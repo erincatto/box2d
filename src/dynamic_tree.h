@@ -3,9 +3,19 @@
 
 #pragma once
 
-#include "box2d/math_functions.h"
+#include "box2d/collision.h"
 
-typedef struct b2DynamicTree b2DynamicTree;
+#define B2_TREE_STACK_SIZE 1024
+
+static inline bool b2IsLeaf( const b2TreeNode* node )
+{
+	return node->flags & b2_leafNode;
+}
+
+static inline bool b2IsAllocated( const b2TreeNode* node )
+{
+	return node->flags & b2_allocatedNode;
+}
 
 void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId );

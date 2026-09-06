@@ -13,6 +13,7 @@
 #include "body.h"
 #include "contact.h"
 #include "core.h"
+#include "dynamic_tree.h"
 #include "parallel_for.h"
 #include "physics_world.h"
 #include "shape.h"
@@ -52,6 +53,10 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 
 	int dynamicCapacity = b2MaxInt( 16, capacity->dynamicShapeCount );
 	bp->trees[b2_dynamicBody] = b2DynamicTree_Create( dynamicCapacity );
+
+	bp->movePairs2 = NULL;
+	b2AtomicStoreInt( &bp->movePairIndex2, 0 );
+	bp->movePairCapacity2 = 0;
 }
 
 void b2DestroyBroadPhase( b2BroadPhase* bp )
@@ -146,10 +151,55 @@ void b2BroadPhase_EnlargeProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	b2BufferMove( bp, proxyKey );
 }
 
+static int b2GatherEnlargedNodes( const b2DynamicTree* tree, int* items )
+{
+	const b2TreeNode* nodes = tree->nodes;
+	int capacity = tree->nodeCapacity;
+
+	uint16_t mask = b2_allocatedNode | b2_enlargedNode | b2_leafNode;
+	uint16_t required = b2_allocatedNode | b2_enlargedNode;
+
+	int count = 0;
+	for ( int i = 0; i < capacity; ++i )
+	{
+		if ( ( nodes[i].flags & mask ) == required )
+		{
+			items[count] = i;
+			count += 1;
+		}
+	}
+
+	return count;
+}
+
+#define B2_CANDIDATE_BATCH 32
+
+typedef struct b2Candidate
+{
+	int shapeIdA;
+	int shapeIdB;
+	int item;
+} b2Candidate;
+
+typedef struct b2PairContext
+{
+	b2World* world;
+	b2MoveResult* moveResult;
+	b2Candidate batch[B2_CANDIDATE_BATCH];
+	int batchCount;
+	int workerIndex;
+	int item;
+} b2PairContext;
+
+typedef struct b2NodePair
+{
+	int a, b;
+} b2NodePair;
+
 typedef struct b2MovePair
 {
-	int shapeIndexA;
-	int shapeIndexB;
+	int shapeIdA;
+	int shapeIdB;
 	b2MovePair* next;
 	bool heap;
 } b2MovePair;
@@ -158,6 +208,225 @@ typedef struct b2MoveResult
 {
 	b2MovePair* pairList;
 } b2MoveResult;
+
+// todo profile with and without prefetch
+static void b2DrainCandidates( b2PairContext* context )
+{
+	b2World* world = context->world;
+	b2BroadPhase* bp = &world->broadPhase;
+
+	int count1 = context->batchCount;
+	context->batchCount = 0;
+
+	uint64_t keys[B2_CANDIDATE_BATCH];
+	uint64_t hashes[B2_CANDIDATE_BATCH];
+	for ( int i = 0; i < count1; ++i )
+	{
+		b2Candidate* candidate = context->batch + i;
+		keys[i] = B2_SHAPE_PAIR_KEY( candidate->shapeIdA, candidate->shapeIdB );
+		hashes[i] = b2KeyHash( keys[i] );
+		b2PrefetchHash( &bp->pairSet, hashes[i] );
+	}
+
+	b2Candidate culled[B2_CANDIDATE_BATCH];
+	int count2 = 0;
+	for ( int i = 0; i < count1; ++i )
+	{
+		bool pairExists = b2ContainsHashedKey( &bp->pairSet, keys[i], hashes[i] );
+		if ( pairExists == false )
+		{
+			culled[count2] = context->batch[i];
+			count2 += 1;
+		}
+	}
+
+	const b2Shape* shapes = world->shapes.data;
+
+	for ( int i = 0; i < count2; ++i )
+	{
+		b2Prefetch( shapes + culled[i].shapeIdA );
+		b2Prefetch( shapes + culled[i].shapeIdB );
+	}
+
+	int count3 = 0;
+	for ( int i = 0; i < count2; ++i )
+	{
+		int shapeIdA = culled[i].shapeIdA;
+		int shapeIdB = culled[i].shapeIdB;
+
+		b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
+		b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
+
+		int bodyIdA = shapeA->bodyId;
+		int bodyIdB = shapeB->bodyId;
+
+		// Are the shapes on the same body?
+		if ( bodyIdA == bodyIdB )
+		{
+			continue;
+		}
+
+		// Sensors are handled elsewhere
+		if ( shapeA->sensorIndex != B2_NULL_INDEX || shapeB->sensorIndex != B2_NULL_INDEX )
+		{
+			continue;
+		}
+
+		if ( b2ShouldShapesCollide( shapeA->filter, shapeB->filter ) == false )
+		{
+			continue;
+		}
+
+		if ( b2CanCollide( shapeA->type, shapeB->type ) == false )
+		{
+			// For example, no segment vs segment collision
+			continue;
+		}
+
+		// Does a joint override collision?
+		b2Body* bodyA = b2Array_Get( world->bodies, bodyIdA );
+		b2Body* bodyB = b2Array_Get( world->bodies, bodyIdB );
+		if ( b2ShouldBodiesCollide( world, bodyA, bodyB ) == false )
+		{
+			continue;
+		}
+
+		// Custom user filter
+		if ( shapeA->enableCustomFiltering || shapeB->enableCustomFiltering )
+		{
+			b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
+			if ( customFilterFcn != NULL )
+			{
+				b2ShapeId idA = { shapeIdA + 1, world->worldId, shapeA->generation };
+				b2ShapeId idB = { shapeIdB + 1, world->worldId, shapeB->generation };
+				bool shouldCollide = customFilterFcn( idA, idB, world->customFilterContext );
+				if ( shouldCollide == false )
+				{
+					continue;
+				}
+			}
+		}
+
+		culled[count3] = culled[i];
+		count3 += 1;
+	}
+
+	int base = b2AtomicFetchAddInt( &bp->movePairIndex2, count3 );
+
+	for ( int i = 0; i < count3; ++i )
+	{
+		int pairIndex = base + i;
+		b2MovePair* pair;
+		if ( pairIndex < bp->movePairCapacity2 )
+		{
+			pair = bp->movePairs2 + pairIndex;
+			pair->heap = false;
+		}
+		else
+		{
+			static b2AtomicInt once = { 0 };
+			if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
+			{
+				// This means you have too many overlapping objects.
+				b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", bp->movePairCapacity );
+			}
+
+			pair = b2Alloc( sizeof( b2MovePair ) );
+			pair->heap = true;
+		}
+
+		pair->shapeIdA = culled[i].shapeIdA;
+		pair->shapeIdB = culled[i].shapeIdB;
+
+		pair->next = context->moveResult->pairList;
+		context->moveResult->pairList = pair;
+	}
+}
+
+B2_FORCE_INLINE void b2ReportCandidate( int shapeIdA, int shapeIdB, b2PairContext* context )
+{
+	// Follow shape index order.
+	b2Candidate* candidate = context->batch + context->batchCount;
+	candidate->shapeIdA = b2MinInt( shapeIdA, shapeIdB );
+	candidate->shapeIdB = b2MaxInt( shapeIdA, shapeIdB );
+	candidate->item = context->item;
+	context->batchCount += 1;
+	if ( context->batchCount == B2_CANDIDATE_BATCH )
+	{
+		b2DrainCandidates( context );
+	}
+}
+
+static void b2CrossPairs( const b2DynamicTree* tree, int indexA, int indexB, b2PairContext* context )
+{
+	const b2TreeNode* nodes = tree->nodes;
+
+	b2NodePair stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = (b2NodePair){ .a = indexA, .b = indexB };
+
+	while ( stackCount > 0 )
+	{
+		b2NodePair pair = stack[--stackCount];
+		const b2TreeNode* a = nodes + pair.a;
+		const b2TreeNode* b = nodes + pair.b;
+
+		// Any enlarged?
+		if ( ( ( a->flags | b->flags ) & b2_enlargedNode ) == 0 )
+		{
+			continue;
+		}
+
+		if ( b2AABB_Overlaps( a->aabb, b->aabb ) == false )
+		{
+			continue;
+		}
+
+		bool leafA = b2IsLeaf( a );
+		bool leafB = b2IsLeaf( b );
+
+		if ( leafA && leafB )
+		{
+			b2ReportCandidate( (int)a->userData, (int)b->userData, context );
+			continue;
+		}
+
+		// At least one node is internal. If one node is a leaf, then decend into the other
+		// one. If both are internal, then decend into the larger box.
+		if ( leafB || ( leafA == false && b2Perimeter( a->aabb ) > b2Perimeter( b->aabb ) ) )
+		{
+			stack[stackCount++] = (b2NodePair){ .a = a->children.child1, .b = pair.b };
+			stack[stackCount++] = (b2NodePair){ .a = a->children.child2, .b = pair.b };
+		}
+		else
+		{
+			stack[stackCount++] = (b2NodePair){ .a = pair.a, .b = b->children.child1 };
+			stack[stackCount++] = (b2NodePair){ .a = pair.a, .b = b->children.child2 };
+		}
+	}
+}
+
+static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
+{
+	b2World* world = context;
+	b2BroadPhase* bp = &world->broadPhase;
+	const b2DynamicTree* tree = bp->trees + b2_dynamicBody;
+	const b2TreeNode* nodes = tree->nodes;
+	const int* items = bp->enlargedNodes;
+
+	b2PairContext pairContext = { .world = world, .workerIndex = workerIndex };
+
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		const b2TreeNode* node = nodes + items[i];
+		pairContext.item = i;
+		pairContext.moveResult = bp->moveResults2 + i;
+		pairContext.moveResult->pairList = NULL;
+		b2CrossPairs( tree, node->children.child1, node->children.child2, &pairContext );
+	}
+
+	b2DrainCandidates( &pairContext );
+}
 
 typedef struct b2QueryPairContext
 {
@@ -314,8 +583,8 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 		pair->heap = true;
 	}
 
-	pair->shapeIndexA = shapeIdA;
-	pair->shapeIndexB = shapeIdB;
+	pair->shapeIdA = shapeIdA;
+	pair->shapeIdB = shapeIdB;
 	pair->next = queryContext->moveResult->pairList;
 	queryContext->moveResult->pairList = pair;
 
@@ -411,7 +680,7 @@ static void b2UpdateTreesTask( void* context )
 
 // Task that can be done in parallel with the narrow-phase
 // - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
-static void b2EnqueueTreeUpdate(b2World* world)
+static void b2EnqueueTreeUpdate( b2World* world )
 {
 	if ( world->taskCount < B2_MAX_TASKS )
 	{
@@ -449,6 +718,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	bp->moveResults = b2StackAlloc( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
 
 	// This capacity can be exceeded if there are many overlapping pairs (e.g. all shapes at the origin)
+	// todo if this remains then it should hit a high water mark and account for heap allocated pairs
 	bp->movePairCapacity = 32 * moveCount;
 	bp->movePairs = b2StackAlloc( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 	b2AtomicStoreInt( &bp->movePairIndex, 0 );
@@ -460,6 +730,44 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	int minRange = 64;
 	b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
+
+	{
+		const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
+		int nodeCount = dynamicTree->nodeCount;
+		bp->enlargedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
+		int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->enlargedNodes );
+	
+		// todo need a better heuristic
+		bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
+		bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair), "mp2" );
+		bp->moveResults2 = b2StackAlloc( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
+
+		b2AtomicStoreInt( &bp->movePairIndex2, 0 );
+
+		b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, minRange, world );
+
+		for (int i = 0; i < enlargedCount; ++i)
+		{
+			b2MovePair* pair = bp->moveResults2[i].pairList;
+			while (pair != NULL)
+			{
+				b2MovePair* next = pair->next;
+				if (pair->heap)
+				{
+					b2Free( pair, sizeof( b2MovePair ) );
+				}
+
+				pair = next;
+			}
+		}
+
+		b2StackFree( alloc, bp->moveResults2 );
+		bp->moveResults2 = NULL;
+		b2StackFree( alloc, bp->movePairs2 );
+		bp->movePairs2 = NULL;
+		b2StackFree( alloc, bp->enlargedNodes );
+		bp->enlargedNodes = NULL;
+	}
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
@@ -476,8 +784,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		b2MovePair* pair = result->pairList;
 		while ( pair != NULL )
 		{
-			int shapeIdA = pair->shapeIndexA;
-			int shapeIdB = pair->shapeIndexB;
+			int shapeIdA = pair->shapeIdA;
+			int shapeIdB = pair->shapeIdB;
 
 			// if (s_file != NULL)
 			//{

@@ -14,8 +14,6 @@
 #include <float.h>
 #include <string.h>
 
-#define B2_TREE_STACK_SIZE 1024
-
 static b2TreeNode b2_defaultTreeNode = {
 	.aabb = { { 0.0f, 0.0f }, { 0.0f, 0.0f } },
 	.categoryBits = B2_DEFAULT_CATEGORY_BITS,
@@ -29,17 +27,7 @@ static b2TreeNode b2_defaultTreeNode = {
 	.flags = b2_allocatedNode,
 };
 
-static bool b2IsLeaf( const b2TreeNode* node )
-{
-	return node->flags & b2_leafNode;
-}
-
-static bool b2IsAllocated( const b2TreeNode* node )
-{
-	return node->flags & b2_allocatedNode;
-}
-
-static uint16_t b2MaxUInt16( uint16_t a, uint16_t b )
+static inline uint16_t b2MaxUInt16( uint16_t a, uint16_t b )
 {
 	return a > b ? a : b;
 }
@@ -48,9 +36,11 @@ b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 {
 	int capacity = b2MaxInt( proxyCapacity, 16 );
 
+	// Intentially not initialized with brace initialization, which can leave
+	// uninitialized gaps.
 	b2DynamicTree tree;
 
-	// memset needed for deterministic serialization
+	// memset needed for deterministic serialization.
 	memset( &tree, 0, sizeof( b2DynamicTree ) );
 
 	tree.root = B2_NULL_INDEX;

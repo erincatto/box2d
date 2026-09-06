@@ -41,9 +41,14 @@ typedef struct b2BroadPhase
 	int movePairCapacity;
 	b2AtomicInt movePairIndex;
 
+	int* enlargedNodes;
+	b2MovePair* movePairs2;
+	b2MoveResult* moveResults2;
+	int movePairCapacity2;
+	b2AtomicInt movePairIndex2;
+
 	// Tracks shape pairs that have a b2Contact
 	b2HashSet pairSet;
-
 } b2BroadPhase;
 
 void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity );

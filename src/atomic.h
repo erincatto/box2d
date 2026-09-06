@@ -16,6 +16,19 @@
 #include <immintrin.h>
 #endif
 
+#if defined( _MSC_VER )
+#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
+#define b2Prefetch( addr ) _mm_prefetch( (const char*)( addr ), _MM_HINT_T0 )
+#else
+#define b2Prefetch( addr ) __prefetch( (const void*)( addr ) )
+#endif
+#elif defined( __GNUC__ ) || defined( __clang__ )
+#define b2Prefetch( addr ) __builtin_prefetch( (const void*)( addr ), 0, 3 )
+#else
+#define b2Prefetch( addr ) ( (void)( addr ) )
+#endif
+
+
 static inline void b2AtomicStoreInt( b2AtomicInt* a, int value )
 {
 #if defined( _MSC_VER )
