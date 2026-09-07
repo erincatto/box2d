@@ -734,7 +734,7 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int leaf )
 
 // Create a proxy in the tree as a leaf node. We return the index of the node instead of a pointer so that we can grow
 // the node pool.
-int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData )
+int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData, uint16_t nodeFlags )
 {
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
 
@@ -745,7 +745,7 @@ int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t catego
 	node->userData = userData;
 	node->categoryBits = categoryBits;
 	node->height = 0;
-	node->flags = b2_allocatedNode | b2_leafNode;
+	node->flags = b2_allocatedNode | b2_leafNode | nodeFlags;
 
 	bool shouldRotate = true;
 	b2InsertLeaf( tree, proxyId, shouldRotate );
@@ -772,7 +772,7 @@ int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree )
 	return tree->proxyCount;
 }
 
-void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
+void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, uint16_t nodeFlags )
 {
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
 	B2_VALIDATE( aabb.upperBound.x - aabb.lowerBound.x < B2_HUGE );
@@ -783,6 +783,7 @@ void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	b2RemoveLeaf( tree, proxyId );
 
 	tree->nodes[proxyId].aabb = aabb;
+	tree->nodes[proxyId].flags |= nodeFlags;
 
 	bool shouldRotate = false;
 	b2InsertLeaf( tree, proxyId, shouldRotate );
@@ -802,6 +803,7 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	B2_VALIDATE( b2AABB_Contains( nodes[proxyId].aabb, aabb ) == false );
 
 	nodes[proxyId].aabb = aabb;
+	nodes[proxyId].flags |= b2_enlargedNode;
 
 	int parentIndex = nodes[proxyId].parent;
 	while ( parentIndex != B2_NULL_INDEX )
@@ -1991,6 +1993,21 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 	return leafCount;
 }
 
+void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId )
+{
+	b2TreeNode* nodes = tree->nodes;
+	B2_VALIDATE( b2IsLeaf( nodes + proxyId ) );
+
+	nodes[proxyId].flags |= b2_enlargedNode;
+
+	int index = nodes[proxyId].parent;
+	while ( index != B2_NULL_INDEX )
+	{
+		nodes[index].flags |= b2_enlargedNode;
+		index = nodes[index].parent;
+	}
+}
+
 void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 {
 	b2TreeNode* nodes = tree->nodes;
@@ -2061,5 +2078,48 @@ void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
 
 		childIndex = parentIndex;
 		parentIndex = parentNode->parent;
+	}
+}
+
+// todo call this during the async rebuild
+void b2DynamicTree_ClearEnlarged(b2DynamicTree* tree)
+{
+	b2TreeNode* nodes = tree->nodes;
+	int root = tree->root;
+	if ( root == B2_NULL_INDEX  )
+	{
+		return;
+	}
+
+	if ( ( nodes[root].flags & b2_enlargedNode ) == 0 )
+	{
+		return;
+	}
+
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = root;
+
+	while (stackCount > 0)
+	{
+		b2TreeNode* node = nodes + stack[--stackCount];
+		node->flags &= ~b2_enlargedNode;
+
+		if (b2IsLeaf(node))
+		{
+			continue;
+		}
+
+		int child1 = node->children.child1;
+		if ( nodes[child1].flags & b2_enlargedNode)
+		{
+			stack[stackCount++] = child1;
+		}
+
+		int child2 = node->children.child2;
+		if ( nodes[child2].flags & b2_enlargedNode)
+		{
+			stack[stackCount++] = child1;
+		}
 	}
 }

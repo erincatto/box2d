@@ -205,6 +205,7 @@ int main( int argc, char** argv )
 	b2Counters counters = { 0 };
 	bool enableContinuous = true;
 	bool recordStepTimes = false;
+	bool fullSteps = false;
 
 	for ( int i = 1; i < argc; ++i )
 	{
@@ -250,6 +251,11 @@ int main( int argc, char** argv )
 		{
 			recordStepTimes = true;
 		}
+		else if ( strcmp( arg, "-f" ) == 0 || strcmp( arg, "--full" ) == 0 )
+		{
+			// Debug builds run 10 steps unless asked for the full count
+			fullSteps = true;
+		}
 		else if ( strcmp( arg, "-l" ) == 0 || strcmp( arg, "--list" ) == 0 )
 		{
 			PrintBenchmarks( benchmarks, benchmarkCount );
@@ -264,6 +270,7 @@ int main( int argc, char** argv )
 					"-r, --repeats=<integer>: number of repeats (default is 4)\n"
 					"-nc, --no-continuous: disable continuous collision\n"
 					"-s, --record-steps: record step times\n"
+					"-f, --full: run the full step count in a debug build\n"
 					"-l, --list: list the registered benchmarks\n"
 					"-h, --help: print this help\n" );
 			exit( 0 );
@@ -289,10 +296,12 @@ int main( int argc, char** argv )
 			continue;
 		}
 
-#ifdef NDEBUG
 		int stepCount = benchmarks[benchmarkIndex].totalStepCount;
-#else
-		int stepCount = 10;
+#ifndef NDEBUG
+		if ( fullSteps == false )
+		{
+			stepCount = 10;
+		}
 #endif
 
 		Benchmark* benchmark = benchmarks + benchmarkIndex;

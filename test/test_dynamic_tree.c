@@ -13,7 +13,7 @@ static int TreeCreateDestroy( void )
 	};
 
 	b2DynamicTree tree = b2DynamicTree_Create( 16 );
-	b2DynamicTree_CreateProxy( &tree, a, 1, 0 );
+	b2DynamicTree_CreateProxy( &tree, a, 1, 0, 0 );
 
 	ENSURE( tree.nodeCount > 0 );
 	ENSURE( tree.proxyCount == 1 );
@@ -41,7 +41,7 @@ static int TreeRayCastTest( void )
 	// Test AABB centered at origin with bounds [-1, -1] to [1, 1]
 	b2AABB a = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f }, };
 	b2DynamicTree tree = b2DynamicTree_Create( 16 );
-	int proxyId = b2DynamicTree_CreateProxy( &tree, a, 1, 0 );
+	int proxyId = b2DynamicTree_CreateProxy( &tree, a, 1, 0, 0 );
 
 	b2RayCastInput input = {};
 	input.maxFraction = 1.0f;
@@ -247,9 +247,9 @@ static int TreeMultipleProxiesTest( void )
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
 	b2AABB a3 = { .lowerBound = { 3.0f, -1.0f }, .upperBound = { 5.0f, 1.0f } };
 
-	int id1 = b2DynamicTree_CreateProxy( &tree, a1, 0x1ull, 42 );
-	int id2 = b2DynamicTree_CreateProxy( &tree, a2, 0x2ull, 43 );
-	int id3 = b2DynamicTree_CreateProxy( &tree, a3, 0x4ull, 44 );
+	int id1 = b2DynamicTree_CreateProxy( &tree, a1, 0x1ull, 42, 0 );
+	int id2 = b2DynamicTree_CreateProxy( &tree, a2, 0x2ull, 43, 0 );
+	int id3 = b2DynamicTree_CreateProxy( &tree, a3, 0x4ull, 44, 0 );
 
 	ENSURE( b2DynamicTree_GetProxyCount( &tree ) == 3 );
 
@@ -273,9 +273,9 @@ static int TreeQueryTest( void )
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
 	b2AABB a3 = { .lowerBound = { 3.0f, -1.0f }, .upperBound = { 5.0f, 1.0f } };
 
-	int id1 = b2DynamicTree_CreateProxy( &tree, a1, 0xFFull, 0 );
-	int id2 = b2DynamicTree_CreateProxy( &tree, a2, 0xFFull, 0 );
-	int id3 = b2DynamicTree_CreateProxy( &tree, a3, 0xFFull, 0 );
+	int id1 = b2DynamicTree_CreateProxy( &tree, a1, 0xFFull, 0, 0 );
+	int id2 = b2DynamicTree_CreateProxy( &tree, a2, 0xFFull, 0, 0 );
+	int id3 = b2DynamicTree_CreateProxy( &tree, a3, 0xFFull, 0, 0 );
 
 	b2AABB queryA = { .lowerBound = { -2.0f, -2.0f }, .upperBound = { 2.0f, 2.0f } };
 
@@ -302,11 +302,11 @@ static int TreeMoveAndEnlargeTest( void )
 	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	b2AABB a = { .lowerBound = { 0.0f, 0.0f }, .upperBound = { 1.0f, 1.0f } };
-	int id = b2DynamicTree_CreateProxy( &tree, a, 0x1ull, 100 );
+	int id = b2DynamicTree_CreateProxy( &tree, a, 0x1ull, 100, 0 );
 
 	// Move proxy to a new place
 	b2AABB moved = { .lowerBound = { 10.0f, 10.0f }, .upperBound = { 11.0f, 11.0f } };
-	b2DynamicTree_MoveProxy( &tree, id, moved );
+	b2DynamicTree_MoveProxy( &tree, id, moved, 0 );
 
 	b2AABB got = b2DynamicTree_GetAABB( &tree, id );
 	ENSURE( got.lowerBound.x == moved.lowerBound.x );
@@ -335,7 +335,7 @@ static int TreeRebuildAndValidateTest( void )
 	{
 		float x = (float)i * 2.0f;
 		b2AABB a = { .lowerBound = { x - 0.5f, -0.5f }, .upperBound = { x + 0.5f, 0.5f } };
-		b2DynamicTree_CreateProxy( &tree, a, 0xFFull, (uint64_t)i );
+		b2DynamicTree_CreateProxy( &tree, a, 0xFFull, (uint64_t)i, 0 );
 	}
 
 	int sorted = b2DynamicTree_Rebuild( &tree, true );
@@ -357,7 +357,7 @@ static int TreeRowHeightTest( void )
 	{
 		float x = 1.0f * i;
 		b2AABB a = { .lowerBound = { x, 0.0f }, .upperBound = { x + 1.0f, 1.0f } };
-		b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i );
+		b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i, 0 );
 	}
 
 	float minHeight = log2f((float)columnCount);
@@ -381,7 +381,7 @@ static int TreeGridHeightTest( void )
 		{
 			float y = 1.0f * j;
 			b2AABB a = { .lowerBound = { x, y }, .upperBound = { x + 1.0f, y + 1.0f } };
-			b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i );
+			b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i, 0 );
 		}
 	}
 
@@ -408,7 +408,7 @@ static int TreeGridMovementTest( void )
 		{
 			float y = 1.0f * j;
 			b2AABB a = { .lowerBound = { x, y }, .upperBound = { x + 1.0f, y + 1.0f } };
-			proxyIds[index] = b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i );
+			proxyIds[index] = b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i, 0 );
 			index += 1;
 		}
 	}
@@ -429,7 +429,7 @@ static int TreeGridMovementTest( void )
 			b2AABB a = b2DynamicTree_GetAABB( &tree, proxyIds[index] );
 			a.lowerBound = b2Add( a.lowerBound, offset );
 			a.upperBound = b2Add( a.upperBound, offset );
-			b2DynamicTree_MoveProxy( &tree, proxyIds[index], a );
+			b2DynamicTree_MoveProxy( &tree, proxyIds[index], a, 0 );
 			index += 1;
 		}
 	}

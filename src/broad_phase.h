@@ -5,6 +5,7 @@
 
 #include "bitset.h"
 #include "container.h"
+#include "dynamic_tree.h"
 #include "table.h"
 
 #include "box2d/collision.h"
@@ -70,8 +71,12 @@ void b2ValidateBroadphase( const b2BroadPhase* bp );
 void b2ValidateNoEnlarged( const b2BroadPhase* bp );
 void b2ValidateMovedProxies( const b2BroadPhase* bp );
 
-void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb );
-void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId );
+static inline void b2BroadPhase_MarkEnlargedFlag( b2BroadPhase* bp, int proxyKey )
+{
+	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
+	int proxyId = B2_PROXY_ID( proxyKey );
+	b2DynamicTree_MarkEnlargedFlag( bp->trees + proxyType, proxyId );
+}
 
 static inline void b2BroadPhase_MarkEnlarged( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 {

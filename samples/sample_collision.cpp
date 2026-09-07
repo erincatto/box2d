@@ -557,7 +557,7 @@ public:
 					p->fatBox.lowerBound = b2Sub( p->box.lowerBound, aabbMargin );
 					p->fatBox.upperBound = b2Add( p->box.upperBound, aabbMargin );
 
-					p->proxyId = b2DynamicTree_CreateProxy( &m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount );
+					p->proxyId = b2DynamicTree_CreateProxy( &m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount, 0 );
 					p->rayStamp = -1;
 					p->queryStamp = -1;
 					p->moved = false;
@@ -759,7 +759,7 @@ public:
 					Proxy* p = m_proxies + i;
 					if ( p->moved )
 					{
-						b2DynamicTree_MoveProxy( &m_tree, p->proxyId, p->fatBox );
+						b2DynamicTree_MoveProxy( &m_tree, p->proxyId, p->fatBox, 0 );
 					}
 				}
 				float ms = b2GetMilliseconds( ticks );

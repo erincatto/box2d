@@ -13,17 +13,50 @@
 #include "body.h"
 #include "contact.h"
 #include "core.h"
+#include "ctz.h"
 #include "dynamic_tree.h"
 #include "parallel_for.h"
 #include "physics_world.h"
 #include "shape.h"
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 // #include <stdio.h>
 
 // static FILE* s_file = NULL;
+
+// Totals over the life of the world, printed when the broad phase is destroyed.
+// Tasks add their local sums once so the workers never share a cache line.
+#if B2_SNOOP_PAIR_COUNTERS
+static b2AtomicInt b2_queryNodeVisits;
+static b2AtomicInt b2_queryLeafVisits;
+static b2AtomicInt b2_queryDynamicNodeVisits;
+static b2AtomicInt b2_queryDynamicLeafVisits;
+static b2AtomicInt b2_queryCandidates;
+static b2AtomicInt b2_querySurvivors;
+static b2AtomicInt b2_selfPops;
+static b2AtomicInt b2_selfCandidates;
+static b2AtomicInt b2_selfSurvivors;
+static b2AtomicInt b2_pairSteps;
+#endif
+
+// Pass timing for the C.6 gate. The passes alternate order each step so each is timed cold
+// as often as warm, otherwise the second pass inherits the first one's cache.
+#define B2_SNOOP_PAIR_TIMING 0
+
+#if B2_SNOOP_PAIR_TIMING
+static float b2_queryFirstMs;
+static float b2_querySecondMs;
+static float b2_selfFirstMs;
+static float b2_selfSecondMs;
+static int b2_queryFirstCount;
+static int b2_selfFirstCount;
+static int b2_timingSteps;
+#endif
 
 void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 {
@@ -75,6 +108,50 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 
 	memset( bp, 0, sizeof( b2BroadPhase ) );
 
+#if B2_SNOOP_PAIR_COUNTERS
+	int steps = b2AtomicLoadInt( &b2_pairSteps );
+	// Unit tests run short, keep them quiet
+	if ( steps >= 100 )
+	{
+		b2Log( "pair steps %d: query visits %d node %d leaf (dynamic tree %d node %d leaf), candidates %d, survivors %d | self "
+			   "pops %d, candidates %d, survivors %d",
+			   steps, b2AtomicLoadInt( &b2_queryNodeVisits ), b2AtomicLoadInt( &b2_queryLeafVisits ),
+			   b2AtomicLoadInt( &b2_queryDynamicNodeVisits ), b2AtomicLoadInt( &b2_queryDynamicLeafVisits ),
+			   b2AtomicLoadInt( &b2_queryCandidates ), b2AtomicLoadInt( &b2_querySurvivors ), b2AtomicLoadInt( &b2_selfPops ),
+			   b2AtomicLoadInt( &b2_selfCandidates ), b2AtomicLoadInt( &b2_selfSurvivors ) );
+
+		b2AtomicStoreInt( &b2_queryNodeVisits, 0 );
+		b2AtomicStoreInt( &b2_queryLeafVisits, 0 );
+		b2AtomicStoreInt( &b2_queryDynamicNodeVisits, 0 );
+		b2AtomicStoreInt( &b2_queryDynamicLeafVisits, 0 );
+		b2AtomicStoreInt( &b2_queryCandidates, 0 );
+		b2AtomicStoreInt( &b2_querySurvivors, 0 );
+		b2AtomicStoreInt( &b2_selfPops, 0 );
+		b2AtomicStoreInt( &b2_selfCandidates, 0 );
+		b2AtomicStoreInt( &b2_selfSurvivors, 0 );
+		b2AtomicStoreInt( &b2_pairSteps, 0 );
+	}
+#endif
+
+#if B2_SNOOP_PAIR_TIMING
+	if ( b2_timingSteps > 0 )
+	{
+		int querySecondCount = b2_timingSteps - b2_queryFirstCount;
+		int selfSecondCount = b2_timingSteps - b2_selfFirstCount;
+		b2Log( "pair timing %d steps, ms per step: query first %.4f second %.4f | self first %.4f second %.4f", b2_timingSteps,
+			   b2_queryFirstMs / b2MaxInt( b2_queryFirstCount, 1 ), b2_querySecondMs / b2MaxInt( querySecondCount, 1 ),
+			   b2_selfFirstMs / b2MaxInt( b2_selfFirstCount, 1 ), b2_selfSecondMs / b2MaxInt( selfSecondCount, 1 ) );
+
+		b2_queryFirstMs = 0.0f;
+		b2_querySecondMs = 0.0f;
+		b2_selfFirstMs = 0.0f;
+		b2_selfSecondMs = 0.0f;
+		b2_queryFirstCount = 0;
+		b2_selfFirstCount = 0;
+		b2_timingSteps = 0;
+	}
+#endif
+
 	// if (s_file != NULL)
 	//{
 	//	fclose(s_file);
@@ -110,8 +187,12 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 							  bool forcePairCreation )
 {
 	B2_ASSERT( 0 <= proxyType && proxyType < b2_bodyTypeCount );
-	int proxyId = b2DynamicTree_CreateProxy( bp->trees + proxyType, aabb, categoryBits, shapeIndex );
+
+	uint16_t flags = ( proxyType != b2_staticBody || forcePairCreation ) ? b2_enlargedNode : 0;
+
+	int proxyId = b2DynamicTree_CreateProxy( bp->trees + proxyType, aabb, categoryBits, shapeIndex, flags );
 	int proxyKey = B2_PROXY_KEY( proxyId, proxyType );
+
 	if ( proxyType != b2_staticBody || forcePairCreation )
 	{
 		b2BufferMove( bp, proxyKey );
@@ -135,7 +216,7 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
 
-	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb );
+	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb, b2_enlargedNode );
 	b2BufferMove( bp, proxyKey );
 }
 
@@ -184,11 +265,15 @@ typedef struct b2Candidate
 typedef struct b2PairContext
 {
 	b2World* world;
-	b2MoveResult* moveResult;
 	b2Candidate batch[B2_CANDIDATE_BATCH];
 	int batchCount;
 	int workerIndex;
 	int item;
+
+#if B2_SNOOP_PAIR_COUNTERS
+	int pops;
+	int candidates;
+#endif
 } b2PairContext;
 
 typedef struct b2NodePair
@@ -217,6 +302,10 @@ static void b2DrainCandidates( b2PairContext* context )
 
 	int count1 = context->batchCount;
 	context->batchCount = 0;
+
+#if B2_SNOOP_PAIR_COUNTERS
+	context->candidates += count1;
+#endif
 
 	uint64_t keys[B2_CANDIDATE_BATCH];
 	uint64_t hashes[B2_CANDIDATE_BATCH];
@@ -328,7 +417,7 @@ static void b2DrainCandidates( b2PairContext* context )
 			if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
 			{
 				// This means you have too many overlapping objects.
-				b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", bp->movePairCapacity );
+				b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", bp->movePairCapacity2 );
 			}
 
 			pair = b2Alloc( sizeof( b2MovePair ) );
@@ -338,8 +427,11 @@ static void b2DrainCandidates( b2PairContext* context )
 		pair->shapeIdA = culled[i].shapeIdA;
 		pair->shapeIdB = culled[i].shapeIdB;
 
-		pair->next = context->moveResult->pairList;
-		context->moveResult->pairList = pair;
+		// A batch spans items. Link by the candidate's own item so the block split
+		// cannot decide which list a pair lands in.
+		b2MoveResult* result = bp->moveResults2 + culled[i].item;
+		pair->next = result->pairList;
+		result->pairList = pair;
 	}
 }
 
@@ -357,10 +449,8 @@ B2_FORCE_INLINE void b2ReportCandidate( int shapeIdA, int shapeIdB, b2PairContex
 	}
 }
 
-static void b2CrossPairs( const b2DynamicTree* tree, int indexA, int indexB, b2PairContext* context )
+static void b2CrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, int indexA, int indexB, b2PairContext* context )
 {
-	const b2TreeNode* nodes = tree->nodes;
-
 	b2NodePair stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
 	stack[stackCount++] = (b2NodePair){ .a = indexA, .b = indexB };
@@ -368,8 +458,13 @@ static void b2CrossPairs( const b2DynamicTree* tree, int indexA, int indexB, b2P
 	while ( stackCount > 0 )
 	{
 		b2NodePair pair = stack[--stackCount];
-		const b2TreeNode* a = nodes + pair.a;
-		const b2TreeNode* b = nodes + pair.b;
+
+#if B2_SNOOP_PAIR_COUNTERS
+		context->pops += 1;
+#endif
+
+		const b2TreeNode* a = nodesA + pair.a;
+		const b2TreeNode* b = nodesB + pair.b;
 
 		// Any enlarged?
 		if ( ( ( a->flags | b->flags ) & b2_enlargedNode ) == 0 )
@@ -419,10 +514,124 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		const b2TreeNode* node = nodes + items[i];
+		bp->moveResults2[i].pairList = NULL;
 		pairContext.item = i;
-		pairContext.moveResult = bp->moveResults2 + i;
-		pairContext.moveResult->pairList = NULL;
-		b2CrossPairs( tree, node->children.child1, node->children.child2, &pairContext );
+		b2CrossPairs( tree->nodes, tree->nodes, node->children.child1, node->children.child2, &pairContext );
+	}
+
+	b2DrainCandidates( &pairContext );
+
+#if B2_SNOOP_PAIR_COUNTERS
+	b2AtomicFetchAddInt( &b2_selfPops, pairContext.pops );
+	b2AtomicFetchAddInt( &b2_selfCandidates, pairContext.candidates );
+#endif
+}
+
+// Must be a power of 2
+#define B2_CROSS_SEED_COUNT 64
+_Static_assert( ( B2_CROSS_SEED_COUNT & ( B2_CROSS_SEED_COUNT - 1 ) ) == 0, "must be power of 2" );
+
+static int b2ExpandCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* treeB, b2NodePair* seeds )
+{
+	if ( treeA->root == B2_NULL_INDEX || treeB->root == B2_NULL_INDEX )
+	{
+		return 0;
+	}
+
+	const b2TreeNode* nodesA = treeA->nodes;
+	const b2TreeNode* nodesB = treeB->nodes;
+
+	// Bread-first search
+	b2NodePair queue[2 * B2_CROSS_SEED_COUNT];
+	int mask = 2 * B2_CROSS_SEED_COUNT - 1;
+	int head = 0;
+	int tail = 0;
+	queue[tail & mask] = (b2NodePair){ .a = treeA->root, .b = treeB->root };
+	tail += 1;
+
+	int seedCount = 0;
+	while ( head < tail && seedCount + ( tail - head ) < B2_CROSS_SEED_COUNT )
+	{
+		b2NodePair pair = queue[head & mask];
+		head += 1;
+
+		const b2TreeNode* a = nodesA + pair.a;
+		const b2TreeNode* b = nodesB + pair.b;
+
+		// Either enlarged?
+		if ( ( ( a->flags | b->flags ) & b2_enlargedNode ) == 0 )
+		{
+			continue;
+		}
+
+		if ( b2AABB_Overlaps( a->aabb, b->aabb ) == false )
+		{
+			continue;
+		}
+
+		bool leafA = b2IsLeaf( a );
+		bool leafB = b2IsLeaf( b );
+
+		if ( leafA && leafB )
+		{
+			seeds[seedCount] = pair;
+			seedCount += 1;
+			continue;
+		}
+
+		// At least one node is internal. If one node is a leaf, then decend into the other
+		// one. If both are internal, then decend into the larger box.
+		if ( leafB || ( leafA == false && b2Perimeter( a->aabb ) > b2Perimeter( b->aabb ) ) )
+		{
+			queue[tail & mask] = (b2NodePair){ .a = a->children.child1, .b = pair.b };
+			queue[( tail + 1 ) & mask] = (b2NodePair){ .a = a->children.child2, .b = pair.b };
+		}
+		else
+		{
+			queue[tail & mask] = (b2NodePair){ .a = pair.a, .b = b->children.child1 };
+			queue[( tail + 1 ) & mask] = (b2NodePair){ .a = pair.a, .b = b->children.child2 };
+		}
+
+		tail += 2;
+	}
+
+	while ( head < tail )
+	{
+		seeds[seedCount] = queue[head & mask];
+		seedCount += 1;
+		head += 1;
+	}
+
+	return seedCount;
+}
+
+typedef struct b2CrossContext
+{
+	b2World* world;
+	const b2NodePair* seeds;
+	int staticSeedCount;
+	int itemBase;
+} b2CrossContext;
+
+static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
+{
+	b2CrossContext* crossContext = context;
+	b2World* world = crossContext->world;
+	b2BroadPhase* bp = &world->broadPhase;
+	const b2TreeNode* staticNodes = bp->trees[b2_staticBody].nodes;
+	const b2TreeNode* kinematicNodes = bp->trees[b2_kinematicBody].nodes;
+	const b2TreeNode* dynamicNodes = bp->trees[b2_dynamicBody].nodes;
+
+	b2PairContext pairContext = { .world = world, .workerIndex = workerIndex };
+
+	for ( int i = startIndex; i < endIndex; ++i )
+	{
+		const b2TreeNode* nodesB = i < crossContext->staticSeedCount ? staticNodes : kinematicNodes;
+		b2NodePair seed = crossContext->seeds[i];
+		int item = crossContext->itemBase + i;
+		bp->moveResults2[item].pairList = NULL;
+		pairContext.item = item;
+		b2CrossPairs( dynamicNodes, nodesB, seed.a, seed.b, &pairContext );
 	}
 
 	b2DrainCandidates( &pairContext );
@@ -435,6 +644,10 @@ typedef struct b2QueryPairContext
 	b2BodyType queryTreeType;
 	int queryProxyKey;
 	int queryShapeIndex;
+
+#if B2_SNOOP_PAIR_COUNTERS
+	int candidates;
+#endif
 } b2QueryPairContext;
 
 // This is called from b2DynamicTree::Query when we are gathering pairs.
@@ -486,6 +699,10 @@ static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
 			return true;
 		}
 	}
+
+#if B2_SNOOP_PAIR_COUNTERS
+	queryContext->candidates += 1;
+#endif
 
 	uint64_t pairKey = B2_SHAPE_PAIR_KEY( shapeId, queryContext->queryShapeIndex );
 	bool pairExists = b2ContainsKey( &broadPhase->pairSet, pairKey );
@@ -611,6 +828,14 @@ static void b2FindPairsTask( int startIndex, int endIndex, int workerIndex, void
 	b2QueryPairContext queryContext;
 	queryContext.world = world;
 
+#if B2_SNOOP_PAIR_COUNTERS
+	int nodeVisits = 0;
+	int leafVisits = 0;
+	int dynamicNodeVisits = 0;
+	int dynamicLeafVisits = 0;
+	queryContext.candidates = 0;
+#endif
+
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		// Initialize move result for this moved proxy
@@ -662,7 +887,22 @@ static void b2FindPairsTask( int startIndex, int endIndex, int workerIndex, void
 			b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
 		stats.nodeVisits += statsDynamic.nodeVisits;
 		stats.leafVisits += statsDynamic.leafVisits;
+
+#if B2_SNOOP_PAIR_COUNTERS
+		nodeVisits += stats.nodeVisits;
+		leafVisits += stats.leafVisits;
+		dynamicNodeVisits += statsDynamic.nodeVisits;
+		dynamicLeafVisits += statsDynamic.leafVisits;
+#endif
 	}
+
+#if B2_SNOOP_PAIR_COUNTERS
+	b2AtomicFetchAddInt( &b2_queryNodeVisits, nodeVisits );
+	b2AtomicFetchAddInt( &b2_queryLeafVisits, leafVisits );
+	b2AtomicFetchAddInt( &b2_queryDynamicNodeVisits, dynamicNodeVisits );
+	b2AtomicFetchAddInt( &b2_queryDynamicLeafVisits, dynamicLeafVisits );
+	b2AtomicFetchAddInt( &b2_queryCandidates, queryContext.candidates );
+#endif
 
 	b2TracyCZoneEnd( pair_task );
 }
@@ -695,6 +935,184 @@ static void b2EnqueueTreeUpdate( b2World* world )
 	}
 }
 
+#if B2_ENABLE_VALIDATION == 1
+static int b2CompareKeys( const void* a, const void* b )
+{
+	uint64_t keyA = *(const uint64_t*)a;
+	uint64_t keyB = *(const uint64_t*)b;
+	return ( keyA > keyB ) - ( keyA < keyB );
+}
+#endif
+
+// The tree passes must find exactly the pairs the proxy queries found with a marked leaf on
+// at least one side. A proxy can be moved without a mark (created,
+// teleported, collide connected changed). Only the queries find those, so they are excluded.
+static void b2ValidateSelfPairs( b2World* world, int moveCount, int itemCount )
+{
+#if B2_ENABLE_VALIDATION == 1
+	b2BroadPhase* bp = &world->broadPhase;
+	b2Stack* alloc = &world->stack;
+
+	int queryTotal = b2AtomicLoadInt( &bp->movePairIndex );
+	int selfTotal = b2AtomicLoadInt( &bp->movePairIndex2 );
+	uint64_t* queryKeys = b2StackAlloc( alloc, b2MaxInt( queryTotal, 1 ) * sizeof( uint64_t ), "query keys" );
+	uint64_t* selfKeys = b2StackAlloc( alloc, b2MaxInt( selfTotal, 1 ) * sizeof( uint64_t ), "self keys" );
+
+	int queryCount = 0;
+	for ( int i = 0; i < moveCount; ++i )
+	{
+		for ( const b2MovePair* pair = bp->moveResults[i].pairList; pair != NULL; pair = pair->next )
+		{
+			// int proxyKeyA = b2Array_Get( world->shapes, pair->shapeIdA )->proxyKey;
+			// int proxyKeyB = b2Array_Get( world->shapes, pair->shapeIdB )->proxyKey;
+			// const b2TreeNode* leafA = bp->trees[B2_PROXY_TYPE( proxyKeyA )].nodes + B2_PROXY_ID( proxyKeyA );
+			// const b2TreeNode* leafB = bp->trees[B2_PROXY_TYPE( proxyKeyB )].nodes + B2_PROXY_ID( proxyKeyB );
+
+			// Moved without a mark, only the queries find these until C.3 marks on insert
+			// if ( ( ( leafA->flags | leafB->flags ) & b2_enlargedNode ) == 0 )
+			//{
+			//	continue;
+			//}
+
+			B2_ASSERT( queryCount < queryTotal );
+			queryKeys[queryCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
+			queryCount += 1;
+		}
+	}
+
+	int selfCount = 0;
+	for ( int i = 0; i < itemCount; ++i )
+	{
+		for ( const b2MovePair* pair = bp->moveResults2[i].pairList; pair != NULL; pair = pair->next )
+		{
+			B2_ASSERT( selfCount < selfTotal );
+			selfKeys[selfCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
+			selfCount += 1;
+		}
+	}
+
+	// Every survivor is linked exactly once
+	B2_ASSERT( selfCount == selfTotal );
+
+	qsort( queryKeys, queryCount, sizeof( uint64_t ), b2CompareKeys );
+	qsort( selfKeys, selfCount, sizeof( uint64_t ), b2CompareKeys );
+
+	// Merge walk. A pair the self pass produced twice shows up as extra.
+	int i = 0;
+	int j = 0;
+	int missing = 0;
+	int extra = 0;
+	while ( i < queryCount || j < selfCount )
+	{
+		if ( j == selfCount || ( i < queryCount && queryKeys[i] < selfKeys[j] ) )
+		{
+			if ( missing < 4 )
+			{
+				b2Log( "self pairs: missing %d %d", (int)( queryKeys[i] >> 32 ), (int)( queryKeys[i] & 0xFFFFFFFF ) );
+			}
+			missing += 1;
+			i += 1;
+		}
+		else if ( i == queryCount || selfKeys[j] < queryKeys[i] )
+		{
+			if ( extra < 4 )
+			{
+				b2Log( "self pairs: extra %d %d", (int)( selfKeys[j] >> 32 ), (int)( selfKeys[j] & 0xFFFFFFFF ) );
+			}
+			extra += 1;
+			j += 1;
+		}
+		else
+		{
+			i += 1;
+			j += 1;
+		}
+	}
+
+	if ( missing + extra > 0 )
+	{
+		b2Log( "self pairs: %d missing, %d extra, %d from queries, %d from self pass", missing, extra, queryCount, selfCount );
+		fflush( stdout );
+	}
+
+	B2_ASSERT( missing == 0 && extra == 0 );
+
+	b2StackFree( alloc, selfKeys );
+	b2StackFree( alloc, queryKeys );
+#else
+	B2_UNUSED( world );
+	B2_UNUSED( moveCount );
+	B2_UNUSED( itemCount );
+#endif
+}
+
+// Generate pairs by querying the dynamic body tree against itself.
+static void b2SelfPass( b2World* world, int moveCount, int minRange )
+{
+	b2BroadPhase* bp = &world->broadPhase;
+	b2Stack* alloc = &world->stack;
+
+	const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
+	int nodeCount = dynamicTree->nodeCount;
+	bp->enlargedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
+	int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->enlargedNodes );
+
+	// todo need a better capacity heuristic
+	bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
+	bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair ), "mp2" );
+
+	b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
+	int staticSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_staticBody, seeds );
+	B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
+	int kinematicSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, seeds + staticSeedCount );
+	B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
+	int crossCount = staticSeedCount + kinematicSeedCount;
+	int itemCount = enlargedCount + crossCount;
+
+	bp->moveResults2 = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
+
+	b2AtomicStoreInt( &bp->movePairIndex2, 0 );
+
+	b2CrossContext crossContext = {
+		.world = world,
+		.seeds = seeds,
+		.staticSeedCount = staticSeedCount,
+		.itemBase = enlargedCount,
+	};
+	b2ParallelFor( world, &b2CrossPairsTask, crossCount, 1, &crossContext );
+	b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, minRange, world );
+
+	b2ValidateSelfPairs( world, moveCount, itemCount );
+
+#if B2_SNOOP_PAIR_COUNTERS
+	b2AtomicFetchAddInt( &b2_querySurvivors, b2AtomicLoadInt( &bp->movePairIndex ) );
+	b2AtomicFetchAddInt( &b2_selfSurvivors, b2AtomicLoadInt( &bp->movePairIndex2 ) );
+	b2AtomicFetchAddInt( &b2_pairSteps, 1 );
+#endif
+
+	for ( int i = 0; i < itemCount; ++i )
+	{
+		b2MovePair* pair = bp->moveResults2[i].pairList;
+		while ( pair != NULL )
+		{
+			b2MovePair* next = pair->next;
+			if ( pair->heap )
+			{
+				b2Free( pair, sizeof( b2MovePair ) );
+			}
+
+			pair = next;
+		}
+	}
+
+	b2StackFree( alloc, bp->moveResults2 );
+	bp->moveResults2 = NULL;
+	b2StackFree( alloc, bp->movePairs2 );
+	bp->movePairs2 = NULL;
+	b2StackFree( alloc, bp->enlargedNodes );
+	bp->enlargedNodes = NULL;
+}
+
 void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
@@ -706,6 +1124,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	if ( moveCount == 0 )
 	{
 		// A destroyed shape may lead to no moves, but the tree could still be enlarged.
+		b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
 		b2EnqueueTreeUpdate( world );
 		return;
 	}
@@ -729,45 +1148,34 @@ void b2UpdateBroadPhasePairs( b2World* world )
 #endif
 
 	int minRange = 64;
-	b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
 
+#if B2_SNOOP_PAIR_TIMING
+	// The validate compare reads the query results, so the order only alternates without it
+	bool selfFirst = B2_ENABLE_VALIDATION == 0 && ( b2_timingSteps & 1 ) == 1;
+	uint64_t ticks = b2GetTicks();
+	if ( selfFirst )
 	{
-		const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
-		int nodeCount = dynamicTree->nodeCount;
-		bp->enlargedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
-		int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->enlargedNodes );
-	
-		// todo need a better heuristic
-		bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
-		bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair), "mp2" );
-		bp->moveResults2 = b2StackAlloc( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
-
-		b2AtomicStoreInt( &bp->movePairIndex2, 0 );
-
-		b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, minRange, world );
-
-		for (int i = 0; i < enlargedCount; ++i)
-		{
-			b2MovePair* pair = bp->moveResults2[i].pairList;
-			while (pair != NULL)
-			{
-				b2MovePair* next = pair->next;
-				if (pair->heap)
-				{
-					b2Free( pair, sizeof( b2MovePair ) );
-				}
-
-				pair = next;
-			}
-		}
-
-		b2StackFree( alloc, bp->moveResults2 );
-		bp->moveResults2 = NULL;
-		b2StackFree( alloc, bp->movePairs2 );
-		bp->movePairs2 = NULL;
-		b2StackFree( alloc, bp->enlargedNodes );
-		bp->enlargedNodes = NULL;
+		b2SelfPass( world, moveCount, minRange );
+		b2_selfFirstMs += b2GetMillisecondsAndReset( &ticks );
+		b2_selfFirstCount += 1;
+		b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
+		b2_querySecondMs += b2GetMillisecondsAndReset( &ticks );
 	}
+	else
+	{
+		b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
+		b2_queryFirstMs += b2GetMillisecondsAndReset( &ticks );
+		b2_queryFirstCount += 1;
+		b2SelfPass( world, moveCount, minRange );
+		b2_selfSecondMs += b2GetMillisecondsAndReset( &ticks );
+	}
+	b2_timingSteps += 1;
+#else
+	b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
+	b2SelfPass( world, moveCount, minRange );
+#endif
+
+	b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
