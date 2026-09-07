@@ -106,20 +106,22 @@ void b2BroadPhase_EnlargeProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	b2DynamicTree_EnlargeProxy( bp->trees + typeIndex, proxyId, aabb );
 }
 
-static int b2GatherEnlargedNodes( const b2DynamicTree* tree, int* items )
+// Gather internal nodes that have moved. This is done serially but
+// it is cache friendly and fast.
+static int b2GatherMovedInternalNodes( const b2DynamicTree* tree, int* nodeIndices )
 {
 	const b2TreeNode* nodes = tree->nodes;
 	int capacity = tree->nodeCapacity;
 
 	uint16_t mask = b2_allocatedNode | b2_enlargedNode | b2_leafNode;
-	uint16_t required = b2_allocatedNode | b2_enlargedNode;
+	uint16_t movedInternalNode = b2_allocatedNode | b2_enlargedNode;
 
 	int count = 0;
 	for ( int i = 0; i < capacity; ++i )
 	{
-		if ( ( nodes[i].flags & mask ) == required )
+		if ( ( nodes[i].flags & mask ) == movedInternalNode )
 		{
-			items[count] = i;
+			nodeIndices[count] = i;
 			count += 1;
 		}
 	}
@@ -133,16 +135,16 @@ typedef struct b2Candidate
 {
 	int shapeIdA;
 	int shapeIdB;
-	int item;
-} b2Candidate;
+	int moveIndex;
+} b2CandidatePair;
 
 typedef struct b2PairContext
 {
 	b2World* world;
-	b2Candidate batch[B2_CANDIDATE_BATCH];
+	b2CandidatePair batch[B2_CANDIDATE_BATCH];
 	int batchCount;
 	int workerIndex;
-	int item;
+	int moveIndex;
 } b2PairContext;
 
 typedef struct b2NodePair
@@ -164,7 +166,7 @@ typedef struct b2MoveResult
 } b2MoveResult;
 
 // todo profile with and without prefetch
-static void b2DrainCandidates( b2PairContext* context )
+static void b2FlushPairs( b2PairContext* context )
 {
 	b2World* world = context->world;
 	b2BroadPhase* bp = &world->broadPhase;
@@ -172,41 +174,44 @@ static void b2DrainCandidates( b2PairContext* context )
 	int count1 = context->batchCount;
 	context->batchCount = 0;
 
+	// Prefetch hash set entries.
 	uint64_t keys[B2_CANDIDATE_BATCH];
 	uint64_t hashes[B2_CANDIDATE_BATCH];
 	for ( int i = 0; i < count1; ++i )
 	{
-		b2Candidate* candidate = context->batch + i;
+		b2CandidatePair* candidate = context->batch + i;
 		keys[i] = B2_SHAPE_PAIR_KEY( candidate->shapeIdA, candidate->shapeIdB );
 		hashes[i] = b2KeyHash( keys[i] );
 		b2PrefetchHash( &bp->pairSet, hashes[i] );
 	}
 
-	b2Candidate culled[B2_CANDIDATE_BATCH];
+	// Cull existing pairs.
+	b2CandidatePair candidates[B2_CANDIDATE_BATCH];
 	int count2 = 0;
 	for ( int i = 0; i < count1; ++i )
 	{
 		bool pairExists = b2ContainsHashedKey( &bp->pairSet, keys[i], hashes[i] );
 		if ( pairExists == false )
 		{
-			culled[count2] = context->batch[i];
+			candidates[count2] = context->batch[i];
 			count2 += 1;
 		}
 	}
 
+	// Prefetch shapes.
 	const b2Shape* shapes = world->shapes.data;
-
 	for ( int i = 0; i < count2; ++i )
 	{
-		b2Prefetch( shapes + culled[i].shapeIdA );
-		b2Prefetch( shapes + culled[i].shapeIdB );
+		b2Prefetch( shapes + candidates[i].shapeIdA );
+		b2Prefetch( shapes + candidates[i].shapeIdB );
 	}
 
+	// Filter candidates.
 	int count3 = 0;
 	for ( int i = 0; i < count2; ++i )
 	{
-		int shapeIdA = culled[i].shapeIdA;
-		int shapeIdB = culled[i].shapeIdB;
+		int shapeIdA = candidates[i].shapeIdA;
+		int shapeIdB = candidates[i].shapeIdB;
 
 		b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
 		b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
@@ -261,10 +266,11 @@ static void b2DrainCandidates( b2PairContext* context )
 			}
 		}
 
-		culled[count3] = culled[i];
+		candidates[count3] = candidates[i];
 		count3 += 1;
 	}
 
+	// Claim results space.
 	int base = b2AtomicFetchAddInt( &bp->movePairIndex, count3 );
 
 	for ( int i = 0; i < count3; ++i )
@@ -289,32 +295,39 @@ static void b2DrainCandidates( b2PairContext* context )
 			pair->heap = true;
 		}
 
-		pair->shapeIdA = culled[i].shapeIdA;
-		pair->shapeIdB = culled[i].shapeIdB;
+		pair->shapeIdA = candidates[i].shapeIdA;
+		pair->shapeIdB = candidates[i].shapeIdB;
 
-		// A batch spans items. Link by the candidate's own item so the block split
-		// cannot decide which list a pair lands in.
-		b2MoveResult* result = bp->moveResults + culled[i].item;
+		// Append to linked list.
+		b2MoveResult* result = bp->moveResults + candidates[i].moveIndex;
 		pair->next = result->pairList;
 		result->pairList = pair;
 	}
 }
 
-B2_FORCE_INLINE void b2ReportCandidate( int shapeIdA, int shapeIdB, b2PairContext* context )
+B2_FORCE_INLINE void b2AddPair( int shapeIdA, int shapeIdB, b2PairContext* context )
 {
 	// Follow shape index order.
-	b2Candidate* candidate = context->batch + context->batchCount;
+	b2CandidatePair* candidate = context->batch + context->batchCount;
 	candidate->shapeIdA = b2MinInt( shapeIdA, shapeIdB );
 	candidate->shapeIdB = b2MaxInt( shapeIdA, shapeIdB );
-	candidate->item = context->item;
+	candidate->moveIndex = context->moveIndex;
 	context->batchCount += 1;
 	if ( context->batchCount == B2_CANDIDATE_BATCH )
 	{
-		b2DrainCandidates( context );
+		b2FlushPairs( context );
 	}
 }
 
-static void b2CrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, int indexA, int indexB, b2PairContext* context )
+// This collides two sub-trees against each other. They can live in the same dynamic tree.
+// This can only generate pairs cross sub-tree, but not within a sub-tree. This fact means
+// this does not generate duplicate pairs.
+// For example consider the full binary tree A (B (D  E) C (F G))
+// Colliding children of A (B and C) can give pairs (D,F) (D,G) (E,F) and (E,G).
+// Then colliding children of B can give the pair (D,E) and for C (F,G).
+// So no duplicates even when used for self-collision.
+// See Real-time collision detection section 6.3.2.
+static void b2CollideCrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, int indexA, int indexB, b2PairContext* context )
 {
 	b2NodePair stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
@@ -343,7 +356,7 @@ static void b2CrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, in
 
 		if ( leafA && leafB )
 		{
-			b2ReportCandidate( (int)a->userData, (int)b->userData, context );
+			b2AddPair( (int)a->userData, (int)b->userData, context );
 			continue;
 		}
 
@@ -362,6 +375,7 @@ static void b2CrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, in
 	}
 }
 
+// This takes moved internal nodes and collides their sub-trees against each other.
 static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( self_pairs, "Self", b2_colorCoral, true );
@@ -378,11 +392,12 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 	{
 		const b2TreeNode* node = nodes + items[i];
 		bp->moveResults[i].pairList = NULL;
-		pairContext.item = i;
-		b2CrossPairs( tree->nodes, tree->nodes, node->children.child1, node->children.child2, &pairContext );
+		pairContext.moveIndex = i;
+
+		b2CollideCrossPairs( tree->nodes, tree->nodes, node->children.child1, node->children.child2, &pairContext );
 	}
 
-	b2DrainCandidates( &pairContext );
+	b2FlushPairs( &pairContext );
 
 	b2TracyCZoneEnd( self_pairs );
 }
@@ -391,7 +406,9 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 #define B2_CROSS_SEED_COUNT 64
 _Static_assert( ( B2_CROSS_SEED_COUNT & ( B2_CROSS_SEED_COUNT - 1 ) ) == 0, "must be power of 2" );
 
-static int b2ExpandCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* treeB, b2NodePair* seeds )
+// This does a serial cross-tree breadth first search until the queue is full. Then returns
+// the queue pairs as seeds for a parallel search.
+static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* treeB, b2NodePair* seeds )
 {
 	if ( treeA->root == B2_NULL_INDEX || treeB->root == B2_NULL_INDEX )
 	{
@@ -492,11 +509,11 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 		b2NodePair seed = crossContext->seeds[i];
 		int item = crossContext->itemBase + i;
 		bp->moveResults[item].pairList = NULL;
-		pairContext.item = item;
-		b2CrossPairs( dynamicNodes, nodesB, seed.a, seed.b, &pairContext );
+		pairContext.moveIndex = item;
+		b2CollideCrossPairs( dynamicNodes, nodesB, seed.a, seed.b, &pairContext );
 	}
 
-	b2DrainCandidates( &pairContext );
+	b2FlushPairs( &pairContext );
 
 	b2TracyCZoneEnd( cross_pairs );
 }
@@ -562,36 +579,39 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// Generate pairs by querying the dynamic body tree against itself and against
 	// the kinematic and static trees.
 	{
+		// Get the internal nodes of the dynamic body tree that have moved.
 		const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
 		int nodeCount = dynamicTree->nodeCount;
-		bp->movedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
-		int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->movedNodes );
+		bp->movedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "moved nodes" );
+		int dynamicMoveCount = b2GatherMovedInternalNodes( dynamicTree, bp->movedNodes );
+
+		b2NodePair crossSeeds[2 * B2_CROSS_SEED_COUNT];
+		int staticSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_staticBody, crossSeeds );
+		B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
+		int kinematicSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, crossSeeds + staticSeedCount );
+		B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
+		int crossMoveCount = staticSeedCount + kinematicSeedCount;
+		int totalMovedCount = dynamicMoveCount + crossMoveCount;
 
 		// todo need a better capacity heuristic
-		bp->movePairCapacity = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity );
+		bp->movePairCapacity = b2MaxInt( 16 * totalMovedCount, bp->movePairCapacity );
 		bp->movePairs = b2StackAlloc( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
-
-		b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
-		int staticSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_staticBody, seeds );
-		B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
-		int kinematicSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, seeds + staticSeedCount );
-		B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
-		int crossCount = staticSeedCount + kinematicSeedCount;
-		int itemCount = enlargedCount + crossCount;
-
-		bp->moveResults = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
-		bp->moveCount = itemCount;
+		bp->moveResults = b2StackAlloc( alloc, totalMovedCount * sizeof( b2MoveResult ), "move results" );
+		bp->moveCount = totalMovedCount;
 
 		b2AtomicStoreInt( &bp->movePairIndex, 0 );
 
+		// Collide the dynamic body tree against the static and kinematic trees.
 		b2CrossContext crossContext = {
 			.world = world,
-			.seeds = seeds,
+			.seeds = crossSeeds,
 			.staticSeedCount = staticSeedCount,
-			.itemBase = enlargedCount,
+			.itemBase = dynamicMoveCount,
 		};
-		b2ParallelFor( world, &b2CrossPairsTask, crossCount, 1, &crossContext );
-		b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, 64, world );
+		b2ParallelFor( world, &b2CrossPairsTask, crossMoveCount, 1, &crossContext );
+
+		// Collide the dynamic body tree against itself.
+		b2ParallelFor( world, &b2SelfPairsTask, dynamicMoveCount, 64, world );
 	}
 
 	b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
