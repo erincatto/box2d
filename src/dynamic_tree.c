@@ -2119,7 +2119,7 @@ void b2DynamicTree_ClearEnlarged(b2DynamicTree* tree)
 		int child2 = node->children.child2;
 		if ( nodes[child2].flags & b2_enlargedNode)
 		{
-			stack[stackCount++] = child1;
+			stack[stackCount++] = child2;
 		}
 	}
 }

@@ -42,6 +42,11 @@ static b2AtomicInt b2_selfPops;
 static b2AtomicInt b2_selfCandidates;
 static b2AtomicInt b2_selfSurvivors;
 static b2AtomicInt b2_pairSteps;
+static int b2_queryHeapPairs;
+static int b2_selfHeapPairs;
+static int b2_queryMaxSurvivors;
+static int b2_selfMaxSurvivors;
+static int b2_selfMaxCapacity;
 #endif
 
 // Pass timing for the C.6 gate. The passes alternate order each step so each is timed cold
@@ -89,7 +94,8 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 
 	bp->movePairs2 = NULL;
 	b2AtomicStoreInt( &bp->movePairIndex2, 0 );
-	bp->movePairCapacity2 = 0;
+	bp->movePairCapacity2 = 16;
+	bp->moveCount2 = 0;
 }
 
 void b2DestroyBroadPhase( b2BroadPhase* bp )
@@ -119,6 +125,8 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 			   b2AtomicLoadInt( &b2_queryDynamicNodeVisits ), b2AtomicLoadInt( &b2_queryDynamicLeafVisits ),
 			   b2AtomicLoadInt( &b2_queryCandidates ), b2AtomicLoadInt( &b2_querySurvivors ), b2AtomicLoadInt( &b2_selfPops ),
 			   b2AtomicLoadInt( &b2_selfCandidates ), b2AtomicLoadInt( &b2_selfSurvivors ) );
+		b2Log( "pair pools: query max survivors %d heap pairs %d | self max survivors %d heap pairs %d max capacity %d",
+			   b2_queryMaxSurvivors, b2_queryHeapPairs, b2_selfMaxSurvivors, b2_selfHeapPairs, b2_selfMaxCapacity );
 
 		b2AtomicStoreInt( &b2_queryNodeVisits, 0 );
 		b2AtomicStoreInt( &b2_queryLeafVisits, 0 );
@@ -130,6 +138,11 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 		b2AtomicStoreInt( &b2_selfCandidates, 0 );
 		b2AtomicStoreInt( &b2_selfSurvivors, 0 );
 		b2AtomicStoreInt( &b2_pairSteps, 0 );
+		b2_queryHeapPairs = 0;
+		b2_selfHeapPairs = 0;
+		b2_queryMaxSurvivors = 0;
+		b2_selfMaxSurvivors = 0;
+		b2_selfMaxCapacity = 0;
 	}
 #endif
 
@@ -1046,7 +1059,8 @@ static void b2ValidateSelfPairs( b2World* world, int moveCount, int itemCount )
 #endif
 }
 
-// Generate pairs by querying the dynamic body tree against itself.
+// Generate pairs by querying the dynamic body tree against itself and against
+// the kinematic and static trees.
 static void b2SelfPass( b2World* world, int moveCount, int minRange )
 {
 	b2BroadPhase* bp = &world->broadPhase;
@@ -1070,6 +1084,7 @@ static void b2SelfPass( b2World* world, int moveCount, int minRange )
 	int itemCount = enlargedCount + crossCount;
 
 	bp->moveResults2 = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
+	bp->moveCount2 = itemCount;
 
 	b2AtomicStoreInt( &bp->movePairIndex2, 0 );
 
@@ -1085,9 +1100,16 @@ static void b2SelfPass( b2World* world, int moveCount, int minRange )
 	b2ValidateSelfPairs( world, moveCount, itemCount );
 
 #if B2_SNOOP_PAIR_COUNTERS
-	b2AtomicFetchAddInt( &b2_querySurvivors, b2AtomicLoadInt( &bp->movePairIndex ) );
-	b2AtomicFetchAddInt( &b2_selfSurvivors, b2AtomicLoadInt( &bp->movePairIndex2 ) );
+	int querySurvivors = b2AtomicLoadInt( &bp->movePairIndex );
+	int selfSurvivors = b2AtomicLoadInt( &bp->movePairIndex2 );
+	b2AtomicFetchAddInt( &b2_querySurvivors, querySurvivors );
+	b2AtomicFetchAddInt( &b2_selfSurvivors, selfSurvivors );
 	b2AtomicFetchAddInt( &b2_pairSteps, 1 );
+	b2_queryHeapPairs += b2MaxInt( querySurvivors - bp->movePairCapacity, 0 );
+	b2_selfHeapPairs += b2MaxInt( selfSurvivors - bp->movePairCapacity2, 0 );
+	b2_queryMaxSurvivors = b2MaxInt( b2_queryMaxSurvivors, querySurvivors );
+	b2_selfMaxSurvivors = b2MaxInt( b2_selfMaxSurvivors, selfSurvivors );
+	b2_selfMaxCapacity = b2MaxInt( b2_selfMaxCapacity, bp->movePairCapacity2 );
 #endif
 
 	for ( int i = 0; i < itemCount; ++i )
@@ -1104,13 +1126,6 @@ static void b2SelfPass( b2World* world, int moveCount, int minRange )
 			pair = next;
 		}
 	}
-
-	b2StackFree( alloc, bp->moveResults2 );
-	bp->moveResults2 = NULL;
-	b2StackFree( alloc, bp->movePairs2 );
-	bp->movePairs2 = NULL;
-	b2StackFree( alloc, bp->enlargedNodes );
-	bp->enlargedNodes = NULL;
 }
 
 void b2UpdateBroadPhasePairs( b2World* world )
@@ -1186,9 +1201,10 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// - Clear move flags
 	// - Create contacts in deterministic order
 	// This is deterministic because the results follow the order of b2BroadPhase::moveArray.
-	for ( int i = 0; i < moveCount; ++i )
+	int count = bp->moveCount2;
+	for ( int i = 0; i < count; ++i )
 	{
-		b2MoveResult* result = bp->moveResults + i;
+		b2MoveResult* result = bp->moveResults2 + i;
 		b2MovePair* pair = result->pairList;
 		while ( pair != NULL )
 		{
@@ -1240,6 +1256,13 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		b2ClearBit( &bp->movedProxies[B2_PROXY_TYPE( proxyKey )], B2_PROXY_ID( proxyKey ) );
 	}
 	b2Array_Clear( bp->moveArray );
+	
+	b2StackFree( alloc, bp->moveResults2 );
+	bp->moveResults2 = NULL;
+	b2StackFree( alloc, bp->movePairs2 );
+	bp->movePairs2 = NULL;
+	b2StackFree( alloc, bp->enlargedNodes );
+	bp->enlargedNodes = NULL;
 
 	b2StackFree( alloc, bp->movePairs );
 	bp->movePairs = NULL;
