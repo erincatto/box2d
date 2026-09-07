@@ -402,7 +402,6 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 	b2TracyCZoneEnd( self_pairs );
 }
 
-// Must be a power of 2
 #define B2_CROSS_SEED_COUNT 64
 _Static_assert( ( B2_CROSS_SEED_COUNT & ( B2_CROSS_SEED_COUNT - 1 ) ) == 0, "must be power of 2" );
 
@@ -435,7 +434,7 @@ static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* 
 		const b2TreeNode* a = nodesA + pair.a;
 		const b2TreeNode* b = nodesB + pair.b;
 
-		// Either enlarged?
+		// Either moved? This lets static shapes invoke contact generation.
 		if ( ( ( a->flags | b->flags ) & b2_enlargedNode ) == 0 )
 		{
 			continue;
@@ -585,6 +584,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		bp->movedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "moved nodes" );
 		int dynamicMoveCount = b2GatherMovedInternalNodes( dynamicTree, bp->movedNodes );
 
+		// Get seeds for colliding against the static and kinematic trees.
 		b2NodePair crossSeeds[2 * B2_CROSS_SEED_COUNT];
 		int staticSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_staticBody, crossSeeds );
 		B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
