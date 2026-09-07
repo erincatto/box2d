@@ -1266,6 +1266,7 @@ static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void
 	b2Shape* shapeArray = world->shapes.data;
 
 	uint64_t* bits = world->taskContexts.data[0].enlargedSimBitSet.bits;
+	uint32_t fastBullet = b2_isBullet | b2_isFast;
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
@@ -1277,7 +1278,7 @@ static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void
 			b2Body* body = bodyArray + bodySim->bodyId;
 
 			// Skip fast bullets.
-			if ( ( body->flags & ( b2_isBullet | b2_isFast ) ) != ( b2_isBullet | b2_isFast ) )
+			if ( ( body->flags & fastBullet ) != fastBullet )
 			{
 				// Fast bullet bodies don't have their final AABB yet
 				int shapeId = body->headShapeId;
@@ -1289,6 +1290,7 @@ static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void
 					if ( shape->enlargedAABB )
 					{
 						b2BroadPhase_RefitEnlarged( broadPhase, shape->proxyKey );
+						shape->enlargedAABB = false;
 					}
 
 					shapeId = shape->nextShapeId;
@@ -1889,48 +1891,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		// Enlarge broad-phase proxies. Apply shape AABB changes to broad-phase. 
 		b2ParallelFor( world, b2RefitTreeTask, (int)enlargedBodyBitSet->blockCount, 4, stepContext );
-
-		// todo this only clears the enlargedAABB flag, must be able to get rid of this
-		{
-			uint32_t wordCount = enlargedBodyBitSet->blockCount;
-			uint64_t* bits = enlargedBodyBitSet->bits;
-
-			// Fast array access is important here
-			b2Body* bodyArray = world->bodies.data;
-			b2BodySim* bodySimArray = awakeSet->bodySims.data;
-			b2Shape* shapeArray = world->shapes.data;
-
-			for ( uint32_t k = 0; k < wordCount; ++k )
-			{
-				uint64_t word = bits[k];
-				while ( word != 0 )
-				{
-					uint32_t ctz = b2CTZ64( word );
-					uint32_t bodySimIndex = 64 * k + ctz;
-
-					b2BodySim* bodySim = bodySimArray + bodySimIndex;
-
-					b2Body* body = bodyArray + bodySim->bodyId;
-
-					int shapeId = body->headShapeId;
-					if ( ( body->flags & ( b2_isBullet | b2_isFast ) ) == ( b2_isBullet | b2_isFast ) )
-					{
-					}
-					else
-					{
-						while ( shapeId != B2_NULL_INDEX )
-						{
-							b2Shape* shape = shapeArray + shapeId;
-							shape->enlargedAABB = false;
-							shapeId = shape->nextShapeId;
-						}
-					}
-
-					// Clear the smallest set bit
-					word = word & ( word - 1 );
-				}
-			}
-		}
 
 		b2ValidateBroadphase( &world->broadPhase );
 
