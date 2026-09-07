@@ -17,51 +17,15 @@
 #include "dynamic_tree.h"
 #include "parallel_for.h"
 #include "physics_world.h"
+#include "qsort.h"
 #include "shape.h"
 
 #include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 
 // #include <stdio.h>
 
 // static FILE* s_file = NULL;
-
-// Totals over the life of the world, printed when the broad phase is destroyed.
-// Tasks add their local sums once so the workers never share a cache line.
-#if B2_SNOOP_PAIR_COUNTERS
-static b2AtomicInt b2_queryNodeVisits;
-static b2AtomicInt b2_queryLeafVisits;
-static b2AtomicInt b2_queryDynamicNodeVisits;
-static b2AtomicInt b2_queryDynamicLeafVisits;
-static b2AtomicInt b2_queryCandidates;
-static b2AtomicInt b2_querySurvivors;
-static b2AtomicInt b2_selfPops;
-static b2AtomicInt b2_selfCandidates;
-static b2AtomicInt b2_selfSurvivors;
-static b2AtomicInt b2_pairSteps;
-static int b2_queryHeapPairs;
-static int b2_selfHeapPairs;
-static int b2_queryMaxSurvivors;
-static int b2_selfMaxSurvivors;
-static int b2_selfMaxCapacity;
-#endif
-
-// Pass timing for the C.6 gate. The passes alternate order each step so each is timed cold
-// as often as warm, otherwise the second pass inherits the first one's cache.
-#define B2_SNOOP_PAIR_TIMING 0
-
-#if B2_SNOOP_PAIR_TIMING
-static float b2_queryFirstMs;
-static float b2_querySecondMs;
-static float b2_selfFirstMs;
-static float b2_selfSecondMs;
-static int b2_queryFirstCount;
-static int b2_selfFirstCount;
-static int b2_timingSteps;
-#endif
 
 void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 {
@@ -100,63 +64,6 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 	b2DestroySet( &bp->pairSet );
 
 	memset( bp, 0, sizeof( b2BroadPhase ) );
-
-#if B2_SNOOP_PAIR_COUNTERS
-	int steps = b2AtomicLoadInt( &b2_pairSteps );
-	// Unit tests run short, keep them quiet
-	if ( steps >= 100 )
-	{
-		b2Log( "pair steps %d: query visits %d node %d leaf (dynamic tree %d node %d leaf), candidates %d, survivors %d | self "
-			   "pops %d, candidates %d, survivors %d",
-			   steps, b2AtomicLoadInt( &b2_queryNodeVisits ), b2AtomicLoadInt( &b2_queryLeafVisits ),
-			   b2AtomicLoadInt( &b2_queryDynamicNodeVisits ), b2AtomicLoadInt( &b2_queryDynamicLeafVisits ),
-			   b2AtomicLoadInt( &b2_queryCandidates ), b2AtomicLoadInt( &b2_querySurvivors ), b2AtomicLoadInt( &b2_selfPops ),
-			   b2AtomicLoadInt( &b2_selfCandidates ), b2AtomicLoadInt( &b2_selfSurvivors ) );
-		b2Log( "pair pools: query max survivors %d heap pairs %d | self max survivors %d heap pairs %d max capacity %d",
-			   b2_queryMaxSurvivors, b2_queryHeapPairs, b2_selfMaxSurvivors, b2_selfHeapPairs, b2_selfMaxCapacity );
-
-		b2AtomicStoreInt( &b2_queryNodeVisits, 0 );
-		b2AtomicStoreInt( &b2_queryLeafVisits, 0 );
-		b2AtomicStoreInt( &b2_queryDynamicNodeVisits, 0 );
-		b2AtomicStoreInt( &b2_queryDynamicLeafVisits, 0 );
-		b2AtomicStoreInt( &b2_queryCandidates, 0 );
-		b2AtomicStoreInt( &b2_querySurvivors, 0 );
-		b2AtomicStoreInt( &b2_selfPops, 0 );
-		b2AtomicStoreInt( &b2_selfCandidates, 0 );
-		b2AtomicStoreInt( &b2_selfSurvivors, 0 );
-		b2AtomicStoreInt( &b2_pairSteps, 0 );
-		b2_queryHeapPairs = 0;
-		b2_selfHeapPairs = 0;
-		b2_queryMaxSurvivors = 0;
-		b2_selfMaxSurvivors = 0;
-		b2_selfMaxCapacity = 0;
-	}
-#endif
-
-#if B2_SNOOP_PAIR_TIMING
-	if ( b2_timingSteps > 0 )
-	{
-		int querySecondCount = b2_timingSteps - b2_queryFirstCount;
-		int selfSecondCount = b2_timingSteps - b2_selfFirstCount;
-		b2Log( "pair timing %d steps, ms per step: query first %.4f second %.4f | self first %.4f second %.4f", b2_timingSteps,
-			   b2_queryFirstMs / b2MaxInt( b2_queryFirstCount, 1 ), b2_querySecondMs / b2MaxInt( querySecondCount, 1 ),
-			   b2_selfFirstMs / b2MaxInt( b2_selfFirstCount, 1 ), b2_selfSecondMs / b2MaxInt( selfSecondCount, 1 ) );
-
-		b2_queryFirstMs = 0.0f;
-		b2_querySecondMs = 0.0f;
-		b2_selfFirstMs = 0.0f;
-		b2_selfSecondMs = 0.0f;
-		b2_queryFirstCount = 0;
-		b2_selfFirstCount = 0;
-		b2_timingSteps = 0;
-	}
-#endif
-
-	// if (s_file != NULL)
-	//{
-	//	fclose(s_file);
-	//	s_file = NULL;
-	// }
 }
 
 int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aabb, uint64_t categoryBits, int shapeIndex,
@@ -236,11 +143,6 @@ typedef struct b2PairContext
 	int batchCount;
 	int workerIndex;
 	int item;
-
-#if B2_SNOOP_PAIR_COUNTERS
-	int pops;
-	int candidates;
-#endif
 } b2PairContext;
 
 typedef struct b2NodePair
@@ -269,10 +171,6 @@ static void b2DrainCandidates( b2PairContext* context )
 
 	int count1 = context->batchCount;
 	context->batchCount = 0;
-
-#if B2_SNOOP_PAIR_COUNTERS
-	context->candidates += count1;
-#endif
 
 	uint64_t keys[B2_CANDIDATE_BATCH];
 	uint64_t hashes[B2_CANDIDATE_BATCH];
@@ -426,10 +324,6 @@ static void b2CrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, in
 	{
 		b2NodePair pair = stack[--stackCount];
 
-#if B2_SNOOP_PAIR_COUNTERS
-		context->pops += 1;
-#endif
-
 		const b2TreeNode* a = nodesA + pair.a;
 		const b2TreeNode* b = nodesB + pair.b;
 
@@ -487,11 +381,6 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 	}
 
 	b2DrainCandidates( &pairContext );
-
-#if B2_SNOOP_PAIR_COUNTERS
-	b2AtomicFetchAddInt( &b2_selfPops, pairContext.pops );
-	b2AtomicFetchAddInt( &b2_selfCandidates, pairContext.candidates );
-#endif
 }
 
 // Must be a power of 2
@@ -604,13 +493,6 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 	b2DrainCandidates( &pairContext );
 }
 
-// Warning: writing to these globals significantly slows multithreading performance
-#if B2_SNOOP_PAIR_COUNTERS
-b2TreeStats b2_dynamicStats;
-b2TreeStats b2_kinematicStats;
-b2TreeStats b2_staticStats;
-#endif
-
 static void b2UpdateTreesTask( void* context )
 {
 	b2TracyCZoneNC( tree_task, "Rebuild BVH", b2_colorFireBrick, true );
@@ -639,63 +521,9 @@ static void b2EnqueueTreeUpdate( b2World* world )
 	}
 }
 
-// Generate pairs by querying the dynamic body tree against itself and against
-// the kinematic and static trees.
-static void b2SelfPass( b2World* world, int minRange )
+static inline bool b2HasEnlarged( const b2DynamicTree* tree )
 {
-	b2BroadPhase* bp = &world->broadPhase;
-	b2Stack* alloc = &world->stack;
-
-	const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
-	int nodeCount = dynamicTree->nodeCount;
-	bp->enlargedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
-	int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->enlargedNodes );
-
-	// todo need a better capacity heuristic
-	bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
-	bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair ), "move pairs" );
-
-	b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
-	int staticSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_staticBody, seeds );
-	B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
-	int kinematicSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, seeds + staticSeedCount );
-	B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
-	int crossCount = staticSeedCount + kinematicSeedCount;
-	int itemCount = enlargedCount + crossCount;
-
-	bp->moveResults2 = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
-	bp->moveCount2 = itemCount;
-
-	b2AtomicStoreInt( &bp->movePairIndex2, 0 );
-
-	b2CrossContext crossContext = {
-		.world = world,
-		.seeds = seeds,
-		.staticSeedCount = staticSeedCount,
-		.itemBase = enlargedCount,
-	};
-	b2ParallelFor( world, &b2CrossPairsTask, crossCount, 1, &crossContext );
-	b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, minRange, world );
-
-	for ( int i = 0; i < itemCount; ++i )
-	{
-		b2MovePair* pair = bp->moveResults2[i].pairList;
-		while ( pair != NULL )
-		{
-			b2MovePair* next = pair->next;
-			if ( pair->heap )
-			{
-				b2Free( pair, sizeof( b2MovePair ) );
-			}
-
-			pair = next;
-		}
-	}
-}
-
-static inline bool b2HasEnlarged(const b2DynamicTree* tree)
-{
-	if (tree->root == B2_NULL_INDEX)
+	if ( tree->root == B2_NULL_INDEX )
 	{
 		return false;
 	}
@@ -707,7 +535,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
-	bool haveEnlarged = b2HasEnlarged(bp->trees + b2_staticBody);
+	bool haveEnlarged = b2HasEnlarged( bp->trees + b2_staticBody );
 	haveEnlarged = haveEnlarged || b2HasEnlarged( bp->trees + b2_kinematicBody );
 	haveEnlarged = haveEnlarged || b2HasEnlarged( bp->trees + b2_dynamicBody );
 
@@ -723,14 +551,40 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2Stack* alloc = &world->stack;
 
-#if B2_SNOOP_TABLE_COUNTERS
-	extern b2AtomicInt b2_probeCount;
-	b2AtomicStoreInt( &b2_probeCount, 0 );
-#endif
+	// Generate pairs by querying the dynamic body tree against itself and against
+	// the kinematic and static trees.
+	{
+		const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
+		int nodeCount = dynamicTree->nodeCount;
+		bp->enlargedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
+		int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->enlargedNodes );
 
-	int minRange = 64;
+		// todo need a better capacity heuristic
+		bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
+		bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair ), "move pairs" );
 
-	b2SelfPass( world, minRange );
+		b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
+		int staticSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_staticBody, seeds );
+		B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
+		int kinematicSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, seeds + staticSeedCount );
+		B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
+		int crossCount = staticSeedCount + kinematicSeedCount;
+		int itemCount = enlargedCount + crossCount;
+
+		bp->moveResults2 = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
+		bp->moveCount2 = itemCount;
+
+		b2AtomicStoreInt( &bp->movePairIndex2, 0 );
+
+		b2CrossContext crossContext = {
+			.world = world,
+			.seeds = seeds,
+			.staticSeedCount = staticSeedCount,
+			.itemBase = enlargedCount,
+		};
+		b2ParallelFor( world, &b2CrossPairsTask, crossCount, 1, &crossContext );
+		b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, 64, world );
+	}
 
 	b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
 
@@ -739,56 +593,59 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	// Update stale trees.
 	b2EnqueueTreeUpdate( world );
 
-	// Single-threaded work
-	// - Clear move flags
-	// - Create contacts in deterministic order
-	// This is deterministic because the results follow the order of b2BroadPhase::moveArray.
-	int count = bp->moveCount2;
-	for ( int i = 0; i < count; ++i )
+	// Pairs arrive in deterministic order but scrambled relative to body and shape order
+	// sorting them here improves solver performance.
+	int itemCount = bp->moveCount2;
+	int pairCount = b2AtomicLoadInt( &bp->movePairIndex2 );
+	uint64_t* pairKeys = b2StackAlloc( alloc, b2MaxInt( pairCount, 1 ) * sizeof( uint64_t ), "pair keys" );
+	int keyCount = 0;
+	for ( int i = 0; i < itemCount; ++i )
 	{
-		b2MoveResult* result = bp->moveResults2 + i;
-		b2MovePair* pair = result->pairList;
+		b2MovePair* pair = bp->moveResults2[i].pairList;
 		while ( pair != NULL )
 		{
-			int shapeIdA = pair->shapeIdA;
-			int shapeIdB = pair->shapeIdB;
+			pairKeys[keyCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
+			keyCount += 1;
 
-			// if (s_file != NULL)
-			//{
-			//	fprintf(s_file, "%d %d\n", shapeIdA, shapeIdB);
-			// }
-
-			b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
-			b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
-
-			b2CreateContact( world, shapeA, shapeB );
-
+			b2MovePair* next = pair->next;
 			if ( pair->heap )
 			{
-				// Note: I tried adding to the pair set in parallel with contact creation
-				// but that didn't work with with pair heap allocation. I could make it
-				// work with a task context bump allocator with heap fallback. The perf
-				// gain was small or zero.
-				b2MovePair* temp = pair;
-				pair = pair->next;
-				b2Free( temp, sizeof( b2MovePair ) );
+				b2Free( pair, sizeof( b2MovePair ) );
 			}
-			else
-			{
-				pair = pair->next;
-			}
-		}
 
-		// if (s_file != NULL)
-		//{
-		//	fprintf(s_file, "\n");
-		// }
+			pair = next;
+		}
 	}
 
-	// if (s_file != NULL)
-	//{
-	//	fprintf(s_file, "count = %d\n\n", pairCount);
-	// }
+	B2_ASSERT( keyCount == pairCount );
+
+	{
+#define LESS( i, j ) ( pairKeys[(int)( i )] < pairKeys[(int)( j )] )
+#define SWAP( i, j )                                                                                                             \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		uint64_t tmp_ = pairKeys[(int)( i )];                                                                                    \
+		pairKeys[(int)( i )] = pairKeys[(int)( j )];                                                                             \
+		pairKeys[(int)( j )] = tmp_;                                                                                             \
+	}                                                                                                                            \
+	while ( 0 )
+
+		QSORT( pairCount, LESS, SWAP );
+
+#undef LESS
+#undef SWAP
+	}
+
+	for ( int i = 0; i < keyCount; ++i )
+	{
+		int shapeIdA = (int)( pairKeys[i] >> 32 );
+		int shapeIdB = (int)( pairKeys[i] & 0xFFFFFFFF );
+		b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
+		b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
+		b2CreateContact( world, shapeA, shapeB );
+	}
+
+	b2StackFree( alloc, pairKeys );
 
 	b2StackFree( alloc, bp->moveResults2 );
 	bp->moveResults2 = NULL;

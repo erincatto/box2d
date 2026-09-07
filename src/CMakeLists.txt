@@ -46,6 +46,7 @@ set(BOX2D_SOURCE_FILES
 	physics_world.h
 	pogo_joint.c
 	prismatic_joint.c
+	qsort.h
 	recording.c
 	recording.h
 	recording_ops.inl

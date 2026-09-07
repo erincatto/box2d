@@ -12,11 +12,11 @@ extern "C"
 #endif
 
 #if defined( BOX2D_DOUBLE_PRECISION )
-#define EXPECTED_SLEEP_STEP 246
-#define EXPECTED_HASH 0x916A1EC2
+#define EXPECTED_SLEEP_STEP 256
+#define EXPECTED_HASH 0x29D0B92D
 #else
-#define EXPECTED_SLEEP_STEP 273
-#define EXPECTED_HASH 0xD6A77A92
+#define EXPECTED_SLEEP_STEP 295
+#define EXPECTED_HASH 0x36564C94
 #endif
 
 typedef struct FallingHingeData
