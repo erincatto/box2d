@@ -2191,22 +2191,14 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	int staticTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody );
 	int kinematicTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody );
 	int dynamicTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody );
-	int movedBytes = 0;
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		movedBytes += b2GetBitSetBytes( &world->broadPhase.movedProxies[i] );
-	}
-	int moveArrayBytes = b2Array_ByteCount( world->broadPhase.moveArray );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
 	int pairSetBytes = b2GetHashSetBytes( pairSet );
-	total += staticTreeBytes + kinematicTreeBytes + dynamicTreeBytes + movedBytes + moveArrayBytes + pairSetBytes;
+	total += staticTreeBytes + kinematicTreeBytes + dynamicTreeBytes + pairSetBytes;
 
 	fprintf( file, "broad-phase\n" );
 	fprintf( file, "static tree: %d\n", staticTreeBytes );
 	fprintf( file, "kinematic tree: %d\n", kinematicTreeBytes );
 	fprintf( file, "dynamic tree: %d\n", dynamicTreeBytes );
-	fprintf( file, "movedProxies: %d\n", movedBytes );
-	fprintf( file, "moveArray: %d\n", moveArrayBytes );
 	fprintf( file, "pairSet: %d (%u, %u)\n", pairSetBytes, pairSet->count, pairSet->capacity );
 	fprintf( file, "\n" );
 

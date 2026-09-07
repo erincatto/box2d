@@ -1890,10 +1890,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Enlarge broad-phase proxies. Apply shape AABB changes to broad-phase. 
 		b2ParallelFor( world, b2RefitTreeTask, (int)enlargedBodyBitSet->blockCount, 4, stepContext );
 
-		// Create the move array which must be in deterministic order. I'm tracking sim bodies because
-		// the number of shape ids can be huge. This has to happen before bullets are processed.
+		// todo this only clears the enlargedAABB flag, must be able to get rid of this
 		{
-			b2BroadPhase* broadPhase = &world->broadPhase;
 			uint32_t wordCount = enlargedBodyBitSet->blockCount;
 			uint64_t* bits = enlargedBodyBitSet->bits;
 
@@ -1917,34 +1915,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 					int shapeId = body->headShapeId;
 					if ( ( body->flags & ( b2_isBullet | b2_isFast ) ) == ( b2_isBullet | b2_isFast ) )
 					{
-						// Fast bullet bodies don't have their final AABB yet
-						while ( shapeId != B2_NULL_INDEX )
-						{
-							b2Shape* shape = shapeArray + shapeId;
-
-							// Shape is fast. It's aabb will be enlarged in continuous collision.
-							// Update the move array here for determinism because bullets are processed
-							// below in non-deterministic order.
-							b2BufferMove( broadPhase, shape->proxyKey );
-
-							shapeId = shape->nextShapeId;
-						}
 					}
 					else
 					{
 						while ( shapeId != B2_NULL_INDEX )
 						{
 							b2Shape* shape = shapeArray + shapeId;
-
-							// The AABB may not have been enlarged, despite the body being flagged as enlarged.
-							// For example, a body with multiple shapes may have not have all shapes enlarged.
-							// A fast body may have been flagged as enlarged despite having no shapes enlarged.
-							if ( shape->enlargedAABB )
-							{
-								b2BufferMove( broadPhase, shape->proxyKey );
-								shape->enlargedAABB = false;
-							}
-
+							shape->enlargedAABB = false;
 							shapeId = shape->nextShapeId;
 						}
 					}
@@ -2016,9 +1993,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				int proxyKey = shape->proxyKey;
 				int proxyId = B2_PROXY_ID( proxyKey );
 				B2_VALIDATE( B2_PROXY_TYPE( proxyKey ) == b2_dynamicBody );
-
-				// all fast bullet shapes should already be in the move buffer
-				B2_VALIDATE( b2GetBit( &broadPhase->movedProxies[b2_dynamicBody], proxyId ) );
 
 				b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shape->fatAABB );
 

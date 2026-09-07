@@ -29,19 +29,6 @@ typedef struct b2BroadPhase
 {
 	b2DynamicTree trees[b2_bodyTypeCount];
 
-	// Per body-type bit sets indexed by proxyId, marking proxies moved this step.
-	// Paired with moveArray which preserves deterministic insertion order for pair queries.
-	b2BitSet movedProxies[b2_bodyTypeCount];
-	b2Array( int ) moveArray;
-
-	// These are the results from the pair query and are used to create new contacts
-	// in deterministic order. There is a move result linked list for each moving shape and
-	// these follow the dynamic tree query order for determinism.
-	b2MoveResult* moveResults;
-	b2MovePair* movePairs;
-	int movePairCapacity;
-	b2AtomicInt movePairIndex;
-
 	int* enlargedNodes;
 	b2MovePair* movePairs2;
 	b2MoveResult* moveResults2;
@@ -70,7 +57,6 @@ bool b2BroadPhase_TestOverlap( const b2BroadPhase* bp, int proxyKeyA, int proxyK
 
 void b2ValidateBroadphase( const b2BroadPhase* bp );
 void b2ValidateNoEnlarged( const b2BroadPhase* bp );
-void b2ValidateMovedProxies( const b2BroadPhase* bp );
 
 static inline void b2BroadPhase_MarkEnlargedFlag( b2BroadPhase* bp, int proxyKey )
 {
@@ -91,18 +77,4 @@ static inline void b2BroadPhase_RefitEnlarged( b2BroadPhase* bp, int proxyKey )
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
 	b2DynamicTree_RefitEnlarged( bp->trees + proxyType, proxyId );
-}
-
-// This is what triggers new contact pairs to be created
-// Warning: this must be called in deterministic order
-static inline void b2BufferMove( b2BroadPhase* bp, int queryProxy )
-{
-	b2BodyType proxyType = B2_PROXY_TYPE( queryProxy );
-	int proxyId = B2_PROXY_ID( queryProxy );
-	b2BitSet* set = &bp->movedProxies[proxyType];
-	if ( b2GetBit( set, proxyId ) == false )
-	{
-		b2SetBitGrow( set, proxyId );
-		b2Array_Push( bp->moveArray, queryProxy );
-	}
 }

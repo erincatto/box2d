@@ -73,14 +73,6 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 	//	fprintf(s_file, "============\n\n");
 	// }
 
-	bp->movedProxies[b2_staticBody] = b2CreateBitSet( b2MaxInt( 16, capacity->staticShapeCount ) );
-	bp->movedProxies[b2_kinematicBody] = b2CreateBitSet( 16 );
-	bp->movedProxies[b2_dynamicBody] = b2CreateBitSet( b2MaxInt( 16, capacity->dynamicShapeCount ) );
-	b2Array_CreateN( bp->moveArray, b2MaxInt( 16, capacity->dynamicShapeCount ) );
-	bp->moveResults = NULL;
-	bp->movePairs = NULL;
-	bp->movePairCapacity = 0;
-	b2AtomicStoreInt( &bp->movePairIndex, 0 );
 	bp->pairSet = b2CreateSet( b2MaxInt( 32, 2 * capacity->contactCount ) );
 
 	int staticCapacity = b2MaxInt( 16, capacity->staticShapeCount );
@@ -105,11 +97,6 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 		b2DynamicTree_Destroy( bp->trees + i );
 	}
 
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		b2DestroyBitSet( &bp->movedProxies[i] );
-	}
-	b2Array_Destroy( bp->moveArray );
 	b2DestroySet( &bp->pairSet );
 
 	memset( bp, 0, sizeof( b2BroadPhase ) );
@@ -172,30 +159,6 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 	// }
 }
 
-static inline void b2UnBufferMove( b2BroadPhase* bp, int proxyKey )
-{
-	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
-	int proxyId = B2_PROXY_ID( proxyKey );
-	b2BitSet* set = &bp->movedProxies[proxyType];
-
-	if ( b2GetBit( set, proxyId ) )
-	{
-		b2ClearBit( set, proxyId );
-
-		// Purge from move buffer. Linear search.
-		// todo if I can iterate the move set then I don't need the moveArray
-		int count = bp->moveArray.count;
-		for ( int i = 0; i < count; ++i )
-		{
-			if ( bp->moveArray.data[i] == proxyKey )
-			{
-				b2Array_RemoveSwap( bp->moveArray, i );
-				break;
-			}
-		}
-	}
-}
-
 int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aabb, uint64_t categoryBits, int shapeIndex,
 							  bool forcePairCreation )
 {
@@ -205,18 +168,11 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 	int proxyId = b2DynamicTree_CreateProxy( bp->trees + proxyType, aabb, categoryBits, shapeIndex, flags );
 	int proxyKey = B2_PROXY_KEY( proxyId, proxyType );
-
-	if ( proxyType != b2_staticBody || forcePairCreation )
-	{
-		b2BufferMove( bp, proxyKey );
-	}
 	return proxyKey;
 }
 
 void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 {
-	b2UnBufferMove( bp, proxyKey );
-
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
 
@@ -230,7 +186,6 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	int proxyId = B2_PROXY_ID( proxyKey );
 
 	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb, b2_enlargedNode );
-	b2BufferMove( bp, proxyKey );
 }
 
 void b2BroadPhase_EnlargeProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
@@ -242,7 +197,6 @@ void b2BroadPhase_EnlargeProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	B2_ASSERT( typeIndex != b2_staticBody );
 
 	b2DynamicTree_EnlargeProxy( bp->trees + typeIndex, proxyId, aabb );
-	b2BufferMove( bp, proxyKey );
 }
 
 static int b2GatherEnlargedNodes( const b2DynamicTree* tree, int* items )
@@ -650,275 +604,12 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 	b2DrainCandidates( &pairContext );
 }
 
-typedef struct b2QueryPairContext
-{
-	b2World* world;
-	b2MoveResult* moveResult;
-	b2BodyType queryTreeType;
-	int queryProxyKey;
-	int queryShapeIndex;
-
-#if B2_SNOOP_PAIR_COUNTERS
-	int candidates;
-#endif
-} b2QueryPairContext;
-
-// This is called from b2DynamicTree::Query when we are gathering pairs.
-static bool b2PairQueryCallback( int proxyId, uint64_t userData, void* context )
-{
-	int shapeId = (int)userData;
-
-	b2QueryPairContext* queryContext = context;
-	b2BroadPhase* broadPhase = &queryContext->world->broadPhase;
-
-	int proxyKey = B2_PROXY_KEY( proxyId, queryContext->queryTreeType );
-	int queryProxyKey = queryContext->queryProxyKey;
-
-	// A proxy cannot form a pair with itself.
-	if ( proxyKey == queryContext->queryProxyKey )
-	{
-		return true;
-	}
-
-	b2BodyType treeType = queryContext->queryTreeType;
-	b2BodyType queryProxyType = B2_PROXY_TYPE( queryProxyKey );
-
-	// De-duplication
-	// It is important to prevent duplicate contacts from being created. Ideally I can prevent duplicates
-	// early and in the worker. Most of the time the movedProxies bit sets contain dynamic and kinematic
-	// proxies, but sometimes static proxies are in there too (b2ShapeDef::invokeContactCreation or a
-	// modified static shape), so we always have to check.
-
-	// Is this proxy also moving?
-	if ( queryProxyType == b2_dynamicBody )
-	{
-		if ( treeType == b2_dynamicBody && proxyKey < queryProxyKey )
-		{
-			bool moved = b2GetBit( &broadPhase->movedProxies[treeType], proxyId );
-			if ( moved )
-			{
-				// Both proxies are moving. Avoid duplicate pairs.
-				return true;
-			}
-		}
-	}
-	else
-	{
-		B2_ASSERT( treeType == b2_dynamicBody );
-		bool moved = b2GetBit( &broadPhase->movedProxies[treeType], proxyId );
-		if ( moved )
-		{
-			// Both proxies are moving. Avoid duplicate pairs.
-			return true;
-		}
-	}
-
-#if B2_SNOOP_PAIR_COUNTERS
-	queryContext->candidates += 1;
-#endif
-
-	uint64_t pairKey = B2_SHAPE_PAIR_KEY( shapeId, queryContext->queryShapeIndex );
-	bool pairExists = b2ContainsKey( &broadPhase->pairSet, pairKey );
-	if ( pairExists )
-	{
-		// contact exists
-		return true;
-	}
-
-	int shapeIdA, shapeIdB;
-	if ( proxyKey < queryProxyKey )
-	{
-		shapeIdA = shapeId;
-		shapeIdB = queryContext->queryShapeIndex;
-	}
-	else
-	{
-		shapeIdA = queryContext->queryShapeIndex;
-		shapeIdB = shapeId;
-	}
-
-	b2World* world = queryContext->world;
-
-	b2Shape* shapeA = b2Array_Get( world->shapes, shapeIdA );
-	b2Shape* shapeB = b2Array_Get( world->shapes, shapeIdB );
-
-	int bodyIdA = shapeA->bodyId;
-	int bodyIdB = shapeB->bodyId;
-
-	// Are the shapes on the same body?
-	if ( bodyIdA == bodyIdB )
-	{
-		return true;
-	}
-
-	// Sensors are handled elsewhere
-	if ( shapeA->sensorIndex != B2_NULL_INDEX || shapeB->sensorIndex != B2_NULL_INDEX )
-	{
-		return true;
-	}
-
-	if ( b2ShouldShapesCollide( shapeA->filter, shapeB->filter ) == false )
-	{
-		return true;
-	}
-
-	if ( b2CanCollide( shapeA->type, shapeB->type ) == false )
-	{
-		// For example, no segment vs segment collision
-		return true;
-	}
-
-	// Does a joint override collision?
-	b2Body* bodyA = b2Array_Get( world->bodies, bodyIdA );
-	b2Body* bodyB = b2Array_Get( world->bodies, bodyIdB );
-	if ( b2ShouldBodiesCollide( world, bodyA, bodyB ) == false )
-	{
-		return true;
-	}
-
-	// Custom user filter
-	if ( shapeA->enableCustomFiltering || shapeB->enableCustomFiltering )
-	{
-		b2CustomFilterFcn* customFilterFcn = queryContext->world->customFilterFcn;
-		if ( customFilterFcn != NULL )
-		{
-			b2ShapeId idA = { shapeIdA + 1, world->worldId, shapeA->generation };
-			b2ShapeId idB = { shapeIdB + 1, world->worldId, shapeB->generation };
-			bool shouldCollide = customFilterFcn( idA, idB, queryContext->world->customFilterContext );
-			if ( shouldCollide == false )
-			{
-				return true;
-			}
-		}
-	}
-
-	int pairIndex = b2AtomicFetchAddInt( &broadPhase->movePairIndex, 1 );
-
-	b2MovePair* pair;
-	if ( pairIndex < broadPhase->movePairCapacity )
-	{
-		pair = broadPhase->movePairs + pairIndex;
-		pair->heap = false;
-	}
-	else
-	{
-		static b2AtomicInt once = { 0 };
-		if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
-		{
-			// This means you have too many overlapping objects.
-			b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", broadPhase->movePairCapacity );
-		}
-
-		pair = b2Alloc( sizeof( b2MovePair ) );
-		pair->heap = true;
-	}
-
-	pair->shapeIdA = shapeIdA;
-	pair->shapeIdB = shapeIdB;
-	pair->next = queryContext->moveResult->pairList;
-	queryContext->moveResult->pairList = pair;
-
-	// continue the query
-	return true;
-}
-
 // Warning: writing to these globals significantly slows multithreading performance
 #if B2_SNOOP_PAIR_COUNTERS
 b2TreeStats b2_dynamicStats;
 b2TreeStats b2_kinematicStats;
 b2TreeStats b2_staticStats;
 #endif
-
-static void b2FindPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
-{
-	B2_UNUSED( workerIndex );
-
-	b2TracyCZoneNC( pair_task, "Pair", b2_colorMediumSlateBlue, true );
-
-	b2World* world = context;
-	b2BroadPhase* bp = &world->broadPhase;
-
-	b2QueryPairContext queryContext;
-	queryContext.world = world;
-
-#if B2_SNOOP_PAIR_COUNTERS
-	int nodeVisits = 0;
-	int leafVisits = 0;
-	int dynamicNodeVisits = 0;
-	int dynamicLeafVisits = 0;
-	queryContext.candidates = 0;
-#endif
-
-	for ( int i = startIndex; i < endIndex; ++i )
-	{
-		// Initialize move result for this moved proxy
-		queryContext.moveResult = bp->moveResults + i;
-		queryContext.moveResult->pairList = NULL;
-
-		int proxyKey = bp->moveArray.data[i];
-		if ( proxyKey == B2_NULL_INDEX )
-		{
-			// proxy was destroyed after it moved
-			continue;
-		}
-
-		b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
-
-		int proxyId = B2_PROXY_ID( proxyKey );
-		queryContext.queryProxyKey = proxyKey;
-
-		const b2DynamicTree* baseTree = bp->trees + proxyType;
-
-		// We have to query the tree with the fat AABB so that
-		// we don't fail to create a contact that may touch later.
-		b2AABB fatAABB = b2DynamicTree_GetAABB( baseTree, proxyId );
-		queryContext.queryShapeIndex = (int)b2DynamicTree_GetUserData( baseTree, proxyId );
-
-		// Query trees. Only dynamic proxies collide with kinematic and static proxies.
-		// Using B2_DEFAULT_MASK_BITS so that b2Filter::groupIndex works.
-		b2TreeStats stats = { 0 };
-		if ( proxyType == b2_dynamicBody )
-		{
-			// consider using bits = groupIndex > 0 ? B2_DEFAULT_MASK_BITS : maskBits
-			queryContext.queryTreeType = b2_kinematicBody;
-			b2TreeStats statsKinematic = b2DynamicTree_Query( bp->trees + b2_kinematicBody, fatAABB, B2_DEFAULT_MASK_BITS,
-															  b2PairQueryCallback, &queryContext );
-			stats.nodeVisits += statsKinematic.nodeVisits;
-			stats.leafVisits += statsKinematic.leafVisits;
-
-			queryContext.queryTreeType = b2_staticBody;
-			b2TreeStats statsStatic = b2DynamicTree_Query( bp->trees + b2_staticBody, fatAABB, B2_DEFAULT_MASK_BITS,
-														   b2PairQueryCallback, &queryContext );
-			stats.nodeVisits += statsStatic.nodeVisits;
-			stats.leafVisits += statsStatic.leafVisits;
-		}
-
-		// All proxies collide with dynamic proxies
-		// Using B2_DEFAULT_MASK_BITS so that b2Filter::groupIndex works.
-		queryContext.queryTreeType = b2_dynamicBody;
-		b2TreeStats statsDynamic =
-			b2DynamicTree_Query( bp->trees + b2_dynamicBody, fatAABB, B2_DEFAULT_MASK_BITS, b2PairQueryCallback, &queryContext );
-		stats.nodeVisits += statsDynamic.nodeVisits;
-		stats.leafVisits += statsDynamic.leafVisits;
-
-#if B2_SNOOP_PAIR_COUNTERS
-		nodeVisits += stats.nodeVisits;
-		leafVisits += stats.leafVisits;
-		dynamicNodeVisits += statsDynamic.nodeVisits;
-		dynamicLeafVisits += statsDynamic.leafVisits;
-#endif
-	}
-
-#if B2_SNOOP_PAIR_COUNTERS
-	b2AtomicFetchAddInt( &b2_queryNodeVisits, nodeVisits );
-	b2AtomicFetchAddInt( &b2_queryLeafVisits, leafVisits );
-	b2AtomicFetchAddInt( &b2_queryDynamicNodeVisits, dynamicNodeVisits );
-	b2AtomicFetchAddInt( &b2_queryDynamicLeafVisits, dynamicLeafVisits );
-	b2AtomicFetchAddInt( &b2_queryCandidates, queryContext.candidates );
-#endif
-
-	b2TracyCZoneEnd( pair_task );
-}
 
 static void b2UpdateTreesTask( void* context )
 {
@@ -948,120 +639,9 @@ static void b2EnqueueTreeUpdate( b2World* world )
 	}
 }
 
-#if B2_ENABLE_VALIDATION == 1
-static int b2CompareKeys( const void* a, const void* b )
-{
-	uint64_t keyA = *(const uint64_t*)a;
-	uint64_t keyB = *(const uint64_t*)b;
-	return ( keyA > keyB ) - ( keyA < keyB );
-}
-#endif
-
-// The tree passes must find exactly the pairs the proxy queries found with a marked leaf on
-// at least one side. A proxy can be moved without a mark (created,
-// teleported, collide connected changed). Only the queries find those, so they are excluded.
-static void b2ValidateSelfPairs( b2World* world, int moveCount, int itemCount )
-{
-#if B2_ENABLE_VALIDATION == 1
-	b2BroadPhase* bp = &world->broadPhase;
-	b2Stack* alloc = &world->stack;
-
-	int queryTotal = b2AtomicLoadInt( &bp->movePairIndex );
-	int selfTotal = b2AtomicLoadInt( &bp->movePairIndex2 );
-	uint64_t* queryKeys = b2StackAlloc( alloc, b2MaxInt( queryTotal, 1 ) * sizeof( uint64_t ), "query keys" );
-	uint64_t* selfKeys = b2StackAlloc( alloc, b2MaxInt( selfTotal, 1 ) * sizeof( uint64_t ), "self keys" );
-
-	int queryCount = 0;
-	for ( int i = 0; i < moveCount; ++i )
-	{
-		for ( const b2MovePair* pair = bp->moveResults[i].pairList; pair != NULL; pair = pair->next )
-		{
-			// int proxyKeyA = b2Array_Get( world->shapes, pair->shapeIdA )->proxyKey;
-			// int proxyKeyB = b2Array_Get( world->shapes, pair->shapeIdB )->proxyKey;
-			// const b2TreeNode* leafA = bp->trees[B2_PROXY_TYPE( proxyKeyA )].nodes + B2_PROXY_ID( proxyKeyA );
-			// const b2TreeNode* leafB = bp->trees[B2_PROXY_TYPE( proxyKeyB )].nodes + B2_PROXY_ID( proxyKeyB );
-
-			// Moved without a mark, only the queries find these until C.3 marks on insert
-			// if ( ( ( leafA->flags | leafB->flags ) & b2_enlargedNode ) == 0 )
-			//{
-			//	continue;
-			//}
-
-			B2_ASSERT( queryCount < queryTotal );
-			queryKeys[queryCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
-			queryCount += 1;
-		}
-	}
-
-	int selfCount = 0;
-	for ( int i = 0; i < itemCount; ++i )
-	{
-		for ( const b2MovePair* pair = bp->moveResults2[i].pairList; pair != NULL; pair = pair->next )
-		{
-			B2_ASSERT( selfCount < selfTotal );
-			selfKeys[selfCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
-			selfCount += 1;
-		}
-	}
-
-	// Every survivor is linked exactly once
-	B2_ASSERT( selfCount == selfTotal );
-
-	qsort( queryKeys, queryCount, sizeof( uint64_t ), b2CompareKeys );
-	qsort( selfKeys, selfCount, sizeof( uint64_t ), b2CompareKeys );
-
-	// Merge walk. A pair the self pass produced twice shows up as extra.
-	int i = 0;
-	int j = 0;
-	int missing = 0;
-	int extra = 0;
-	while ( i < queryCount || j < selfCount )
-	{
-		if ( j == selfCount || ( i < queryCount && queryKeys[i] < selfKeys[j] ) )
-		{
-			if ( missing < 4 )
-			{
-				b2Log( "self pairs: missing %d %d", (int)( queryKeys[i] >> 32 ), (int)( queryKeys[i] & 0xFFFFFFFF ) );
-			}
-			missing += 1;
-			i += 1;
-		}
-		else if ( i == queryCount || selfKeys[j] < queryKeys[i] )
-		{
-			if ( extra < 4 )
-			{
-				b2Log( "self pairs: extra %d %d", (int)( selfKeys[j] >> 32 ), (int)( selfKeys[j] & 0xFFFFFFFF ) );
-			}
-			extra += 1;
-			j += 1;
-		}
-		else
-		{
-			i += 1;
-			j += 1;
-		}
-	}
-
-	if ( missing + extra > 0 )
-	{
-		b2Log( "self pairs: %d missing, %d extra, %d from queries, %d from self pass", missing, extra, queryCount, selfCount );
-		fflush( stdout );
-	}
-
-	B2_ASSERT( missing == 0 && extra == 0 );
-
-	b2StackFree( alloc, selfKeys );
-	b2StackFree( alloc, queryKeys );
-#else
-	B2_UNUSED( world );
-	B2_UNUSED( moveCount );
-	B2_UNUSED( itemCount );
-#endif
-}
-
 // Generate pairs by querying the dynamic body tree against itself and against
 // the kinematic and static trees.
-static void b2SelfPass( b2World* world, int moveCount, int minRange )
+static void b2SelfPass( b2World* world, int minRange )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 	b2Stack* alloc = &world->stack;
@@ -1073,7 +653,7 @@ static void b2SelfPass( b2World* world, int moveCount, int minRange )
 
 	// todo need a better capacity heuristic
 	bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
-	bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair ), "mp2" );
+	bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair ), "move pairs" );
 
 	b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
 	int staticSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_staticBody, seeds );
@@ -1097,21 +677,6 @@ static void b2SelfPass( b2World* world, int moveCount, int minRange )
 	b2ParallelFor( world, &b2CrossPairsTask, crossCount, 1, &crossContext );
 	b2ParallelFor( world, &b2SelfPairsTask, enlargedCount, minRange, world );
 
-	b2ValidateSelfPairs( world, moveCount, itemCount );
-
-#if B2_SNOOP_PAIR_COUNTERS
-	int querySurvivors = b2AtomicLoadInt( &bp->movePairIndex );
-	int selfSurvivors = b2AtomicLoadInt( &bp->movePairIndex2 );
-	b2AtomicFetchAddInt( &b2_querySurvivors, querySurvivors );
-	b2AtomicFetchAddInt( &b2_selfSurvivors, selfSurvivors );
-	b2AtomicFetchAddInt( &b2_pairSteps, 1 );
-	b2_queryHeapPairs += b2MaxInt( querySurvivors - bp->movePairCapacity, 0 );
-	b2_selfHeapPairs += b2MaxInt( selfSurvivors - bp->movePairCapacity2, 0 );
-	b2_queryMaxSurvivors = b2MaxInt( b2_queryMaxSurvivors, querySurvivors );
-	b2_selfMaxSurvivors = b2MaxInt( b2_selfMaxSurvivors, selfSurvivors );
-	b2_selfMaxCapacity = b2MaxInt( b2_selfMaxCapacity, bp->movePairCapacity2 );
-#endif
-
 	for ( int i = 0; i < itemCount; ++i )
 	{
 		b2MovePair* pair = bp->moveResults2[i].pairList;
@@ -1128,15 +693,25 @@ static void b2SelfPass( b2World* world, int moveCount, int minRange )
 	}
 }
 
+static inline bool b2HasEnlarged(const b2DynamicTree* tree)
+{
+	if (tree->root == B2_NULL_INDEX)
+	{
+		return false;
+	}
+
+	return tree->nodes[tree->root].flags & b2_enlargedNode;
+}
+
 void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
-	b2ValidateMovedProxies( bp );
+	bool haveEnlarged = b2HasEnlarged(bp->trees + b2_staticBody);
+	haveEnlarged = haveEnlarged || b2HasEnlarged( bp->trees + b2_kinematicBody );
+	haveEnlarged = haveEnlarged || b2HasEnlarged( bp->trees + b2_dynamicBody );
 
-	int moveCount = bp->moveArray.count;
-
-	if ( moveCount == 0 )
+	if ( haveEnlarged == false )
 	{
 		// A destroyed shape may lead to no moves, but the tree could still be enlarged.
 		b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
@@ -1148,15 +723,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2Stack* alloc = &world->stack;
 
-	// todo these could be in the step context
-	bp->moveResults = b2StackAlloc( alloc, moveCount * sizeof( b2MoveResult ), "move results" );
-
-	// This capacity can be exceeded if there are many overlapping pairs (e.g. all shapes at the origin)
-	// todo if this remains then it should hit a high water mark and account for heap allocated pairs
-	bp->movePairCapacity = 32 * moveCount;
-	bp->movePairs = b2StackAlloc( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
-	b2AtomicStoreInt( &bp->movePairIndex, 0 );
-
 #if B2_SNOOP_TABLE_COUNTERS
 	extern b2AtomicInt b2_probeCount;
 	b2AtomicStoreInt( &b2_probeCount, 0 );
@@ -1164,31 +730,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	int minRange = 64;
 
-#if B2_SNOOP_PAIR_TIMING
-	// The validate compare reads the query results, so the order only alternates without it
-	bool selfFirst = B2_ENABLE_VALIDATION == 0 && ( b2_timingSteps & 1 ) == 1;
-	uint64_t ticks = b2GetTicks();
-	if ( selfFirst )
-	{
-		b2SelfPass( world, moveCount, minRange );
-		b2_selfFirstMs += b2GetMillisecondsAndReset( &ticks );
-		b2_selfFirstCount += 1;
-		b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
-		b2_querySecondMs += b2GetMillisecondsAndReset( &ticks );
-	}
-	else
-	{
-		b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
-		b2_queryFirstMs += b2GetMillisecondsAndReset( &ticks );
-		b2_queryFirstCount += 1;
-		b2SelfPass( world, moveCount, minRange );
-		b2_selfSecondMs += b2GetMillisecondsAndReset( &ticks );
-	}
-	b2_timingSteps += 1;
-#else
-	b2ParallelFor( world, &b2FindPairsTask, moveCount, minRange, world );
-	b2SelfPass( world, moveCount, minRange );
-#endif
+	b2SelfPass( world, minRange );
 
 	b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
 
@@ -1248,26 +790,12 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	//	fprintf(s_file, "count = %d\n\n", pairCount);
 	// }
 
-	// Reset move buffer: clear only the bits that were set this step.
-	// Invariant: bit set in movedProxies[type] iff proxyKey is present in moveArray.
-	for ( int i = 0; i < bp->moveArray.count; ++i )
-	{
-		int proxyKey = bp->moveArray.data[i];
-		b2ClearBit( &bp->movedProxies[B2_PROXY_TYPE( proxyKey )], B2_PROXY_ID( proxyKey ) );
-	}
-	b2Array_Clear( bp->moveArray );
-	
 	b2StackFree( alloc, bp->moveResults2 );
 	bp->moveResults2 = NULL;
 	b2StackFree( alloc, bp->movePairs2 );
 	bp->movePairs2 = NULL;
 	b2StackFree( alloc, bp->enlargedNodes );
 	bp->enlargedNodes = NULL;
-
-	b2StackFree( alloc, bp->movePairs );
-	bp->movePairs = NULL;
-	b2StackFree( alloc, bp->moveResults );
-	bp->moveResults = NULL;
 
 	b2ValidateSolverSets( world );
 
@@ -1311,30 +839,6 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 		const b2DynamicTree* tree = bp->trees + j;
 		b2DynamicTree_ValidateNoEnlarged( tree );
 	}
-#else
-	B2_UNUSED( bp );
-#endif
-}
-
-void b2ValidateMovedProxies( const b2BroadPhase* bp )
-{
-#if B2_ENABLE_VALIDATION == 1
-	// Invariant: bit set in movedProxies[type] iff proxyKey is present in moveArray.
-	int moveCount = bp->moveArray.count;
-	for ( int i = 0; i < moveCount; ++i )
-	{
-		int proxyKey = bp->moveArray.data[i];
-		b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
-		int proxyId = B2_PROXY_ID( proxyKey );
-		B2_ASSERT( b2GetBit( &bp->movedProxies[proxyType], proxyId ) );
-	}
-
-	int totalSetBits = 0;
-	for ( int i = 0; i < b2_bodyTypeCount; ++i )
-	{
-		totalSetBits += b2CountSetBits( (b2BitSet*)&bp->movedProxies[i] );
-	}
-	B2_ASSERT( totalSetBits == moveCount );
 #else
 	B2_UNUSED( bp );
 #endif

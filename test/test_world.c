@@ -706,8 +706,6 @@ static int EnlargedProxyDestroyed( int workerCount )
 
 	b2DestroyBody( moverId );
 
-	// The mover was the only proxy in the move buffer
-	ENSURE( world->broadPhase.moveArray.count == 0 );
 	ENSURE( CountEnlargedNodes( tree ) > 0 );
 
 	b2World_Step( worldId, timeStep, 4 );

@@ -955,26 +955,6 @@ void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
 
 			shapeId = shape->nextShapeId;
 		}
-
-		// todo delete old path
-
-		// need to tell the broad-phase to look for new pairs for one of the
-		// two bodies. Pick the one with the fewest shapes.
-		int shapeCountA = bodyA->shapeCount;
-		int shapeCountB = bodyB->shapeCount;
-
-		shapeId = shapeCountA < shapeCountB ? bodyA->headShapeId : bodyB->headShapeId;
-		while ( shapeId != B2_NULL_INDEX )
-		{
-			b2Shape* shape = b2Array_Get( world->shapes, shapeId );
-
-			if ( shape->proxyKey != B2_NULL_INDEX )
-			{
-				b2BufferMove( &world->broadPhase, shape->proxyKey );
-			}
-
-			shapeId = shape->nextShapeId;
-		}
 	}
 	else
 	{
