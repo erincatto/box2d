@@ -48,10 +48,10 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 	int dynamicCapacity = b2MaxInt( 16, capacity->dynamicShapeCount );
 	bp->trees[b2_dynamicBody] = b2DynamicTree_Create( dynamicCapacity );
 
-	bp->movePairs2 = NULL;
-	b2AtomicStoreInt( &bp->movePairIndex2, 0 );
-	bp->movePairCapacity2 = 16;
-	bp->moveCount2 = 0;
+	bp->movePairs = NULL;
+	b2AtomicStoreInt( &bp->movePairIndex, 0 );
+	bp->movePairCapacity = 16;
+	bp->moveCount = 0;
 }
 
 void b2DestroyBroadPhase( b2BroadPhase* bp )
@@ -265,15 +265,15 @@ static void b2DrainCandidates( b2PairContext* context )
 		count3 += 1;
 	}
 
-	int base = b2AtomicFetchAddInt( &bp->movePairIndex2, count3 );
+	int base = b2AtomicFetchAddInt( &bp->movePairIndex, count3 );
 
 	for ( int i = 0; i < count3; ++i )
 	{
 		int pairIndex = base + i;
 		b2MovePair* pair;
-		if ( pairIndex < bp->movePairCapacity2 )
+		if ( pairIndex < bp->movePairCapacity )
 		{
-			pair = bp->movePairs2 + pairIndex;
+			pair = bp->movePairs + pairIndex;
 			pair->heap = false;
 		}
 		else
@@ -282,7 +282,7 @@ static void b2DrainCandidates( b2PairContext* context )
 			if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
 			{
 				// This means you have too many overlapping objects.
-				b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", bp->movePairCapacity2 );
+				b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", bp->movePairCapacity );
 			}
 
 			pair = b2Alloc( sizeof( b2MovePair ) );
@@ -294,7 +294,7 @@ static void b2DrainCandidates( b2PairContext* context )
 
 		// A batch spans items. Link by the candidate's own item so the block split
 		// cannot decide which list a pair lands in.
-		b2MoveResult* result = bp->moveResults2 + culled[i].item;
+		b2MoveResult* result = bp->moveResults + culled[i].item;
 		pair->next = result->pairList;
 		result->pairList = pair;
 	}
@@ -364,23 +364,27 @@ static void b2CrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, in
 
 static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
+	b2TracyCZoneNC( self_pairs, "Self", b2_colorCoral, true );
+
 	b2World* world = context;
 	b2BroadPhase* bp = &world->broadPhase;
 	const b2DynamicTree* tree = bp->trees + b2_dynamicBody;
 	const b2TreeNode* nodes = tree->nodes;
-	const int* items = bp->enlargedNodes;
+	const int* items = bp->movedNodes;
 
 	b2PairContext pairContext = { .world = world, .workerIndex = workerIndex };
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		const b2TreeNode* node = nodes + items[i];
-		bp->moveResults2[i].pairList = NULL;
+		bp->moveResults[i].pairList = NULL;
 		pairContext.item = i;
 		b2CrossPairs( tree->nodes, tree->nodes, node->children.child1, node->children.child2, &pairContext );
 	}
 
 	b2DrainCandidates( &pairContext );
+
+	b2TracyCZoneEnd( self_pairs );
 }
 
 // Must be a power of 2
@@ -471,6 +475,8 @@ typedef struct b2CrossContext
 
 static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
+	b2TracyCZoneNC( cross_pairs, "Cross", b2_colorCoral, true );
+
 	b2CrossContext* crossContext = context;
 	b2World* world = crossContext->world;
 	b2BroadPhase* bp = &world->broadPhase;
@@ -485,12 +491,14 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 		const b2TreeNode* nodesB = i < crossContext->staticSeedCount ? staticNodes : kinematicNodes;
 		b2NodePair seed = crossContext->seeds[i];
 		int item = crossContext->itemBase + i;
-		bp->moveResults2[item].pairList = NULL;
+		bp->moveResults[item].pairList = NULL;
 		pairContext.item = item;
 		b2CrossPairs( dynamicNodes, nodesB, seed.a, seed.b, &pairContext );
 	}
 
 	b2DrainCandidates( &pairContext );
+
+	b2TracyCZoneEnd( cross_pairs );
 }
 
 static void b2UpdateTreesTask( void* context )
@@ -556,12 +564,12 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	{
 		const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
 		int nodeCount = dynamicTree->nodeCount;
-		bp->enlargedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
-		int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->enlargedNodes );
+		bp->movedNodes = b2StackAlloc( alloc, nodeCount * sizeof( int ), "enlarged nodes" );
+		int enlargedCount = b2GatherEnlargedNodes( dynamicTree, bp->movedNodes );
 
 		// todo need a better capacity heuristic
-		bp->movePairCapacity2 = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity2 );
-		bp->movePairs2 = b2StackAlloc( alloc, bp->movePairCapacity2 * sizeof( b2MovePair ), "move pairs" );
+		bp->movePairCapacity = b2MaxInt( 16 * enlargedCount, bp->movePairCapacity );
+		bp->movePairs = b2StackAlloc( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
 
 		b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
 		int staticSeedCount = b2ExpandCrossSeeds( dynamicTree, bp->trees + b2_staticBody, seeds );
@@ -571,10 +579,10 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		int crossCount = staticSeedCount + kinematicSeedCount;
 		int itemCount = enlargedCount + crossCount;
 
-		bp->moveResults2 = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
-		bp->moveCount2 = itemCount;
+		bp->moveResults = b2StackAlloc( alloc, itemCount * sizeof( b2MoveResult ), "move results" );
+		bp->moveCount = itemCount;
 
-		b2AtomicStoreInt( &bp->movePairIndex2, 0 );
+		b2AtomicStoreInt( &bp->movePairIndex, 0 );
 
 		b2CrossContext crossContext = {
 			.world = world,
@@ -588,6 +596,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
 
+	b2TracyCZoneEnd( update_pairs );
+
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
 	// Update stale trees.
@@ -595,13 +605,13 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// Pairs arrive in deterministic order but scrambled relative to body and shape order
 	// sorting them here improves solver performance.
-	int itemCount = bp->moveCount2;
-	int pairCount = b2AtomicLoadInt( &bp->movePairIndex2 );
+	int itemCount = bp->moveCount;
+	int pairCount = b2AtomicLoadInt( &bp->movePairIndex );
 	uint64_t* pairKeys = b2StackAlloc( alloc, b2MaxInt( pairCount, 1 ) * sizeof( uint64_t ), "pair keys" );
 	int keyCount = 0;
 	for ( int i = 0; i < itemCount; ++i )
 	{
-		b2MovePair* pair = bp->moveResults2[i].pairList;
+		b2MovePair* pair = bp->moveResults[i].pairList;
 		while ( pair != NULL )
 		{
 			pairKeys[keyCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
@@ -647,17 +657,16 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2StackFree( alloc, pairKeys );
 
-	b2StackFree( alloc, bp->moveResults2 );
-	bp->moveResults2 = NULL;
-	b2StackFree( alloc, bp->movePairs2 );
-	bp->movePairs2 = NULL;
-	b2StackFree( alloc, bp->enlargedNodes );
-	bp->enlargedNodes = NULL;
+	b2StackFree( alloc, bp->moveResults );
+	bp->moveResults = NULL;
+	b2StackFree( alloc, bp->movePairs );
+	bp->movePairs = NULL;
+	b2StackFree( alloc, bp->movedNodes );
+	bp->movedNodes = NULL;
 
 	b2ValidateSolverSets( world );
 
 	b2TracyCZoneEnd( create_contacts );
-	b2TracyCZoneEnd( update_pairs );
 }
 
 bool b2BroadPhase_TestOverlap( const b2BroadPhase* bp, int proxyKeyA, int proxyKeyB )

@@ -29,12 +29,12 @@ typedef struct b2BroadPhase
 {
 	b2DynamicTree trees[b2_bodyTypeCount];
 
-	int* enlargedNodes;
-	b2MovePair* movePairs2;
-	b2MoveResult* moveResults2;
-	int movePairCapacity2;
-	b2AtomicInt movePairIndex2;
-	int moveCount2;
+	int* movedNodes;
+	b2MovePair* movePairs;
+	b2MoveResult* moveResults;
+	int movePairCapacity;
+	b2AtomicInt movePairIndex;
+	int moveCount;
 
 	// Tracks shape pairs that have a b2Contact
 	b2HashSet pairSet;

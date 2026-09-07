@@ -891,3 +891,254 @@ void CreateCompounds( b2WorldId worldId )
 		}
 	}
 }
+
+// Query benchmark. A sparse grid of static boxes like the cast sample, a pile of dynamic boxes
+// settling on a ground inside it with a kinematic paddle keeping some of them awake, and a few
+// static sensors in the pile. Every step runs a fixed set of closest rays, circle casts and box
+// overlaps, once with the default filter and once with a mask that hits one category in three.
+// The queries are precomputed so only the tree work lands in the step time.
+
+#define QUERY_COUNT ( BENCHMARK_DEBUG ? 100 : 1000 )
+
+typedef struct QueryBenchmark
+{
+	b2Pos origins[1000];
+	b2Vec2 translations[1000];
+	b2BodyId paddleId;
+	b2TreeStats stats;
+	float extent;
+	float paddleMinX;
+	float paddleMaxX;
+} QueryBenchmark;
+
+static QueryBenchmark g_queryBenchmark;
+static uint32_t g_queryRandomState;
+
+// Repeatable is all this needs to be
+static float QueryRandom( float lower, float upper )
+{
+	g_queryRandomState = 1664525u * g_queryRandomState + 1013904223u;
+	float unit = (float)( g_queryRandomState >> 8 ) * ( 1.0f / 16777216.0f );
+	return lower + ( upper - lower ) * unit;
+}
+
+void CreateQueries( b2WorldId worldId )
+{
+	g_queryRandomState = 1234;
+
+	float extent = BENCHMARK_DEBUG ? 100.0f : 500.0f;
+	int cellCount = BENCHMARK_DEBUG ? 100 : 500;
+	float fill = 0.1f;
+
+	// The pile keeps this region of the grid clear
+	float pileX = 0.4f * extent;
+	float pileY = 0.3f * extent;
+	b2AABB clear = { { pileX - 10.0f, pileY - 10.0f }, { pileX + 50.0f, pileY + 60.0f } };
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	for ( int i = 0; i < cellCount; ++i )
+	{
+		float y = (float)i;
+		for ( int j = 0; j < cellCount; ++j )
+		{
+			float x = (float)j;
+
+			float fillTest = QueryRandom( 0.0f, 1.0f );
+			float ratio = QueryRandom( 1.0f, 5.0f );
+			float halfWidth = QueryRandom( 0.05f, 0.25f );
+			float orientation = QueryRandom( 0.0f, 1.0f );
+			int category = (int)QueryRandom( 0.0f, 2.999f );
+
+			if ( fillTest > fill )
+			{
+				continue;
+			}
+
+			if ( clear.lowerBound.x <= x && x <= clear.upperBound.x && clear.lowerBound.y <= y && y <= clear.upperBound.y )
+			{
+				continue;
+			}
+
+			bodyDef.position = (b2Pos){ x, y };
+			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+			b2Polygon box = orientation > 0.5f ? b2MakeBox( ratio * halfWidth, halfWidth ) : b2MakeBox( halfWidth, ratio * halfWidth );
+			shapeDef.filter.categoryBits = 1ull << category;
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+		}
+	}
+
+	shapeDef.filter.categoryBits = 1;
+
+	// Ground for the pile
+	{
+		bodyDef.position = (b2Pos){ 0.0f, 0.0f };
+		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+		b2Segment segment = { { pileX - 10.0f, pileY }, { pileX + 50.0f, pileY } };
+		b2CreateSegmentShape( groundId, &shapeDef, &segment );
+	}
+
+	// Static sensors sitting in the pile
+	{
+		b2ShapeDef sensorDef = b2DefaultShapeDef();
+		sensorDef.isSensor = true;
+		b2Polygon sensorBox = b2MakeSquare( 2.0f );
+		for ( int i = 0; i < 8; ++i )
+		{
+			bodyDef.position = (b2Pos){ pileX + 4.0f * i, pileY + 2.0f };
+			b2BodyId sensorId = b2CreateBody( worldId, &bodyDef );
+			b2CreatePolygonShape( sensorId, &sensorDef, &sensorBox );
+		}
+	}
+
+	// The pile, dropped from just above the ground so it settles quickly
+	{
+		int columnCount = BENCHMARK_DEBUG ? 20 : 40;
+		int rowCount = BENCHMARK_DEBUG ? 25 : 50;
+		float spacing = 0.55f;
+		b2Polygon box = b2MakeSquare( 0.25f );
+
+		bodyDef.type = b2_dynamicBody;
+		for ( int i = 0; i < rowCount; ++i )
+		{
+			for ( int j = 0; j < columnCount; ++j )
+			{
+				bodyDef.position = (b2Pos){ pileX + spacing * j, pileY + 1.0f + spacing * i };
+				b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			}
+		}
+	}
+
+	// Kinematic paddle sweeping through the bottom of the pile
+	{
+		bodyDef.type = b2_kinematicBody;
+		bodyDef.position = (b2Pos){ pileX - 5.0f, pileY + 1.2f };
+		bodyDef.linearVelocity = (b2Vec2){ 5.0f, 0.0f };
+		g_queryBenchmark.paddleId = b2CreateBody( worldId, &bodyDef );
+		b2Polygon paddle = b2MakeBox( 1.0f, 1.0f );
+		b2CreatePolygonShape( g_queryBenchmark.paddleId, &shapeDef, &paddle );
+		g_queryBenchmark.paddleMinX = pileX - 5.0f;
+		g_queryBenchmark.paddleMaxX = pileX + 30.0f;
+	}
+
+	// Rays and casts cross the whole world, overlaps are centered on the origins
+	int queryCount = QUERY_COUNT;
+	for ( int i = 0; i < queryCount; ++i )
+	{
+		float x1 = QueryRandom( 0.0f, extent );
+		float y1 = QueryRandom( 0.0f, extent );
+		float x2 = QueryRandom( 0.0f, extent );
+		float y2 = QueryRandom( 0.0f, extent );
+		g_queryBenchmark.origins[i] = (b2Pos){ x1, y1 };
+		g_queryBenchmark.translations[i] = (b2Vec2){ x2 - x1, y2 - y1 };
+	}
+
+	g_queryBenchmark.stats = (b2TreeStats){ 0 };
+	g_queryBenchmark.extent = extent;
+}
+
+static float QueryCastClosest( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
+{
+	(void)shapeId;
+	(void)point;
+	(void)normal;
+	*(float*)context = fraction;
+	return fraction;
+}
+
+static bool QueryOverlapCount( b2ShapeId shapeId, void* context )
+{
+	(void)shapeId;
+	*(int*)context += 1;
+	return true;
+}
+
+float StepQueries( b2WorldId worldId, int stepCount )
+{
+	(void)stepCount;
+
+	QueryBenchmark* data = &g_queryBenchmark;
+
+	// Reverse the paddle at the ends of its sweep
+	b2Pos paddlePosition = b2Body_GetPosition( data->paddleId );
+	if ( paddlePosition.x > data->paddleMaxX )
+	{
+		b2Body_SetLinearVelocity( data->paddleId, (b2Vec2){ -5.0f, 0.0f } );
+	}
+	else if ( paddlePosition.x < data->paddleMinX )
+	{
+		b2Body_SetLinearVelocity( data->paddleId, (b2Vec2){ 5.0f, 0.0f } );
+	}
+
+	b2QueryFilter filters[2] = { b2DefaultQueryFilter(), b2DefaultQueryFilter() };
+	filters[1].maskBits = 1;
+
+	b2Vec2 circleCenter = b2Vec2_zero;
+	b2ShapeProxy circle = b2MakeProxy( &circleCenter, 1, 0.1f );
+
+	int queryCount = QUERY_COUNT;
+	int hitCount = 0;
+	b2TreeStats stats = { 0 };
+
+	for ( int f = 0; f < 2; ++f )
+	{
+		b2QueryFilter filter = filters[f];
+
+		for ( int i = 0; i < queryCount; ++i )
+		{
+			b2RayResult result = b2World_CastRayClosest( worldId, data->origins[i], data->translations[i], filter );
+			stats.nodeVisits += result.nodeVisits;
+			stats.leafVisits += result.leafVisits;
+			hitCount += result.hit ? 1 : 0;
+		}
+
+		for ( int i = 0; i < queryCount; ++i )
+		{
+			float fraction = 1.0f;
+			b2TreeStats castStats =
+				b2World_CastShape( worldId, data->origins[i], &circle, data->translations[i], filter, QueryCastClosest, &fraction );
+			stats.nodeVisits += castStats.nodeVisits;
+			stats.leafVisits += castStats.leafVisits;
+			hitCount += fraction < 1.0f ? 1 : 0;
+		}
+
+		for ( int i = 0; i < queryCount; ++i )
+		{
+			int overlapCount = 0;
+			b2AABB aabb = { { -5.0f, -5.0f }, { 5.0f, 5.0f } };
+			b2TreeStats overlapStats = b2World_OverlapAABB( worldId, data->origins[i], aabb, filter, QueryOverlapCount, &overlapCount );
+			stats.nodeVisits += overlapStats.nodeVisits;
+			stats.leafVisits += overlapStats.leafVisits;
+			hitCount += overlapCount;
+		}
+	}
+
+	data->stats.nodeVisits += stats.nodeVisits;
+	data->stats.leafVisits += stats.leafVisits;
+
+	return (float)hitCount;
+}
+
+b2TreeStats GetQueryBenchmarkStats( void )
+{
+	return g_queryBenchmark.stats;
+}
+
+int GetQueryBenchmarkCount( void )
+{
+	return QUERY_COUNT;
+}
+
+float GetQueryBenchmarkExtent( void )
+{
+	return g_queryBenchmark.extent;
+}
+
+void GetQueryBenchmarkRay( int index, b2Pos* origin, b2Vec2* translation )
+{
+	*origin = g_queryBenchmark.origins[index];
+	*translation = g_queryBenchmark.translations[index];
+}

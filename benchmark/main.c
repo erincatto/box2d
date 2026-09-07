@@ -157,6 +157,7 @@ int main( int argc, char** argv )
 		{ "spinner", CreateSpinner, StepSpinner, 500 },
 		{ "tumbler", CreateTumbler, NULL, 750 },
 		{ "washer", CreateWasher, NULL, 500 },
+		{ "queries", CreateQueries, StepQueries, 200 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
@@ -400,6 +401,12 @@ int main( int argc, char** argv )
 
 				fclose( file );
 			}
+		}
+
+		if ( benchmark->stepFcn == StepQueries )
+		{
+			b2TreeStats stats = GetQueryBenchmarkStats();
+			printf( "query visits per step: %d node, %d leaf\n", stats.nodeVisits / stepCount, stats.leafVisits / stepCount );
 		}
 
 		printf( "body %d / shape %d / contact %d / joint %d / stack %d\n", counters.bodyCount, counters.shapeCount,

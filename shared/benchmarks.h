@@ -3,6 +3,7 @@
 #pragma once
 
 #include "box2d/id.h"
+#include "box2d/collision.h"
 #include "box2d/types.h"
 
 #include <stdbool.h>
@@ -28,6 +29,13 @@ void CreateWasher( b2WorldId worldId );
 void CreateJunkyard( b2WorldId worldId );
 float StepJunkyard( b2WorldId worldId, int stepCount );
 void CreateCompounds( b2WorldId worldId );
+
+void CreateQueries( b2WorldId worldId );
+float StepQueries( b2WorldId worldId, int stepCount );
+b2TreeStats GetQueryBenchmarkStats( void );
+int GetQueryBenchmarkCount( void );
+float GetQueryBenchmarkExtent( void );
+void GetQueryBenchmarkRay( int index, b2Pos* origin, b2Vec2* translation );
 
 #ifdef __cplusplus
 }

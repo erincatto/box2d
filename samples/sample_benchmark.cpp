@@ -2150,3 +2150,86 @@ public:
 };
 
 static int benchmarkJunkyard = RegisterSample( "Benchmark", "Junkyard", BenchmarkJunkyard::Create );
+
+// The queries benchmark scene with one of its queries drawn and the cost of the whole set
+class BenchmarkQueries : public Sample
+{
+public:
+	explicit BenchmarkQueries( SampleContext* context )
+		: Sample( context )
+	{
+		CreateQueries( m_worldId );
+
+		if ( m_context->restart == false )
+		{
+			float extent = GetQueryBenchmarkExtent();
+			m_context->camera.center = { 0.5f * extent, 0.5f * extent };
+			m_context->camera.zoom = 0.55f * extent;
+		}
+
+		m_drawIndex = 0;
+		m_minTime = 1e6f;
+		m_lastTime = 0.0f;
+		m_hitCount = 0;
+		m_nodeVisits = 0;
+		m_leafVisits = 0;
+	}
+
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
+		ImGui::SliderInt( "draw", &m_drawIndex, 0, GetQueryBenchmarkCount() - 1, "%d" );
+		ImGui::PopItemWidth();
+		return false;
+	}
+
+	void Step() override
+	{
+		if ( m_context->pause == false || m_context->singleStep == true )
+		{
+			b2TreeStats before = GetQueryBenchmarkStats();
+			uint64_t ticks = b2GetTicks();
+			m_hitCount = (int)StepQueries( m_worldId, m_stepCount );
+			m_lastTime = b2GetMilliseconds( ticks );
+			m_minTime = b2MinFloat( m_minTime, m_lastTime );
+			b2TreeStats after = GetQueryBenchmarkStats();
+			m_nodeVisits = after.nodeVisits - before.nodeVisits;
+			m_leafVisits = after.leafVisits - before.leafVisits;
+		}
+
+		Sample::Step();
+
+		b2Pos origin;
+		b2Vec2 translation;
+		GetQueryBenchmarkRay( m_drawIndex, &origin, &translation );
+		b2Pos end = origin + translation;
+		DrawLine( m_context->draw, origin, end, b2_colorWhite );
+		DrawPoint( m_context->draw, origin, 5.0f, b2_colorGreen );
+		DrawPoint( m_context->draw, end, 5.0f, b2_colorRed );
+
+		// The overlap box the same query runs
+		b2AABB box = {
+			{ b2RoundDownFloat( origin.x - 5.0f ), b2RoundDownFloat( origin.y - 5.0f ) },
+			{ b2RoundUpFloat( origin.x + 5.0f ), b2RoundUpFloat( origin.y + 5.0f ) },
+		};
+		DrawBounds( m_context->draw, box, b2_colorWhite );
+
+		DrawScreenTextLine( "%d queries of each kind and filter, %d hits", GetQueryBenchmarkCount(), m_hitCount );
+		DrawScreenTextLine( "node visits = %d, leaf visits = %d", m_nodeVisits, m_leafVisits );
+		DrawScreenTextLine( "queries ms = %.3f, min = %.3f", m_lastTime, m_minTime );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new BenchmarkQueries( context );
+	}
+
+	int m_drawIndex;
+	float m_minTime;
+	float m_lastTime;
+	int m_hitCount;
+	int m_nodeVisits;
+	int m_leafVisits;
+};
+
+static int benchmarkQueries = RegisterSample( "Benchmark", "Queries", BenchmarkQueries::Create );
