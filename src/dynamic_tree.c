@@ -195,11 +195,77 @@ static void b2FreeProxy( b2DynamicTree* tree, int proxyId )
 	--tree->proxyCount;
 }
 
-typedef struct b2NodeId
+typedef struct b2ChildId
 {
 	int parent;
 	int slot;
-} b2NodeId;
+} b2ChildId;
+
+static inline b2ChildId b2GetChildId( const b2DynamicTree* tree, int nodeIndex )
+{
+	B2_ASSERT( 0 <= nodeIndex && nodeIndex < tree->nodeCapacity );
+	const b2TreeLink* link = tree->links + nodeIndex;
+	B2_ASSERT( b2IsAllocated( link ) );
+	int slot = b2GetChildSlot( link );
+	return (b2ChildId){
+		.parent = link->parent,
+		.slot = slot,
+	};
+}
+
+static inline int b2GetLeafCount( const b2TreeChild* child )
+{
+	return b2IsLeaf( child ) ? 1 : child->leafCount;
+}
+
+// Given an node, make the child that goes in the parent.
+static inline b2TreeChild b2MakeInternalChild( const b2TreeNode* node, int nodeIndex )
+{
+	const b2TreeChild* c1 = node->children + 0;
+	const b2TreeChild* c2 = node->children + 1;
+
+	b2TreeChild child = { 0 };
+	child.aabb = b2AABB_Union( c1->aabb, c2->aabb );
+	child.flagIndex = (uint32_t)nodeIndex | ( ( c1->flagIndex | c2->flagIndex ) & B2_MOVED_NODE );
+	child.leafCount = b2GetLeafCount( c1 ) + b2GetLeafCount( c2 );
+	child.categoryBits = c1->categoryBits | c2->categoryBits;
+	return child;
+}
+
+// Given a proxy, make a child that goes in the parent.
+static inline b2TreeChild b2MakeLeafChild( b2AABB aabb, int proxyId, uint64_t userData, uint64_t categoryBits, bool moved )
+{
+	b2TreeChild child = { 0 };
+	child.aabb = aabb;
+	child.flagIndex = (uint32_t)proxyId | B2_LEAF_NODE | ( moved ? B2_MOVED_NODE : 0 );
+	child.truncatedUserData = (uint32_t)userData;
+	child.categoryBits = categoryBits;
+	return child;
+}
+
+static inline void b2ConnectChild( b2DynamicTree* tree, b2ChildId id )
+{
+	B2_ASSERT( 0 <= id.parent && id.parent < tree->nodeCapacity );
+	B2_ASSERT( id.slot == 0 || id.slot == 1 );
+	const b2TreeNode* node = tree->nodes + id.parent;
+	const b2TreeChild* child = node->children + id.slot;
+	if ( b2IsLeaf( child ) )
+	{
+		int proxyId = b2GetChildIndex( child );
+		B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
+		b2TreeProxy* proxy = tree->proxies + proxyId;
+		proxy->link.parent = id.parent;
+		proxy->link.flags |= id.slot == 0 ? 0 : b2_child2Link;
+	}
+	else
+	{
+		int childIndex = b2GetChildIndex( child );
+		B2_ASSERT( 0 <= childIndex && childIndex < tree->nodeCapacity );
+		b2TreeLink* link = tree->links + childIndex;
+		link->parent = id.parent;
+		link->flags |= id.slot == 0 ? 0 : b2_child2Link;
+	}
+}
 
 // Greedy algorithm for sibling selection using the SAH
 // We have three nodes A-(B,C) and want to add a leaf D, there are three choices.
@@ -218,7 +284,7 @@ typedef struct b2NodeId
 // Suppose B (or C) is an internal node, then the lowest cost would be one of two cases:
 // case1: D becomes a sibling of B
 // case2: D becomes a descendant of B along with a new internal node of area(D).
-static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
+static b2ChildId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 {
 	b2Vec2 centerD = b2AABB_Center( boxD );
 	float areaD = b2Perimeter( boxD );
@@ -236,15 +302,16 @@ static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 	float directCost = b2Perimeter( b2AABB_Union( rootBox, boxD ) );
 	float inheritedCost = 0.0f;
 
-	b2NodeId bestSibling = { B2_NULL_INDEX, 0 };
+	b2ChildId bestSibling = { B2_NULL_INDEX, 0 };
 	float bestCost = directCost;
 
 	// Descend the tree from root, following a single greedy path.
-	int index = rootIndex;
+	b2ChildId currentId = bestSibling;
+	int nodeIndex = rootIndex;
 	for ( ;; )
 	{
-		int child1 = nodes[index].children[0].flagIndex & B2_NODE_INDEX_MASK;
-		int child2 = nodes[index].children[1].flagIndex & B2_NODE_INDEX_MASK;
+		int child1 = nodes[nodeIndex].children[0].flagIndex & B2_NODE_INDEX_MASK;
+		int child2 = nodes[nodeIndex].children[1].flagIndex & B2_NODE_INDEX_MASK;
 
 		// Cost of creating a new parent for this node and the new leaf
 		float cost = directCost + inheritedCost;
@@ -253,19 +320,19 @@ static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 		// This breaks the ties using the centroid distance.
 		if ( cost < bestCost )
 		{
-			bestSibling.parent = index;
+			bestSibling = currentId;
 			bestCost = cost;
 		}
 
 		// Inheritance cost seen by children
 		inheritedCost += directCost - areaBase;
 
-		bool leaf1 = b2IsLeaf( nodes[index].children + 0 );
-		bool leaf2 = b2IsLeaf( nodes[index].children + 1 );
+		bool leaf1 = b2IsLeaf( nodes[nodeIndex].children + 0 );
+		bool leaf2 = b2IsLeaf( nodes[nodeIndex].children + 1 );
 
 		// Cost of descending into child 1
 		float lowerCost1 = FLT_MAX;
-		b2AABB box1 = nodes[index].children[0].aabb;
+		b2AABB box1 = nodes[nodeIndex].children[0].aabb;
 		float directCost1 = b2Perimeter( b2AABB_Union( box1, boxD ) );
 		float area1 = 0.0f;
 		if ( leaf1 )
@@ -277,7 +344,7 @@ static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 			// Need this here due to while condition above
 			if ( cost1 < bestCost )
 			{
-				bestSibling.parent = index;
+				bestSibling.parent = nodeIndex;
 				bestSibling.slot = 0;
 				bestCost = cost1;
 			}
@@ -297,7 +364,7 @@ static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 
 		// Cost of descending into child 2
 		float lowerCost2 = FLT_MAX;
-		b2AABB box2 = nodes[index].children[1].aabb;
+		b2AABB box2 = nodes[nodeIndex].children[1].aabb;
 		float directCost2 = b2Perimeter( b2AABB_Union( box2, boxD ) );
 		float area2 = 0.0f;
 		if ( leaf2 )
@@ -306,7 +373,7 @@ static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 
 			if ( cost2 < bestCost )
 			{
-				bestSibling.parent = index;
+				bestSibling.parent = nodeIndex;
 				bestSibling.slot = 1;
 				bestCost = cost2;
 			}
@@ -344,13 +411,17 @@ static b2NodeId b2FindBestSibling( const b2DynamicTree* tree, b2AABB boxD )
 		// Descend
 		if ( lowerCost1 < lowerCost2 && leaf1 == false )
 		{
-			index = child1;
+			currentId.parent = nodeIndex;
+			currentId.slot = 0;
+			nodeIndex = child1;
 			areaBase = area1;
 			directCost = directCost1;
 		}
 		else
 		{
-			index = child2;
+			currentId.parent = nodeIndex;
+			currentId.slot = 1;
+			nodeIndex = child2;
 			areaBase = area2;
 			directCost = directCost2;
 		}
@@ -370,7 +441,7 @@ enum b2RotateType
 
 // Perform a left or right rotation if node A is imbalanced.
 // Returns the new root index.
-static void b2RotateNodes( b2DynamicTree* tree, b2NodeId iA )
+static void b2RotateNodes( b2DynamicTree* tree, b2ChildId iA )
 {
 	B2_ASSERT( iA.parent != B2_NULL_INDEX );
 
@@ -657,7 +728,8 @@ static void b2RotateNodes( b2DynamicTree* tree, b2NodeId iA )
 	}
 }
 
-static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t categoryBits, bool shouldRotate )
+static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t categoryBits, bool moved,
+						  bool shouldRotate )
 {
 	b2TreeProxy* proxy = tree->proxies + leaf;
 
@@ -670,15 +742,12 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 
 		// Proxy becomes first child.
 		b2TreeNode* root = tree->nodes + tree->root;
-		root->children[0].aabb = aabb;
-		root->children[0].flagIndex = leaf | B2_LEAF_NODE;
+		root->children[0] = b2MakeLeafChild( aabb, leaf, proxy->userData, categoryBits, moved );
+		root->children[1] = b2MakeEmptyChild();
 
-		// Hook up proxy to node.
+		// Hook up proxy to node. Already child1.
+		B2_ASSERT( b2GetChildSlot( &proxy->link ) == 0 );
 		proxy->link.parent = tree->root;
-		proxy->link.flags = 0;
-
-		// Truncate the user data (shape index).
-		root->children[0].truncatedUserData = (uint32_t)proxy->userData;
 
 		return;
 	}
@@ -689,17 +758,16 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 		proxy->link.parent = tree->root;
 
 		b2TreeNode* root = tree->nodes + tree->root;
+
+		// Find empty child.
 		if ( root->children[0].flagIndex == B2_NODE_SENTINEL )
 		{
-			root->children[0].aabb = aabb;
-			root->children[0].flagIndex = leaf | B2_LEAF_NODE;
-			root->children[0].truncatedUserData = (uint32_t)proxy->userData;
+			root->children[0] = b2MakeLeafChild( aabb, leaf, proxy->userData, categoryBits, moved );
 		}
 		else
 		{
-			root->children[1].aabb = aabb;
-			root->children[1].flagIndex = leaf | B2_LEAF_NODE;
-			root->children[1].truncatedUserData = (uint32_t)proxy->userData;
+			B2_ASSERT( root->children[0].flagIndex != B2_NODE_SENTINEL );
+			root->children[1] = b2MakeLeafChild( aabb, leaf, proxy->userData, categoryBits, moved );
 			proxy->link.flags |= b2_child2Link;
 		}
 
@@ -710,7 +778,7 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 	b2TreeLink* links = tree->links;
 
 	// Stage 1: find the best sibling for this node
-	b2NodeId sibling = b2FindBestSibling( tree, aabb );
+	b2ChildId sibling = b2FindBestSibling( tree, aabb );
 
 	// Stage 2: create a new parent for the leaf and sibling
 	int oldParent = sibling.parent;
@@ -722,10 +790,7 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 	links[newParent].parent = oldParent;
 	links[newParent].flags |= sibling.slot == 0 ? 0 : b2_child2Link;
 	nodes[newParent].children[0] = oldParentNode->children[sibling.slot];
-	nodes[newParent].children[1].aabb = aabb;
-	nodes[newParent].children[1].flagIndex = leaf | B2_LEAF_NODE;
-	nodes[newParent].children[1].truncatedUserData = (uint32_t)proxy->userData;
-	nodes[newParent].children[1].categoryBits = categoryBits;
+	nodes[newParent].children[1] = b2MakeLeafChild( aabb, leaf, proxy->userData, categoryBits, moved );
 	proxy->link.parent = newParent;
 	proxy->link.flags |= b2_child2Link;
 
@@ -736,13 +801,13 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 	if ( oldParent != B2_NULL_INDEX )
 	{
 		// The sibling was not the root
-		if ( (sibling.slot & b2_child2Link) == 0)
+		if ( ( sibling.slot & b2_child2Link ) == 0 )
 		{
 			nodes[oldParent].children[0].flagIndex = newParent;
 		}
 		else
 		{
-			B2_ASSERT( b2GetChildIndex(nodes[oldParent].children + 1) == siblingNodeIndex );
+			B2_ASSERT( b2GetChildIndex( nodes[oldParent].children + 1 ) == siblingNodeIndex );
 			nodes[oldParent].children[1].flagIndex = newParent;
 		}
 	}
@@ -752,18 +817,21 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 		tree->root = newParent;
 	}
 
-	// Stage 3: walk back up the tree fixing heights and AABBs
-	b2NodeId nodeId = sibling;
+	// Stage 3: walk back up the tree refitting parent fields
+	b2ChildId nodeId = sibling;
 	while ( nodeId.parent != B2_NULL_INDEX )
 	{
 		b2TreeNode* parent = nodes + nodeId.parent;
 		b2TreeChild* child = parent->children + nodeId.slot;
 		int nodeIndex = b2GetChildIndex( child );
 		b2TreeNode* node = nodes + nodeIndex;
+		const b2TreeChild* c1 = node->children + 0;
+		const b2TreeChild* c2 = node->children + 1;
 
-		child->aabb = b2AABB_Union( node->children[0].aabb, node->children[1].aabb );
-		child->leafCount = node->children[0].leafCount + node->children[1].leafCount;
-		child->categoryBits = node->children[0].categoryBits | node->children[1].categoryBits;
+		child->aabb = b2AABB_Union( c1->aabb, c2->aabb );
+		child->flagIndex = (uint32_t)nodeIndex | ( ( c1->flagIndex | c2->flagIndex ) & B2_MOVED_NODE );
+		child->leafCount = b2GetLeafCount( c1 ) + b2GetLeafCount( c2 );
+		child->categoryBits = c1->categoryBits | c2->categoryBits;
 
 		if ( shouldRotate )
 		{
@@ -772,7 +840,7 @@ static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t c
 
 		b2TreeLink* link = tree->links + nodeId.parent;
 		nodeId.parent = link->parent;
-		nodeId.slot = link->flags & b2_child2Link;
+		nodeId.slot = b2GetChildSlot( link );
 	}
 }
 
@@ -1195,7 +1263,7 @@ b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId )
 	const b2TreeProxy* proxy = tree->proxies + proxyId;
 	int parent = proxy->link.parent;
 	b2TreeNode* node = tree->nodes + parent;
-	int slot = proxy->link.flags & b2_child2Link;
+	int slot = b2GetChildSlot( &proxy->link );
 	return node->children[slot].aabb;
 }
 
@@ -1220,29 +1288,33 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 		const b2TreeNode* node = tree->nodes + nodeId;
 		result.nodeVisits += 1;
 
-		if ( b2AABB_Overlaps( node->aabb, aabb ) && ( node->categoryBits & maskBits ) != 0 )
+		for ( int i = 0; i < 2; ++i )
 		{
-			if ( b2IsLeaf( node ) )
+			if ( b2AABB_Overlaps( node->children[i].aabb, aabb ) && ( node->children[i].categoryBits & maskBits ) != 0 )
 			{
-				// callback to user code with proxy id
-				bool proceed = callback( nodeId, node->userData, context );
-				result.leafVisits += 1;
+				if ( b2IsLeaf( node->children + i ) )
+				{
+					// callback to user code with proxy id
+					int proxyId = b2GetChildIndex( node->children + i );
+					const b2TreeProxy* proxy = tree->proxies + proxyId;
+					bool proceed = callback( proxyId, proxy->userData, context );
+					result.leafVisits += 1;
 
-				if ( proceed == false )
-				{
-					return result;
-				}
-			}
-			else
-			{
-				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
-				{
-					stack[stackCount++] = node->children.child1;
-					stack[stackCount++] = node->children.child2;
+					if ( proceed == false )
+					{
+						return result;
+					}
 				}
 				else
 				{
-					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+					if ( stackCount < B2_TREE_STACK_SIZE - 1 )
+					{
+						stack[stackCount++] = b2GetChildIndex( node->children + i );
+					}
+					else
+					{
+						B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+					}
 				}
 			}
 		}

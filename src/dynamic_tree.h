@@ -20,17 +20,22 @@ enum b2TreeLinkFlags
 
 B2_FORCE_INLINE bool b2IsLeaf( const b2TreeChild* child )
 {
-	return child->flagIndex & B2_LEAF_NODE;
+	return (child->flagIndex & B2_LEAF_NODE) == B2_LEAF_NODE;
 }
 
 B2_FORCE_INLINE bool b2IsChildMoved( const b2TreeChild* child )
 {
-	return child->flagIndex & B2_MOVED_NODE;
+	return (child->flagIndex & B2_MOVED_NODE) == B2_MOVED_NODE;
 }
 
 B2_FORCE_INLINE uint32_t b2GetChildIndex( const b2TreeChild* child )
 {
 	return child->flagIndex & B2_NODE_INDEX_MASK;
+}
+
+B2_FORCE_INLINE int b2GetChildSlot(const b2TreeLink* link )
+{
+	return ( link->flags & b2_child2Link ) ? 1 : 0;
 }
 
 B2_FORCE_INLINE bool b2IsAllocated( const b2TreeLink* link )
