@@ -673,59 +673,80 @@ B2_API b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* se
  * @{
  */
 
-/// Tree node flags. For internal usage.
-enum b2TreeNodeFlags
-{
-	b2_allocatedNode = 0x0001,
-	b2_enlargedNode = 0x0002,
-	b2_leafNode = 0x0004,
-	b2_refitNode = 0x0008,
-};
-
-/// Tree node child indices. Internal usage.
-typedef struct b2TreeNodeChildren
-{
-	int child1; ///< child node index 1
-	int child2; ///< child node index 2
-} b2TreeNodeChildren;
-
-/// A node in the dynamic tree. For internal usage.
-typedef struct b2TreeNode
+/// A node child. 32 bytes for performance.
+typedef struct
 {
 	/// The node bounding box
-	b2AABB aabb; // 16
+	b2AABB aabb;
 
-	/// Category bits for collision filtering
-	uint64_t categoryBits; // 8
-
-	union
-	{
-		/// Children (internal node)
-		b2TreeNodeChildren children;
-
-		/// User data (leaf node)
-		uint64_t userData;
-	}; // 8
+	/// bit 31 : 1 for leaf node
+	/// bit 30 : 1 for moved flag
+	/// bits 0-29 : index to child node
+	uint32_t flagIndex;
 
 	union
 	{
-		/// The node parent index (allocated node)
-		int32_t parent;
+		/// The total number of leaves below for an internal node.
+		int32_t leafCount;
 
-		/// The node freelist next index (free node)
-		int32_t next;
-	}; // 4
+		/// The truncated user data for a leaf. Avoids a lookup.
+		uint32_t truncatedUserData;
+	};
 
-	uint16_t height; // 2
-	uint16_t flags;	 // 2
+	/// Category bits for collision filtering.
+	uint64_t categoryBits;
+} b2TreeChild;
+
+/// An internal node in the dynamic tree.
+/// 64 bytes.
+typedef struct b2TreeNode
+{
+	/// Left and right child.
+	b2TreeChild children[2];
 } b2TreeNode;
+
+/// Separate storage cold node data.
+typedef struct b2TreeLink
+{
+	union
+	{
+		/// Index of parent internal node.
+		int32_t parent;
+		
+		/// Next index when in the free list
+		int32_t next;
+	};
+
+	/// b2TreeLinkFlags
+	uint32_t flags;
+} b2TreeLink;
+
+/// Separate storage for tree leaves.
+typedef struct b2TreeProxy
+{
+	/// Same link used for internal nodes also needed for proxies.
+	b2TreeLink link;
+
+	/// User data is an index instead of void* because it is used internally as a shape index.
+	uint64_t userData;
+
+} b2TreeProxy;
 
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
 typedef struct b2DynamicTree
 {
-	/// The tree nodes
-	struct b2TreeNode* nodes;
+	/// Array of internal nodes.
+	b2TreeNode* nodes;
+
+	/// Array of internal nodes for rebuild.
+	b2TreeNode* swapNodes;
+
+	/// Cold data per internal node.
+	b2TreeLink* links;
+
+	/// Proxy data split from node array as cold data.
+	b2TreeProxy* proxies;
 
 	/// The root index
 	int32_t root;
@@ -737,10 +758,16 @@ typedef struct b2DynamicTree
 	int32_t nodeCapacity;
 
 	/// Node free list
-	int32_t freeList;
+	int32_t nodeFreeList;
 
 	/// Number of proxies created
 	int32_t proxyCount;
+
+	/// The allocated proxy space
+	int32_t proxyCapacity;
+
+	/// Proxy free list
+	int32_t proxyFreeList;
 
 	/// Leaf indices for rebuild
 	int32_t* leafIndices;
@@ -756,6 +783,10 @@ typedef struct b2DynamicTree
 
 	/// Allocated space for rebuilding
 	int32_t rebuildCapacity;
+
+	/// Does this tree have a DFS order?
+	bool dfsOrdered;
+
 } b2DynamicTree;
 
 /// These are performance results returned by dynamic tree queries.
@@ -775,13 +806,14 @@ B2_API b2DynamicTree b2DynamicTree_Create( int proxyCapacity );
 B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );
 
 /// Create a proxy. Provide an AABB and a userData value.
-B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData, uint16_t nodeFlags );
+B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
+									  bool markMoved );
 
 /// Destroy a proxy. This asserts if the id is invalid.
 B2_API void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId );
 
 /// Move a proxy to a new AABB by removing and reinserting into the tree.
-B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, uint16_t nodeFlags );
+B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, bool markMoved );
 
 /// Enlarge a proxy and enlarge ancestors as necessary.
 B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );

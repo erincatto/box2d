@@ -6,15 +6,64 @@
 #include "box2d/collision.h"
 
 #define B2_TREE_STACK_SIZE 1024
+#define B2_NODE_SENTINEL ( UINT32_MAX & ~B2_MOVED_NODE )
+#define B2_MOVED_NODE ( 1u << 30 )
+#define B2_LEAF_NODE ( 1u << 31 )
+#define B2_NODE_INDEX_MASK ( 0xFFFFFFFFu & ~( B2_MOVED_NODE | B2_LEAF_NODE ) )
 
-static inline bool b2IsLeaf( const b2TreeNode* node )
+enum b2TreeLinkFlags
 {
-	return node->flags & b2_leafNode;
+	b2_child2Link = 0x00000001,
+	b2_allocatedLink = 0x00000002,
+	b2_refitLink = 0x00000004,
+};
+
+B2_FORCE_INLINE bool b2IsLeaf( const b2TreeChild* child )
+{
+	return child->flagIndex & B2_LEAF_NODE;
 }
 
-static inline bool b2IsAllocated( const b2TreeNode* node )
+B2_FORCE_INLINE bool b2IsChildMoved( const b2TreeChild* child )
 {
-	return node->flags & b2_allocatedNode;
+	return child->flagIndex & B2_MOVED_NODE;
+}
+
+B2_FORCE_INLINE uint32_t b2GetChildIndex( const b2TreeChild* child )
+{
+	return child->flagIndex & B2_NODE_INDEX_MASK;
+}
+
+B2_FORCE_INLINE bool b2IsAllocated( const b2TreeLink* link )
+{
+	return link->flags & b2_allocatedLink;
+}
+
+B2_FORCE_INLINE b2TreeChild b2MakeEmptyChild( void )
+{
+	return (b2TreeChild){
+		.aabb = { .lowerBound = { .x = INFINITY, .y = INFINITY }, .upperBound = { .x = -INFINITY, .y = -INFINITY } },
+		.flagIndex = B2_NODE_SENTINEL,
+		.leafCount = 0,
+		.categoryBits = 0,
+	};
+}
+
+#include <xmmintrin.h>
+B2_FORCE_INLINE bool b2OverlapsV(b2AABB a, b2AABB b)
+{
+	__m128 av = _mm_loadu_ps( &a.lowerBound.x );
+	__m128 bv = _mm_loadu_ps( &b.lowerBound.x );
+
+	// [alx aly blx bly]
+	__m128 t1 = _mm_movelh_ps( av, bv );
+
+	// [bux buy aux auy]
+	__m128 t2 = _mm_movehl_ps( av, bv );
+
+	__m128 cmp = _mm_cmple_ps( t1, t2 );
+
+	int m = _mm_movemask_ps( cmp );
+	return m == 0xF;
 }
 
 void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId );
