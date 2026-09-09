@@ -38,7 +38,7 @@ B2_FORCE_INLINE int b2GetChildSlot( const b2TreeLink* link )
 
 B2_FORCE_INLINE bool b2IsAllocated( const b2TreeLink* link )
 {
-	return link->flags & b2_allocatedLink;
+	return (link->flags & B2_ALLOCATED_BIT) == B2_ALLOCATED_BIT;
 }
 
 B2_FORCE_INLINE b2TreeChild b2MakeEmptyChild( void )
