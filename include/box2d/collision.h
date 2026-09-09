@@ -893,7 +893,7 @@ typedef float b2TreeBoxCastCallbackFcn( const b2BoxCastInput* input, int proxyId
 B2_API b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
 										  b2TreeBoxCastCallbackFcn* callback, void* context );
 
-/// Get the height of the binary tree.
+/// Get the height of the binary tree. Expensive.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 
 /// Get the ratio of the sum of the node areas to the root area.

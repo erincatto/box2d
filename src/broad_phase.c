@@ -95,17 +95,6 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb, b2_enlargedNode );
 }
 
-void b2BroadPhase_EnlargeProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
-{
-	B2_ASSERT( proxyKey != B2_NULL_INDEX );
-	int typeIndex = B2_PROXY_TYPE( proxyKey );
-	int proxyId = B2_PROXY_ID( proxyKey );
-
-	B2_ASSERT( typeIndex != b2_staticBody );
-
-	b2DynamicTree_EnlargeProxy( bp->trees + typeIndex, proxyId, aabb );
-}
-
 // Gather internal nodes that have moved. This is done serially but
 // it is cache friendly and fast.
 static int b2GatherMovedInternalNodes( const b2DynamicTree* tree, int* nodeIndices )

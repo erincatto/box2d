@@ -20,12 +20,12 @@ enum b2TreeLinkFlags
 
 B2_FORCE_INLINE bool b2IsLeaf( const b2TreeChild* child )
 {
-	return (child->flagIndex & B2_LEAF_NODE) == B2_LEAF_NODE;
+	return ( child->flagIndex & B2_LEAF_NODE ) == B2_LEAF_NODE;
 }
 
 B2_FORCE_INLINE bool b2IsChildMoved( const b2TreeChild* child )
 {
-	return (child->flagIndex & B2_MOVED_NODE) == B2_MOVED_NODE;
+	return ( child->flagIndex & B2_MOVED_NODE ) == B2_MOVED_NODE;
 }
 
 B2_FORCE_INLINE uint32_t b2GetChildIndex( const b2TreeChild* child )
@@ -33,7 +33,7 @@ B2_FORCE_INLINE uint32_t b2GetChildIndex( const b2TreeChild* child )
 	return child->flagIndex & B2_NODE_INDEX_MASK;
 }
 
-B2_FORCE_INLINE int b2GetChildSlot(const b2TreeLink* link )
+B2_FORCE_INLINE int b2GetChildSlot( const b2TreeLink* link )
 {
 	return ( link->flags & b2_child2Link ) ? 1 : 0;
 }
@@ -54,8 +54,10 @@ B2_FORCE_INLINE b2TreeChild b2MakeEmptyChild( void )
 }
 
 #include <xmmintrin.h>
-B2_FORCE_INLINE bool b2OverlapsV(b2AABB a, b2AABB b)
+B2_FORCE_INLINE bool b2OverlapsV( b2AABB a, b2AABB b )
 {
+	// Unaligned load
+	// [lower.x lower.y upper.x upper.y]
 	__m128 av = _mm_loadu_ps( &a.lowerBound.x );
 	__m128 bv = _mm_loadu_ps( &b.lowerBound.x );
 
@@ -69,6 +71,18 @@ B2_FORCE_INLINE bool b2OverlapsV(b2AABB a, b2AABB b)
 
 	int m = _mm_movemask_ps( cmp );
 	return m == 0xF;
+}
+
+B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
+{
+	__m128 b1 = _mm_load_ps( &a.lowerBound.x );
+	__m128 b2 = _mm_load_ps( &b.lowerBound.x );
+	__m128 lower = _mm_min_ps( b1, b2 );
+	__m128 upper = _mm_max_ps( b1, b2 );
+	__m128 c = _mm_shuffle_ps( lower, upper, _MM_SHUFFLE( 3, 2, 1, 0 ) );
+	b2AABB result = { 0 };
+	_mm_store_ps( &result.lowerBound.x, c );
+	return result;
 }
 
 void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId );
