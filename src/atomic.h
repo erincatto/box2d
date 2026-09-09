@@ -141,6 +141,17 @@ static inline uint32_t b2AtomicLoadU32Raw( uint32_t* a )
 #endif
 }
 
+static inline uint32_t b2AtomicFetchOrU32( uint32_t* a, uint32_t mask )
+{
+#if defined( _MSC_VER )
+	return (uint32_t)_InterlockedOr( (long*)a, (long)mask );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_or( a, mask, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline int64_t b2AtomicFetchAddI64( b2AtomicI64* a, int64_t increment )
 {
 #if defined( _MSC_VER )

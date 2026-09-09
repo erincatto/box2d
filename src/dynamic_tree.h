@@ -10,13 +10,11 @@
 #define B2_MOVED_NODE ( 1u << 30 )
 #define B2_LEAF_NODE ( 1u << 31 )
 #define B2_NODE_INDEX_MASK ( 0xFFFFFFFFu & ~( B2_MOVED_NODE | B2_LEAF_NODE ) )
+#define B2_ROOT_NODE 0
 
-enum b2TreeLinkFlags
-{
-	b2_child2Link = 0x00000001,
-	b2_allocatedLink = 0x00000002,
-	b2_refitLink = 0x00000004,
-};
+#define B2_SLOT_BIT 0x00000001u
+#define B2_ALLOCATED_BIT 0x00000002u
+#define B2_REFIT_BIT 0x00000004u
 
 B2_FORCE_INLINE bool b2IsLeaf( const b2TreeChild* child )
 {
@@ -35,7 +33,7 @@ B2_FORCE_INLINE uint32_t b2GetChildIndex( const b2TreeChild* child )
 
 B2_FORCE_INLINE int b2GetChildSlot( const b2TreeLink* link )
 {
-	return ( link->flags & b2_child2Link ) ? 1 : 0;
+	return link->flags & B2_SLOT_BIT;
 }
 
 B2_FORCE_INLINE bool b2IsAllocated( const b2TreeLink* link )
@@ -49,7 +47,6 @@ B2_FORCE_INLINE b2TreeChild b2MakeEmptyChild( void )
 		.aabb = { .lowerBound = { .x = INFINITY, .y = INFINITY }, .upperBound = { .x = -INFINITY, .y = -INFINITY } },
 		.flagIndex = B2_NODE_SENTINEL,
 		.leafCount = 0,
-		.categoryBits = 0,
 	};
 }
 
@@ -75,13 +72,15 @@ B2_FORCE_INLINE bool b2OverlapsV( b2AABB a, b2AABB b )
 
 B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 {
-	__m128 b1 = _mm_load_ps( &a.lowerBound.x );
-	__m128 b2 = _mm_load_ps( &b.lowerBound.x );
+	// Unaligned load
+	// [lower.x lower.y upper.x upper.y]
+	__m128 b1 = _mm_loadu_ps( &a.lowerBound.x );
+	__m128 b2 = _mm_loadu_ps( &b.lowerBound.x );
 	__m128 lower = _mm_min_ps( b1, b2 );
 	__m128 upper = _mm_max_ps( b1, b2 );
 	__m128 c = _mm_shuffle_ps( lower, upper, _MM_SHUFFLE( 3, 2, 1, 0 ) );
 	b2AABB result = { 0 };
-	_mm_store_ps( &result.lowerBound.x, c );
+	_mm_storeu_ps( &result.lowerBound.x, c );
 	return result;
 }
 

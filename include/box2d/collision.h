@@ -753,9 +753,6 @@ typedef struct b2DynamicTree
 	/// Proxy data split from node array as cold data.
 	b2TreeProxy* proxies;
 
-	/// The root index
-	int32_t root;
-
 	/// The number of nodes
 	int32_t nodeCount;
 
