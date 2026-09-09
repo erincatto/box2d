@@ -673,11 +673,14 @@ B2_API b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* se
  * @{
  */
 
-/// A node child. 32 bytes for performance.
+/// A node child.
 typedef struct
 {
 	/// The node bounding box
 	b2AABB aabb;
+
+	/// In 3D this is the z components
+	uint64_t padding;
 
 	/// bit 31 : 1 for leaf node
 	/// bit 30 : 1 for moved flag
@@ -693,12 +696,10 @@ typedef struct
 		uint32_t truncatedUserData;
 	};
 
-	/// Category bits for collision filtering.
-	uint64_t categoryBits;
 } b2TreeChild;
 
 /// An internal node in the dynamic tree.
-/// 64 bytes.
+/// 64 bytes to fit a cache line.
 typedef struct b2TreeNode
 {
 	/// Left and right child.
@@ -726,6 +727,9 @@ typedef struct b2TreeProxy
 {
 	/// Same link used for internal nodes also needed for proxies.
 	b2TreeLink link;
+
+	/// Category bits for collision filtering.
+	uint64_t categoryBits;
 
 	/// User data is an index instead of void* because it is used internally as a shape index.
 	uint64_t userData;

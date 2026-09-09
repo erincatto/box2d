@@ -17,7 +17,7 @@
 _Static_assert( sizeof( b2TreeChild ) == 32, "expected size" );
 _Static_assert( sizeof( b2TreeNode ) == 64, "expected size" );
 _Static_assert( sizeof( b2TreeLink ) == 8, "expected size" );
-_Static_assert( sizeof( b2TreeProxy ) == 16, "expected size" );
+_Static_assert( sizeof( b2TreeProxy ) == 24, "expected size" );
 
 // static b2TreeNode b2_defaultTreeNode = {
 //	.aabb = { { 0.0f, 0.0f }, { 0.0f, 0.0f } },
@@ -239,18 +239,16 @@ static inline b2TreeChild b2MakeInternalChild( const b2TreeNode* node, int nodeI
 	child.aabb = b2AABB_Union( c1->aabb, c2->aabb );
 	child.flagIndex = (uint32_t)nodeIndex | ( ( c1->flagIndex | c2->flagIndex ) & B2_MOVED_NODE );
 	child.leafCount = b2GetLeafCount( c1 ) + b2GetLeafCount( c2 );
-	child.categoryBits = c1->categoryBits | c2->categoryBits;
 	return child;
 }
 
 // Given a proxy, make a child that goes in the parent.
-static inline b2TreeChild b2MakeLeafChild( b2AABB aabb, int proxyId, uint64_t userData, uint64_t categoryBits, bool moved )
+static inline b2TreeChild b2MakeLeafChild( b2AABB aabb, int proxyId, uint64_t userData, bool moved )
 {
 	b2TreeChild child = { 0 };
 	child.aabb = aabb;
 	child.flagIndex = (uint32_t)proxyId | B2_LEAF_NODE | ( moved ? B2_MOVED_NODE : 0 );
 	child.truncatedUserData = (uint32_t)userData;
-	child.categoryBits = categoryBits;
 	return child;
 }
 
@@ -546,12 +544,12 @@ static void b2RotateNodes( b2DynamicTree* tree, int iA )
 	}
 }
 
-static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, uint64_t categoryBits, bool moved, bool shouldRotate )
+static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, bool moved, bool shouldRotate )
 {
 	tree->dfsOrdered = false;
 
 	b2TreeProxy* proxy = tree->proxies + leaf;
-	b2TreeChild leafChild = b2MakeLeafChild( aabb, leaf, proxy->userData, categoryBits, moved );
+	b2TreeChild leafChild = b2MakeLeafChild( aabb, leaf, proxy->userData, moved );
 
 	// Stage 1: check for an empty slot in the root
 	{
@@ -621,6 +619,8 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int leaf )
 {
 	b2TreeNode* nodes = tree->nodes;
 	b2TreeProxy* proxy = tree->proxies + leaf;
+	B2_ASSERT( b2IsAllocated( &proxy->link ) );
+
 	int parent = proxy->link.parent;
 	int slot = b2GetChildSlot( &proxy->link );
 	b2TreeChild* sibling = nodes[parent].children + ( slot ^ 1 );
@@ -672,18 +672,18 @@ int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t catego
 	int proxyId = b2AllocateProxy( tree );
 
 	b2TreeProxy* proxy = tree->proxies + proxyId;
+	proxy->categoryBits = categoryBits;
 	proxy->userData = userData;
 
 	bool shouldRotate = true;
-	b2InsertLeaf( tree, aabb, proxyId, categoryBits, markMoved, shouldRotate );
+	b2InsertLeaf( tree, aabb, proxyId, markMoved, shouldRotate );
 
 	return proxyId;
 }
 
 void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId )
 {
-	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
-	B2_ASSERT( b2IsLeaf( tree->nodes + proxyId ) );
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
 
 	b2RemoveLeaf( tree, proxyId );
 	b2FreeNode( tree, proxyId );
@@ -702,41 +702,46 @@ void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, boo
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
 	B2_VALIDATE( aabb.upperBound.x - aabb.lowerBound.x < B2_HUGE );
 	B2_VALIDATE( aabb.upperBound.y - aabb.lowerBound.y < B2_HUGE );
-	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
-
-	const b2TreeProxy* proxy = tree->proxies + proxyId;
-	const b2TreeNode* node = tree->nodes + proxy->link.parent;
-	int slot = b2GetChildSlot( &proxy->link );
-	uint64_t categoryBits = node->children[slot].categoryBits;
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
 
 	b2RemoveLeaf( tree, proxyId );
 
 	bool shouldRotate = false;
-	b2InsertLeaf( tree, aabb, proxyId, categoryBits, markMoved, shouldRotate );
+	b2InsertLeaf( tree, aabb, proxyId, markMoved, shouldRotate );
 }
 
 void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 {
-	b2TreeNode* nodes = tree->nodes;
-
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
 	B2_VALIDATE( aabb.upperBound.x - aabb.lowerBound.x < B2_HUGE );
 	B2_VALIDATE( aabb.upperBound.y - aabb.lowerBound.y < B2_HUGE );
-	B2_ASSERT( 0 <= proxyId && proxyId < tree->nodeCapacity );
-	B2_ASSERT( b2IsLeaf( tree->nodes + proxyId ) );
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
+
+	b2TreeProxy* proxy = tree->proxies + proxyId;
+
+	int nodeIndex = proxy->link.parent;
+	int slotIndex = b2GetChildSlot( &proxy->link );
+
+	b2TreeNode* nodes = tree->nodes;
+	b2TreeChild* child = tree->nodes[nodeIndex].children + slotIndex;
+
+	B2_ASSERT( b2IsLeaf( child ) );
 
 	// Caller must ensure this
-	B2_VALIDATE( b2AABB_Contains( nodes[proxyId].aabb, aabb ) == false );
+	B2_VALIDATE( b2AABB_Contains( child->aabb, aabb ) == false );
 
-	nodes[proxyId].aabb = aabb;
-	nodes[proxyId].flags |= b2_enlargedNode;
+	child->aabb = aabb;
+	child->flagIndex |= B2_MOVED_NODE;
 
-	int parentIndex = nodes[proxyId].parent;
+	const b2TreeLink* links = tree->links;
+
+	int parentIndex = links[nodeIndex].parent;
 	while ( parentIndex != B2_NULL_INDEX )
 	{
-		bool changed = b2EnlargeAABB( &nodes[parentIndex].aabb, aabb );
-		nodes[parentIndex].flags |= b2_enlargedNode;
-		parentIndex = nodes[parentIndex].parent;
+		slotIndex = b2GetChildSlot( links + parentIndex );
+		bool changed = b2EnlargeAABB( &nodes[parentIndex].children[slotIndex].aabb, aabb );
+		nodes[parentIndex].children[slotIndex].flagIndex |= B2_MOVED_NODE;
+		parentIndex = links[parentIndex].parent;
 
 		if ( changed == false )
 		{
@@ -746,18 +751,19 @@ void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 
 	while ( parentIndex != B2_NULL_INDEX )
 	{
-		if ( nodes[parentIndex].flags & b2_enlargedNode )
+		slotIndex = b2GetChildSlot( links + parentIndex );
+		if ( nodes[parentIndex].children[slotIndex].flagIndex & B2_MOVED_NODE )
 		{
-			// early out because this ancestor was previously ascended and marked as enlarged
+			// early out because this ancestor was previously ascended and marked as moved
 			break;
 		}
 
-		nodes[parentIndex].flags |= b2_enlargedNode;
-		parentIndex = nodes[parentIndex].parent;
+		nodes[parentIndex].children[slotIndex].flagIndex |= B2_MOVED_NODE;
+		parentIndex = links[parentIndex].parent;
 	}
 }
 
-static inline b2TreeChild* b2GetProxyNode(b2DynamicTree* tree, int proxyId)
+static inline b2TreeChild* b2GetProxyChild( b2DynamicTree* tree, int proxyId )
 {
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
 
@@ -773,49 +779,13 @@ static inline b2TreeChild* b2GetProxyNode(b2DynamicTree* tree, int proxyId)
 void b2DynamicTree_SetCategoryBits( b2DynamicTree* tree, int proxyId, uint64_t categoryBits )
 {
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
-
-	b2TreeProxy* proxy = tree->proxies + proxyId;
-	B2_ASSERT( b2IsAllocated( &proxy->link ) );
-	int slot = b2GetChildSlot( &proxy->link );
-	int parentIndex = proxy->link.parent;
-
-	b2TreeNode* nodes = tree->nodes;
-
-	b2TreeNode* parent = nodes + parentIndex;
-	B2_ASSERT( b2IsLeaf( parent->children + slot ) );
-	parent->children[slot].categoryBits = categoryBits;
-
-	const b2TreeLink* links = tree->links;
-
-	// Fix up category bits in ancestor internal nodes
-	int nodeIndex = parentIndex;
-	while ( nodeIndex != 0 )
-	{
-		const b2TreeLink* link = links + nodeIndex;
-		slot = b2GetChildSlot( link );
-		b2TreeNode* node = nodes + link->parent;
-
-		const b2TreeChild* c1 = nodes[nodeIndex].children + 0;
-		const b2TreeChild* c2 = nodes[nodeIndex].children + 1;
-		b2TreeChild* c = node->children + slot;
-		c->categoryBits = c1->categoryBits | c2->categoryBits;
-
-		nodeIndex = link->parent;
-	}
+	tree->proxies[proxyId].categoryBits = categoryBits;
 }
 
 uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId )
 {
-	b2TreeProxy* proxy = tree->proxies + proxyId;
-	B2_ASSERT( b2IsAllocated( &proxy->link ) );
-	int slot = b2GetChildSlot( &proxy->link );
-	int parentIndex = proxy->link.parent;
-
-	b2TreeNode* nodes = tree->nodes;
-
-	b2TreeNode* parent = nodes + parentIndex;
-	B2_ASSERT( b2IsLeaf( parent->children + slot ) );
-	return parent->children[slot].categoryBits;
+	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
+	return tree->proxies[proxyId].categoryBits;
 }
 
 static int b2ComputeHeight( const b2DynamicTree* tree, int nodeId )
@@ -866,18 +836,41 @@ float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree )
 	}
 
 	const b2TreeNode* root = tree->nodes + tree->root;
-	float rootArea = b2Perimeter( root->aabb );
+	b2AABB aabb = b2UnionV( root->children[0].aabb, root->children[1].aabb );
+	float rootArea = b2Perimeter( aabb );
+
+	B2_ASSERT( tree->root == 0 );
 
 	float totalArea = 0.0f;
-	for ( int i = 0; i < tree->nodeCapacity; ++i )
+	for ( int i = 1; i < tree->nodeCapacity; ++i )
 	{
 		const b2TreeNode* node = tree->nodes + i;
-		if ( b2IsAllocated( node ) == false || b2IsLeaf( node ) || i == tree->root )
+		if ( b2IsAllocated( tree->links + i ) == false )
 		{
 			continue;
 		}
 
-		totalArea += b2Perimeter( node->aabb );
+		bool leaf1 = b2IsLeaf( node->children + 0 );
+		bool leaf2 = b2IsLeaf( node->children + 1 );
+		if ( leaf1 && leaf2 )
+		{
+			continue;
+		}
+
+		if ( leaf1 )
+		{
+			aabb = node->children[1].aabb;
+		}
+		else if ( leaf2 )
+		{
+			aabb = node->children[0].aabb;
+		}
+		else
+		{
+			aabb = b2UnionV( node->children[0].aabb, node->children[1].aabb );
+		}
+
+		totalArea += b2Perimeter( aabb );
 	}
 
 	return totalArea / rootArea;
@@ -991,7 +984,6 @@ static void b2ValidateSubtree( const b2DynamicTree* tree, int index )
 		B2_ASSERT( selfMoved == moved1 || moved2 );
 		B2_ASSERT( b2AABB_Contains( self->aabb, c1->aabb ) );
 		B2_ASSERT( b2AABB_Contains( self->aabb, c2->aabb ) );
-		B2_ASSERT( self->categoryBits == c1->categoryBits | c2->categoryBits );
 
 		b2ValidateSubtree( tree, b2GetChildIndex( c2 ) );
 		b2ValidateSubtree( tree, b2GetChildIndex( c2 ) );
@@ -1114,19 +1106,22 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			if ( b2OverlapsV( node->children[i].aabb, aabb ) && ( node->children[i].categoryBits & maskBits ) != 0 )
+			if ( b2OverlapsV( node->children[i].aabb, aabb ) )
 			{
 				if ( b2IsLeaf( node->children + i ) )
 				{
 					// callback to user code with proxy id
 					int proxyId = b2GetChildIndex( node->children + i );
 					const b2TreeProxy* proxy = tree->proxies + proxyId;
-					bool proceed = callback( proxyId, proxy->userData, context );
-					result.leafVisits += 1;
-
-					if ( proceed == false )
+					if ( proxy->categoryBits & maskBits )
 					{
-						return result;
+						bool proceed = callback( proxyId, proxy->userData, context );
+						result.leafVisits += 1;
+
+						if ( proceed == false )
+						{
+							return result;
+						}
 					}
 				}
 				else
@@ -1207,7 +1202,7 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 {
 	b2TreeStats result = { 0 };
 
-	if ( tree->nodeCount == 0 )
+	if ( tree->proxyCount == 0 )
 	{
 		return result;
 	}
@@ -1241,80 +1236,84 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 
 	while ( stackCount > 0 )
 	{
-		int nodeId = stack[--stackCount];
-		if ( nodeId == B2_NULL_INDEX )
-		{
-			// todo is this possible?
-			B2_ASSERT( false );
-			continue;
-		}
+		int nodeIndex = stack[--stackCount];
 
-		const b2TreeNode* node = nodes + nodeId;
+		const b2TreeNode* node = nodes + nodeIndex;
 		result.nodeVisits += 1;
 
-		b2AABB nodeAABB = node->aabb;
+		const b2TreeChild* children[2];
+		children[0] = node->children + 0;
+		children[1] = node->children + 1;
 
-		if ( ( node->categoryBits & maskBits ) == 0 || b2AABB_Overlaps( nodeAABB, segmentAABB ) == false )
+		b2Vec2 center1 = b2AABB_Center( children[0]->aabb );
+		b2Vec2 center2 = b2AABB_Center( children[1]->aabb );
+
+		if ( b2DistanceSquared( center2, p1 ) < b2DistanceSquared( center1, p1 ) )
 		{
-			continue;
+			B2_SWAP( children[0], children[1] );
 		}
 
-		// Separating axis for segment (Gino, p80).
-		// |dot(v, p1 - c)| > dot(|v|, h)
-		// radius extension is added to the node in this case
-		b2Vec2 c = b2AABB_Center( nodeAABB );
-		b2Vec2 h = b2AABB_Extents( nodeAABB );
-		float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
-		float term2 = b2Dot( abs_v, h );
-		if ( term2 < term1 )
+		for ( int i = 0; i < 2; ++i )
 		{
-			continue;
-		}
+			const b2TreeChild* child = children[i];
 
-		if ( b2IsLeaf( node ) )
-		{
-			subInput.maxFraction = maxFraction;
-
-			float value = callback( &subInput, nodeId, node->userData, context );
-			result.leafVisits += 1;
-
-			// The user may return -1 to indicate this shape should be skipped
-
-			if ( value == 0.0f )
+			b2AABB nodeAABB = child->aabb;
+			if ( b2OverlapsV( nodeAABB, segmentAABB ) == false )
 			{
-				// The client has terminated the ray cast.
-				return result;
+				continue;
 			}
 
-			if ( 0.0f < value && value <= maxFraction )
+			// Separating axis for segment (Gino, p80).
+			// |dot(v, p1 - c)| > dot(|v|, h)
+			b2Vec2 c = b2AABB_Center( nodeAABB );
+			b2Vec2 h = b2AABB_Extents( nodeAABB );
+			float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
+			float term2 = b2Dot( abs_v, h );
+			if ( term2 < term1 )
 			{
-				// Update segment bounding box.
-				maxFraction = value;
-				p2 = b2MulAdd( p1, maxFraction, d );
-				segmentAABB.lowerBound = b2Min( p1, p2 );
-				segmentAABB.upperBound = b2Max( p1, p2 );
+				continue;
 			}
-		}
-		else
-		{
-			if ( stackCount < B2_TREE_STACK_SIZE - 1 )
+
+			if ( b2IsLeaf( child ) )
 			{
-				b2Vec2 c1 = b2AABB_Center( nodes[node->children.child1].aabb );
-				b2Vec2 c2 = b2AABB_Center( nodes[node->children.child2].aabb );
-				if ( b2DistanceSquared( c1, p1 ) < b2DistanceSquared( c2, p1 ) )
+				int proxyId = b2GetChildIndex( child );
+				const b2TreeProxy* proxy = tree->proxies + proxyId;
+				result.leafVisits += 1;
+
+				if ( proxy->categoryBits & maskBits )
 				{
-					stack[stackCount++] = node->children.child2;
-					stack[stackCount++] = node->children.child1;
-				}
-				else
-				{
-					stack[stackCount++] = node->children.child1;
-					stack[stackCount++] = node->children.child2;
+					subInput.maxFraction = maxFraction;
+
+					float value = callback( &subInput, proxyId, proxy->userData, context );
+
+					// The user may return -1 to indicate this shape should be skipped
+
+					if ( value == 0.0f )
+					{
+						// The client has terminated the ray cast.
+						return result;
+					}
+
+					if ( 0.0f < value && value <= maxFraction )
+					{
+						// Update segment bounding box.
+						maxFraction = value;
+						p2 = b2MulAdd( p1, maxFraction, d );
+						segmentAABB.lowerBound = b2Min( p1, p2 );
+						segmentAABB.upperBound = b2Max( p1, p2 );
+					}
 				}
 			}
 			else
 			{
-				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
+				{
+					stack[stackCount++] = b2GetChildIndex( child );
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				}
 			}
 		}
 	}
