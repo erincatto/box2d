@@ -674,7 +674,8 @@ B2_API b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* se
  */
 
 /// A node child.
-typedef struct
+/// todo consider b2TreeSlot or b2NodeSlot or b2TreeNodeSlot
+typedef struct b2TreeChild
 {
 	/// The node bounding box
 	b2AABB aabb;

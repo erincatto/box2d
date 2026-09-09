@@ -130,6 +130,17 @@ static inline uint32_t b2AtomicLoadU32( b2AtomicU32* a )
 #endif
 }
 
+static inline uint32_t b2AtomicLoadU32Raw( uint32_t* a )
+{
+#if defined( _MSC_VER ) && !defined( __clang__ )
+	return (uint32_t)__iso_volatile_load32( (volatile __int32*)a );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( a, __ATOMIC_RELAXED );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline int64_t b2AtomicFetchAddI64( b2AtomicI64* a, int64_t increment )
 {
 #if defined( _MSC_VER )

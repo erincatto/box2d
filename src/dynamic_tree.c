@@ -2015,46 +2015,66 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 
 void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId )
 {
+	B2_VALIDATE( 0 <= proxyId && proxyId < tree->proxyCapacity );
+	b2TreeProxy* proxy = tree->proxies + proxyId;
+	B2_VALIDATE( b2IsAllocated( &proxy->link ) );
+
+	int nodeIndex = proxy->link.parent;
+	int slotIndex = b2GetChildSlot( &proxy->link );
+
 	b2TreeNode* nodes = tree->nodes;
-	B2_VALIDATE( b2IsLeaf( nodes + proxyId ) );
+	B2_VALIDATE( b2IsLeaf( nodes[nodeIndex].children + slotIndex ) );
 
-	nodes[proxyId].flags |= b2_enlargedNode;
-
-	int index = nodes[proxyId].parent;
-	while ( index != B2_NULL_INDEX )
+	b2TreeLink* links = tree->links;
+	while ( nodeIndex != B2_NULL_INDEX )
 	{
-		nodes[index].flags |= b2_enlargedNode;
-		index = nodes[index].parent;
+		nodes[nodeIndex].children[slotIndex].flagIndex |= B2_MOVED_NODE;
+		slotIndex = b2GetChildSlot( links + nodeIndex );
+		nodeIndex = links[nodeIndex].parent;
 	}
 }
 
 void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 {
-	b2TreeNode* nodes = tree->nodes;
-	B2_VALIDATE( b2IsLeaf( nodes + proxyId ) );
-	B2_VALIDATE( b2AABB_Contains( nodes[proxyId].aabb, aabb ) == false );
+	B2_VALIDATE( 0 <= proxyId && proxyId < tree->proxyCapacity );
+	b2TreeProxy* proxy = tree->proxies + proxyId;
+	B2_VALIDATE( b2IsAllocated( &proxy->link ) );
 
-	nodes[proxyId].aabb = aabb;
+	int slotIndex = b2GetChildSlot( &proxy->link );
+	int nodeIndex = proxy->link.parent;
+
+	b2TreeNode* nodes = tree->nodes;
+	b2TreeChild* child = nodes[nodeIndex].children + slotIndex;
+	B2_VALIDATE( b2IsLeaf( child ) );
+	B2_VALIDATE( b2AABB_Contains( child->aabb, aabb ) == false );
 
 	// This is not raced since it is the leaf.
-	nodes[proxyId].flags |= b2_enlargedNode;
+	child->aabb = aabb;
+	child->flagIndex |= B2_MOVED_NODE;
 
-	int index = nodes[proxyId].parent;
-	while ( index != B2_NULL_INDEX )
+	b2TreeLink* links = tree->links;
+	slotIndex = b2GetChildSlot( links + nodeIndex );
+	nodeIndex = links[nodeIndex].parent;
+
+	while ( nodeIndex != B2_NULL_INDEX )
 	{
+		child = nodes[nodeIndex].children + slotIndex;
+
 		// Read first to avoid the FetchOr if possible.
-		if ( b2AtomicLoadU16( &nodes[index].flags ) & b2_enlargedNode )
+		if ( b2AtomicLoadU32Raw( &child->flagIndex ) & B2_MOVED_NODE )
 		{
 			break;
 		}
 
-		uint16_t previousFlags = b2AtomicFetchOrU16( &nodes[index].flags, b2_enlargedNode );
-		if ( previousFlags & b2_enlargedNode )
+		uint32_t previousFlags = b2AtomicFetchOrU32( &child->flagIndex, B2_MOVED_NODE );
+		if ( previousFlags & B2_MOVED_NODE )
 		{
 			// Ancestor already visited.
 			break;
 		}
-		index = nodes[index].parent;
+
+		slotIndex = b2GetChildSlot( links + nodeIndex );
+		nodeIndex = links[nodeIndex].parent;
 	}
 }
 
