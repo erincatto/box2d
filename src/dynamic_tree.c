@@ -52,6 +52,9 @@ static int b2AllocateNode( b2DynamicTree* tree )
 		tree->nodes = B2_GROW_ZERO( tree->nodes, oldCapacity, tree->nodeCapacity );
 		tree->links = B2_GROW_ZERO( tree->links, oldCapacity, tree->nodeCapacity );
 
+		b2Free( tree->swapNodes, tree->nodeCapacity * sizeof( b2TreeNode ) );
+		tree->swapNodes = NULL;
+
 		// Build a linked list for the free list. The parent pointer becomes the "next" pointer.
 		for ( int i = tree->nodeCount; i < tree->nodeCapacity - 1; ++i )
 		{
@@ -145,9 +148,9 @@ void b2DynamicTree_Destroy( b2DynamicTree* tree )
 	b2Free( tree->nodes, tree->nodeCapacity * sizeof( b2TreeNode ) );
 	b2Free( tree->links, tree->nodeCapacity * sizeof( b2TreeLink ) );
 	b2Free( tree->proxies, tree->proxyCapacity * sizeof( b2TreeProxy ) );
-
+	b2Free( tree->swapNodes, tree->nodeCapacity * sizeof( b2TreeChild ) );
 	b2Free( tree->leafIndices, tree->rebuildCapacity * sizeof( int32_t ) );
-	b2Free( tree->swapNodes, tree->rebuildCapacity * sizeof( b2TreeChild ) );
+	b2Free( tree->leafChildren, tree->rebuildCapacity * sizeof( b2TreeChild ) );
 	b2Free( tree->leafBoxes, tree->rebuildCapacity * sizeof( b2AABB ) );
 	b2Free( tree->leafCenters, tree->rebuildCapacity * sizeof( b2Vec2 ) );
 	b2Free( tree->binIndices, tree->rebuildCapacity * sizeof( int32_t ) );
@@ -1083,12 +1086,23 @@ void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree )
 
 int b2DynamicTree_GetByteCount( const b2DynamicTree* tree )
 {
-	size_t size = sizeof( b2DynamicTree ) + tree->nodeCapacity * sizeof( b2TreeNode );
+	size_t size = sizeof( b2DynamicTree );
+	size += tree->nodeCapacity * sizeof( b2TreeNode );
 	size += tree->nodeCapacity * sizeof( b2TreeLink );
 	size += tree->proxyCapacity * sizeof( b2TreeProxy );
-	// todo what size?
-	// size += swapNodeCapacity * sizeof(b2TreeNode);
-	size += tree->rebuildCapacity * ( sizeof( int ) + sizeof( b2AABB ) + sizeof( b2Vec2 ) + sizeof( int ) );
+	size += tree->swapNodes == NULL ? 0 : tree->nodeCapacity * sizeof( b2TreeNode );
+
+	// leafIndices
+	size += tree->rebuildCapacity * sizeof( int );
+	// leafChildren
+	size += tree->rebuildCapacity * sizeof( b2TreeChild );
+	// leafBoxes
+	size += tree->rebuildCapacity * sizeof( b2AABB );
+	// leafCenters
+	size += tree->rebuildCapacity * sizeof( b2Vec2 );
+	// binIndices
+	size += tree->rebuildCapacity * sizeof( int );
+
 	return (int)size;
 }
 
@@ -1967,12 +1981,16 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 		return 0;
 	}
 
+	if ( tree->swapNodes == NULL )
+	{
+		tree->swapNodes = b2Alloc( tree->nodeCapacity * sizeof( b2TreeNode ) );
+	}
+
 	if ( proxyCount > tree->rebuildCapacity )
 	{
 		int oldCapacity = tree->rebuildCapacity;
 		int newCapacity = proxyCount + proxyCount / 2;
 
-		tree->swapNodes = B2_GROW( tree->swapNodes, oldCapacity, newCapacity );
 		tree->leafIndices = B2_GROW( tree->leafIndices, oldCapacity, newCapacity );
 		tree->leafChildren = B2_GROW( tree->leafChildren, oldCapacity, newCapacity );
 #if B2_TREE_HEURISTIC == 0

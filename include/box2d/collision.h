@@ -744,9 +744,6 @@ typedef struct b2DynamicTree
 	/// Array of internal nodes.
 	b2TreeNode* nodes;
 
-	/// Array of internal nodes for rebuild.
-	b2TreeNode* swapNodes;
-
 	/// Cold data per internal node.
 	b2TreeLink* links;
 
@@ -770,6 +767,9 @@ typedef struct b2DynamicTree
 
 	/// Proxy free list
 	int32_t proxyFreeList;
+
+	/// Array of internal nodes for rebuild.
+	b2TreeNode* swapNodes;
 
 	/// Leaf indices for rebuild
 	int32_t* leafIndices;
