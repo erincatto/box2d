@@ -789,7 +789,7 @@ typedef struct b2DynamicTree
 	/// Allocated space for rebuilding
 	int32_t rebuildCapacity;
 
-	/// Does this tree have a DFS order?
+	/// Does the node array have hierarchical order (child follows parent)?
 	bool dfsOrdered;
 
 } b2DynamicTree;
@@ -901,7 +901,7 @@ B2_API b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2Box
 /// Get the height of the binary tree. Expensive.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 
-/// Get the ratio of the sum of the node areas to the root area.
+/// Get the ratio of the sum of the internal node areas to the root area.
 B2_API float b2DynamicTree_GetAreaRatio( const b2DynamicTree* tree );
 
 /// Get the bounding box that contains the entire tree
