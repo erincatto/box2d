@@ -1853,8 +1853,7 @@ static void b2PlaceLeaf( b2DynamicTree* tree, b2TreeChild leaf, int parent, int 
 	}
 }
 
-// Returns root node index
-static int b2BuildTree( b2DynamicTree* tree, int leafCount )
+static void b2BuildTree( b2DynamicTree* tree, int leafCount )
 {
 	b2TreeNode* nodes = tree->swapNodes;
 	b2TreeLink* links = tree->links;
@@ -1869,8 +1868,8 @@ static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 #endif
 
 	// Bump allocation into the spare. The root is index zero.
-	tree->nodeCount = 0;
-	int rootIndex = tree->nodeCount++;
+	tree->nodeCount = 1;
+	int rootIndex = B2_ROOT_NODE;
 	links[rootIndex].parent = B2_NULL_INDEX;
 	links[rootIndex].flags = B2_ALLOCATED_BIT;
 
@@ -1878,7 +1877,6 @@ static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 	{
 		b2PlaceLeaf( tree, leaves[leafIndices[0]], rootIndex, 0 );
 		nodes[rootIndex].children[1] = b2MakeEmptyChild();
-		return rootIndex;
 	}
 
 	b2RebuildItem stack[B2_TREE_STACK_SIZE];
@@ -1943,8 +1941,6 @@ static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 		links[newItem->nodeIndex].parent = item->nodeIndex;
 		links[newItem->nodeIndex].flags = B2_ALLOCATED_BIT | ( slot == 0 ? 0 : B2_SLOT_BIT );
 	}
-
-	return rootIndex;
 }
 
 // Rebuild the stale parts of the tree. The entire tree is put into DFS order. This makes
@@ -2034,8 +2030,7 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 
 	B2_ASSERT( 0 < leafCount && leafCount <= proxyCount );
 
-	int rootIndex = b2BuildTree( tree, leafCount );
-	B2_ASSERT( rootIndex == 0 );
+	b2BuildTree( tree, leafCount );
 
 	// The spare is now the tree and the old array is the spare
 	B2_SWAP( tree->nodes, tree->swapNodes );
