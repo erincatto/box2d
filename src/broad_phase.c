@@ -71,9 +71,9 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 {
 	B2_ASSERT( 0 <= proxyType && proxyType < b2_bodyTypeCount );
 
-	uint16_t flags = ( proxyType != b2_staticBody || forcePairCreation ) ? b2_enlargedNode : 0;
+	bool mark = ( proxyType != b2_staticBody || forcePairCreation );
 
-	int proxyId = b2DynamicTree_CreateProxy( bp->trees + proxyType, aabb, categoryBits, shapeIndex, flags );
+	int proxyId = b2DynamicTree_CreateProxy( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
 	int proxyKey = B2_PROXY_KEY( proxyId, proxyType );
 	return proxyKey;
 }
@@ -92,26 +92,22 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
 
-	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb, b2_enlargedNode );
+	bool mark = true;
+	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb, mark );
 }
 
-// Gather internal nodes that have moved. This is done serially but
-// it is cache friendly and fast.
+// Gather internal nodes that have moved. This is done serially but it is cache friendly and fast.
 static int b2GatherMovedInternalNodes( const b2DynamicTree* tree, int* nodeIndices )
 {
 	const b2TreeNode* nodes = tree->nodes;
 	int capacity = tree->nodeCapacity;
 
-	uint16_t mask = b2_allocatedNode | b2_enlargedNode | b2_leafNode;
-	uint16_t movedInternalNode = b2_allocatedNode | b2_enlargedNode;
-
 	int count = 0;
 	for ( int i = 0; i < capacity; ++i )
 	{
-		if ( ( nodes[i].flags & mask ) == movedInternalNode )
+		if ( ( nodes[i].children[0].flagIndex | nodes[i].children[1].flagIndex ) & B2_MOVED_NODE )
 		{
-			nodeIndices[count] = i;
-			count += 1;
+			nodeIndices[count++] = i;
 		}
 	}
 
@@ -135,6 +131,12 @@ typedef struct b2PairContext
 	int workerIndex;
 	int moveIndex;
 } b2PairContext;
+
+typedef struct b2RecordPair
+{
+	b2TreeChild a;
+	b2TreeChild b;
+} b2RecordPair;
 
 typedef struct b2NodePair
 {
@@ -308,6 +310,86 @@ B2_FORCE_INLINE void b2AddPair( int shapeIdA, int shapeIdB, b2PairContext* conte
 	}
 }
 
+// Did either move and if so do they overlap?
+B2_FORCE_INLINE bool b2RecordPairSurvives( const b2TreeChild* a, const b2TreeChild* b )
+{
+	if ( ( ( a->flagIndex | b->flagIndex ) & B2_MOVED_NODE ) == 0 )
+	{
+		return false;
+	}
+
+	return b2OverlapsV( a->aabb, b->aabb );
+}
+
+static void b2CollideProxyAndSubtree( const b2TreeChild* proxy, const b2TreeNode* nodes, int nodeIndex, b2PairContext* context )
+{
+	uint32_t proxyMark = proxy->flagIndex & B2_MOVED_NODE;
+	b2AABB box = proxy->aabb;
+	int shapeId = (int)proxy->truncatedUserData;
+
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = nodeIndex;
+
+	while ( stackCount > 0 )
+	{
+		const b2TreeNode* node = nodes + stack[--stackCount];
+		for ( int i = 0; i < 2; ++i )
+		{
+			const b2TreeChild* child = node->children + i;
+			if ( ( ( child->flagIndex | proxyMark ) & B2_MOVED_NODE ) == 0 )
+			{
+				continue;
+			}
+
+			if ( b2OverlapsV( child->aabb, box ) == false )
+			{
+				continue;
+			}
+
+			if ( b2IsLeaf( child ) )
+			{
+				b2AddPair( shapeId, (int)child->truncatedUserData, context );
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+				stack[stackCount++] = b2GetChildIndex( child );
+			}
+		}
+	}
+}
+
+B2_FORCE_INLINE void b2VisitRecordPair( const b2TreeNode* nodesA, const b2TreeNode* nodesB, const b2TreeChild* a,
+										const b2TreeChild* b, b2NodePair* stack, int* stackCount, b2PairContext* context )
+{
+	if ( b2RecordPairSurvives( a, b ) == false )
+	{
+		return;
+	}
+
+	bool leafA = b2IsLeaf( a );
+	bool leafB = b2IsLeaf( b );
+	if ( leafA && leafB )
+	{
+		b2AddPair( (int)a->truncatedUserData, (int)b->truncatedUserData, context );
+	}
+	else if ( leafA )
+	{
+		b2CollideProxyAndSubtree( a, nodesB, b2GetChildIndex( b ), context );
+	}
+	else if ( leafB )
+	{
+		b2CollideProxyAndSubtree( b, nodesA, b2GetChildIndex( a ), context );
+	}
+	else
+	{
+		B2_ASSERT( *stackCount < B2_TREE_STACK_SIZE );
+		stack[*stackCount] = (b2NodePair){ .a = b2GetChildIndex( a ), .b = b2GetChildIndex( b ) };
+		*stackCount += 1;
+	}
+}
+
 // This collides two sub-trees against each other. They can live in the same dynamic tree.
 // This can only generate pairs cross sub-tree, but not within a sub-tree. This fact means
 // this does not generate duplicate pairs.
@@ -316,50 +398,26 @@ B2_FORCE_INLINE void b2AddPair( int shapeIdA, int shapeIdB, b2PairContext* conte
 // Then colliding children of B can give the pair (D,E) and for C (F,G).
 // So no duplicates even when used for self-collision.
 // See Real-time collision detection section 6.3.2.
-static void b2CollideCrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, int indexA, int indexB, b2PairContext* context )
+static void b2CollideCrossPairs( const b2TreeNode* nodesA, const b2TreeNode* nodesB, const b2TreeChild* a, const b2TreeChild* b,
+								 b2PairContext* context )
 {
 	b2NodePair stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
-	stack[stackCount++] = (b2NodePair){ .a = indexA, .b = indexB };
+
+	b2VisitRecordPair( nodesA, nodesB, a, b, stack, &stackCount, context );
 
 	while ( stackCount > 0 )
 	{
 		b2NodePair pair = stack[--stackCount];
+		const b2TreeNode* nodeA = nodesA + pair.a;
+		const b2TreeNode* nodeB = nodesB + pair.b;
 
-		const b2TreeNode* a = nodesA + pair.a;
-		const b2TreeNode* b = nodesB + pair.b;
-
-		// Any enlarged?
-		if ( ( ( a->flags | b->flags ) & b2_enlargedNode ) == 0 )
+		for ( int i = 0; i < 2; ++i )
 		{
-			continue;
-		}
-
-		if ( b2AABB_Overlaps( a->aabb, b->aabb ) == false )
-		{
-			continue;
-		}
-
-		bool leafA = b2IsLeaf( a );
-		bool leafB = b2IsLeaf( b );
-
-		if ( leafA && leafB )
-		{
-			b2AddPair( (int)a->userData, (int)b->userData, context );
-			continue;
-		}
-
-		// At least one node is internal. If one node is a leaf, then decend into the other
-		// one. If both are internal, then decend into the larger box.
-		if ( leafB || ( leafA == false && b2Perimeter( a->aabb ) > b2Perimeter( b->aabb ) ) )
-		{
-			stack[stackCount++] = (b2NodePair){ .a = a->children.child1, .b = pair.b };
-			stack[stackCount++] = (b2NodePair){ .a = a->children.child2, .b = pair.b };
-		}
-		else
-		{
-			stack[stackCount++] = (b2NodePair){ .a = pair.a, .b = b->children.child1 };
-			stack[stackCount++] = (b2NodePair){ .a = pair.a, .b = b->children.child2 };
+			for ( int j = 0; j < 2; ++j )
+			{
+				b2VisitRecordPair( nodesA, nodesB, nodeA->children + i, nodeB->children + j, stack, &stackCount, context );
+			}
 		}
 	}
 }
@@ -373,17 +431,17 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 	b2BroadPhase* bp = &world->broadPhase;
 	const b2DynamicTree* tree = bp->trees + b2_dynamicBody;
 	const b2TreeNode* nodes = tree->nodes;
-	const int* items = bp->movedNodes;
+	const int* nodeIndices = bp->movedNodes;
 
 	b2PairContext pairContext = { .world = world, .workerIndex = workerIndex };
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
-		const b2TreeNode* node = nodes + items[i];
+		const b2TreeNode* node = nodes + nodeIndices[i];
 		bp->moveResults[i].pairList = NULL;
 		pairContext.moveIndex = i;
 
-		b2CollideCrossPairs( tree->nodes, tree->nodes, node->children.child1, node->children.child2, &pairContext );
+		b2CollideCrossPairs( tree->nodes, tree->nodes, node->children + 0, node->children + 1, &pairContext );
 	}
 
 	b2FlushPairs( &pairContext );
@@ -396,68 +454,62 @@ _Static_assert( ( B2_CROSS_SEED_COUNT & ( B2_CROSS_SEED_COUNT - 1 ) ) == 0, "mus
 
 // This does a serial cross-tree breadth first search until the queue is full. Then returns
 // the queue pairs as seeds for a parallel search.
-static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* treeB, b2NodePair* seeds )
+static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* treeB, b2RecordPair* seeds )
 {
-	if ( treeA->root == B2_NULL_INDEX || treeB->root == B2_NULL_INDEX )
-	{
-		return 0;
-	}
-
 	const b2TreeNode* nodesA = treeA->nodes;
 	const b2TreeNode* nodesB = treeB->nodes;
 
+	const b2TreeNode* rootA = nodesA + B2_ROOT_NODE;
+	const b2TreeNode* rootB = nodesB + B2_ROOT_NODE;
+
 	// Bread-first search
-	b2NodePair queue[2 * B2_CROSS_SEED_COUNT];
+	b2RecordPair queue[2 * B2_CROSS_SEED_COUNT];
 	int mask = 2 * B2_CROSS_SEED_COUNT - 1;
 	int head = 0;
 	int tail = 0;
-	queue[tail & mask] = (b2NodePair){ .a = treeA->root, .b = treeB->root };
-	tail += 1;
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		const b2TreeChild* cA = rootA->children + i;
+		if ( cA->flagIndex != B2_NODE_SENTINEL )
+		{
+			for ( int j = 0; j < 2; ++j )
+			{
+				const b2TreeChild* cB = rootB->children + j;
+				if ( cB->flagIndex != B2_NODE_SENTINEL )
+				{
+					queue[tail & mask] = (b2RecordPair){ .a = *cA, .b = *cB };
+					tail += 1;
+				}
+			}
+		}
+	}
 
 	int seedCount = 0;
-	while ( head < tail && seedCount + ( tail - head ) < B2_CROSS_SEED_COUNT )
+	while ( head < tail && seedCount + ( tail - head ) + 3 < B2_CROSS_SEED_COUNT )
 	{
-		b2NodePair pair = queue[head & mask];
+		b2RecordPair pair = queue[head & mask];
 		head += 1;
 
-		const b2TreeNode* a = nodesA + pair.a;
-		const b2TreeNode* b = nodesB + pair.b;
-
-		// Either moved? This lets static shapes invoke contact generation.
-		if ( ( ( a->flags | b->flags ) & b2_enlargedNode ) == 0 )
+		if ( b2IsLeaf( &pair.a ) || b2IsLeaf( &pair.b ) )
 		{
-			continue;
+			seeds[seedCount++] = pair;
 		}
 
-		if ( b2AABB_Overlaps( a->aabb, b->aabb ) == false )
-		{
-			continue;
-		}
+		const b2TreeNode* a = nodesA + b2GetChildIndex( &pair.a );
+		const b2TreeNode* b = nodesB + b2GetChildIndex( &pair.b );
 
-		bool leafA = b2IsLeaf( a );
-		bool leafB = b2IsLeaf( b );
-
-		if ( leafA && leafB )
+		for ( int i = 0; i < 2; ++i )
 		{
-			seeds[seedCount] = pair;
-			seedCount += 1;
-			continue;
+			for ( int j = 0; j < 2; ++j )
+			{
+				if ( b2RecordPairSurvives( a->children + i, b->children + j ) )
+				{
+					queue[tail & mask] = (b2RecordPair){ a->children[i], b->children[j] };
+					tail += 1;
+				}
+			}
 		}
-
-		// At least one node is internal. If one node is a leaf, then decend into the other
-		// one. If both are internal, then decend into the larger box.
-		if ( leafB || ( leafA == false && b2Perimeter( a->aabb ) > b2Perimeter( b->aabb ) ) )
-		{
-			queue[tail & mask] = (b2NodePair){ .a = a->children.child1, .b = pair.b };
-			queue[( tail + 1 ) & mask] = (b2NodePair){ .a = a->children.child2, .b = pair.b };
-		}
-		else
-		{
-			queue[tail & mask] = (b2NodePair){ .a = pair.a, .b = b->children.child1 };
-			queue[( tail + 1 ) & mask] = (b2NodePair){ .a = pair.a, .b = b->children.child2 };
-		}
-
-		tail += 2;
 	}
 
 	while ( head < tail )
@@ -473,7 +525,7 @@ static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* 
 typedef struct b2CrossContext
 {
 	b2World* world;
-	const b2NodePair* seeds;
+	const b2RecordPair* seeds;
 	int staticSeedCount;
 	int itemBase;
 } b2CrossContext;
@@ -494,11 +546,11 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		const b2TreeNode* nodesB = i < crossContext->staticSeedCount ? staticNodes : kinematicNodes;
-		b2NodePair seed = crossContext->seeds[i];
 		int item = crossContext->itemBase + i;
 		bp->moveResults[item].pairList = NULL;
 		pairContext.moveIndex = item;
-		b2CollideCrossPairs( dynamicNodes, nodesB, seed.a, seed.b, &pairContext );
+		b2RecordPair seed = crossContext->seeds[i];
+		b2CollideCrossPairs( dynamicNodes, nodesB, &seed.a, &seed.b, &pairContext );
 	}
 
 	b2FlushPairs( &pairContext );
@@ -534,27 +586,18 @@ static void b2EnqueueTreeUpdate( b2World* world )
 	}
 }
 
-static inline bool b2HasEnlarged( const b2DynamicTree* tree )
-{
-	if ( tree->root == B2_NULL_INDEX )
-	{
-		return false;
-	}
-
-	return tree->nodes[tree->root].flags & b2_enlargedNode;
-}
-
 void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
-	bool haveEnlarged = b2HasEnlarged( bp->trees + b2_staticBody );
-	haveEnlarged = haveEnlarged || b2HasEnlarged( bp->trees + b2_kinematicBody );
-	haveEnlarged = haveEnlarged || b2HasEnlarged( bp->trees + b2_dynamicBody );
+	bool moved = b2HasTreeMoved( bp->trees + b2_staticBody );
+	moved = moved || b2HasTreeMoved( bp->trees + b2_kinematicBody );
+	moved = moved || b2HasTreeMoved( bp->trees + b2_dynamicBody );
 
-	if ( haveEnlarged == false )
+	if ( moved == false )
 	{
-		// A destroyed shape may lead to no moves, but the tree could still be enlarged.
+		// A destroyed shape may lead to no moves, but the tree could still be moved
+		// todo I think this is no longer true since the move array is gone
 		b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
 		b2EnqueueTreeUpdate( world );
 		return;
@@ -574,7 +617,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		int dynamicMoveCount = b2GatherMovedInternalNodes( dynamicTree, bp->movedNodes );
 
 		// Get seeds for colliding against the static and kinematic trees.
-		b2NodePair crossSeeds[2 * B2_CROSS_SEED_COUNT];
+		b2RecordPair crossSeeds[2 * B2_CROSS_SEED_COUNT];
 		int staticSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_staticBody, crossSeeds );
 		B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
 		int kinematicSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, crossSeeds + staticSeedCount );

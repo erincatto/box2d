@@ -34,6 +34,8 @@ static int b2AllocateNode( b2DynamicTree* tree )
 		tree->nodes = B2_GROW_ZERO( tree->nodes, oldCapacity, tree->nodeCapacity );
 		tree->links = B2_GROW_ZERO( tree->links, oldCapacity, tree->nodeCapacity );
 
+		// Might as well free this because it will have to grow later in the rebuild.
+		// However if this tree never rebuilds it will be NULL and free will early return.
 		b2Free( tree->swapNodes, oldCapacity * sizeof( b2TreeNode ) );
 		tree->swapNodes = NULL;
 
@@ -121,6 +123,7 @@ b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 	B2_ASSERT( root == B2_ROOT_NODE );
 	tree.nodes[root].children[0] = b2MakeEmptyChild();
 	tree.nodes[root].children[1] = b2MakeEmptyChild();
+	tree.links[root].parent = B2_NULL_INDEX;
 
 	return tree;
 }
@@ -2198,14 +2201,12 @@ void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree )
 
 void b2DynamicTree_Refit( b2DynamicTree* tree )
 {
-	B2_ASSERT( tree->dfsNodeCount > 0 );
-	b2TreeNode* nodes = tree->nodes;
-
-	const b2TreeNode* root = nodes + B2_ROOT_NODE;
-	if ( b2IsChildMoved( root->children + 0 ) == false && b2IsChildMoved( root->children + 1 ) == false )
+	if ( b2HasTreeMoved( tree ) == false )
 	{
 		return;
 	}
+
+	b2TreeNode* nodes = tree->nodes;
 
 	const b2TreeLink* links = tree->links;
 

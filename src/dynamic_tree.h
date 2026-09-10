@@ -50,6 +50,12 @@ B2_FORCE_INLINE b2TreeChild b2MakeEmptyChild( void )
 	};
 }
 
+static inline bool b2HasTreeMoved( const b2DynamicTree* tree )
+{
+	const b2TreeNode* root = tree->nodes + B2_ROOT_NODE;
+	return b2IsChildMoved( root->children + 0 ) || b2IsChildMoved( root->children + 1 );
+}
+
 #include <xmmintrin.h>
 B2_FORCE_INLINE bool b2OverlapsV( b2AABB a, b2AABB b )
 {

@@ -557,7 +557,7 @@ public:
 					p->fatBox.lowerBound = b2Sub( p->box.lowerBound, aabbMargin );
 					p->fatBox.upperBound = b2Add( p->box.upperBound, aabbMargin );
 
-					p->proxyId = b2DynamicTree_CreateProxy( &m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount, 0 );
+					p->proxyId = b2DynamicTree_CreateProxy( &m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount, false );
 					p->rayStamp = -1;
 					p->queryStamp = -1;
 					p->moved = false;

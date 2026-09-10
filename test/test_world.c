@@ -3,6 +3,7 @@
 
 #include "test_macros.h"
 #include "benchmarks.h"
+#include "dynamic_tree.h"
 #include "physics_world.h"
 
 #include "box2d/box2d.h"
@@ -652,16 +653,20 @@ static int SetBulletDriftTest( void )
 	return 0;
 }
 
+// Marks live in the child records, so this counts marked records over every allocated node
 static int CountEnlargedNodes( const b2DynamicTree* tree )
 {
 	int count = 0;
 	for ( int i = 0; i < tree->nodeCapacity; ++i )
 	{
-		const b2TreeNode* node = tree->nodes + i;
-		if ( ( node->flags & b2_allocatedNode ) != 0 && ( node->flags & b2_enlargedNode ) != 0 )
+		if ( b2IsAllocated( tree->links + i ) == false )
 		{
-			count += 1;
+			continue;
 		}
+
+		const b2TreeNode* node = tree->nodes + i;
+		count += b2IsChildMoved( node->children + 0 ) ? 1 : 0;
+		count += b2IsChildMoved( node->children + 1 ) ? 1 : 0;
 	}
 
 	return count;

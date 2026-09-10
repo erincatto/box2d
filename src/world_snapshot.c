@@ -31,7 +31,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 5u // new pair finder
+#define B2_SNAP_VERSION 6u // tree records
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -66,6 +66,9 @@ static uint32_t b2ComputeLayoutHash( void )
 	MIX( sizeof( b2GraphColor ) )
 	MIX( sizeof( b2DynamicTree ) )
 	MIX( sizeof( b2TreeNode ) )
+	MIX( sizeof( b2TreeChild ) )
+	MIX( sizeof( b2TreeLink ) )
+	MIX( sizeof( b2TreeProxy ) )
 	MIX( sizeof( b2SetItem ) )
 	MIX( sizeof( b2IdPool ) )
 	MIX( sizeof( b2SurfaceMaterial ) )
@@ -312,65 +315,75 @@ static void b2DesHashSet( b2SnapReader* r, b2HashSet* hs )
 	}
 }
 
-// DynamicTree: scalars + full nodeCapacity nodes (freeList chains through free slots)
+// DynamicTree: counts then the node, link and proxy arrays at capacity. Both free lists chain
+// through the link records. The spare node array and the rebuild scratch are reallocated on
+// demand, so they are not serialized.
 static void b2SerTree( b2RecBuffer* buf, const b2DynamicTree* tree )
 {
-	b2SnapW_I32( buf, tree->root );
 	b2SnapW_I32( buf, tree->nodeCount );
 	b2SnapW_I32( buf, tree->nodeCapacity );
-	b2SnapW_I32( buf, tree->freeList );
+	b2SnapW_I32( buf, tree->nodeFreeList );
 	b2SnapW_I32( buf, tree->proxyCount );
-	if ( tree->nodeCapacity > 0 )
-	{
-		b2SnapW_Bytes( buf, tree->nodes, tree->nodeCapacity * (int)sizeof( b2TreeNode ) );
-	}
+	b2SnapW_I32( buf, tree->proxyCapacity );
+	b2SnapW_I32( buf, tree->proxyFreeList );
+	b2SnapW_I32( buf, tree->dfsNodeCount );
+	b2SnapW_Bytes( buf, tree->nodes, tree->nodeCapacity * (int)sizeof( b2TreeNode ) );
+	b2SnapW_Bytes( buf, tree->links, tree->nodeCapacity * (int)sizeof( b2TreeLink ) );
+	b2SnapW_Bytes( buf, tree->proxies, tree->proxyCapacity * (int)sizeof( b2TreeProxy ) );
 }
 
 static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 {
-	int root = b2SnapR_I32( r );
 	int nodeCount = b2SnapR_I32( r );
 	int nodeCapacity = b2SnapR_I32( r );
-	int freeList = b2SnapR_I32( r );
+	int nodeFreeList = b2SnapR_I32( r );
 	int proxyCount = b2SnapR_I32( r );
+	int proxyCapacity = b2SnapR_I32( r );
+	int proxyFreeList = b2SnapR_I32( r );
+	int dfsNodeCount = b2SnapR_I32( r );
 
-	if ( r->ok && b2SnapCheckCount( r, nodeCapacity, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) ) == false )
+	// The root node always exists, so a live tree has at least one node and one proxy slot
+	if ( r->ok && ( nodeCount < 1 || nodeCapacity < 1 || proxyCapacity < 1 ) )
 	{
 		r->ok = false;
 	}
 
-	// Free what the shell or a live world holds. A live tree that ran a rebuild also owns
-	// rebuild scratch, so free that too. Null everything so a failure here leaves the tree
-	// safe to destroy.
-	b2Free( tree->nodes, tree->nodeCapacity * (int)sizeof( b2TreeNode ) );
-	b2Free( tree->leafIndices, tree->rebuildCapacity * (int)sizeof( int ) );
-	b2Free( tree->leafBoxes, tree->rebuildCapacity * (int)sizeof( b2AABB ) );
-	b2Free( tree->leafCenters, tree->rebuildCapacity * (int)sizeof( b2Vec2 ) );
-	b2Free( tree->binIndices, tree->rebuildCapacity * (int)sizeof( int ) );
-	tree->nodes = NULL;
-	tree->leafIndices = NULL;
-	tree->leafBoxes = NULL;
-	tree->leafCenters = NULL;
-	tree->binIndices = NULL;
-	tree->nodeCapacity = 0;
-	tree->rebuildCapacity = 0;
+	int nodeStreamBytes = (int)( sizeof( b2TreeNode ) + sizeof( b2TreeLink ) );
+	if ( r->ok && b2SnapCheckCount( r, nodeCapacity, (int)sizeof( b2TreeNode ), nodeStreamBytes ) == false )
+	{
+		r->ok = false;
+	}
+
+	if ( r->ok && b2SnapCheckCount( r, proxyCapacity, (int)sizeof( b2TreeProxy ), (int)sizeof( b2TreeProxy ) ) == false )
+	{
+		r->ok = false;
+	}
+
+	// Free what the shell or a live world holds, rebuild scratch included. Destroy zeroes the
+	// struct, which covers every field the image does not carry.
+	b2DynamicTree_Destroy( tree );
 
 	if ( !r->ok )
 	{
+		// Leave a valid empty tree so the shell can still be destroyed
+		*tree = b2DynamicTree_Create( 0 );
 		return;
 	}
 
-	tree->root = root;
 	tree->nodeCount = nodeCount;
 	tree->nodeCapacity = nodeCapacity;
-	tree->freeList = freeList;
+	tree->nodeFreeList = nodeFreeList;
 	tree->proxyCount = proxyCount;
+	tree->proxyCapacity = proxyCapacity;
+	tree->proxyFreeList = proxyFreeList;
+	tree->dfsNodeCount = dfsNodeCount;
 
-	if ( nodeCapacity > 0 )
-	{
-		tree->nodes = b2Alloc( nodeCapacity * (int)sizeof( b2TreeNode ) );
-		b2SnapR_Bytes( r, tree->nodes, nodeCapacity * (int)sizeof( b2TreeNode ) );
-	}
+	tree->nodes = b2Alloc( nodeCapacity * sizeof( b2TreeNode ) );
+	tree->links = b2Alloc( nodeCapacity * sizeof( b2TreeLink ) );
+	tree->proxies = b2Alloc( proxyCapacity * sizeof( b2TreeProxy ) );
+	b2SnapR_Bytes( r, tree->nodes, nodeCapacity * (int)sizeof( b2TreeNode ) );
+	b2SnapR_Bytes( r, tree->links, nodeCapacity * (int)sizeof( b2TreeLink ) );
+	b2SnapR_Bytes( r, tree->proxies, proxyCapacity * (int)sizeof( b2TreeProxy ) );
 }
 
 // Solver set: setIndex + 5 POD arrays
