@@ -789,8 +789,9 @@ typedef struct b2DynamicTree
 	/// Allocated space for rebuilding
 	int32_t rebuildCapacity;
 
-	/// Does the node array have hierarchical order (child follows parent)?
-	bool dfsOrdered;
+	/// Node count recorded at last DFS rebuild. The current node count may have holes
+	/// due to proxy deletion.
+	int32_t dfsNodeCount;
 
 } b2DynamicTree;
 

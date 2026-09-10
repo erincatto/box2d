@@ -114,7 +114,7 @@ b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 	tree.leafCenters = NULL;
 	tree.binIndices = NULL;
 	tree.rebuildCapacity = 0;
-	tree.dfsOrdered = false;
+	tree.dfsNodeCount = false;
 
 	// Root node always exists for simplicity. nodeCount == 1 and proxyCount == 0.
 	int root = b2AllocateNode( &tree );
@@ -515,7 +515,7 @@ static void b2RotateNodes( b2DynamicTree* tree, int iA )
 
 static void b2InsertLeaf( b2DynamicTree* tree, b2AABB aabb, int leaf, bool moved, bool shouldRotate )
 {
-	tree->dfsOrdered = false;
+	tree->dfsNodeCount = 0;
 
 	b2TreeProxy* proxy = tree->proxies + leaf;
 	b2TreeChild leafChild = b2MakeLeafChild( aabb, leaf, proxy->userData, moved );
@@ -616,7 +616,6 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int leaf )
 		b2ConnectChild( tree, (b2ChildId){ parent, 0 } );
 		b2ConnectChild( tree, (b2ChildId){ parent, 1 } );
 		b2FreeNode( tree, siblingIndex );
-		tree->dfsOrdered = false;
 		return;
 	}
 
@@ -624,7 +623,6 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int leaf )
 	nodes[parentId.parent].children[parentId.slot] = *sibling;
 	b2ConnectChild( tree, parentId );
 	b2FreeNode( tree, parent );
-	tree->dfsOrdered = false;
 
 	int nodeIndex = parentId.parent;
 	for ( ;; )
@@ -1015,11 +1013,10 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 	B2_ASSERT( leafCount == leafCount1 + leafCount2 );
 	B2_ASSERT( leafCount == tree->proxyCount );
 
-	if ( tree->dfsOrdered )
+	for ( int i = 0; i < tree->dfsNodeCount; ++i )
 	{
-		for ( int i = 0; i < tree->nodeCount; ++i )
+		if ( b2IsAllocated( tree->links + i ) )
 		{
-			B2_ASSERT( b2IsAllocated( tree->links + i ) );
 			B2_ASSERT( tree->links[i].parent < i );
 		}
 	}
@@ -2035,7 +2032,7 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 		tree->links[i].flags = 0;
 	}
 	tree->nodeFreeList = nodeCount < nodeCapacity ? nodeCount : B2_NULL_INDEX;
-	tree->dfsOrdered = true;
+	tree->dfsNodeCount = nodeCount;
 
 	b2DynamicTree_Validate( tree );
 	b2DynamicTree_ValidateNoEnlarged( tree );
@@ -2196,5 +2193,38 @@ void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree )
 				stack[stackCount++] = b2GetChildIndex( child2 );
 			}
 		}
+	}
+}
+
+void b2DynamicTree_Refit( b2DynamicTree* tree )
+{
+	B2_ASSERT( tree->dfsNodeCount > 0 );
+	b2TreeNode* nodes = tree->nodes;
+
+	const b2TreeNode* root = nodes + B2_ROOT_NODE;
+	if ( b2IsChildMoved( root->children + 0 ) == false && b2IsChildMoved( root->children + 1 ) == false )
+	{
+		return;
+	}
+
+	const b2TreeLink* links = tree->links;
+
+	for ( int i = tree->dfsNodeCount - 1; i > 0; --i )
+	{
+		const b2TreeLink* link = links + i;
+		if ( b2IsAllocated( link ) == false )
+		{
+			continue;
+		}
+
+		b2TreeNode* node = nodes + i;
+		if ( ( ( node->children[0].flagIndex | node->children[1].flagIndex ) & B2_MOVED_NODE ) == 0 )
+		{
+			continue;
+		}
+
+		node = nodes + link->parent;
+		int slotIndex = b2GetChildSlot( link );
+		node->children[slotIndex].aabb = b2UnionV( node->children[0].aabb, node->children[1].aabb );
 	}
 }

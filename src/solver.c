@@ -1882,15 +1882,19 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneNC( refit_bvh, "Refit BVH", b2_colorFireBrick, true );
 		uint64_t refitTicks = b2GetTicks();
 
-		// Gather bits for all sim bodies that have enlarged AABBs
-		b2BitSet* enlargedBodyBitSet = &world->taskContexts.data[0].enlargedSimBitSet;
-		for ( int i = 1; i < world->workerCount; ++i )
-		{
-			b2InPlaceUnion( enlargedBodyBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
-		}
+		//// Gather bits for all sim bodies that have enlarged AABBs
+		// b2BitSet* enlargedBodyBitSet = &world->taskContexts.data[0].enlargedSimBitSet;
+		// for ( int i = 1; i < world->workerCount; ++i )
+		//{
+		//	b2InPlaceUnion( enlargedBodyBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
+		// }
 
-		// Enlarge broad-phase proxies. Apply shape AABB changes to broad-phase. 
-		b2ParallelFor( world, b2RefitTreeTask, (int)enlargedBodyBitSet->blockCount, 4, stepContext );
+		//// Enlarge broad-phase proxies. Apply shape AABB changes to broad-phase.
+		// b2ParallelFor( world, b2RefitTreeTask, (int)enlargedBodyBitSet->blockCount, 4, stepContext );
+
+		b2BroadPhase* bp = &world->broadPhase;
+		b2DynamicTree_Refit( bp->trees + b2_kinematicBody );
+		b2DynamicTree_Refit( bp->trees + b2_dynamicBody );
 
 		b2ValidateBroadphase( &world->broadPhase );
 
