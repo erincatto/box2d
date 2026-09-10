@@ -324,13 +324,13 @@ B2_FORCE_INLINE bool b2RecordPairSurvives( const b2TreeChild* a, const b2TreeChi
 		return false;
 	}
 
-	return b2OverlapsV( a->aabb, b->aabb );
+	return b2AABB_Overlaps( a->aabb, b->aabb );
 }
 
 static void b2CollideProxyAndSubtree( const b2TreeChild* proxy, const b2TreeNode* nodes, int nodeIndex, b2PairContext* context )
 {
 	uint32_t proxyMark = proxy->flagIndex & B2_MOVED_NODE;
-	b2AABB box = proxy->aabb;
+	__m128 boxv = _mm_loadu_ps(&proxy->aabb.lowerBound.x);
 	int shapeId = (int)proxy->truncatedUserData;
 
 	int stack[B2_TREE_STACK_SIZE];
@@ -348,7 +348,7 @@ static void b2CollideProxyAndSubtree( const b2TreeChild* proxy, const b2TreeNode
 				continue;
 			}
 
-			if ( b2OverlapsV( child->aabb, box ) == false )
+			if ( b2OverlapChild( boxv, child ) == false )
 			{
 				continue;
 			}

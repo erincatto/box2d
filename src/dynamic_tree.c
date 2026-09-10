@@ -1118,6 +1118,8 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 	stack[stackCount++] = B2_ROOT_NODE;
 	const b2TreeNode* nodes = tree->nodes;
 
+	__m128 boxv = _mm_loadu_ps( &aabb.lowerBound.x );
+
 	while ( stackCount > 0 )
 	{
 		int nodeId = stack[--stackCount];
@@ -1127,7 +1129,7 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			if ( b2OverlapsV( node->children[i].aabb, aabb ) )
+			if ( b2OverlapChild( boxv, node->children + i ) )
 			{
 				if ( b2IsLeaf( node->children + i ) )
 				{
@@ -1177,6 +1179,8 @@ b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2Tr
 	stack[stackCount++] = B2_ROOT_NODE;
 	const b2TreeNode* nodes = tree->nodes;
 
+	__m128 boxv = _mm_loadu_ps( &aabb.lowerBound.x );
+
 	while ( stackCount > 0 )
 	{
 		int nodeId = stack[--stackCount];
@@ -1186,7 +1190,7 @@ b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2Tr
 
 		for ( int i = 0; i < 2; ++i )
 		{
-			if ( b2OverlapsV( node->children[i].aabb, aabb ) )
+			if ( b2OverlapChild( boxv, node->children + i ) )
 			{
 				if ( b2IsLeaf( node->children + i ) )
 				{
@@ -1248,6 +1252,8 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 	// Build a bounding box for the segment.
 	b2AABB segmentAABB = { b2Min( p1, p2 ), b2Max( p1, p2 ) };
 
+	__m128 boxv = _mm_loadu_ps( &segmentAABB.lowerBound.x );
+
 	int stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
 	stack[stackCount++] = B2_ROOT_NODE;
@@ -1287,14 +1293,14 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 		{
 			const b2TreeChild* child = children[i];
 
-			b2AABB nodeAABB = child->aabb;
-			if ( b2OverlapsV( nodeAABB, segmentAABB ) == false )
+			if ( b2OverlapChild( boxv, child ) == false )
 			{
 				continue;
 			}
 
 			// Separating axis for segment (Gino, p80).
 			// |dot(v, p1 - c)| > dot(|v|, h)
+			b2AABB nodeAABB = child->aabb;
 			b2Vec2 c = b2AABB_Center( nodeAABB );
 			b2Vec2 h = b2AABB_Extents( nodeAABB );
 			float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
@@ -1334,6 +1340,8 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 					p2 = b2MulAdd( p1, maxFraction, d );
 					segmentAABB.lowerBound = b2Min( p1, p2 );
 					segmentAABB.upperBound = b2Max( p1, p2 );
+
+					boxv = _mm_loadu_ps( &segmentAABB.lowerBound.x );
 				}
 			}
 			else
@@ -1385,6 +1393,8 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 		b2Max( originAABB.upperBound, b2Add( originAABB.upperBound, t ) ),
 	};
 
+	__m128 boxv = _mm_loadu_ps( &totalAABB.lowerBound.x );
+
 	b2BoxCastInput subInput = *input;
 	const b2TreeNode* nodes = tree->nodes;
 
@@ -1423,8 +1433,7 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 		{
 			const b2TreeChild* child = children[i];
 
-			b2AABB nodeAABB = child->aabb;
-			if ( b2OverlapsV( nodeAABB, totalAABB ) == false )
+			if ( b2OverlapChild( boxv, child ) == false )
 			{
 				continue;
 			}
@@ -1432,6 +1441,7 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 			// Separating axis for segment (Gino, p80).
 			// |dot(v, p1 - c)| > dot(|v|, h)
 			// radius extension is added to the node in this case
+			b2AABB nodeAABB = child->aabb;
 			b2Vec2 c = b2AABB_Center( nodeAABB );
 			b2Vec2 h = b2Add( b2AABB_Extents( nodeAABB ), extension );
 			float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
@@ -1471,6 +1481,7 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 					t = b2MulSV( maxFraction, input->translation );
 					totalAABB.lowerBound = b2Min( originAABB.lowerBound, b2Add( originAABB.lowerBound, t ) );
 					totalAABB.upperBound = b2Max( originAABB.upperBound, b2Add( originAABB.upperBound, t ) );
+					boxv = _mm_loadu_ps( &totalAABB.lowerBound.x );
 				}
 			}
 			else
@@ -1877,6 +1888,7 @@ static void b2BuildTree( b2DynamicTree* tree, int leafCount )
 	{
 		b2PlaceLeaf( tree, leaves[leafIndices[0]], rootIndex, 0 );
 		nodes[rootIndex].children[1] = b2MakeEmptyChild();
+		return;
 	}
 
 	b2RebuildItem stack[B2_TREE_STACK_SIZE];
