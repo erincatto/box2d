@@ -672,8 +672,9 @@ static int CountEnlargedNodes( const b2DynamicTree* tree )
 	return count;
 }
 
-// A proxy can be enlarged in one step and destroyed before the next, which empties the move buffer.
-// The trees still need a rebuild or the enlarged nodes survive into the next step.
+// A proxy can be enlarged in one step and destroyed before the next. The remove recomputes the
+// ancestor marks from the surviving children, so the mover's marks go with it and the next step
+// starts clean.
 static int EnlargedProxyDestroyed( int workerCount )
 {
 	b2WorldDef worldDef = b2DefaultWorldDef();
@@ -711,7 +712,7 @@ static int EnlargedProxyDestroyed( int workerCount )
 
 	b2DestroyBody( moverId );
 
-	ENSURE( CountEnlargedNodes( tree ) > 0 );
+	ENSURE( CountEnlargedNodes( tree ) == 0 );
 
 	b2World_Step( worldId, timeStep, 4 );
 

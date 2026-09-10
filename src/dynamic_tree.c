@@ -914,10 +914,12 @@ static int b2ComputeLeafCount( const b2DynamicTree* tree, int nodeId )
 
 static inline void b2ValidateChild( const b2DynamicTree* tree, const b2TreeNode* node, int nodeIndex, int slot )
 {
+	const b2TreeChild* child = node->children + slot;
 	int childIndex = b2GetChildIndex( node->children + slot );
-	b2ChildId childId = b2GetChildId( tree, childIndex );
-	B2_ASSERT( childId.parent == nodeIndex );
-	B2_ASSERT( childId.slot == slot );
+	const b2TreeLink* link = b2IsLeaf( child ) ? &tree->proxies[childIndex].link : tree->links + childIndex;
+	B2_ASSERT( b2IsAllocated( link ) );
+	B2_ASSERT( link->parent == nodeIndex );
+	B2_ASSERT( b2GetChildSlot( link ) == slot );
 }
 
 // Compute the height of a sub-tree.
@@ -939,13 +941,19 @@ static void b2ValidateSubtree( const b2DynamicTree* tree, int index )
 		if ( node->children[0].flagIndex != B2_NODE_SENTINEL )
 		{
 			b2ValidateChild( tree, node, index, 0 );
-			b2ValidateSubtree( tree, b2GetChildIndex( node->children + 0 ) );
+			if ( b2IsLeaf( node->children + 0 ) == false )
+			{
+				b2ValidateSubtree( tree, b2GetChildIndex( node->children + 0 ) );
+			}
 		}
 
 		if ( node->children[1].flagIndex != B2_NODE_SENTINEL )
 		{
 			b2ValidateChild( tree, node, index, 1 );
-			b2ValidateSubtree( tree, b2GetChildIndex( node->children + 1 ) );
+			if ( b2IsLeaf( node->children + 1 ) == false )
+			{
+				b2ValidateSubtree( tree, b2GetChildIndex( node->children + 1 ) );
+			}
 		}
 	}
 	else
@@ -969,8 +977,15 @@ static void b2ValidateSubtree( const b2DynamicTree* tree, int index )
 		B2_ASSERT( b2AABB_Contains( self->aabb, c1->aabb ) );
 		B2_ASSERT( b2AABB_Contains( self->aabb, c2->aabb ) );
 
-		b2ValidateSubtree( tree, b2GetChildIndex( c1 ) );
-		b2ValidateSubtree( tree, b2GetChildIndex( c2 ) );
+		if ( b2IsLeaf( c1 ) == false )
+		{
+			b2ValidateSubtree( tree, b2GetChildIndex( c1 ) );
+		}
+
+		if ( b2IsLeaf( c2 ) == false )
+		{
+			b2ValidateSubtree( tree, b2GetChildIndex( c2 ) );
+		}
 	}
 }
 
@@ -2224,8 +2239,8 @@ void b2DynamicTree_Refit( b2DynamicTree* tree )
 			continue;
 		}
 
-		node = nodes + link->parent;
+		b2TreeNode* parent = nodes + link->parent;
 		int slotIndex = b2GetChildSlot( link );
-		node->children[slotIndex].aabb = b2UnionV( node->children[0].aabb, node->children[1].aabb );
+		parent->children[slotIndex].aabb = b2UnionV( node->children[0].aabb, node->children[1].aabb );
 	}
 }

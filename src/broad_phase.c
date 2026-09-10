@@ -100,11 +100,17 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 static int b2GatherMovedInternalNodes( const b2DynamicTree* tree, int* nodeIndices )
 {
 	const b2TreeNode* nodes = tree->nodes;
+	const b2TreeLink* links = tree->links;
 	int capacity = tree->nodeCapacity;
 
 	int count = 0;
 	for ( int i = 0; i < capacity; ++i )
 	{
+		if ( b2IsAllocated( links + i ) == false )
+		{
+			continue;
+		}
+
 		if ( ( nodes[i].children[0].flagIndex | nodes[i].children[1].flagIndex ) & B2_MOVED_NODE )
 		{
 			nodeIndices[count++] = i;
@@ -470,16 +476,19 @@ static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* 
 
 	for ( int i = 0; i < 2; ++i )
 	{
-		const b2TreeChild* cA = rootA->children + i;
-		if ( cA->flagIndex != B2_NODE_SENTINEL )
+		const b2TreeChild* a = rootA->children + i;
+		if ( a->flagIndex != B2_NODE_SENTINEL )
 		{
 			for ( int j = 0; j < 2; ++j )
 			{
-				const b2TreeChild* cB = rootB->children + j;
-				if ( cB->flagIndex != B2_NODE_SENTINEL )
+				const b2TreeChild* b = rootB->children + j;
+				if ( b->flagIndex != B2_NODE_SENTINEL )
 				{
-					queue[tail & mask] = (b2RecordPair){ .a = *cA, .b = *cB };
-					tail += 1;
+					if ( b2RecordPairSurvives( a, b ) )
+					{
+						queue[tail & mask] = (b2RecordPair){ .a = *a, .b = *b };
+						tail += 1;
+					}
 				}
 			}
 		}
@@ -494,6 +503,7 @@ static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* 
 		if ( b2IsLeaf( &pair.a ) || b2IsLeaf( &pair.b ) )
 		{
 			seeds[seedCount++] = pair;
+			continue;
 		}
 
 		const b2TreeNode* a = nodesA + b2GetChildIndex( &pair.a );

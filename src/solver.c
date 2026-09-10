@@ -498,7 +498,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				fatAABB.upperBound.y = aabb.upperBound.y + margin;
 				shape->fatAABB = fatAABB;
 
-				shape->enlargedAABB = true;
 				fastBodySim->flags |= b2_enlargeBounds;
 
 				// Regular bodies mark the hierarchy as enlarged using atomic operations.
@@ -542,7 +541,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				fatAABB.upperBound.y = shape->aabb.upperBound.y + margin;
 				shape->fatAABB = fatAABB;
 
-				shape->enlargedAABB = true;
 				fastBodySim->flags |= b2_enlargeBounds;
 
 				if ( isBullet == false )
@@ -737,8 +735,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 				b2AABB aabb = b2ComputeFatShapeAABB( shape, transform, speculativeDistance );
 				shape->aabb = aabb;
 
-				B2_ASSERT( shape->enlargedAABB == false );
-
 				if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
 				{
 					float margin = shape->aabbMargin;
@@ -748,7 +744,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 					fatAABB.upperBound.x = aabb.upperBound.x + margin;
 					fatAABB.upperBound.y = aabb.upperBound.y + margin;
 					shape->fatAABB = fatAABB;
-					shape->enlargedAABB = true;
 
 					// Mark the hierarchy as enlarged using atomic operations.
 					b2BroadPhase_MarkEnlarged( &world->broadPhase, shape->proxyKey, fatAABB );
@@ -1247,62 +1242,6 @@ static void b2SolverTask( void* taskContext )
 
 		lastSyncBits = syncBits;
 	}
-}
-
-// Refit bounding boxes in parallel. Makes use previous atomic node tagging
-// to avoid racing.
-static void b2RefitTreeTask( int startIndex, int endIndex, int workerIndex, void* context )
-{
-	b2TracyCZoneNC( refit_tree_task, "Refit", b2_colorFireBrick, true );
-
-	B2_UNUSED( workerIndex );
-
-	b2StepContext* stepContext = context;
-	b2World* world = stepContext->world;
-	b2BroadPhase* broadPhase = &world->broadPhase;
-
-	b2Body* bodyArray = world->bodies.data;
-	b2BodySim* bodySimArray = stepContext->sims;
-	b2Shape* shapeArray = world->shapes.data;
-
-	uint64_t* bits = world->taskContexts.data[0].enlargedSimBitSet.bits;
-	uint32_t fastBullet = b2_isBullet | b2_isFast;
-
-	for ( int i = startIndex; i < endIndex; ++i )
-	{
-		uint64_t word = bits[i];
-		while ( word != 0 )
-		{
-			uint32_t bodySimIndex = 64 * i + b2CTZ64( word );
-			b2BodySim* bodySim = bodySimArray + bodySimIndex;
-			b2Body* body = bodyArray + bodySim->bodyId;
-
-			// Skip fast bullets.
-			if ( ( body->flags & fastBullet ) != fastBullet )
-			{
-				// Fast bullet bodies don't have their final AABB yet
-				int shapeId = body->headShapeId;
-				while ( shapeId != B2_NULL_INDEX )
-				{
-					b2Shape* shape = shapeArray + shapeId;
-
-					// Not every shape on a moved body is enlarged.
-					if ( shape->enlargedAABB )
-					{
-						b2BroadPhase_RefitEnlarged( broadPhase, shape->proxyKey );
-						shape->enlargedAABB = false;
-					}
-
-					shapeId = shape->nextShapeId;
-				}
-			}
-
-			// Clear the smallest set bit
-			word = word & ( word - 1 );
-		}
-	}
-
-	b2TracyCZoneEnd( refit_tree_task );
 }
 
 static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, void* context )
@@ -1882,16 +1821,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneNC( refit_bvh, "Refit BVH", b2_colorFireBrick, true );
 		uint64_t refitTicks = b2GetTicks();
 
-		//// Gather bits for all sim bodies that have enlarged AABBs
-		// b2BitSet* enlargedBodyBitSet = &world->taskContexts.data[0].enlargedSimBitSet;
-		// for ( int i = 1; i < world->workerCount; ++i )
-		//{
-		//	b2InPlaceUnion( enlargedBodyBitSet, &world->taskContexts.data[i].enlargedSimBitSet );
-		// }
-
-		//// Enlarge broad-phase proxies. Apply shape AABB changes to broad-phase.
-		// b2ParallelFor( world, b2RefitTreeTask, (int)enlargedBodyBitSet->blockCount, 4, stepContext );
-
 		b2BroadPhase* bp = &world->broadPhase;
 		b2DynamicTree_Refit( bp->trees + b2_kinematicBody );
 		b2DynamicTree_Refit( bp->trees + b2_dynamicBody );
@@ -1945,20 +1874,16 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			while ( shapeId != B2_NULL_INDEX )
 			{
 				b2Shape* shape = shapeArray + shapeId;
-				if ( shape->enlargedAABB == false )
-				{
-					shapeId = shape->nextShapeId;
-					continue;
-				}
-
-				// Clear flag
-				shape->enlargedAABB = false;
-
 				int proxyKey = shape->proxyKey;
 				int proxyId = B2_PROXY_ID( proxyKey );
 				B2_VALIDATE( B2_PROXY_TYPE( proxyKey ) == b2_dynamicBody );
 
-				b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shape->fatAABB );
+				b2AABB treeAABB = b2DynamicTree_GetAABB( dynamicTree, proxyId );
+
+				if ( b2AABB_Contains( treeAABB, shape->fatAABB ) == false )
+				{
+					b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shape->fatAABB );
+				}
 
 				shapeId = shape->nextShapeId;
 			}
