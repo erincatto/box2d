@@ -774,6 +774,9 @@ typedef struct b2DynamicTree
 	/// Leaf indices for rebuild
 	int32_t* leafIndices;
 
+	/// Children for rebuild
+	b2TreeChild* leafChildren;
+
 	/// Leaf bounding boxes for rebuild
 	b2AABB* leafBoxes;
 

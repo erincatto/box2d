@@ -146,10 +146,8 @@ void b2DynamicTree_Destroy( b2DynamicTree* tree )
 	b2Free( tree->links, tree->nodeCapacity * sizeof( b2TreeLink ) );
 	b2Free( tree->proxies, tree->proxyCapacity * sizeof( b2TreeProxy ) );
 
-	// todo what size is this?
-	// b2Free( tree->swapNodes, 0 );
-
 	b2Free( tree->leafIndices, tree->rebuildCapacity * sizeof( int32_t ) );
+	b2Free( tree->swapNodes, tree->rebuildCapacity * sizeof( b2TreeChild ) );
 	b2Free( tree->leafBoxes, tree->rebuildCapacity * sizeof( b2AABB ) );
 	b2Free( tree->leafCenters, tree->rebuildCapacity * sizeof( b2Vec2 ) );
 	b2Free( tree->binIndices, tree->rebuildCapacity * sizeof( int32_t ) );
@@ -1780,7 +1778,7 @@ static int b2PartitionSAH( int* indices, int* binIndices, b2AABB* boxes, int cou
 #endif
 
 // Temporary data used to track the rebuild of a tree node
-struct b2RebuildItem
+typedef struct b2RebuildItem
 {
 	int nodeIndex;
 	int childCount;
@@ -1789,19 +1787,80 @@ struct b2RebuildItem
 	int startIndex;
 	int splitIndex;
 	int endIndex;
-};
+} b2RebuildItem;
+
+typedef struct b2CopyItem
+{
+	int oldIndex;
+	int parent;
+	int slot;
+} b2CopyItem;
+
+// Copy a retained subtree from the old tree into the rebuilt DFS tree.
+static void b2CopySubtree( b2DynamicTree* tree, int oldIndex, int parent, int slot )
+{
+	const b2TreeNode* oldNodes = tree->nodes;
+	b2TreeNode* newNodes = tree->swapNodes;
+	b2TreeLink* links = tree->links;
+	b2TreeProxy* proxies = tree->proxies;
+
+	b2CopyItem stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = (b2CopyItem){ oldIndex, parent, slot };
+
+	while ( stackCount > 0 )
+	{
+		b2CopyItem item = stack[--stackCount];
+
+		// Index assigned at the pop, so a the left subtree preceeds the right child.
+		int newIndex = tree->nodeCount++;
+		newNodes[newIndex] = oldNodes[item.oldIndex];
+		links[newIndex].parent = item.parent;
+		links[newIndex].flags = B2_ALLOCATED_BIT | ( item.slot == 0 ? 0 : B2_SLOT_BIT );
+		newNodes[item.parent].children[item.slot].flagIndex = (uint32_t)newIndex;
+
+		// Push the right child first so the left pops first.
+		for ( int i = 1; i >= 0; --i )
+		{
+			const b2TreeChild* child = newNodes[newIndex].children + i;
+			if ( b2IsLeaf( child ) )
+			{
+				b2TreeLink* link = &proxies[b2GetChildIndex( child )].link;
+				link->parent = newIndex;
+				link->flags = B2_ALLOCATED_BIT | ( i == 0 ? 0 : B2_SLOT_BIT );
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+				stack[stackCount++] = (b2CopyItem){ b2GetChildIndex( child ), newIndex, i };
+			}
+		}
+	}
+}
+
+static void b2PlaceLeaf( b2DynamicTree* tree, b2TreeChild leaf, int parent, int slot )
+{
+	tree->swapNodes[parent].children[slot] = leaf;
+
+	if ( b2IsLeaf( &leaf ) )
+	{
+		b2TreeLink* link = &tree->proxies[b2GetChildIndex( &leaf )].link;
+		link->parent = parent;
+		link->flags = B2_ALLOCATED_BIT | ( slot == 0 ? 0 : B2_SLOT_BIT );
+	}
+	else
+	{
+		b2CopySubtree( tree, b2GetChildIndex( &leaf ), parent, slot );
+	}
+}
 
 // Returns root node index
 static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 {
-	b2TreeNode* nodes = tree->nodes;
+	b2TreeNode* nodes = tree->swapNodes;
+	b2TreeLink* links = tree->links;
+	const b2TreeChild* leaves = tree->leafChildren;
 	int* leafIndices = tree->leafIndices;
-
-	if ( leafCount == 1 )
-	{
-		nodes[leafIndices[0]].parent = B2_NULL_INDEX;
-		return leafIndices[0];
-	}
 
 #if B2_TREE_HEURISTIC == 0
 	b2Vec2* leafCenters = tree->leafCenters;
@@ -1810,11 +1869,23 @@ static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 	int* binIndices = tree->binIndices;
 #endif
 
-	// todo large stack item
-	struct b2RebuildItem stack[B2_TREE_STACK_SIZE];
+	// Bump allocation into the spare. The root is index zero.
+	tree->nodeCount = 0;
+	int rootIndex = tree->nodeCount++;
+	links[rootIndex].parent = B2_NULL_INDEX;
+	links[rootIndex].flags = B2_ALLOCATED_BIT;
+
+	if ( leafCount == 1 )
+	{
+		b2PlaceLeaf( tree, leaves[leafIndices[0]], rootIndex, 0 );
+		nodes[rootIndex].children[1] = b2MakeEmptyChild();
+		return rootIndex;
+	}
+
+	b2RebuildItem stack[B2_TREE_STACK_SIZE];
 	int top = 0;
 
-	stack[0].nodeIndex = b2AllocateNode( tree );
+	stack[0].nodeIndex = rootIndex;
 	stack[0].childCount = -1;
 	stack[0].startIndex = 0;
 	stack[0].endIndex = leafCount;
@@ -1826,127 +1897,59 @@ static int b2BuildTree( b2DynamicTree* tree, int leafCount )
 
 	while ( true )
 	{
-		struct b2RebuildItem* item = stack + top;
-
+		b2RebuildItem* item = stack + top;
 		item->childCount += 1;
 
 		if ( item->childCount == 2 )
 		{
-			// This internal node has both children established
-
+			// Both slots written, so the record above this node can be made
 			if ( top == 0 )
 			{
-				// all done
 				break;
 			}
 
-			struct b2RebuildItem* parentItem = stack + ( top - 1 );
-			b2TreeNode* parentNode = nodes + parentItem->nodeIndex;
-
-			if ( parentItem->childCount == 0 )
-			{
-				B2_ASSERT( parentNode->children.child1 == B2_NULL_INDEX );
-				parentNode->children.child1 = item->nodeIndex;
-			}
-			else
-			{
-				B2_ASSERT( parentItem->childCount == 1 );
-				B2_ASSERT( parentNode->children.child2 == B2_NULL_INDEX );
-				parentNode->children.child2 = item->nodeIndex;
-			}
-
-			b2TreeNode* node = nodes + item->nodeIndex;
-
-			B2_ASSERT( node->parent == B2_NULL_INDEX );
-			node->parent = parentItem->nodeIndex;
-
-			B2_ASSERT( node->children.child1 != B2_NULL_INDEX );
-			B2_ASSERT( node->children.child2 != B2_NULL_INDEX );
-			b2TreeNode* child1 = nodes + node->children.child1;
-			b2TreeNode* child2 = nodes + node->children.child2;
-
-			node->aabb = b2AABB_Union( child1->aabb, child2->aabb );
-			node->height = 1 + b2MaxUInt16( child1->height, child2->height );
-			node->categoryBits = child1->categoryBits | child2->categoryBits;
-
-			// Pop stack
+			b2RebuildItem* parentItem = stack + ( top - 1 );
+			nodes[parentItem->nodeIndex].children[parentItem->childCount] =
+				b2MakeInternalChild( nodes + item->nodeIndex, item->nodeIndex );
 			top -= 1;
+			continue;
 		}
-		else
+
+		int slot = item->childCount;
+		int startIndex = slot == 0 ? item->startIndex : item->splitIndex;
+		int endIndex = slot == 0 ? item->splitIndex : item->endIndex;
+		int count = endIndex - startIndex;
+		B2_ASSERT( count > 0 );
+
+		if ( count == 1 )
 		{
-			int startIndex, endIndex;
-			if ( item->childCount == 0 )
-			{
-				startIndex = item->startIndex;
-				endIndex = item->splitIndex;
-			}
-			else
-			{
-				B2_ASSERT( item->childCount == 1 );
-				startIndex = item->splitIndex;
-				endIndex = item->endIndex;
-			}
-
-			int count = endIndex - startIndex;
-
-			if ( count == 1 )
-			{
-				int childIndex = leafIndices[startIndex];
-				b2TreeNode* node = nodes + item->nodeIndex;
-
-				if ( item->childCount == 0 )
-				{
-					B2_ASSERT( node->children.child1 == B2_NULL_INDEX );
-					node->children.child1 = childIndex;
-				}
-				else
-				{
-					B2_ASSERT( item->childCount == 1 );
-					B2_ASSERT( node->children.child2 == B2_NULL_INDEX );
-					node->children.child2 = childIndex;
-				}
-
-				b2TreeNode* childNode = nodes + childIndex;
-				B2_ASSERT( childNode->parent == B2_NULL_INDEX );
-				childNode->parent = item->nodeIndex;
-			}
-			else
-			{
-				B2_ASSERT( count > 0 );
-				B2_ASSERT( top < B2_TREE_STACK_SIZE );
-
-				top += 1;
-				struct b2RebuildItem* newItem = stack + top;
-				newItem->nodeIndex = b2AllocateNode( tree );
-				newItem->childCount = -1;
-				newItem->startIndex = startIndex;
-				newItem->endIndex = endIndex;
-#if B2_TREE_HEURISTIC == 0
-				newItem->splitIndex = b2PartitionMid( leafIndices + startIndex, leafCenters + startIndex, count );
-#else
-				newItem->splitIndex =
-					b2PartitionSAH( leafIndices + startIndex, binIndices + startIndex, leafBoxes + startIndex, count );
-#endif
-				newItem->splitIndex += startIndex;
-			}
+			b2PlaceLeaf( tree, leaves[leafIndices[startIndex]], item->nodeIndex, slot );
+			continue;
 		}
+
+		B2_ASSERT( top < B2_TREE_STACK_SIZE - 1 );
+		top += 1;
+		b2RebuildItem* newItem = stack + top;
+		newItem->nodeIndex = tree->nodeCount++;
+		newItem->childCount = -1;
+		newItem->startIndex = startIndex;
+		newItem->endIndex = endIndex;
+		newItem->splitIndex = startIndex;
+#if B2_TREE_HEURISTIC == 0
+		newItem->splitIndex += b2PartitionMid( leafIndices + startIndex, leafCenters + startIndex, count );
+#else
+		newItem->splitIndex += b2PartitionSAH( leafIndices + startIndex, binIndices + startIndex, leafBoxes + startIndex, count );
+#endif
+
+		links[newItem->nodeIndex].parent = item->nodeIndex;
+		links[newItem->nodeIndex].flags = B2_ALLOCATED_BIT | ( slot == 0 ? 0 : B2_SLOT_BIT );
 	}
 
-	b2TreeNode* rootNode = nodes + stack[0].nodeIndex;
-	B2_ASSERT( rootNode->parent == B2_NULL_INDEX );
-	B2_ASSERT( rootNode->children.child1 != B2_NULL_INDEX );
-	B2_ASSERT( rootNode->children.child2 != B2_NULL_INDEX );
-
-	b2TreeNode* child1 = nodes + rootNode->children.child1;
-	b2TreeNode* child2 = nodes + rootNode->children.child2;
-
-	rootNode->aabb = b2AABB_Union( child1->aabb, child2->aabb );
-	rootNode->height = 1 + b2MaxUInt16( child1->height, child2->height );
-	rootNode->categoryBits = child1->categoryBits | child2->categoryBits;
-
-	return stack[0].nodeIndex;
+	return rootIndex;
 }
 
+// Rebuild the stale parts of the tree. The entire tree is put into DFS order. This makes
+// refitting much faster. This is done async with threading, so the cost is hidden.
 // Not safe to access tree during this operation because it may grow.
 int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 {
@@ -1956,115 +1959,98 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 		return 0;
 	}
 
-	// Ensure capacity for rebuild space
+	const b2TreeNode* nodes = tree->nodes;
+	const b2TreeNode* root = nodes + B2_ROOT_NODE;
+	if ( fullBuild == false && b2IsChildMoved( root->children + 0 ) == false && b2IsChildMoved( root->children + 1 ) == false )
+	{
+		// Nothing moved.
+		return 0;
+	}
+
 	if ( proxyCount > tree->rebuildCapacity )
 	{
+		int oldCapacity = tree->rebuildCapacity;
 		int newCapacity = proxyCount + proxyCount / 2;
 
-		b2Free( tree->leafIndices, tree->rebuildCapacity * sizeof( int ) );
-		tree->leafIndices = b2Alloc( newCapacity * sizeof( int ) );
-
+		tree->swapNodes = B2_GROW( tree->swapNodes, oldCapacity, newCapacity );
+		tree->leafIndices = B2_GROW( tree->leafIndices, oldCapacity, newCapacity );
+		tree->leafChildren = B2_GROW( tree->leafChildren, oldCapacity, newCapacity );
 #if B2_TREE_HEURISTIC == 0
-		b2Free( tree->leafCenters, tree->rebuildCapacity * sizeof( b2Vec2 ) );
-		tree->leafCenters = b2Alloc( newCapacity * sizeof( b2Vec2 ) );
+		tree->leafCenters = B2_GROW( tree->leafCenters, oldCapacity, newCapacity );
 #else
-		b2Free( tree->leafBoxes, tree->rebuildCapacity * sizeof( b2AABB ) );
-		tree->leafBoxes = b2Alloc( newCapacity * sizeof( b2AABB ) );
-		b2Free( tree->binIndices, tree->rebuildCapacity * sizeof( int ) );
-		tree->binIndices = b2Alloc( newCapacity * sizeof( int ) );
+		tree->leafBoxes = B2_GROW( tree->leafBoxes, oldCapacity, newCapacity );
+		tree->binIndices = B2_GROW( tree->binIndices, oldCapacity, newCapacity );
 #endif
 		tree->rebuildCapacity = newCapacity;
 	}
 
-	int leafCount = 0;
-	int stack[B2_TREE_STACK_SIZE];
-	int stackCount = 0;
-
-	int nodeIndex = tree->root;
-	b2TreeNode* nodes = tree->nodes;
-	b2TreeNode* node = nodes + nodeIndex;
-
-	// These are the nodes that get sorted to rebuild the tree.
-	// I'm using indices because the node pool may grow during the build.
 	int* leafIndices = tree->leafIndices;
-
+	b2TreeChild* leaves = tree->leafChildren;
 #if B2_TREE_HEURISTIC == 0
 	b2Vec2* leafCenters = tree->leafCenters;
 #else
 	b2AABB* leafBoxes = tree->leafBoxes;
 #endif
 
-	// Gather all proxy nodes that have grown and all internal nodes that haven't grown. Both are
-	// considered leaves in the tree rebuild.
-	// Free all internal nodes that have grown.
-	// todo use a node growth metric instead of simply enlarged to reduce rebuild size and frequency
-	// this should be weighed against B2_AABB_MARGIN
-	while ( true )
+	// Gather build leaves. A marked internal child is descended and its node is abandoned in the
+	// old array. Everything else is a build leaf, kept subtrees included.
+	int leafCount = 0;
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = B2_ROOT_NODE;
+
+	while ( stackCount > 0 )
 	{
-		if ( node->height == 0 || ( ( node->flags & b2_enlargedNode ) == 0 && fullBuild == false ) )
+		const b2TreeNode* node = nodes + stack[--stackCount];
+		for ( int slot = 0; slot < 2; ++slot )
 		{
-			leafIndices[leafCount] = nodeIndex;
-#if B2_TREE_HEURISTIC == 0
-			leafCenters[leafCount] = b2AABB_Center( node->aabb );
-#else
-			leafBoxes[leafCount] = node->aabb;
-#endif
-			leafCount += 1;
-
-			// Detach
-			node->parent = B2_NULL_INDEX;
-
-			node->flags &= ~b2_enlargedNode;
-		}
-		else
-		{
-			int doomedNodeIndex = nodeIndex;
-
-			// Handle children
-			nodeIndex = node->children.child1;
-
-			if ( stackCount < B2_TREE_STACK_SIZE )
+			b2TreeChild child = node->children[slot];
+			if ( child.flagIndex == B2_NODE_SENTINEL )
 			{
-				stack[stackCount++] = node->children.child2;
+				continue;
 			}
-			else
+
+			if ( b2IsLeaf( &child ) == false && ( fullBuild || b2IsChildMoved( &child ) ) )
 			{
 				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+				stack[stackCount++] = b2GetChildIndex( &child );
+				continue;
 			}
 
-			node = nodes + nodeIndex;
-
-			// Remove doomed internal node.
-			b2FreeNode( tree, doomedNodeIndex );
-
-			continue;
-		}
-
-		if ( stackCount == 0 )
-		{
-			break;
-		}
-
-		nodeIndex = stack[--stackCount];
-		node = nodes + nodeIndex;
-	}
-
-#if B2_ENABLE_VALIDATION == 1
-	int capacity = tree->nodeCapacity;
-	for ( int i = 0; i < capacity; ++i )
-	{
-		if ( nodes[i].flags & b2_allocatedNode )
-		{
-			B2_ASSERT( ( nodes[i].flags & b2_enlargedNode ) == 0 );
-		}
-	}
+			child.flagIndex &= ~B2_MOVED_NODE;
+			leafIndices[leafCount] = leafCount;
+			leaves[leafCount] = child;
+#if B2_TREE_HEURISTIC == 0
+			leafCenters[leafCount] = b2AABB_Center( child.aabb );
+#else
+			leafBoxes[leafCount] = child.aabb;
 #endif
+			leafCount += 1;
+		}
+	}
 
-	B2_ASSERT( leafCount <= proxyCount );
+	B2_ASSERT( 0 < leafCount && leafCount <= proxyCount );
 
-	tree->root = b2BuildTree( tree, leafCount );
+	int rootIndex = b2BuildTree( tree, leafCount );
+	B2_ASSERT( rootIndex == 0 );
+
+	// The spare is now the tree and the old array is the spare
+	B2_SWAP( tree->nodes, tree->swapNodes );
+
+	// Everything above the DFS range is free. Chain it upward so the next allocations extend the
+	// dense range instead of scattering.
+	int nodeCount = tree->nodeCount;
+	int nodeCapacity = tree->nodeCapacity;
+	for ( int i = nodeCount; i < nodeCapacity; ++i )
+	{
+		tree->links[i].next = i + 1 < nodeCapacity ? i + 1 : B2_NULL_INDEX;
+		tree->links[i].flags = 0;
+	}
+	tree->nodeFreeList = nodeCount < nodeCapacity ? nodeCount : B2_NULL_INDEX;
+	tree->dfsOrdered = true;
 
 	b2DynamicTree_Validate( tree );
+	b2DynamicTree_ValidateNoEnlarged( tree );
 
 	return leafCount;
 }
@@ -2143,18 +2129,18 @@ void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
 
 	b2TreeNode* nodes = tree->nodes;
 	b2TreeLink* links = tree->links;
-	//B2_VALIDATE( b2IsLeaf( nodes + proxyId ) );
-	//B2_VALIDATE( b2AtomicLoadU16( &nodes[proxyId].flags ) & b2_enlargedNode );
+	// B2_VALIDATE( b2IsLeaf( nodes + proxyId ) );
+	// B2_VALIDATE( b2AtomicLoadU16( &nodes[proxyId].flags ) & b2_enlargedNode );
 
-	//int childIndex = proxyId;
-	//int parentIndex = nodes[proxyId].parent;
+	// int childIndex = proxyId;
+	// int parentIndex = nodes[proxyId].parent;
 	while ( nodeIndex != B2_ROOT_NODE )
 	{
 		b2TreeNode* node = nodes + nodeIndex;
 		B2_VALIDATE( b2AtomicLoadU32Raw( &node->children[slotIndex].flagIndex ) & B2_MOVED_NODE );
 
-		//int child1 = parentNode->children.child1;
-		//int child2 = parentNode->children.child2;
+		// int child1 = parentNode->children.child1;
+		// int child2 = parentNode->children.child2;
 		int siblingIndex = 1 ^ slotIndex;
 
 		// Is the sibling also enlarged?
