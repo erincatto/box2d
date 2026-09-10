@@ -92,6 +92,5 @@ B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 
 void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId );
 void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb );
-void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId );
 void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree );
 void b2DynamicTree_Refit( b2DynamicTree* tree );

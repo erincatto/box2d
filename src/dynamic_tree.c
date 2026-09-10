@@ -2118,58 +2118,6 @@ void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	}
 }
 
-void b2DynamicTree_RefitEnlarged( b2DynamicTree* tree, int proxyId )
-{
-	B2_VALIDATE( 0 <= proxyId && proxyId < tree->proxyCapacity );
-	b2TreeProxy* proxy = tree->proxies + proxyId;
-	int slotIndex = b2GetChildSlot( &proxy->link );
-	int nodeIndex = proxy->link.parent;
-
-	b2TreeNode* nodes = tree->nodes;
-	b2TreeLink* links = tree->links;
-	// B2_VALIDATE( b2IsLeaf( nodes + proxyId ) );
-	// B2_VALIDATE( b2AtomicLoadU16( &nodes[proxyId].flags ) & b2_enlargedNode );
-
-	// int childIndex = proxyId;
-	// int parentIndex = nodes[proxyId].parent;
-	while ( nodeIndex != B2_ROOT_NODE )
-	{
-		b2TreeNode* node = nodes + nodeIndex;
-		B2_VALIDATE( b2AtomicLoadU32Raw( &node->children[slotIndex].flagIndex ) & B2_MOVED_NODE );
-		b2TreeLink* link = links + nodeIndex;
-
-		// int child1 = parentNode->children.child1;
-		// int child2 = parentNode->children.child2;
-		int siblingIndex = 1 ^ slotIndex;
-
-		// Is the sibling also enlarged?
-		if ( b2AtomicLoadU32Raw( &node->children[siblingIndex].flagIndex ) & B2_MOVED_NODE )
-		{
-			// Leave a tag for the sibling or maybe the sibling already tagged (since they know
-			// this node is enlarged).
-			// Internal nodes will be freed in the rebuild so this flag never needs to be cleared.
-			uint32_t previousFlags = b2AtomicFetchOrU32( &link->flags, B2_REFIT_BIT );
-
-			// If the sibling didn't arrive here yet, then bail to avoid a race on the bounds.
-			if ( ( previousFlags & B2_REFIT_BIT ) == 0 )
-			{
-				// Sibling will handle it once they arrive. You got me bro!
-				return;
-			}
-		}
-
-		int parentIndex = link->parent;
-		slotIndex = b2AtomicLoadU32Raw( &link->flags ) & B2_SLOT_BIT;
-
-		// Reaching this line means either:
-		// 1. Only one child got enlarged
-		// 2. The second child has arrived and both siblings have up to date bounds.
-		nodes[parentIndex].children[slotIndex].aabb = b2AABB_Union( node->children[0].aabb, node->children[1].aabb );
-
-		nodeIndex = parentIndex;
-	}
-}
-
 // todo call this during the async rebuild
 void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree )
 {

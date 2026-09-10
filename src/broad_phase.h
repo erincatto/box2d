@@ -70,10 +70,3 @@ static inline void b2BroadPhase_MarkEnlarged( b2BroadPhase* bp, int proxyKey, b2
 	int proxyId = B2_PROXY_ID( proxyKey );
 	b2DynamicTree_MarkEnlarged( bp->trees + proxyType, proxyId, aabb );
 }
-
-static inline void b2BroadPhase_RefitEnlarged( b2BroadPhase* bp, int proxyKey )
-{
-	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
-	int proxyId = B2_PROXY_ID( proxyKey );
-	b2DynamicTree_RefitEnlarged( bp->trees + proxyType, proxyId );
-}
