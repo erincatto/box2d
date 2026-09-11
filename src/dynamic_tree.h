@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "core.h"
+
 #include "box2d/collision.h"
 
 #define B2_TREE_STACK_SIZE 512
@@ -56,27 +58,57 @@ static inline bool b2HasTreeMoved( const b2DynamicTree* tree )
 	return b2IsChildMoved( root->children + 0 ) || b2IsChildMoved( root->children + 1 );
 }
 
-#include <xmmintrin.h>
-//B2_FORCE_INLINE bool b2OverlapsV( b2AABB a, b2AABB b )
-//{
-//	// Unaligned load
-//	// [lower.x lower.y upper.x upper.y]
-//	__m128 av = _mm_loadu_ps( &a.lowerBound.x );
-//	__m128 bv = _mm_loadu_ps( &b.lowerBound.x );
-//
-//	// [alx aly blx bly]
-//	__m128 t1 = _mm_movelh_ps( av, bv );
-//
-//	// [bux buy aux auy]
-//	__m128 t2 = _mm_movehl_ps( av, bv );
-//
-//	__m128 cmp = _mm_cmple_ps( t1, t2 );
-//
-//	int m = _mm_movemask_ps( cmp );
-//	return m == 0xF;
-//}
+// The query box is loaded into a register once and tested against each record in place. Passing
+// the record's box by value copies it to the stack as two 8 byte moves that a 16 byte load cannot
+// forward from, which is a stall on every node.
+#if defined( B2_SIMD_NEON )
 
-B2_FORCE_INLINE bool b2OverlapChild(__m128 av, const b2TreeChild* child)
+#include <arm_neon.h>
+
+typedef float32x4_t b2AABBV;
+
+B2_FORCE_INLINE b2AABBV b2LoadAABBV( const b2AABB* aabb )
+{
+	return vld1q_f32( &aabb->lowerBound.x );
+}
+
+B2_FORCE_INLINE bool b2OverlapChild( b2AABBV av, const b2TreeChild* child )
+{
+	// [lower.x lower.y upper.x upper.y]
+	float32x4_t bv = vld1q_f32( &child->aabb.lowerBound.x );
+
+	// [alx aly blx bly]
+	float32x4_t t1 = vcombine_f32( vget_low_f32( av ), vget_low_f32( bv ) );
+
+	// [bux buy aux auy]
+	float32x4_t t2 = vcombine_f32( vget_high_f32( bv ), vget_high_f32( av ) );
+
+	return vminvq_u32( vcleq_f32( t1, t2 ) ) != 0;
+}
+
+B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
+{
+	float32x4_t b1 = vld1q_f32( &a.lowerBound.x );
+	float32x4_t b2 = vld1q_f32( &b.lowerBound.x );
+	float32x4_t lower = vminq_f32( b1, b2 );
+	float32x4_t upper = vmaxq_f32( b1, b2 );
+	b2AABB result;
+	vst1q_f32( &result.lowerBound.x, vcombine_f32( vget_low_f32( lower ), vget_high_f32( upper ) ) );
+	return result;
+}
+
+#elif defined( B2_SIMD_SSE2 ) || defined( B2_SIMD_AVX2 )
+
+#include <xmmintrin.h>
+
+typedef __m128 b2AABBV;
+
+B2_FORCE_INLINE b2AABBV b2LoadAABBV( const b2AABB* aabb )
+{
+	return _mm_loadu_ps( &aabb->lowerBound.x );
+}
+
+B2_FORCE_INLINE bool b2OverlapChild( b2AABBV av, const b2TreeChild* child )
 {
 	// Unaligned load
 	// [lower.x lower.y upper.x upper.y]
@@ -104,6 +136,31 @@ B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 	_mm_storeu_ps( &result.lowerBound.x, c );
 	return result;
 }
+
+#else
+
+typedef b2AABB b2AABBV;
+
+B2_FORCE_INLINE b2AABBV b2LoadAABBV( const b2AABB* aabb )
+{
+	return *aabb;
+}
+
+// Same compares as the SIMD paths, no subtraction, so an inverted empty box fails and the
+// scalar build traverses exactly what the SIMD builds do
+B2_FORCE_INLINE bool b2OverlapChild( b2AABBV av, const b2TreeChild* child )
+{
+	const b2AABB* bv = &child->aabb;
+	return av.lowerBound.x <= bv->upperBound.x && av.lowerBound.y <= bv->upperBound.y &&
+		   bv->lowerBound.x <= av.upperBound.x && bv->lowerBound.y <= av.upperBound.y;
+}
+
+B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
+{
+	return b2AABB_Union( a, b );
+}
+
+#endif
 
 void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId );
 void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb );

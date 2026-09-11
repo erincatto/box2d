@@ -1118,7 +1118,7 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 	stack[stackCount++] = B2_ROOT_NODE;
 	const b2TreeNode* nodes = tree->nodes;
 
-	__m128 boxv = _mm_loadu_ps( &aabb.lowerBound.x );
+	b2AABBV boxv = b2LoadAABBV( &aabb );
 
 	while ( stackCount > 0 )
 	{
@@ -1179,7 +1179,7 @@ b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2Tr
 	stack[stackCount++] = B2_ROOT_NODE;
 	const b2TreeNode* nodes = tree->nodes;
 
-	__m128 boxv = _mm_loadu_ps( &aabb.lowerBound.x );
+	b2AABBV boxv = b2LoadAABBV( &aabb );
 
 	while ( stackCount > 0 )
 	{
@@ -1254,7 +1254,7 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 	// Build a bounding box for the segment.
 	b2AABB segmentAABB = { b2Min( p1, p2 ), b2Max( p1, p2 ) };
 
-	__m128 boxv = _mm_loadu_ps( &segmentAABB.lowerBound.x );
+	b2AABBV boxv = b2LoadAABBV( &segmentAABB );
 
 	int stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
@@ -1350,7 +1350,7 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 					segmentAABB.lowerBound = b2Min( p1, p2 );
 					segmentAABB.upperBound = b2Max( p1, p2 );
 
-					boxv = _mm_loadu_ps( &segmentAABB.lowerBound.x );
+					boxv = b2LoadAABBV( &segmentAABB );
 				}
 			}
 			else
@@ -1402,7 +1402,7 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 		b2Max( originAABB.upperBound, b2Add( originAABB.upperBound, t ) ),
 	};
 
-	__m128 boxv = _mm_loadu_ps( &totalAABB.lowerBound.x );
+	b2AABBV boxv = b2LoadAABBV( &totalAABB );
 
 	int stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
@@ -1498,7 +1498,7 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 					t = b2MulSV( maxFraction, input->translation );
 					totalAABB.lowerBound = b2Min( originAABB.lowerBound, b2Add( originAABB.lowerBound, t ) );
 					totalAABB.upperBound = b2Max( originAABB.upperBound, b2Add( originAABB.upperBound, t ) );
-					boxv = _mm_loadu_ps( &totalAABB.lowerBound.x );
+					boxv = b2LoadAABBV( &totalAABB );
 				}
 			}
 			else

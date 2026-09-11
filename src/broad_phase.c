@@ -330,7 +330,7 @@ B2_FORCE_INLINE bool b2RecordPairSurvives( const b2TreeChild* a, const b2TreeChi
 static void b2CollideProxyAndSubtree( const b2TreeChild* proxy, const b2TreeNode* nodes, int nodeIndex, b2PairContext* context )
 {
 	uint32_t proxyMark = proxy->flagIndex & B2_MOVED_NODE;
-	__m128 boxv = _mm_loadu_ps(&proxy->aabb.lowerBound.x);
+	b2AABBV boxv = b2LoadAABBV( &proxy->aabb );
 	int shapeId = (int)proxy->truncatedUserData;
 
 	int stack[B2_TREE_STACK_SIZE];
