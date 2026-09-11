@@ -1223,193 +1223,138 @@ b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2Tr
 	return result;
 }
 
-typedef struct b2CastSlab
-{
-	b2Vec2 invD;
-	bool parallelX, parallelY;
-	int nearX, farX, nearY, farY;
-	float nearOffX, farOffX, nearOffY, farOffY;
-
-	// Origin span for a parallel axis. Includes box cast extent.
-	float spanLoX, spanHiX, spanLoY, spanHiY;
-} b2CastSlab;
-
-static inline b2CastSlab b2MakeCastSlab( b2Vec2 p, b2Vec2 d, b2Vec2 extent )
-{
-	b2CastSlab slab;
-
-	if ( b2AbsFloat( d.x ) < 1e-20f )
-	{
-		slab.invD.x = 0.0f;
-		slab.parallelX = true;
-	}
-	else
-	{
-		slab.invD.x = 1.0f / d.x;
-		slab.parallelX = false;
-	}
-
-	if ( b2AbsFloat( d.y ) < 1e-20f )
-	{
-		slab.invD.y = 0.0f;
-		slab.parallelY = true;
-	}
-	else
-	{
-		slab.invD.y = 1.0f / d.y;
-		slab.parallelY = false;
-	}
-
-	slab.spanLoX = p.x - extent.x;
-	slab.spanHiX = p.x + extent.x;
-	slab.spanLoY = p.y - extent.y;
-	slab.spanHiY = p.y + extent.y;
-
-	bool positiveX = slab.invD.x >= 0.0f;
-	bool positiveY = slab.invD.y >= 0.0f;
-	slab.nearX = positiveX ? 0 : 2;
-	slab.farX = positiveX ? 2 : 0;
-	slab.nearY = positiveY ? 1 : 3;
-	slab.farY = positiveY ? 3 : 1;
-	slab.nearOffX = ( positiveX ? -extent.x : extent.x ) - p.x;
-	slab.farOffX = ( positiveX ? extent.x : -extent.x ) - p.x;
-	slab.nearOffY = ( positiveY ? -extent.y : extent.y ) - p.y;
-	slab.farOffY = ( positiveY ? extent.y : -extent.y ) - p.y;
-	return slab;
-}
-
-B2_FORCE_INLINE bool b2CastSlabTest( const b2CastSlab* slab, const b2TreeChild* child, float maxFraction, float* fraction )
-{
-	const float* box = &child->aabb.lowerBound.x;
-	float tmin = 0.0f;
-	float tmax = maxFraction;
-
-	if ( slab->parallelX )
-	{
-		if ( slab->spanHiX < box[0] || box[2] < slab->spanLoX )
-		{
-			return false;
-		}
-	}
-	else
-	{
-		float tNear = ( box[slab->nearX] + slab->nearOffX ) * slab->invD.x;
-		float tFar = ( box[slab->farX] + slab->farOffX ) * slab->invD.x;
-		tmin = b2MaxFloat( tNear, tmin );
-		tmax = b2MinFloat( tFar, tmax );
-	}
-
-	if ( slab->parallelY )
-	{
-		if ( slab->spanHiY < box[0] || box[2] < slab->spanLoY )
-		{
-			return false;
-		}
-	}
-	else
-	{
-		float tNear = ( box[slab->nearY] + slab->nearOffY ) * slab->invD.y;
-		float tFar = ( box[slab->farY] + slab->farOffY ) * slab->invD.y;
-		tmin = b2MaxFloat( tNear, tmin );
-		tmax = b2MinFloat( tFar, tmax );
-	}
-
-	*fraction = tmin;
-	return tmin <= tmax;
-}
-
-typedef struct b2CastEntry
-{
-	uint32_t flagIndex;
-	float fraction;
-} b2CastEntry;
-
 b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 								   b2TreeRayCastCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
+
 	if ( tree->proxyCount == 0 )
 	{
 		return result;
 	}
 
+	b2Vec2 p1 = input->origin;
+	b2Vec2 d = input->translation;
+
+	b2Vec2 r = b2Normalize( d );
+
+	// v is perpendicular to the segment.
+	b2Vec2 v = b2CrossSV( 1.0f, r );
+	b2Vec2 abs_v = b2Abs( v );
+
+	// Separating axis for segment (Gino, p80).
+	// |dot(v, p1 - c)| > dot(|v|, h)
+
 	float maxFraction = input->maxFraction;
-	b2CastSlab slab = b2MakeCastSlab( input->origin, input->translation, b2Vec2_zero );
-	b2RayCastInput subInput = *input;
+
+	b2Vec2 p2 = b2MulAdd( p1, maxFraction, d );
+
+	// Build a bounding box for the segment.
+	b2AABB segmentAABB = { b2Min( p1, p2 ), b2Max( p1, p2 ) };
+
+	__m128 boxv = _mm_loadu_ps( &segmentAABB.lowerBound.x );
+
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = B2_ROOT_NODE;
+
 	const b2TreeNode* nodes = tree->nodes;
 
-	b2CastEntry stack[B2_TREE_STACK_SIZE];
-	int stackCount = 0;
-	stack[stackCount++] = (b2CastEntry){ B2_ROOT_NODE, 0.0f };
+	b2RayCastInput subInput = *input;
 
 	while ( stackCount > 0 )
 	{
-		b2CastEntry entry = stack[--stackCount];
+		int nodeIndex = stack[--stackCount];
 
-		// A hit since the push may have moved the best fraction under this entry
-		if ( entry.fraction > maxFraction )
+		const b2TreeNode* node = nodes + nodeIndex;
+		result.nodeVisits += 1;
+
+		const b2TreeChild* children[2];
+		children[0] = node->children + 0;
+		children[1] = node->children + 1;
+
+		bool leaf1 = b2IsLeaf( children[0] );
+		bool leaf2 = b2IsLeaf( children[1] );
+
+		// Push the farthest child first so it gets processed second. This is
+		// only relevant if both nodes are internal.
+		if ( leaf1 == false && leaf2 == false )
 		{
-			continue;
+			b2Vec2 center1 = b2AABB_Center( children[0]->aabb );
+			b2Vec2 center2 = b2AABB_Center( children[1]->aabb );
+
+			if ( b2DistanceSquared( center1, p1 ) < b2DistanceSquared( center2, p1 ) )
+			{
+				B2_SWAP( children[0], children[1] );
+			}
 		}
 
-		if ( entry.flagIndex & B2_LEAF_NODE )
+		for ( int i = 0; i < 2; ++i )
 		{
-			int proxyId = (int)( entry.flagIndex & B2_NODE_INDEX_MASK );
-			const b2TreeProxy* proxy = tree->proxies + proxyId;
-			if ( ( proxy->categoryBits & maskBits ) == 0 )
+			const b2TreeChild* child = children[i];
+
+			if ( b2OverlapChild( boxv, child ) == false )
 			{
 				continue;
 			}
 
-			subInput.maxFraction = maxFraction;
-			float value = callback( &subInput, proxyId, proxy->userData, context );
-			result.leafVisits += 1;
-
-			if ( value == 0.0f )
+			// Separating axis for segment (Gino, p80).
+			// |dot(v, p1 - c)| > dot(|v|, h)
+			b2AABB nodeAABB = child->aabb;
+			b2Vec2 c = b2AABB_Center( nodeAABB );
+			b2Vec2 h = b2AABB_Extents( nodeAABB );
+			float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
+			float term2 = b2Dot( abs_v, h );
+			if ( term2 < term1 )
 			{
-				return result;
+				continue;
 			}
 
-			if ( 0.0f < value && value <= maxFraction )
+			if ( b2IsLeaf( child ) )
 			{
-				maxFraction = value;
-			}
+				int proxyId = b2GetChildIndex( child );
+				const b2TreeProxy* proxy = tree->proxies + proxyId;
 
-			continue;
-		}
+				if ( ( proxy->categoryBits & maskBits ) == 0 )
+				{
+					continue;
+				}
 
-		const b2TreeNode* node = nodes + ( entry.flagIndex & B2_NODE_INDEX_MASK );
-		result.nodeVisits += 1;
+				subInput.maxFraction = maxFraction;
 
-		const b2TreeChild* c0 = node->children + 0;
-		const b2TreeChild* c1 = node->children + 1;
-		float fraction0, fraction1;
-		bool hit0 = b2CastSlabTest( &slab, c0, maxFraction, &fraction0 );
-		bool hit1 = b2CastSlabTest( &slab, c1, maxFraction, &fraction1 );
+				float value = callback( &subInput, proxyId, proxy->userData, context );
+				result.leafVisits += 1;
 
-		B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				// The user may return -1 to indicate this shape should be skipped
 
-		// Far first so the near pops first
-		if ( hit0 && hit1 )
-		{
-			if ( fraction0 < fraction1 )
-			{
-				stack[stackCount++] = (b2CastEntry){ c1->flagIndex, fraction1 };
-				stack[stackCount++] = (b2CastEntry){ c0->flagIndex, fraction0 };
+				if ( value == 0.0f )
+				{
+					// The client has terminated the ray cast.
+					return result;
+				}
+
+				if ( 0.0f < value && value <= maxFraction )
+				{
+					// Update segment bounding box.
+					maxFraction = value;
+					p2 = b2MulAdd( p1, maxFraction, d );
+					segmentAABB.lowerBound = b2Min( p1, p2 );
+					segmentAABB.upperBound = b2Max( p1, p2 );
+
+					boxv = _mm_loadu_ps( &segmentAABB.lowerBound.x );
+				}
 			}
 			else
 			{
-				stack[stackCount++] = (b2CastEntry){ c0->flagIndex, fraction0 };
-				stack[stackCount++] = (b2CastEntry){ c1->flagIndex, fraction1 };
+				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
+				{
+					stack[stackCount++] = b2GetChildIndex( child );
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				}
 			}
-		}
-		else if ( hit0 )
-		{
-			stack[stackCount++] = (b2CastEntry){ c0->flagIndex, fraction0 };
-		}
-		else if ( hit1 )
-		{
-			stack[stackCount++] = (b2CastEntry){ c1->flagIndex, fraction1 };
 		}
 	}
 
@@ -1420,88 +1365,136 @@ b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInp
 								   b2TreeBoxCastCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
+
 	if ( tree->proxyCount == 0 )
 	{
 		return result;
 	}
 
+	b2AABB originAABB = input->box;
+
+	b2Vec2 p1 = b2AABB_Center( originAABB );
+	b2Vec2 extension = b2AABB_Extents( originAABB );
+
+	// v is perpendicular to the segment.
+	b2Vec2 r = input->translation;
+	b2Vec2 v = b2CrossSV( 1.0f, r );
+	b2Vec2 abs_v = b2Abs( v );
+
+	// Separating axis for segment (Gino, p80).
+	// |dot(v, p1 - c)| > dot(|v|, h)
+
 	float maxFraction = input->maxFraction;
-	b2CastSlab slab = b2MakeCastSlab( b2AABB_Center( input->box ), input->translation, b2AABB_Extents( input->box ) );
+
+	// Build total box for the cast
+	b2Vec2 t = b2MulSV( maxFraction, input->translation );
+	b2AABB totalAABB = {
+		b2Min( originAABB.lowerBound, b2Add( originAABB.lowerBound, t ) ),
+		b2Max( originAABB.upperBound, b2Add( originAABB.upperBound, t ) ),
+	};
+
+	__m128 boxv = _mm_loadu_ps( &totalAABB.lowerBound.x );
+
 	b2BoxCastInput subInput = *input;
 	const b2TreeNode* nodes = tree->nodes;
 
-	b2CastEntry stack[B2_TREE_STACK_SIZE];
+	int stack[B2_TREE_STACK_SIZE];
 	int stackCount = 0;
-	stack[stackCount++] = (b2CastEntry){ B2_ROOT_NODE, 0.0f };
+	stack[stackCount++] = B2_ROOT_NODE;
 
 	while ( stackCount > 0 )
 	{
-		b2CastEntry entry = stack[--stackCount];
+		int nodeIndex = stack[--stackCount];
 
-		// A hit since the push may have moved the best fraction under this entry
-		if ( entry.fraction > maxFraction )
+		const b2TreeNode* node = nodes + nodeIndex;
+		result.nodeVisits += 1;
+
+		const b2TreeChild* children[2];
+		children[0] = node->children + 0;
+		children[1] = node->children + 1;
+
+		bool leaf1 = b2IsLeaf( children[0] );
+		bool leaf2 = b2IsLeaf( children[1] );
+
+		// Push the farthest child first so it gets processed second. This is
+		// only relevant if both nodes are internal.
+		if ( leaf1 == false && leaf2 == false )
 		{
-			continue;
+			b2Vec2 center1 = b2AABB_Center( children[0]->aabb );
+			b2Vec2 center2 = b2AABB_Center( children[1]->aabb );
+
+			if ( b2DistanceSquared( center1, p1 ) < b2DistanceSquared( center2, p1 ) )
+			{
+				B2_SWAP( children[0], children[1] );
+			}
 		}
 
-		if ( entry.flagIndex & B2_LEAF_NODE )
+		for ( int i = 0; i < 2; ++i )
 		{
-			int proxyId = (int)( entry.flagIndex & B2_NODE_INDEX_MASK );
-			const b2TreeProxy* proxy = tree->proxies + proxyId;
-			if ( ( proxy->categoryBits & maskBits ) == 0 )
+			const b2TreeChild* child = children[i];
+
+			if ( b2OverlapChild( boxv, child ) == false )
 			{
 				continue;
 			}
 
-			subInput.maxFraction = maxFraction;
-			float value = callback( &subInput, proxyId, proxy->userData, context );
-			result.leafVisits += 1;
-
-			if ( value == 0.0f )
+			// Separating axis for segment (Gino, p80).
+			// |dot(v, p1 - c)| > dot(|v|, h)
+			// radius extension is added to the node in this case
+			b2AABB nodeAABB = child->aabb;
+			b2Vec2 c = b2AABB_Center( nodeAABB );
+			b2Vec2 h = b2Add( b2AABB_Extents( nodeAABB ), extension );
+			float term1 = b2AbsFloat( b2Dot( v, b2Sub( p1, c ) ) );
+			float term2 = b2Dot( abs_v, h );
+			if ( term2 < term1 )
 			{
-				return result;
+				continue;
 			}
 
-			if ( 0.0f < value && value <= maxFraction )
+			if ( b2IsLeaf( child ) )
 			{
-				maxFraction = value;
-			}
+				int proxyId = b2GetChildIndex( child );
+				const b2TreeProxy* proxy = tree->proxies + proxyId;
 
-			continue;
-		}
+				if ( ( proxy->categoryBits & maskBits ) == 0 )
+				{
+					continue;
+				}
 
-		const b2TreeNode* node = nodes + ( entry.flagIndex & B2_NODE_INDEX_MASK );
-		result.nodeVisits += 1;
+				subInput.maxFraction = maxFraction;
 
-		const b2TreeChild* c0 = node->children + 0;
-		const b2TreeChild* c1 = node->children + 1;
-		float fraction0, fraction1;
-		bool hit0 = b2CastSlabTest( &slab, c0, maxFraction, &fraction0 );
-		bool hit1 = b2CastSlabTest( &slab, c1, maxFraction, &fraction1 );
+				float value = callback( &subInput, proxyId, proxy->userData, context );
+				result.leafVisits += 1;
 
-		B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				// The user may return -1 to indicate this shape should be skipped
 
-		// Far first so the near pops first
-		if ( hit0 && hit1 )
-		{
-			if ( fraction0 < fraction1 )
-			{
-				stack[stackCount++] = (b2CastEntry){ c1->flagIndex, fraction1 };
-				stack[stackCount++] = (b2CastEntry){ c0->flagIndex, fraction0 };
+				if ( value == 0.0f )
+				{
+					// The client has terminated the ray cast.
+					return result;
+				}
+
+				if ( 0.0f < value && value < maxFraction )
+				{
+					// Update cast bounding box.
+					maxFraction = value;
+					t = b2MulSV( maxFraction, input->translation );
+					totalAABB.lowerBound = b2Min( originAABB.lowerBound, b2Add( originAABB.lowerBound, t ) );
+					totalAABB.upperBound = b2Max( originAABB.upperBound, b2Add( originAABB.upperBound, t ) );
+					boxv = _mm_loadu_ps( &totalAABB.lowerBound.x );
+				}
 			}
 			else
 			{
-				stack[stackCount++] = (b2CastEntry){ c0->flagIndex, fraction0 };
-				stack[stackCount++] = (b2CastEntry){ c1->flagIndex, fraction1 };
+				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
+				{
+					stack[stackCount++] = b2GetChildIndex( child );
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE - 1 );
+				}
 			}
-		}
-		else if ( hit0 )
-		{
-			stack[stackCount++] = (b2CastEntry){ c0->flagIndex, fraction0 };
-		}
-		else if ( hit1 )
-		{
-			stack[stackCount++] = (b2CastEntry){ c1->flagIndex, fraction1 };
 		}
 	}
 

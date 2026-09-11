@@ -223,6 +223,63 @@ static int TreeRayCastTest( void )
 		ENSURE( proxyHit == proxyId );
 	}
 
+	// An off center box catches an axis aligned ray tested against the wrong axis, which the origin
+	// centered box above cannot. Two leaves also give the root a child pair.
+	b2AABB b = { .lowerBound = { 10.0f, 4.0f }, .upperBound = { 11.0f, 6.0f } };
+	int proxyIdB = b2DynamicTree_CreateProxy( &tree, b, 1, 1, 0 );
+
+	// Test 14: Horizontal ray through the off center box
+	{
+		b2Vec2 p1 = { 0.0f, 5.0f };
+		b2Vec2 p2 = { 21.0f, 5.0f };
+		input.origin = p1;
+		input.translation = b2Sub( p2, p1 );
+
+		int proxyHit = -1;
+		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+
+		ENSURE( proxyHit == proxyIdB );
+	}
+
+	// Test 15: Vertical ray through the off center box
+	{
+		b2Vec2 p1 = { 10.5f, 0.0f };
+		b2Vec2 p2 = { 10.5f, 21.0f };
+		input.origin = p1;
+		input.translation = b2Sub( p2, p1 );
+
+		int proxyHit = -1;
+		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+
+		ENSURE( proxyHit == proxyIdB );
+	}
+
+	// Test 16: Horizontal ray passing above the off center box
+	{
+		b2Vec2 p1 = { 0.0f, 7.0f };
+		b2Vec2 p2 = { 21.0f, 7.0f };
+		input.origin = p1;
+		input.translation = b2Sub( p2, p1 );
+
+		int proxyHit = -1;
+		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+
+		ENSURE( proxyHit == -1 );
+	}
+
+	// Test 17: Vertical ray passing beside the off center box
+	{
+		b2Vec2 p1 = { 12.0f, 0.0f };
+		b2Vec2 p2 = { 12.0f, 21.0f };
+		input.origin = p1;
+		input.translation = b2Sub( p2, p1 );
+
+		int proxyHit = -1;
+		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+
+		ENSURE( proxyHit == -1 );
+	}
+
 	b2DynamicTree_Destroy( &tree );
 
 	return 0;
