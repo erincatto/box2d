@@ -1244,7 +1244,6 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 
 	// Separating axis for segment (Gino, p80).
 	// |dot(v, p1 - c)| > dot(|v|, h)
-
 	float maxFraction = input->maxFraction;
 
 	b2Vec2 p2 = b2MulAdd( p1, maxFraction, d );
@@ -1273,22 +1272,9 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 		children[0] = node->children + 0;
 		children[1] = node->children + 1;
 
-		bool leaf1 = b2IsLeaf( children[0] );
-		bool leaf2 = b2IsLeaf( children[1] );
-
-		// Push the farthest child first so it gets processed second. This is
-		// only relevant if both nodes are internal.
-		if ( leaf1 == false && leaf2 == false )
-		{
-			b2Vec2 center1 = b2AABB_Center( children[0]->aabb );
-			b2Vec2 center2 = b2AABB_Center( children[1]->aabb );
-
-			if ( b2DistanceSquared( center1, p1 ) < b2DistanceSquared( center2, p1 ) )
-			{
-				B2_SWAP( children[0], children[1] );
-			}
-		}
-
+		const b2TreeChild* hit[2];
+		bool isLeaf[2];
+		int hitCount = 0;
 		for ( int i = 0; i < 2; ++i )
 		{
 			const b2TreeChild* child = children[i];
@@ -1310,9 +1296,30 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 				continue;
 			}
 
-			if ( b2IsLeaf( child ) )
+			isLeaf[hitCount] = b2IsLeaf( child );
+			hit[hitCount] = child;
+			hitCount += 1;
+		}
+
+		if ( hitCount == 2 && isLeaf[0] == false && isLeaf[1] == false )
+		{
+			b2Vec2 center1 = b2AABB_Center( hit[0]->aabb );
+			b2Vec2 center2 = b2AABB_Center( hit[1]->aabb );
+			float d1 = b2DistanceSquared( center1, p1 );
+			float d2 = b2DistanceSquared( center2, p1 );
+
+			// Want to push the closest one last. Both have the same isLeaf, so they don't swap.
+			if ( d1 < d2 )
 			{
-				int proxyId = b2GetChildIndex( child );
+				B2_SWAP( hit[0], hit[1] );
+			}
+		}
+
+		for ( int i = 0; i < hitCount; ++i )
+		{
+			if ( isLeaf[i] )
+			{
+				int proxyId = b2GetChildIndex( hit[i] );
 				const b2TreeProxy* proxy = tree->proxies + proxyId;
 
 				if ( ( proxy->categoryBits & maskBits ) == 0 )
@@ -1348,7 +1355,7 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 			{
 				if ( stackCount < B2_TREE_STACK_SIZE - 1 )
 				{
-					stack[stackCount++] = b2GetChildIndex( child );
+					stack[stackCount++] = b2GetChildIndex( hit[i] );
 				}
 				else
 				{
