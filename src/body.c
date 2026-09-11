@@ -71,24 +71,6 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 	return (b2BodyId){ bodyId + 1, world->worldId, body->generation };
 }
 
-b2BodySim* b2GetBodySim( b2World* world, b2Body* body )
-{
-	b2SolverSet* set = b2Array_Get( world->solverSets, body->setIndex );
-	b2BodySim* bodySim = b2Array_Get( set->bodySims, body->localIndex );
-	return bodySim;
-}
-
-b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
-{
-	if ( body->setIndex == b2_awakeSet )
-	{
-		b2SolverSet* set = b2Array_Get( world->solverSets, b2_awakeSet );
-		return b2Array_Get( set->bodyStates, body->localIndex );
-	}
-
-	return NULL;
-}
-
 void b2SyncBodyFlags( b2World* world, b2Body* body )
 {
 	// Never sync transient flags

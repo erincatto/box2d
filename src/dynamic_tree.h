@@ -5,7 +5,7 @@
 
 #include "box2d/collision.h"
 
-#define B2_TREE_STACK_SIZE 1024
+#define B2_TREE_STACK_SIZE 512
 #define B2_NODE_SENTINEL ( UINT32_MAX & ~B2_MOVED_NODE )
 #define B2_MOVED_NODE ( 1u << 30 )
 #define B2_LEAF_NODE ( 1u << 31 )

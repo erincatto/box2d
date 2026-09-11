@@ -157,3 +157,6 @@ B2_INLINE int b2RemoveHelper( void* data, int* count, int index, int elementSize
 #define b2Array_ByteCount( a ) ( ( a ).capacity * (int)sizeof( *( a ).data ) )
 
 b2DeclareArrayNative( int );
+b2DeclareArray( b2Body );
+b2DeclareArray( b2BodySim );
+b2DeclareArray( b2BodyState );
