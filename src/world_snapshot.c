@@ -812,8 +812,6 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 
 		// pairSet
 		b2DesHashSet( r, &bp->pairSet );
-
-		// Transient move results stay at shell's NULL/0
 	}
 
 	// Step 9: constraint graph

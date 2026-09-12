@@ -12,8 +12,6 @@
 #include "box2d/types.h"
 
 typedef struct b2Shape b2Shape;
-typedef struct b2MovePair b2MovePair;
-typedef struct b2MoveResult b2MoveResult;
 typedef struct b2Stack b2Stack;
 typedef struct b2World b2World;
 
@@ -30,11 +28,6 @@ typedef struct b2BroadPhase
 	b2DynamicTree trees[b2_bodyTypeCount];
 
 	int* movedSiblings;
-	b2MovePair* movePairs;
-	b2MoveResult* moveResults;
-	int movePairCapacity;
-	b2AtomicInt movePairIndex;
-	int moveCount;
 
 	// Tracks shape pairs that have a b2Contact
 	b2HashSet pairSet;

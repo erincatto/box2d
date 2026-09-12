@@ -1945,7 +1945,6 @@ void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	}
 }
 
-// todo call this during the async rebuild
 void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree )
 {
 	b2TreeNode* nodes = tree->nodes;

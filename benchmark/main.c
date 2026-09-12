@@ -213,6 +213,7 @@ int main( int argc, char** argv )
 	bool enableContinuous = true;
 	bool recordStepTimes = false;
 	bool fullSteps = false;
+	bool rebuildStatic = false;
 
 	for ( int i = 1; i < argc; ++i )
 	{
@@ -263,6 +264,12 @@ int main( int argc, char** argv )
 			// Debug builds run 10 steps unless asked for the full count
 			fullSteps = true;
 		}
+		else if ( strcmp( arg, "-rs" ) == 0 || strcmp( arg, "--rebuild-static" ) == 0 )
+		{
+			// What a static rebuild is worth to a scene, timed once per run
+			rebuildStatic = true;
+			printf( "Static tree rebuilt after create\n" );
+		}
 		else if ( strcmp( arg, "-l" ) == 0 || strcmp( arg, "--list" ) == 0 )
 		{
 			PrintBenchmarks( benchmarks, benchmarkCount );
@@ -278,6 +285,7 @@ int main( int argc, char** argv )
 					"-nc, --no-continuous: disable continuous collision\n"
 					"-s, --record-steps: record step times\n"
 					"-f, --full: run the full step count in a debug build\n"
+					"-rs, --rebuild-static: rebuild the static tree after create and print the time\n"
 					"-l, --list: list the registered benchmarks\n"
 					"-h, --help: print this help\n" );
 			exit( 0 );
@@ -336,6 +344,13 @@ int main( int argc, char** argv )
 				b2WorldId worldId = b2CreateWorld( &worldDef );
 
 				benchmark->createFcn( worldId );
+
+				if ( rebuildStatic )
+				{
+					uint64_t rebuildTicks = b2GetTicks();
+					b2World_RebuildStaticTree( worldId );
+					printf( "static rebuild %.3f ms\n", b2GetMilliseconds( rebuildTicks ) );
+				}
 
 				float timeStep = 1.0f / 60.0f;
 				int subStepCount = 4;

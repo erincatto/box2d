@@ -9,7 +9,6 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
-#include "atomic.h"
 #include "body.h"
 #include "contact.h"
 #include "core.h"
@@ -48,10 +47,7 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 	int dynamicCapacity = b2MaxInt( 16, capacity->dynamicShapeCount );
 	bp->trees[b2_dynamicBody] = b2DynamicTree_Create( dynamicCapacity );
 
-	bp->movePairs = NULL;
-	b2AtomicStoreInt( &bp->movePairIndex, 0 );
-	bp->movePairCapacity = 16;
-	bp->moveCount = 0;
+	bp->movedSiblings = NULL;
 }
 
 void b2DestroyBroadPhase( b2BroadPhase* bp )
@@ -123,16 +119,14 @@ typedef struct b2Candidate
 {
 	int shapeIdA;
 	int shapeIdB;
-	int moveIndex;
 } b2CandidatePair;
 
 typedef struct b2PairContext
 {
 	b2World* world;
+	b2Array( uint64_t )* pairKeys;
 	b2CandidatePair batch[B2_CANDIDATE_BATCH];
 	int batchCount;
-	int workerIndex;
-	int moveIndex;
 } b2PairContext;
 
 typedef struct b2NodePair
@@ -145,19 +139,6 @@ typedef struct b2IndexPair
 {
 	int a, b;
 } b2IndexPair;
-
-typedef struct b2MovePair
-{
-	int shapeIdA;
-	int shapeIdB;
-	b2MovePair* next;
-	bool heap;
-} b2MovePair;
-
-typedef struct b2MoveResult
-{
-	b2MovePair* pairList;
-} b2MoveResult;
 
 // todo profile with and without prefetch
 static void b2FlushPairs( b2PairContext* context )
@@ -201,7 +182,7 @@ static void b2FlushPairs( b2PairContext* context )
 	}
 
 	// Filter candidates.
-	int count3 = 0;
+	b2Array( uint64_t )* pairKeys = context->pairKeys;
 	for ( int i = 0; i < count2; ++i )
 	{
 		int shapeIdA = candidates[i].shapeIdA;
@@ -260,42 +241,7 @@ static void b2FlushPairs( b2PairContext* context )
 			}
 		}
 
-		candidates[count3] = candidates[i];
-		count3 += 1;
-	}
-
-	// Claim results space.
-	int base = b2AtomicFetchAddInt( &bp->movePairIndex, count3 );
-
-	for ( int i = 0; i < count3; ++i )
-	{
-		int pairIndex = base + i;
-		b2MovePair* pair;
-		if ( pairIndex < bp->movePairCapacity )
-		{
-			pair = bp->movePairs + pairIndex;
-			pair->heap = false;
-		}
-		else
-		{
-			static b2AtomicInt once = { 0 };
-			if ( b2AtomicCompareExchangeInt( &once, 0, 1 ) == 0 )
-			{
-				// This means you have too many overlapping objects.
-				b2Log( "Pair buffer capacity of %d exceeded, too many overlaps", bp->movePairCapacity );
-			}
-
-			pair = b2Alloc( sizeof( b2MovePair ) );
-			pair->heap = true;
-		}
-
-		pair->shapeIdA = candidates[i].shapeIdA;
-		pair->shapeIdB = candidates[i].shapeIdB;
-
-		// Append to linked list.
-		b2MoveResult* result = bp->moveResults + candidates[i].moveIndex;
-		pair->next = result->pairList;
-		result->pairList = pair;
+		b2Array_Push( *pairKeys, B2_SHAPE_PAIR_KEY( shapeIdA, shapeIdB ) );
 	}
 }
 
@@ -305,7 +251,6 @@ B2_FORCE_INLINE void b2AddCandidatePair( int shapeIdA, int shapeIdB, b2PairConte
 	b2CandidatePair* candidate = context->batch + context->batchCount;
 	candidate->shapeIdA = b2MinInt( shapeIdA, shapeIdB );
 	candidate->shapeIdB = b2MaxInt( shapeIdA, shapeIdB );
-	candidate->moveIndex = context->moveIndex;
 	context->batchCount += 1;
 	if ( context->batchCount == B2_CANDIDATE_BATCH )
 	{
@@ -435,15 +380,12 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 	const b2TreeNode* nodes = tree->nodes;
 	const int* siblingIndices = bp->movedSiblings;
 
-	b2PairContext pairContext = { .world = world, .workerIndex = workerIndex };
+	b2PairContext pairContext = { .world = world, .pairKeys = &world->taskContexts.data[workerIndex].pairKeys };
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
-		int nodeIdex = siblingIndices[i];
-		bp->moveResults[i].pairList = NULL;
-		pairContext.moveIndex = i;
-
-		b2CollideCrossPairs( nodes, nodes, nodes + nodeIdex, nodes + nodeIdex + 1, &pairContext );
+		int nodeIndex = siblingIndices[i];
+		b2CollideCrossPairs( nodes, nodes, nodes + nodeIndex, nodes + nodeIndex + 1, &pairContext );
 	}
 
 	b2FlushPairs( &pairContext );
@@ -519,7 +461,6 @@ typedef struct b2CrossContext
 	b2World* world;
 	const b2NodePair* seeds;
 	int staticSeedCount;
-	int itemBase;
 } b2CrossContext;
 
 static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
@@ -533,14 +474,11 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 	const b2TreeNode* kinematicNodes = bp->trees[b2_kinematicBody].nodes;
 	const b2TreeNode* dynamicNodes = bp->trees[b2_dynamicBody].nodes;
 
-	b2PairContext pairContext = { .world = world, .workerIndex = workerIndex };
+	b2PairContext pairContext = { .world = world, .pairKeys = &world->taskContexts.data[workerIndex].pairKeys };
 
 	for ( int i = startIndex; i < endIndex; ++i )
 	{
 		const b2TreeNode* nodesB = i < crossContext->staticSeedCount ? staticNodes : kinematicNodes;
-		int item = crossContext->itemBase + i;
-		bp->moveResults[item].pairList = NULL;
-		pairContext.moveIndex = item;
 		b2NodePair seed = crossContext->seeds[i];
 		b2CollideCrossPairs( dynamicNodes, nodesB, &seed.a, &seed.b, &pairContext );
 	}
@@ -599,6 +537,11 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2Stack* alloc = &world->stack;
 
+	for ( int i = 0; i < world->workerCount; ++i )
+	{
+		b2Array_Clear( world->taskContexts.data[i].pairKeys );
+	}
+
 	// Generate pairs by querying the dynamic body tree against itself and against
 	// the kinematic and static trees.
 	{
@@ -615,22 +558,12 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		int kinematicSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, crossSeeds + staticSeedCount );
 		B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
 		int crossMoveCount = staticSeedCount + kinematicSeedCount;
-		int totalMovedCount = dynamicMoveCount + crossMoveCount;
-
-		// todo need a better capacity heuristic
-		bp->movePairCapacity = b2MaxInt( 16 * totalMovedCount, bp->movePairCapacity );
-		bp->movePairs = b2StackAlloc( alloc, bp->movePairCapacity * sizeof( b2MovePair ), "move pairs" );
-		bp->moveResults = b2StackAlloc( alloc, totalMovedCount * sizeof( b2MoveResult ), "move results" );
-		bp->moveCount = totalMovedCount;
-
-		b2AtomicStoreInt( &bp->movePairIndex, 0 );
 
 		// Collide the dynamic body tree against the static and kinematic trees.
 		b2CrossContext crossContext = {
 			.world = world,
 			.seeds = crossSeeds,
 			.staticSeedCount = staticSeedCount,
-			.itemBase = dynamicMoveCount,
 		};
 		b2ParallelFor( world, &b2CrossPairsTask, crossMoveCount, 1, &crossContext );
 
@@ -649,25 +582,21 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// Pairs arrive in deterministic order but scrambled relative to body and shape order
 	// sorting them here improves solver performance.
-	int itemCount = bp->moveCount;
-	int pairCount = b2AtomicLoadInt( &bp->movePairIndex );
+	int pairCount = 0;
+	for ( int i = 0; i < world->workerCount; ++i )
+	{
+		pairCount += world->taskContexts.data[i].pairKeys.count;
+	}
+
 	uint64_t* pairKeys = b2StackAlloc( alloc, b2MaxInt( pairCount, 1 ) * sizeof( uint64_t ), "pair keys" );
 	int keyCount = 0;
-	for ( int i = 0; i < itemCount; ++i )
+	for ( int i = 0; i < world->workerCount; ++i )
 	{
-		b2MovePair* pair = bp->moveResults[i].pairList;
-		while ( pair != NULL )
+		const b2Array( uint64_t )* workerKeys = &world->taskContexts.data[i].pairKeys;
+		if ( workerKeys->count > 0 )
 		{
-			pairKeys[keyCount] = B2_SHAPE_PAIR_KEY( pair->shapeIdA, pair->shapeIdB );
-			keyCount += 1;
-
-			b2MovePair* next = pair->next;
-			if ( pair->heap )
-			{
-				b2Free( pair, sizeof( b2MovePair ) );
-			}
-
-			pair = next;
+			memcpy( pairKeys + keyCount, workerKeys->data, workerKeys->count * sizeof( uint64_t ) );
+			keyCount += workerKeys->count;
 		}
 	}
 
@@ -701,10 +630,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	b2StackFree( alloc, pairKeys );
 
-	b2StackFree( alloc, bp->moveResults );
-	bp->moveResults = NULL;
-	b2StackFree( alloc, bp->movePairs );
-	bp->movePairs = NULL;
 	b2StackFree( alloc, bp->movedSiblings );
 	bp->movedSiblings = NULL;
 

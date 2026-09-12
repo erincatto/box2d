@@ -32,6 +32,8 @@ typedef struct b2TaskContext
 	// Collect per thread sensor continuous hit events.
 	b2Array( b2SensorHit ) sensorHits;
 
+	b2Array( uint64_t ) pairKeys;
+
 	// These bits align with the contact id capacity and signal a change in contact status
 	b2BitSet contactStateBitSet;
 

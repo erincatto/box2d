@@ -126,6 +126,7 @@ static void b2CreateWorkerContexts( b2World* world )
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		b2Array_CreateN( world->taskContexts.data[i].sensorHits, 8 );
+		b2Array_Create( world->taskContexts.data[i].pairKeys );
 		world->taskContexts.data[i].contactStateBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].hitEventBitSet = b2CreateBitSet( 1024 );
 		world->taskContexts.data[i].hasHitEvents = false;
@@ -143,6 +144,7 @@ static void b2DestroyWorkerContexts( b2World* world )
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		b2Array_Destroy( world->taskContexts.data[i].sensorHits );
+		b2Array_Destroy( world->taskContexts.data[i].pairKeys );
 		b2DestroyBitSet( &world->taskContexts.data[i].contactStateBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].hitEventBitSet );
 		b2DestroyBitSet( &world->taskContexts.data[i].jointStateBitSet );
@@ -2273,6 +2275,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	{
 		b2TaskContext* taskContext = world->taskContexts.data + i;
 		taskContextBytes += b2Array_ByteCount( taskContext->sensorHits );
+		taskContextBytes += b2Array_ByteCount( taskContext->pairKeys );
 		taskContextBytes += b2GetBitSetBytes( &taskContext->contactStateBitSet );
 		taskContextBytes += b2GetBitSetBytes( &taskContext->hitEventBitSet );
 		taskContextBytes += b2GetBitSetBytes( &taskContext->jointStateBitSet );
