@@ -97,13 +97,7 @@ B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 	// [bux buy aux auy]
 	float32x4_t t2 = vcombine_f32( vget_high_f32( bv ), vget_high_f32( av ) );
 
-#if defined( __aarch64__ ) || defined( _M_ARM64 )
 	return vminvq_u32( vcleq_f32( t1, t2 ) ) != 0;
-#else
-	uint32x4_t mask = vcleq_f32( t1, t2 );
-	uint32x2_t pair = vpmin_u32( vget_low_u32( mask ), vget_high_u32( mask ) );
-	return vget_lane_u32( vpmin_u32( pair, pair ), 0 ) != 0;
-#endif
 }
 
 B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )

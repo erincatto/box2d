@@ -62,7 +62,12 @@
 			#define B2_SIMD_WIDTH 4
 		#endif
 	#elif defined( B2_CPU_ARM )
-		#define B2_SIMD_NEON
+		// todo comment: ARMv7 NEON always flushes denormals regardless of FPSCR, so 32 bit ARM takes the scalar path
+		#if defined( __aarch64__ ) || defined( _M_ARM64 )
+			#define B2_SIMD_NEON
+		#else
+			#define B2_SIMD_NONE
+		#endif
 		#define B2_SIMD_WIDTH 4
 	#elif defined( B2_CPU_WASM )
 		#define B2_CPU_WASM

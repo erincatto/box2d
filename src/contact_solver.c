@@ -670,15 +670,7 @@ static inline b2FloatW b2MulW( b2FloatW a, b2FloatW b )
 
 static inline b2FloatW b2DivW( b2FloatW a, b2FloatW b )
 {
-#if defined( __aarch64__ ) || defined( _M_ARM64 )
 	return vdivq_f32( a, b );
-#else
-	float32_t av[4], bv[4];
-	vst1q_f32( av, a );
-	vst1q_f32( bv, b );
-	float32_t array[4] = { av[0] / bv[0], av[1] / bv[1], av[2] / bv[2], av[3] / bv[3] };
-	return vld1q_f32( array );
-#endif
 }
 
 static inline b2FloatW b2MulAddW( b2FloatW a, b2FloatW b, b2FloatW c )
@@ -731,13 +723,8 @@ static inline bool b2AllZeroW( b2FloatW a )
 	// Compare the input vector with zero
 	uint32x4_t cmp_result = vceqq_f32( a, zero );
 
-// Check if all comparison results are non-zero using vminvq
-#if defined( __aarch64__ ) || defined( _M_ARM64 )
+	// Check if all comparison results are non-zero using vminvq
 	return vminvq_u32( cmp_result ) != 0;
-#else
-	uint32x2_t pair = vpmin_u32( vget_low_u32( cmp_result ), vget_high_u32( cmp_result ) );
-	return vget_lane_u32( vpmin_u32( pair, pair ), 0 ) != 0;
-#endif
 }
 
 // component-wise returns mask ? b : a
@@ -764,26 +751,12 @@ static inline void b2StoreW( float32_t* data, b2FloatW a )
 
 static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
 {
-#if defined( _M_ARM64 ) || defined( __aarch64__ )
 	return vzip1q_f32( a, b );
-#else
-	float32x2_t a1 = vget_low_f32( a );
-	float32x2_t b1 = vget_low_f32( b );
-	float32x2x2_t result = vzip_f32( a1, b1 );
-	return vcombine_f32( result.val[0], result.val[1] );
-#endif
 }
 
 static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 {
-#if defined( _M_ARM64 ) || defined( __aarch64__ )
 	return vzip2q_f32( a, b );
-#else
-	float32x2_t a1 = vget_high_f32( a );
-	float32x2_t b1 = vget_high_f32( b );
-	float32x2x2_t result = vzip_f32( a1, b1 );
-	return vcombine_f32( result.val[0], result.val[1] );
-#endif
 }
 
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )

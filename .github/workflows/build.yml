@@ -173,9 +173,9 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
-  # 32 bit ARM has NEON but not the AArch64 only intrinsics (vminvq, vdivq, vzip1q), so
-  # this is the build that catches one slipping into the NEON path. The default armhf
-  # fpu is vfpv3-d16, NEON has to be asked for. Tests run under qemu user emulation,
+  # 32 bit ARM takes the scalar path. ARMv7 NEON always flushes denormals regardless of
+  # FPSCR, so it cannot match the IEEE math everywhere else. This is the one 32 bit
+  # pointer build that runs the tests. Tests run under qemu user emulation,
   # RelWithDebInfo keeps asserts and the golden hash while staying fast enough emulated.
   linux-armhf:
     name: linux-armhf
@@ -189,7 +189,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf qemu-user-static
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DCMAKE_C_FLAGS=-mfpu=neon -DCMAKE_CXX_FLAGS=-mfpu=neon
+      run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
 
     - name: Build
       run: cmake --build build --config RelWithDebInfo
