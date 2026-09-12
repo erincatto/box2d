@@ -10,10 +10,8 @@ settings.ini
 CMakeUserPresets.json
 .cache/
 .idea/
-.claude/
 .tmp/
 *.b2rec
-AGENTS.md
 zig-out/
 .zig-cache/
 zig-pkg
