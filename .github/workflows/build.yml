@@ -129,7 +129,9 @@ jobs:
       run: ./bin/test
 
   # Build-only: running the wasm test needs a node + pthread/SharedArrayBuffer harness.
-  # This still catches compile breaks in the box2d library and the test target.
+  # This still catches compile breaks in the box2d library and the test target. Built
+  # twice, with the SSE2 path CMake selects for wasm and with SIMD disabled, since the
+  # test target has to inherit the selection either way.
   emscripten:
     name: emscripten
     runs-on: ubuntu-latest
@@ -145,6 +147,12 @@ jobs:
 
     - name: Build
       run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: Configure CMake (SIMD disabled)
+      run: emcmake cmake -B build-nosimd -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DBOX2D_DISABLE_SIMD=ON
+
+    - name: Build (SIMD disabled)
+      run: cmake --build build-nosimd --config ${{env.BUILD_TYPE}}
 
   # Cross compile to catch NEON breaks, the SIMD code paths only compile on ARM.
   # Build-only: the x64 runner cannot execute aarch64 binaries.
@@ -164,6 +172,31 @@ jobs:
 
     - name: Build
       run: cmake --build build --config Release
+
+  # 32 bit ARM takes the scalar path. ARMv7 NEON always flushes denormals regardless of
+  # FPSCR, so it cannot match the IEEE math everywhere else. This is the one 32 bit
+  # pointer build that runs the tests. Tests run under qemu user emulation,
+  # RelWithDebInfo keeps asserts and the golden hash while staying fast enough emulated.
+  linux-armhf:
+    name: linux-armhf
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install armhf cross toolchain and qemu
+      run: sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf qemu-user-static
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
+
+    - name: Build
+      run: cmake --build build --config RelWithDebInfo
+
+    - name: Test
+      working-directory: build
+      run: qemu-arm-static -L /usr/arm-linux-gnueabihf ./bin/test
 
   samples:
     name: ${{ matrix.name }}

@@ -162,7 +162,7 @@ You will need a compiler that supports C17 to build the Box2D library.
 
 You will need a compiler that supports C++20 to build the samples.
 
-Box2D uses SSE2 and Neon SIMD math to improve performance. This can be disabled by defining `BOX2D_DISABLE_SIMD`.
+Box2D uses SSE2 and Neon (AArch64) SIMD math to improve performance. This can be disabled by defining `BOX2D_DISABLE_SIMD`.
 
 ## Documentation
 

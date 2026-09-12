@@ -62,7 +62,12 @@
 			#define B2_SIMD_WIDTH 4
 		#endif
 	#elif defined( B2_CPU_ARM )
-		#define B2_SIMD_NEON
+		// todo comment: ARMv7 NEON always flushes denormals regardless of FPSCR, so 32 bit ARM takes the scalar path
+		#if defined( __aarch64__ ) || defined( _M_ARM64 )
+			#define B2_SIMD_NEON
+		#else
+			#define B2_SIMD_NONE
+		#endif
 		#define B2_SIMD_WIDTH 4
 	#elif defined( B2_CPU_WASM )
 		#define B2_CPU_WASM
@@ -156,7 +161,7 @@ typedef struct b2AtomicI64
 } b2AtomicI64;
 
 void* b2Alloc( size_t size );
-void* b2AllocZeroInit( size_t size );
+void* b2AllocZero( size_t size );
 #define B2_ALLOC_STRUCT( type ) b2Alloc( sizeof( type ) )
 #define B2_ALLOC_ARRAY( count, type ) b2Alloc( count * sizeof( type ) )
 
@@ -165,7 +170,10 @@ void b2Free( void* mem, size_t size );
 #define B2_FREE_ARRAY( mem, count, type ) b2Free( mem, count * sizeof( type ) )
 
 void* b2GrowAlloc( void* oldMem, size_t oldSize, size_t newSize );
-void* b2GrowAllocZeroInit( void* oldMem, size_t oldSize, size_t newSize );
+void* b2GrowAllocZero( void* oldMem, size_t oldSize, size_t newSize );
+
+#define B2_GROW( A, N, M ) b2GrowAlloc( ( A ), ( N ) * sizeof( *( A ) ), ( M ) * sizeof( *( A ) ) )
+#define B2_GROW_ZERO( A, N, M ) b2GrowAllocZero( ( A ), ( N ) * sizeof( *( A ) ), ( M ) * sizeof( *( A ) ) )
 
 void b2Log( const char* format, ... );
 

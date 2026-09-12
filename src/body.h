@@ -4,12 +4,12 @@
 #pragma once
 
 #include "container.h"
+#include "physics_world.h"
+#include "solver_set.h"
 
 #include "box2d/constants.h"
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
-
-typedef struct b2World b2World;
 
 enum b2BodyFlags
 {
@@ -207,10 +207,6 @@ typedef struct b2BodySim
 	uint32_t flags;
 } b2BodySim;
 
-b2DeclareArray( b2Body );
-b2DeclareArray( b2BodySim );
-b2DeclareArray( b2BodyState );
-
 // Get a validated body from a world using an id.
 b2Body* b2GetBodyFullId( b2World* world, b2BodyId bodyId );
 
@@ -222,8 +218,6 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId );
 
 bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
-b2BodySim* b2GetBodySim( b2World* world, b2Body* body );
-b2BodyState* b2GetBodyState( b2World* world, b2Body* body );
 void b2RemoveBodySim( b2Array( b2BodySim ) * bodySims, b2Array( b2Body ) * bodies, int localIndex );
 
 // careful calling this because it can invalidate body, state, joint, and contact pointers
@@ -243,4 +237,22 @@ static inline b2Sweep b2MakeRelativeSweep( const b2BodySim* bodySim, b2Pos base 
 	s.q2 = bodySim->transform.q;
 	s.localCenter = bodySim->localCenter;
 	return s;
+}
+
+static inline b2BodySim* b2GetBodySim( b2World* world, b2Body* body )
+{
+	b2SolverSet* set = b2Array_Get( world->solverSets, body->setIndex );
+	b2BodySim* bodySim = b2Array_Get( set->bodySims, body->localIndex );
+	return bodySim;
+}
+
+static inline b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
+{
+	if ( body->setIndex == b2_awakeSet )
+	{
+		b2SolverSet* set = b2Array_Get( world->solverSets, b2_awakeSet );
+		return b2Array_Get( set->bodyStates, body->localIndex );
+	}
+
+	return NULL;
 }

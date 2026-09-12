@@ -26,6 +26,7 @@ set(BOX2D_SOURCE_FILES
 	distance.c
 	distance_joint.c
 	dynamic_tree.c
+	dynamic_tree.h
 	geometry.c
 	hull.c
 	id_pool.c
@@ -45,6 +46,7 @@ set(BOX2D_SOURCE_FILES
 	physics_world.h
 	pogo_joint.c
 	prismatic_joint.c
+	qsort.h
 	recording.c
 	recording.h
 	recording_ops.inl
@@ -137,10 +139,8 @@ if (BOX2D_VALIDATE)
 	target_compile_definitions(box2d PRIVATE BOX2D_VALIDATE)
 endif()
 
-if (BOX2D_DISABLE_SIMD)
-	message(STATUS "Box2D SIMD disabled")
-	target_compile_definitions(box2d PRIVATE BOX2D_DISABLE_SIMD)
-endif()
+target_compile_definitions(box2d PRIVATE ${BOX2D_SIMD_DEFINITIONS})
+target_compile_options(box2d PRIVATE ${BOX2D_SIMD_OPTIONS})
 
 if (BOX2D_DOUBLE_PRECISION)
 	message(STATUS "Box2D double precision ON")
@@ -175,42 +175,17 @@ if (MSVC)
 		target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 	endif()
 
-	if (BOX2D_AVX2)
-		message(STATUS "Box2D using AVX2")
-		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
-		target_compile_options(box2d PRIVATE /arch:AVX2)
-	endif()
-
 elseif (MINGW)
 	message(STATUS "Box2D on MinGW")
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
-	if (BOX2D_AVX2)
-		message(STATUS "Box2D using AVX2")	
-		target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
-		target_compile_options(box2d PRIVATE -mavx2)
-	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
 elseif (EMSCRIPTEN)
 	message(STATUS "Box2D on Emscripten")
-	if (NOT BOX2D_DISABLE_SIMD)
-		target_compile_options(box2d PRIVATE -msimd128 -msse2)
-	endif()
 elseif (UNIX)
 	message(STATUS "Box2D using Unix")
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
-	if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-		# raspberry pi
-		# -mfpu=neon
-		# target_compile_options(box2d PRIVATE)
-	else()
-		if (BOX2D_AVX2)
-			message(STATUS "Box2D using AVX2")
-			target_compile_definitions(box2d PRIVATE BOX2D_AVX2)
-			target_compile_options(box2d PRIVATE -mavx2)
-		endif()
-	endif()
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURCE_FILES})

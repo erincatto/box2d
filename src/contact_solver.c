@@ -723,15 +723,8 @@ static inline bool b2AllZeroW( b2FloatW a )
 	// Compare the input vector with zero
 	uint32x4_t cmp_result = vceqq_f32( a, zero );
 
-// Check if all comparison results are non-zero using vminvq
-#ifdef __ARM_FEATURE_SVE
-	// ARM v8.2+ has horizontal minimum instruction
+	// Check if all comparison results are non-zero using vminvq
 	return vminvq_u32( cmp_result ) != 0;
-#else
-	// For older ARM architectures, we need to manually check all lanes
-	return vgetq_lane_u32( cmp_result, 0 ) != 0 && vgetq_lane_u32( cmp_result, 1 ) != 0 && vgetq_lane_u32( cmp_result, 2 ) != 0 &&
-		   vgetq_lane_u32( cmp_result, 3 ) != 0;
-#endif
 }
 
 // component-wise returns mask ? b : a
@@ -758,26 +751,12 @@ static inline void b2StoreW( float32_t* data, b2FloatW a )
 
 static inline b2FloatW b2UnpackLoW( b2FloatW a, b2FloatW b )
 {
-#if defined( _M_ARM64 ) || defined( __aarch64__ )
 	return vzip1q_f32( a, b );
-#else
-	float32x2_t a1 = vget_low_f32( a );
-	float32x2_t b1 = vget_low_f32( b );
-	float32x2x2_t result = vzip_f32( a1, b1 );
-	return vcombine_f32( result.val[0], result.val[1] );
-#endif
 }
 
 static inline b2FloatW b2UnpackHiW( b2FloatW a, b2FloatW b )
 {
-#if defined( _M_ARM64 ) || defined( __aarch64__ )
 	return vzip2q_f32( a, b );
-#else
-	float32x2_t a1 = vget_high_f32( a );
-	float32x2_t b1 = vget_high_f32( b );
-	float32x2x2_t result = vzip_f32( a1, b1 );
-	return vcombine_f32( result.val[0], result.val[1] );
-#endif
 }
 
 static inline b2FloatW b2SoftMaskW( const int* indexA, const int* indexB )

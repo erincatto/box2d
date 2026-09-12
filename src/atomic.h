@@ -16,6 +16,19 @@
 #include <immintrin.h>
 #endif
 
+#if defined( _MSC_VER )
+#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
+#define b2Prefetch( addr ) _mm_prefetch( (const char*)( addr ), _MM_HINT_T0 )
+#else
+#define b2Prefetch( addr ) __prefetch( (const void*)( addr ) )
+#endif
+#elif defined( __GNUC__ ) || defined( __clang__ )
+#define b2Prefetch( addr ) __builtin_prefetch( (const void*)( addr ), 0, 3 )
+#else
+#define b2Prefetch( addr ) ( (void)( addr ) )
+#endif
+
+
 static inline void b2AtomicStoreInt( b2AtomicInt* a, int value )
 {
 #if defined( _MSC_VER )
@@ -55,6 +68,17 @@ static inline int b2AtomicFetchAddInt( b2AtomicInt* a, int increment )
 #endif
 }
 
+static inline uint16_t b2AtomicFetchOrU16( uint16_t* a, uint16_t mask )
+{
+#if defined( _MSC_VER )
+	return (uint16_t)_InterlockedOr16( (short*)a, (short)mask );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_or( a, mask, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline bool b2AtomicCompareExchangeInt( b2AtomicInt* a, int expected, int desired )
 {
 #if defined( _MSC_VER )
@@ -78,6 +102,17 @@ static inline void b2AtomicStoreU32( b2AtomicU32* a, uint32_t value )
 #endif
 }
 
+static inline uint16_t b2AtomicLoadU16( const uint16_t* a )
+{
+#if defined( _MSC_VER ) && !defined( __clang__ )
+	return (uint16_t)__iso_volatile_load16( (const volatile __int16*)a );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( a, __ATOMIC_RELAXED );
+#else
+#error "Unsupported platform"
+#endif
+}
+
 static inline uint32_t b2AtomicLoadU32( b2AtomicU32* a )
 {
 #if defined( _MSC_VER ) && !defined( __clang__ )
@@ -90,6 +125,28 @@ static inline uint32_t b2AtomicLoadU32( b2AtomicU32* a )
 	return value;
 #elif defined( __GNUC__ ) || defined( __clang__ )
 	return __atomic_load_n( &a->value, __ATOMIC_SEQ_CST );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline uint32_t b2AtomicLoadU32Raw( uint32_t* a )
+{
+#if defined( _MSC_VER ) && !defined( __clang__ )
+	return (uint32_t)__iso_volatile_load32( (volatile __int32*)a );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_load_n( a, __ATOMIC_RELAXED );
+#else
+#error "Unsupported platform"
+#endif
+}
+
+static inline uint32_t b2AtomicFetchOrU32( uint32_t* a, uint32_t mask )
+{
+#if defined( _MSC_VER )
+	return (uint32_t)_InterlockedOr( (long*)a, (long)mask );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+	return __atomic_fetch_or( a, mask, __ATOMIC_SEQ_CST );
 #else
 #error "Unsupported platform"
 #endif

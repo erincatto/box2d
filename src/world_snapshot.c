@@ -10,6 +10,7 @@
 #include "contact.h"
 #include "container.h"
 #include "core.h"
+#include "dynamic_tree.h"
 #include "id_pool.h"
 #include "island.h"
 #include "joint.h"
@@ -31,7 +32,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 4u // added b2Body::safetyFactor
+#define B2_SNAP_VERSION 8u // sibling pairs
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -66,6 +67,7 @@ static uint32_t b2ComputeLayoutHash( void )
 	MIX( sizeof( b2GraphColor ) )
 	MIX( sizeof( b2DynamicTree ) )
 	MIX( sizeof( b2TreeNode ) )
+	MIX( sizeof( b2TreeProxy ) )
 	MIX( sizeof( b2SetItem ) )
 	MIX( sizeof( b2IdPool ) )
 	MIX( sizeof( b2SurfaceMaterial ) )
@@ -312,65 +314,78 @@ static void b2DesHashSet( b2SnapReader* r, b2HashSet* hs )
 	}
 }
 
-// DynamicTree: scalars + full nodeCapacity nodes (freeList chains through free slots)
 static void b2SerTree( b2RecBuffer* buf, const b2DynamicTree* tree )
 {
-	b2SnapW_I32( buf, tree->root );
-	b2SnapW_I32( buf, tree->nodeCount );
+	b2SnapW_I32( buf, tree->nodeEnd );
 	b2SnapW_I32( buf, tree->nodeCapacity );
-	b2SnapW_I32( buf, tree->freeList );
+	b2SnapW_I32( buf, tree->pairFreeList );
 	b2SnapW_I32( buf, tree->proxyCount );
-	if ( tree->nodeCapacity > 0 )
-	{
-		b2SnapW_Bytes( buf, tree->nodes, tree->nodeCapacity * (int)sizeof( b2TreeNode ) );
-	}
+	b2SnapW_I32( buf, tree->proxyCapacity );
+	b2SnapW_I32( buf, tree->proxyFreeList );
+	b2SnapW_I32( buf, tree->dfsOrdered ? 1 : 0 );
+
+	b2SnapW_Bytes( buf, tree->nodes, tree->nodeEnd * (int)sizeof( b2TreeNode ) );
+	b2SnapW_Bytes( buf, tree->parents, tree->nodeEnd * (int)sizeof( int32_t ) );
+	b2SnapW_Bytes( buf, tree->proxies, tree->proxyCapacity * (int)sizeof( b2TreeProxy ) );
 }
 
 static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 {
-	int root = b2SnapR_I32( r );
-	int nodeCount = b2SnapR_I32( r );
+	int nodeEnd = b2SnapR_I32( r );
 	int nodeCapacity = b2SnapR_I32( r );
-	int freeList = b2SnapR_I32( r );
+	int pairFreeList = b2SnapR_I32( r );
 	int proxyCount = b2SnapR_I32( r );
+	int proxyCapacity = b2SnapR_I32( r );
+	int proxyFreeList = b2SnapR_I32( r );
+	int ordered = b2SnapR_I32( r );
 
-	if ( r->ok && b2SnapCheckCount( r, nodeCapacity, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) ) == false )
+	if ( r->ok && ( nodeEnd < 2 || ( nodeEnd & 1 ) != 0 || nodeCapacity < nodeEnd || proxyCount < 0 || proxyCapacity < 1 ||
+					proxyCapacity < proxyCount ) )
 	{
 		r->ok = false;
 	}
 
-	// Free what the shell or a live world holds. A live tree that ran a rebuild also owns
-	// rebuild scratch, so free that too. Null everything so a failure here leaves the tree
-	// safe to destroy.
-	b2Free( tree->nodes, tree->nodeCapacity * (int)sizeof( b2TreeNode ) );
-	b2Free( tree->leafIndices, tree->rebuildCapacity * (int)sizeof( int ) );
-	b2Free( tree->leafBoxes, tree->rebuildCapacity * (int)sizeof( b2AABB ) );
-	b2Free( tree->leafCenters, tree->rebuildCapacity * (int)sizeof( b2Vec2 ) );
-	b2Free( tree->binIndices, tree->rebuildCapacity * (int)sizeof( int ) );
-	tree->nodes = NULL;
-	tree->leafIndices = NULL;
-	tree->leafBoxes = NULL;
-	tree->leafCenters = NULL;
-	tree->binIndices = NULL;
-	tree->nodeCapacity = 0;
-	tree->rebuildCapacity = 0;
+	// Stream bounds against what is actually written
+	if ( r->ok && b2SnapCheckCount( r, nodeEnd, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) + (int)sizeof( int32_t ) ) == false )
+	{
+		r->ok = false;
+	}
+
+	if ( r->ok && b2SnapCheckCount( r, proxyCapacity, (int)sizeof( b2TreeProxy ), (int)sizeof( b2TreeProxy ) ) == false )
+	{
+		r->ok = false;
+	}
+
+	// Free what the shell or a live world holds, rebuild scratch included. Destroy zeroes the
+	// struct, which covers every field the image does not carry.
+	b2DynamicTree_Destroy( tree );
 
 	if ( !r->ok )
 	{
+		// Leave a valid empty tree so the shell can still be destroyed
+		*tree = b2DynamicTree_Create( 0 );
 		return;
 	}
 
-	tree->root = root;
-	tree->nodeCount = nodeCount;
-	tree->nodeCapacity = nodeCapacity;
-	tree->freeList = freeList;
-	tree->proxyCount = proxyCount;
+	// This is just an allocation hint and the exact value doesn't matter.
+	nodeCapacity = b2MinInt( nodeCapacity, 2 * nodeEnd );
 
-	if ( nodeCapacity > 0 )
-	{
-		tree->nodes = b2Alloc( nodeCapacity * (int)sizeof( b2TreeNode ) );
-		b2SnapR_Bytes( r, tree->nodes, nodeCapacity * (int)sizeof( b2TreeNode ) );
-	}
+	tree->nodeEnd = nodeEnd;
+	tree->nodeCapacity = nodeCapacity;
+	tree->pairFreeList = pairFreeList;
+	tree->proxyCount = proxyCount;
+	tree->proxyCapacity = proxyCapacity;
+	tree->proxyFreeList = proxyFreeList;
+	tree->dfsOrdered = ordered != 0;
+
+	tree->nodes = b2AllocZero( nodeCapacity * sizeof( b2TreeNode ) );
+	b2SnapR_Bytes( r, tree->nodes, nodeEnd * (int)sizeof( b2TreeNode ) );
+
+	tree->parents = b2AllocZero( nodeCapacity * sizeof( int32_t ) );
+	b2SnapR_Bytes( r, tree->parents, nodeEnd * (int)sizeof( int32_t ) );
+
+	tree->proxies = b2AllocZero( proxyCapacity * sizeof( b2TreeProxy ) );
+	b2SnapR_Bytes( r, tree->proxies, proxyCapacity * (int)sizeof( b2TreeProxy ) );
 }
 
 // Solver set: setIndex + 5 POD arrays
@@ -565,11 +580,6 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 	{
 		b2SerTree( buf, &bp->trees[t] );
 	}
-	for ( int t = 0; t < b2_bodyTypeCount; ++t )
-	{
-		b2SerBitSet( buf, &bp->movedProxies[t] );
-	}
-	b2SerPodArray( buf, bp->moveArray );
 	b2SerHashSet( buf, &bp->pairSet );
 
 	// Constraint graph: B2_GRAPH_COLOR_COUNT colors
@@ -798,21 +808,8 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 			b2DesTree( r, &bp->trees[t] );
 		}
 
-		// movedProxies bitsets: destroy shell's and replace
-		for ( int t = 0; t < b2_bodyTypeCount; ++t )
-		{
-			b2DesBitSet( r, &bp->movedProxies[t] );
-		}
-
-		// moveArray
-		b2Array_Destroy( bp->moveArray );
-		b2Array_Create( bp->moveArray );
-		b2DesPodArray( r, bp->moveArray );
-
 		// pairSet
 		b2DesHashSet( r, &bp->pairSet );
-
-		// Transient move results stay at shell's NULL/0
 	}
 
 	// Step 9: constraint graph

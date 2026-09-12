@@ -71,24 +71,6 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 	return (b2BodyId){ bodyId + 1, world->worldId, body->generation };
 }
 
-b2BodySim* b2GetBodySim( b2World* world, b2Body* body )
-{
-	b2SolverSet* set = b2Array_Get( world->solverSets, body->setIndex );
-	b2BodySim* bodySim = b2Array_Get( set->bodySims, body->localIndex );
-	return bodySim;
-}
-
-b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
-{
-	if ( body->setIndex == b2_awakeSet )
-	{
-		b2SolverSet* set = b2Array_Get( world->solverSets, b2_awakeSet );
-		return b2Array_Get( set->bodyStates, body->localIndex );
-	}
-
-	return NULL;
-}
-
 void b2SyncBodyFlags( b2World* world, b2Body* body )
 {
 	// Never sync transient flags
@@ -652,6 +634,20 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 		bodySim->maxExtent = b2MaxFloat( bodySim->maxExtent, extent.maxExtent );
 
 		shapeId = s->nextShapeId;
+	}
+
+	// When the center of mass changes, any cached contact manifold becomes invalid.
+	int edgeKey = body->headContactKey;
+	while ( edgeKey != B2_NULL_INDEX )
+	{
+		int contactId = edgeKey >> 1;
+		int edgeIndex = edgeKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		b2ContactSim* contactSim = b2GetContactSim( world, contact );
+		contactSim->simFlags &= ~b2_simRelativeTransformValid;
+
+		edgeKey = contact->edges[edgeIndex].nextKey;
 	}
 }
 
@@ -1410,9 +1406,18 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 	body->inertia = massData.rotationalInertia;
 	bodySim->localCenter = massData.center;
 
+	b2Pos oldCenter = bodySim->center;
 	b2Pos center = b2TransformWorldPoint( bodySim->transform, massData.center );
 	bodySim->center = center;
 	bodySim->center0 = center;
+
+	// Update center of mass velocity
+	b2BodyState* state = b2GetBodyState( world, body );
+	if ( state != NULL )
+	{
+		b2Vec2 deltaLinear = b2CrossSV( state->angularVelocity, b2SubPos( bodySim->center, oldCenter ) );
+		state->linearVelocity = b2Add( state->linearVelocity, deltaLinear );
+	}
 
 	bodySim->invMass = body->mass > 0.0f ? 1.0f / body->mass : 0.0f;
 	bodySim->invInertia = body->inertia > 0.0f ? 1.0f / body->inertia : 0.0f;
@@ -1428,6 +1433,20 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 		bodySim->minExtent = b2MinFloat( bodySim->minExtent, extent.minExtent );
 		bodySim->maxExtent = b2MaxFloat( bodySim->maxExtent, extent.maxExtent );
 		shapeId = s->nextShapeId;
+	}
+
+	// When the center of mass changes, any cached contact manifold becomes invalid.
+	int edgeKey = body->headContactKey;
+	while ( edgeKey != B2_NULL_INDEX )
+	{
+		int contactId = edgeKey >> 1;
+		int edgeIndex = edgeKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		b2ContactSim* contactSim = b2GetContactSim( world, contact );
+		contactSim->simFlags &= ~b2_simRelativeTransformValid;
+
+		edgeKey = contact->edges[edgeIndex].nextKey;
 	}
 
 	// Motion locks take priority over mass data.

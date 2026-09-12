@@ -51,43 +51,6 @@ void b2ClearSet( b2HashSet* set )
 	memset( set->items, 0, set->capacity * sizeof( b2SetItem ) );
 }
 
-// I need a good hash because the keys are built from pairs of increasing integers.
-// A simple hash like hash = (integer1 XOR integer2) has many collisions.
-// https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
-// https://preshing.com/20130107/this-hash-set-is-faster-than-a-judy-array/
-// todo try: https://www.jandrewrogers.com/2019/02/12/fast-perfect-hashing/
-// todo try:
-// https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
-
-// I compared with CC on https://jacksonallan.github.io/c_cpp_hash_tables_benchmark/ and got slightly better performance
-// in the washer benchmark.
-// I compared with verstable across 8 benchmarks and the performance was similar.
-
-#if 0
-// Fast-hash
-// https://jonkagstrom.com/bit-mixer-construction
-// https://code.google.com/archive/p/fast-hash
-static uint64_t b2KeyHash( uint64_t key )
-{
-	key ^= key >> 23;
-	key *= 0x2127599BF4325C37ULL;
-	key ^= key >> 47;
-	return key;
-}
-#elif 1
-static uint64_t b2KeyHash( uint64_t key )
-{
-	// Murmur hash
-	uint64_t h = key;
-	h ^= h >> 33;
-	h *= 0xff51afd7ed558ccduLL;
-	h ^= h >> 33;
-	h *= 0xc4ceb9fe1a85ec53uLL;
-	h ^= h >> 33;
-	return h;
-}
-#endif
-
 static int b2FindSlot( const b2HashSet* set, uint64_t key, uint64_t hash )
 {
 #if B2_SNOOP_TABLE_COUNTERS
@@ -154,8 +117,16 @@ static void b2GrowTable( b2HashSet* set )
 bool b2ContainsKey( const b2HashSet* set, uint64_t key )
 {
 	// key of zero is a sentinel
-	B2_ASSERT( key != 0 );
+	B2_VALIDATE( key != 0 );
 	uint64_t hash = b2KeyHash( key );
+	int index = b2FindSlot( set, key, hash );
+	return set->items[index].key == key;
+}
+
+bool b2ContainsHashedKey( const b2HashSet* set, uint64_t key, uint64_t hash )
+{
+	// key of zero is a sentinel
+	B2_VALIDATE( key != 0 );
 	int index = b2FindSlot( set, key, hash );
 	return set->items[index].key == key;
 }

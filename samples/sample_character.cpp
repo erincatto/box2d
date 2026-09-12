@@ -897,6 +897,8 @@ public:
 		if ( contactArea < 4.0f * B2_LINEAR_SLOP )
 		{
 			manifold->pointCount = 0;
+
+			// PreSolve is called from a thread and should not have data race.
 			m_rejectedCount.fetch_add( 1, std::memory_order_relaxed );
 		}
 	}

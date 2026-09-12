@@ -127,8 +127,8 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 	b2_freeFcn = freeFcn;
 }
 
-// Use 32 byte alignment for everything. Works with 256bit SIMD.
-#define B2_ALIGNMENT 32
+// Use 64 byte alignment for everything. Needed for tree nodes.
+#define B2_ALIGNMENT 64
 
 void* b2Alloc( size_t size )
 {
@@ -140,32 +140,32 @@ void* b2Alloc( size_t size )
 	// This could cause some sharing issues, however Box2D rarely calls b2Alloc.
 	b2AtomicFetchAddI64( &b2_byteCount, size );
 
-	// Allocation must be a multiple of 32 or risk a seg fault
+	// Allocation must be a multiple of alignment or risk a seg fault
 	// https://en.cppreference.com/w/c/memory/aligned_alloc
-	size_t size32 = ( ( size - 1 ) | 0x1F ) + 1;
+	size_t alignedSize = ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1;
 
 	if ( b2_allocFcn != NULL )
 	{
-		void* ptr = b2_allocFcn( size32, B2_ALIGNMENT );
+		void* ptr = b2_allocFcn( alignedSize, B2_ALIGNMENT );
 		b2TracyCAlloc( ptr, size );
 
 		B2_ASSERT( ptr != NULL );
-		B2_ASSERT( ( (uintptr_t)ptr & 0x1F ) == 0 );
+		B2_ASSERT( ( (uintptr_t)ptr & ( B2_ALIGNMENT - 1 ) ) == 0 );
 
 		return ptr;
 	}
 
 #ifdef B2_PLATFORM_WINDOWS
-	void* ptr = _aligned_malloc( size32, B2_ALIGNMENT );
+	void* ptr = _aligned_malloc( alignedSize, B2_ALIGNMENT );
 #elif defined( B2_PLATFORM_ANDROID )
 	void* ptr = NULL;
-	if ( posix_memalign( &ptr, B2_ALIGNMENT, size32 ) != 0 )
+	if ( posix_memalign( &ptr, B2_ALIGNMENT, alignedSize ) != 0 )
 	{
 		// allocation failed, exit the application
 		exit( EXIT_FAILURE );
 	}
 #else
-	void* ptr = aligned_alloc( B2_ALIGNMENT, size32 );
+	void* ptr = aligned_alloc( B2_ALIGNMENT, alignedSize );
 #endif
 
 	b2TracyCAlloc( ptr, size );
@@ -176,7 +176,7 @@ void* b2Alloc( size_t size )
 	return ptr;
 }
 
-void* b2AllocZeroInit( size_t size )
+void* b2AllocZero( size_t size )
 {
 	void* memory = b2Alloc( size );
 	memset( memory, 0, size );
@@ -220,7 +220,7 @@ void* b2GrowAlloc( void* oldMem, size_t oldSize, size_t newSize )
 	return newMem;
 }
 
-void* b2GrowAllocZeroInit( void* oldMem, size_t oldSize, size_t newSize )
+void* b2GrowAllocZero( void* oldMem, size_t oldSize, size_t newSize )
 {
 	B2_ASSERT( newSize > oldSize );
 	void* newMem = b2Alloc( newSize );

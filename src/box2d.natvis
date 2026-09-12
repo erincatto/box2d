@@ -96,6 +96,32 @@
     </Expand>
   </Type>
 
+  <Type Name="b2DynamicArray_b2Shape">
+    <DisplayString>{{ count={count}, capacity={capacity} }}</DisplayString>
+    <Expand>
+      <Item Name="count">count</Item>
+      <Item Name="capacity">capacity</Item>
+      <ArrayItems>
+        <Size>count</Size>
+        <ValuePointer>data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="b2Shape">
+    <DisplayString>{type} body={bodyId}</DisplayString>
+    <Expand>
+      <Item Name="id">id</Item>
+      <Item Name="bodyId">bodyId</Item>
+      <Item Name="type">type</Item>
+      <Item Name="density">density</Item>
+      <Item Name="aabb">aabb</Item>
+      <Item Name="fatAABB">fatAABB</Item>
+      <Item Name="filter">filter</Item>
+      <Item Name="userData">userData</Item>
+    </Expand>
+  </Type>
+
   <Type Name="b2Pos">
     <DisplayString>[{x}, {y}]</DisplayString>
     <Expand>

@@ -7,7 +7,6 @@
 
 #include <assert.h>
 
-b2DeclareArrayNative( uint64_t );
 b2DeclareArrayNative( int16_t );
 b2DeclareArrayNative( uint8_t );
 

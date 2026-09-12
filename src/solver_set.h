@@ -3,11 +3,12 @@
 
 #pragma once
 
-#include "body.h"
 #include "contact.h"
+#include "container.h"
 #include "island.h"
 #include "joint.h"
 
+typedef struct b2Body b2Body;
 typedef struct b2World b2World;
 
 // The solver set type by index
