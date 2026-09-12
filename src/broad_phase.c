@@ -22,19 +22,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-// #include <stdio.h>
-
-// static FILE* s_file = NULL;
-
 void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 {
 	_Static_assert( b2_bodyTypeCount == 3, "must be three body types" );
-
-	// if (s_file == NULL)
-	//{
-	//	s_file = fopen("pairs01.txt", "a");
-	//	fprintf(s_file, "============\n\n");
-	// }
 
 	bp->pairSet = b2CreateSet( b2MaxInt( 32, 2 * capacity->contactCount ) );
 
@@ -79,7 +69,7 @@ void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
 
-	B2_ASSERT( 0 <= proxyType && proxyType <= b2_bodyTypeCount );
+	B2_ASSERT( 0 <= proxyType && proxyType < b2_bodyTypeCount );
 	b2DynamicTree_DestroyProxy( bp->trees + proxyType, proxyId );
 }
 
@@ -303,8 +293,14 @@ static void b2CollideProxyAndSubtree( const b2TreeNode* proxy, const b2TreeNode*
 			}
 			else
 			{
-				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
-				stack[stackCount++] = b2GetLeftChild( node );
+				if ( stackCount < B2_TREE_STACK_SIZE )
+				{
+					stack[stackCount++] = b2GetLeftChild( node );
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+				}
 			}
 		}
 	}
@@ -335,9 +331,15 @@ B2_FORCE_INLINE void b2VisitPair( const b2TreeNode* arrayA, const b2TreeNode* ar
 	}
 	else
 	{
-		B2_ASSERT( *stackCount < B2_TREE_STACK_SIZE );
-		stack[*stackCount] = (b2IndexPair){ .a = b2GetLeftChild( nodeA ), .b = b2GetLeftChild( nodeB ) };
-		*stackCount += 1;
+		if ( *stackCount < B2_TREE_STACK_SIZE )
+		{
+			stack[*stackCount] = (b2IndexPair){ .a = b2GetLeftChild( nodeA ), .b = b2GetLeftChild( nodeB ) };
+			*stackCount += 1;
+		}
+		else
+		{
+			B2_ASSERT( *stackCount < B2_TREE_STACK_SIZE );
+		}
 	}
 }
 

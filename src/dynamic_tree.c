@@ -669,21 +669,9 @@ uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId )
 	return tree->proxies[proxyId].categoryBits;
 }
 
-static int b2ComputeHeight( const b2DynamicTree* tree, int nodeIndex )
-{
-	B2_ASSERT( 0 <= nodeIndex && nodeIndex < tree->nodeEnd );
-	const b2TreeNode* node = tree->nodes + nodeIndex;
-	if ( b2IsLeaf( node ) )
-	{
-		return 0;
-	}
-
-	int pair = b2GetLeftChild( node );
-	int height1 = b2ComputeHeight( tree, pair );
-	int height2 = b2ComputeHeight( tree, pair + 1 );
-	return 1 + b2MaxInt( height1, height2 );
-}
-
+// The height is the maximum leaf depth, with the root children at depth one.
+// Siblings share a depth and child pairs sit one deeper. An explicit stack
+// keeps this off the call stack, like the query traversals.
 int b2DynamicTree_GetHeight( const b2DynamicTree* tree )
 {
 	if ( tree->proxyCount == 0 )
@@ -691,7 +679,52 @@ int b2DynamicTree_GetHeight( const b2DynamicTree* tree )
 		return 0;
 	}
 
-	return b2ComputeHeight( tree, B2_ROOT_NODE );
+	const b2TreeNode* nodes = tree->nodes;
+	const b2TreeNode* root = nodes + B2_ROOT_NODE;
+	if ( b2IsLeaf( root ) )
+	{
+		return 0;
+	}
+
+	int pairs[B2_TREE_STACK_SIZE];
+	int depths[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	pairs[stackCount] = b2GetLeftChild( root );
+	depths[stackCount] = 1;
+	++stackCount;
+
+	int height = 0;
+	while ( stackCount > 0 )
+	{
+		--stackCount;
+		int pair = pairs[stackCount];
+		int depth = depths[stackCount];
+		height = b2MaxInt( height, depth );
+
+		for ( int i = 0; i < 2; ++i )
+		{
+			const b2TreeNode* node = nodes + pair + i;
+			if ( b2IsLeaf( node ) )
+			{
+				continue;
+			}
+
+			int childPair = b2GetLeftChild( node );
+
+			if ( stackCount < B2_TREE_STACK_SIZE )
+			{
+				pairs[stackCount] = childPair;
+				depths[stackCount] = depth + 1;
+				++stackCount;
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+			}
+		}
+	}
+
+	return height;
 }
 
 // The area ratio is the thing that SAH seeks to minimize. SAH
@@ -739,7 +772,6 @@ b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree )
 
 #if B2_ENABLE_VALIDATION
 
-// Back links both ways, boxes containing the children, leaf counts and marks exact. Returns the leaf count.
 static int b2ValidateSubtree( const b2DynamicTree* tree, int nodeIndex )
 {
 	B2_ASSERT( 0 <= nodeIndex && nodeIndex < tree->nodeEnd );
@@ -767,6 +799,7 @@ static int b2ValidateSubtree( const b2DynamicTree* tree, int nodeIndex )
 	B2_ASSERT( b2AABB_Contains( node->aabb, c2->aabb ) );
 	B2_ASSERT( b2IsNodeMoved( node ) == ( b2IsNodeMoved( c1 ) || b2IsNodeMoved( c2 ) ) );
 
+	// A bad tree can stack overflow, but that is validation on its own.
 	int leafCount = b2ValidateSubtree( tree, pair ) + b2ValidateSubtree( tree, pair + 1 );
 	B2_ASSERT( node->leafCount == leafCount );
 	return leafCount;
@@ -782,7 +815,6 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 	B2_ASSERT( tree->parents[B2_ROOT_NODE] == B2_NULL_INDEX );
 	B2_ASSERT( b2IsEmptyNode( tree->nodes + B2_ROOT_NODE + 1 ) );
 
-	// Free pairs are self describing and chained through the parent slot
 	int freePairCount = 0;
 	int pair = tree->pairFreeList;
 	while ( pair != B2_NULL_INDEX )
@@ -807,7 +839,6 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 	}
 	B2_ASSERT( tree->proxyCount + freeProxyCount == tree->proxyCapacity );
 
-	// The root pair, a pair per proxy past the first, and the holes
 	B2_ASSERT( tree->nodeEnd == 2 * b2MaxInt( tree->proxyCount, 1 ) + 2 * freePairCount );
 
 	if ( tree->proxyCount == 0 )
@@ -936,6 +967,7 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 	return result;
 }
 
+// This ignores the category bits. Useful for debug draw.
 b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
@@ -1599,10 +1631,8 @@ static inline void b2SetLeftChild( b2TreeNode* node, int pair )
 	node->flagIndex = ( node->flagIndex & ~B2_NODE_INDEX_MASK ) | (uint32_t)pair;
 }
 
-// Copy a retained subtree from the old array into the rebuilt DFS array, a pair per step. The node is
-// the old content of the subtree root, its children still index the old array. The left child is
-// followed right away and the right child waits on the stack, its pair allocated once the left
-// subtree is written, which keeps the DFS order.
+// Copy a retained subtree from the old array into the rebuilt DFS array using
+// a bump allocator.
 static void b2CopySubtree( b2DynamicTree* tree, b2TreeNode node, int newIndex )
 {
 	const b2TreeNode* oldNodes = tree->nodes;
@@ -1636,7 +1666,7 @@ static void b2CopySubtree( b2DynamicTree* tree, b2TreeNode node, int newIndex )
 
 		if ( b2IsLeaf( pair + 1 ) )
 		{
-			// Hoop up proxy on right sibling.
+			// Hook up proxy on right sibling.
 			int proxyId = b2GetProxyId( pair + 1 );
 			proxies[proxyId].node = newPair + 1;
 		}
@@ -1700,7 +1730,7 @@ static void b2BuildTree( b2DynamicTree* tree, int leafCount )
 	int* binIndices = tree->binIndices;
 #endif
 
-	// Bump allocation into the spare. The root pair is fixed.
+	// Bump allocation into the swap nodes.
 	tree->nodeEnd = 2;
 	nodes[B2_ROOT_NODE + 1] = b2MakeEmptyNode();
 	tree->parents[B2_ROOT_NODE] = B2_NULL_INDEX;
@@ -1733,7 +1763,7 @@ static void b2BuildTree( b2DynamicTree* tree, int leafCount )
 
 		if ( item->childCount == 2 )
 		{
-			// Both children written, so the node above them can be made
+			// Both children written, so the parent node can be finalized.
 			nodes[item->nodeIndex] = b2MakeInternalNode( nodes, item->pair );
 			if ( top == 0 )
 			{
@@ -1757,7 +1787,9 @@ static void b2BuildTree( b2DynamicTree* tree, int leafCount )
 			continue;
 		}
 
+		// todo fail gracefully if the stack runs out in release
 		B2_ASSERT( top < B2_TREE_STACK_SIZE - 1 );
+
 		top += 1;
 		b2RebuildItem* newItem = stack + top;
 		newItem->nodeIndex = nodeIndex;
@@ -1854,6 +1886,7 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 			b2TreeNode node = nodes[pair + i];
 			if ( b2IsLeaf( &node ) == false && ( fullBuild || b2IsNodeMoved( &node ) ) )
 			{
+				// todo fail gracefully if the stack runs out in release
 				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
 				stack[stackCount++] = b2GetLeftChild( &node );
 				continue;
@@ -1906,7 +1939,7 @@ void b2DynamicTree_MarkProxyMovedSerial( b2DynamicTree* tree, int proxyId )
 	}
 }
 
-// Update a proxy AABB and flag the ancestors as moved. Thred-safe using atomics.
+// Update a proxy AABB and flag the ancestors as moved. Thread-safe using atomics.
 void b2DynamicTree_MarkProxyMoved( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 {
 	B2_VALIDATE( 0 <= proxyId && proxyId < tree->proxyCapacity );
@@ -1986,7 +2019,7 @@ void b2DynamicTree_ClearMoved( b2DynamicTree* tree )
 					else
 					{
 						// Bad stuff will happen if the moved flags don't get cleared.
-						B2_ASSERT( false );
+						B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
 					}
 				}
 			}
@@ -2031,8 +2064,14 @@ int b2DynamicTree_GatherMovedProxies( const b2DynamicTree* tree, int* proxyIds )
 			}
 			else
 			{
-				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
-				stack[stackCount++] = b2GetLeftChild( node );
+				if ( stackCount < B2_TREE_STACK_SIZE )
+				{
+					stack[stackCount++] = b2GetLeftChild( node );
+				}
+				else
+				{
+					B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+				}
 			}
 		}
 	}
@@ -2041,19 +2080,52 @@ int b2DynamicTree_GatherMovedProxies( const b2DynamicTree* tree, int* proxyIds )
 }
 
 // Slow refit for unit tests.
-static b2AABB b2RefitSubtree( b2TreeNode* nodes, int nodeIndex )
+static void b2RefitSubtree( b2TreeNode* nodes, int rootIndex )
 {
-	b2TreeNode* node = nodes + nodeIndex;
-	if ( b2IsLeaf( node ) || b2IsNodeMoved( node ) == false )
+	b2TreeNode* root = nodes + rootIndex;
+	if ( b2IsLeaf( root ) || b2IsNodeMoved( root ) == false )
 	{
-		return node->aabb;
+		return;
 	}
 
-	int pair = b2GetLeftChild( node );
-	b2AABB box1 = b2RefitSubtree( nodes, pair );
-	b2AABB box2 = b2RefitSubtree( nodes, pair + 1 );
-	node->aabb = b2UnionV( box1, box2 );
-	return node->aabb;
+	// Negative entries indicate deferred unions. A parent is pushed before its children so the
+	// LIFO order guarantees both children are finished when the union runs.
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	// ~0 == -1
+	stack[stackCount++] = ~rootIndex;
+	stack[stackCount++] = b2GetLeftChild( root );
+	stack[stackCount++] = b2GetLeftChild( root ) + 1;
+
+	while ( stackCount > 0 )
+	{
+		int item = stack[--stackCount];
+		if ( item < 0 )
+		{
+			b2TreeNode* node = nodes + ~item;
+			int pair = b2GetLeftChild( node );
+			node->aabb = b2UnionV( nodes[pair].aabb, nodes[pair + 1].aabb );
+			continue;
+		}
+
+		b2TreeNode* node = nodes + item;
+		if ( b2IsLeaf( node ) || b2IsNodeMoved( node ) == false )
+		{
+			continue;
+		}
+
+		if ( stackCount + 3 <= B2_TREE_STACK_SIZE )
+		{
+			int pair = b2GetLeftChild( node );
+			stack[stackCount++] = ~item;
+			stack[stackCount++] = pair;
+			stack[stackCount++] = pair + 1;
+		}
+		else
+		{
+			B2_ASSERT( stackCount + 3 <= B2_TREE_STACK_SIZE );
+		}
+	}
 }
 
 void b2DynamicTree_Refit( b2DynamicTree* tree )
