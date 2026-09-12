@@ -1147,7 +1147,7 @@ void GetQueryBenchmarkRay( int index, b2Pos* origin, b2Vec2* translation )
 
 // Tree cast benchmark. The queries grid goes into a bare dynamic tree one proxy at a time and is
 // never rebuilt, which is the tree a game runs on. Every step casts the same rays through
-// b2DynamicTree_RayCast at full extent, at 25 units and at 5 units, with the default mask and with
+// the tree at full extent, at 25 units and at 5 units, with the default mask and with
 // a mask that hits one category in three, then the same directions as box casts. The callback
 // clips to the tight box, so hits and fraction sums match across builds and nothing but the tree
 // is in the step time. Full extent rays shrink the fraction as they go, 25 unit rays sit at the

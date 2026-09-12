@@ -192,6 +192,19 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 		}
 	}
 
+	// A destroyed static shape leaves a free pair in the static tree. Nothing rebuilds the
+	// static tree on its own, so the hole is still there at every snapshot below.
+	{
+		b2BodyDef bd = b2DefaultBodyDef();
+		bd.position = (b2Pos){ -30.0f, 10.0f };
+		b2BodyId scrapId = b2CreateBody( worldId, &bd );
+
+		b2Polygon scrapBox = b2MakeBox( 0.5f, 0.5f );
+		b2ShapeDef sd = b2DefaultShapeDef();
+		b2CreatePolygonShape( scrapId, &sd, &scrapBox );
+		b2DestroyBody( scrapId );
+	}
+
 	if ( outIds != NULL )
 	{
 		outIds->body = stackTop;
@@ -235,6 +248,9 @@ int SnapshotTest( void )
 	// The sleeping-set path (sets beyond the initial 3) must be exercised
 	ENSURE( worldA->solverSets.count > 3 );
 
+	// The free pair image only round trips if a tree actually has a hole
+	ENSURE( worldA->broadPhase.trees[b2_staticBody].pairFreeList != B2_NULL_INDEX );
+
 	// Serialize worldA
 	b2RecBuffer buf = { 0 };
 	b2SerializeWorld( worldA, &buf );
@@ -254,6 +270,22 @@ int SnapshotTest( void )
 	uint64_t deepA0 = b2HashWorldStateDeep( worldA );
 	uint64_t deepB0 = b2HashWorldStateDeep( worldB );
 	ENSURE( deepA0 == deepB0 );
+
+	// Free pairs are chained through the parent index of their first node, so a broken
+	// restore shows up here and not in the hashes, which never read tree nodes
+	for ( int treeType = 0; treeType < b2_bodyTypeCount; ++treeType )
+	{
+		const b2DynamicTree* treeA = worldA->broadPhase.trees + treeType;
+		const b2DynamicTree* treeB = worldB->broadPhase.trees + treeType;
+		ENSURE( treeA->nodeEnd == treeB->nodeEnd );
+		ENSURE( treeA->pairFreeList == treeB->pairFreeList );
+
+		for ( int pair = treeA->pairFreeList; pair != B2_NULL_INDEX; pair = treeA->parents[pair] )
+		{
+			ENSURE( treeA->parents[pair] == treeB->parents[pair] );
+			ENSURE( treeA->parents[pair + 1] == treeB->parents[pair + 1] );
+		}
+	}
 
 	// Phase 3: lockstep worldA vs worldB for 120 steps, assert both hashes match each step
 	float dt = 1.0f / 60.0f;
