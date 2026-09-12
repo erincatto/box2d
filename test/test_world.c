@@ -653,20 +653,13 @@ static int SetBulletDriftTest( void )
 	return 0;
 }
 
-// Marks live in the child records, so this counts marked records over every allocated node
+// Counts marked nodes, the root included. Free nodes are never marked.
 static int CountEnlargedNodes( const b2DynamicTree* tree )
 {
 	int count = 0;
-	for ( int i = 0; i < tree->nodeCapacity; ++i )
+	for ( int i = 0; i < tree->nodeEnd; ++i )
 	{
-		if ( b2IsAllocated( tree->links + i ) == false )
-		{
-			continue;
-		}
-
-		const b2TreeNode* node = tree->nodes + i;
-		count += b2IsChildMoved( node->children + 0 ) ? 1 : 0;
-		count += b2IsChildMoved( node->children + 1 ) ? 1 : 0;
+		count += b2IsNodeMoved( tree->nodes + i ) ? 1 : 0;
 	}
 
 	return count;

@@ -37,6 +37,16 @@ int GetQueryBenchmarkCount( void );
 float GetQueryBenchmarkExtent( void );
 void GetQueryBenchmarkRay( int index, b2Pos* origin, b2Vec2* translation );
 
+void CreateTreeCast( b2WorldId worldId );
+float StepTreeCast( b2WorldId worldId, int stepCount );
+void DestroyTreeCast( void );
+b2TreeStats GetTreeCastBenchmarkStats( void );
+
+void CreateTileWorld( b2WorldId worldId );
+float StepTileWorld( b2WorldId worldId, int stepCount );
+void DestroyTileWorld( void );
+b2TreeStats GetTileWorldBenchmarkStats( void );
+
 #ifdef __cplusplus
 }
 #endif

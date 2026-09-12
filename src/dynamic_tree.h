@@ -8,59 +8,65 @@
 #include "box2d/collision.h"
 
 #define B2_TREE_STACK_SIZE 512
-#define B2_NODE_SENTINEL ( UINT32_MAX & ~B2_MOVED_NODE )
 #define B2_MOVED_NODE ( 1u << 30 )
 #define B2_LEAF_NODE ( 1u << 31 )
 #define B2_NODE_INDEX_MASK ( 0xFFFFFFFFu & ~( B2_MOVED_NODE | B2_LEAF_NODE ) )
+
+// Used to indicate empty nodes. It also passes as a leaf so that internal node
+// processing will naturally skip it.
+#define B2_EMPTY_NODE ( B2_NODE_INDEX_MASK | B2_LEAF_NODE )
+
 #define B2_ROOT_NODE 0
 
-#define B2_SLOT_BIT 0x00000001u
-#define B2_ALLOCATED_BIT 0x00000002u
-#define B2_REFIT_BIT 0x00000004u
-
-B2_FORCE_INLINE bool b2IsLeaf( const b2TreeChild* child )
+B2_FORCE_INLINE bool b2IsLeaf( const b2TreeNode* node )
 {
-	return ( child->flagIndex & B2_LEAF_NODE ) == B2_LEAF_NODE;
+	return ( node->flagIndex & B2_LEAF_NODE ) == B2_LEAF_NODE;
 }
 
-B2_FORCE_INLINE bool b2IsChildMoved( const b2TreeChild* child )
+B2_FORCE_INLINE bool b2IsNodeMoved( const b2TreeNode* node )
 {
-	return ( child->flagIndex & B2_MOVED_NODE ) == B2_MOVED_NODE;
+	return ( node->flagIndex & B2_MOVED_NODE ) == B2_MOVED_NODE;
 }
 
-B2_FORCE_INLINE uint32_t b2GetChildIndex( const b2TreeChild* child )
+B2_FORCE_INLINE bool b2IsEmptyNode( const b2TreeNode* node )
 {
-	return child->flagIndex & B2_NODE_INDEX_MASK;
+	return node->flagIndex == B2_EMPTY_NODE;
 }
 
-B2_FORCE_INLINE int b2GetChildSlot( const b2TreeLink* link )
+B2_FORCE_INLINE int b2GetLeftChild( const b2TreeNode* node )
 {
-	return link->flags & B2_SLOT_BIT;
+	return (int)( node->flagIndex & B2_NODE_INDEX_MASK );
 }
 
-B2_FORCE_INLINE bool b2IsAllocated( const b2TreeLink* link )
+B2_FORCE_INLINE int b2GetProxyId( const b2TreeNode* node )
 {
-	return (link->flags & B2_ALLOCATED_BIT) == B2_ALLOCATED_BIT;
+	return (int)( node->flagIndex & B2_NODE_INDEX_MASK );
 }
 
-B2_FORCE_INLINE b2TreeChild b2MakeEmptyChild( void )
+B2_FORCE_INLINE int b2GetRootPair( const b2TreeNode* nodes )
 {
-	return (b2TreeChild){
-		.aabb = { .lowerBound = { .x = INFINITY, .y = INFINITY }, .upperBound = { .x = -INFINITY, .y = -INFINITY } },
-		.flagIndex = B2_NODE_SENTINEL,
+	const b2TreeNode* root = nodes + B2_ROOT_NODE;
+	return b2IsLeaf( root ) ? B2_ROOT_NODE : b2GetLeftChild( root );
+}
+
+B2_FORCE_INLINE b2TreeNode b2MakeEmptyNode( void )
+{
+	return (b2TreeNode){
+		.aabb =
+			{
+				.lowerBound = { .x = INFINITY, .y = INFINITY },
+				.upperBound = { .x = -INFINITY, .y = -INFINITY },
+			},
+		.flagIndex = B2_EMPTY_NODE,
 		.leafCount = 0,
 	};
 }
 
 static inline bool b2HasTreeMoved( const b2DynamicTree* tree )
 {
-	const b2TreeNode* root = tree->nodes + B2_ROOT_NODE;
-	return b2IsChildMoved( root->children + 0 ) || b2IsChildMoved( root->children + 1 );
+	return b2IsNodeMoved( tree->nodes + B2_ROOT_NODE );
 }
 
-// The query box is loaded into a register once and tested against each record in place. Passing
-// the record's box by value copies it to the stack as two 8 byte moves that a 16 byte load cannot
-// forward from, which is a stall on every node.
 #if defined( B2_SIMD_NEON )
 
 #include <arm_neon.h>
@@ -72,10 +78,10 @@ B2_FORCE_INLINE b2AABBV b2LoadAABBV( const b2AABB* aabb )
 	return vld1q_f32( &aabb->lowerBound.x );
 }
 
-B2_FORCE_INLINE bool b2OverlapChild( b2AABBV av, const b2TreeChild* child )
+B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 {
 	// [lower.x lower.y upper.x upper.y]
-	float32x4_t bv = vld1q_f32( &child->aabb.lowerBound.x );
+	float32x4_t bv = vld1q_f32( &node->aabb.lowerBound.x );
 
 	// [alx aly blx bly]
 	float32x4_t t1 = vcombine_f32( vget_low_f32( av ), vget_low_f32( bv ) );
@@ -97,9 +103,23 @@ B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 	return result;
 }
 
+B2_FORCE_INLINE b2AABBV b2UnionPairV( const b2TreeNode* pair )
+{
+	float32x4_t b1 = vld1q_f32( &pair[0].aabb.lowerBound.x );
+	float32x4_t b2 = vld1q_f32( &pair[1].aabb.lowerBound.x );
+	return vcombine_f32( vget_low_f32( vminq_f32( b1, b2 ) ), vget_high_f32( vmaxq_f32( b1, b2 ) ) );
+}
+
+B2_FORCE_INLINE void b2StoreAABBV( b2AABB* aabb, b2AABBV value, bool condition )
+{
+	uint32x4_t mask = vdupq_n_u32( condition ? 0xFFFFFFFFu : 0u );
+	float32x4_t old = vld1q_f32( &aabb->lowerBound.x );
+	vst1q_f32( &aabb->lowerBound.x, vbslq_f32( mask, value, old ) );
+}
+
 #elif defined( B2_SIMD_SSE2 ) || defined( B2_SIMD_AVX2 )
 
-#include <xmmintrin.h>
+#include <emmintrin.h>
 
 typedef __m128 b2AABBV;
 
@@ -108,11 +128,13 @@ B2_FORCE_INLINE b2AABBV b2LoadAABBV( const b2AABB* aabb )
 	return _mm_loadu_ps( &aabb->lowerBound.x );
 }
 
-B2_FORCE_INLINE bool b2OverlapChild( b2AABBV av, const b2TreeChild* child )
+// Passing the tree node rather than the AABB avoids a stack copy.
+// todo confirm assembly
+B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 {
 	// Unaligned load
 	// [lower.x lower.y upper.x upper.y]
-	__m128 bv = _mm_loadu_ps( &child->aabb.lowerBound.x );
+	__m128 bv = _mm_loadu_ps( &node->aabb.lowerBound.x );
 
 	// [alx aly blx bly]
 	__m128 t1 = _mm_movelh_ps( av, bv );
@@ -137,6 +159,25 @@ B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 	return result;
 }
 
+B2_FORCE_INLINE b2AABBV b2UnionPairV( const b2TreeNode* pair )
+{
+	__m128 b1 = _mm_loadu_ps( &pair[0].aabb.lowerBound.x );
+	__m128 b2 = _mm_loadu_ps( &pair[1].aabb.lowerBound.x );
+	__m128 lower = _mm_min_ps( b1, b2 );
+	__m128 upper = _mm_max_ps( b1, b2 );
+	return _mm_shuffle_ps( lower, upper, _MM_SHUFFLE( 3, 2, 1, 0 ) );
+}
+
+// Conditionally store the value. This is optimized for tree refitting.
+B2_FORCE_INLINE void b2StoreAABBV( b2AABB* aabb, b2AABBV value, bool condition )
+{
+	__m128 mask = _mm_castsi128_ps( _mm_set1_epi32( condition ? -1 : 0 ) );
+	__m128 old = _mm_loadu_ps( &aabb->lowerBound.x );
+
+	// blend
+	_mm_storeu_ps( &aabb->lowerBound.x, _mm_or_ps( _mm_and_ps( mask, value ), _mm_andnot_ps( mask, old ) ) );
+}
+
 #else
 
 typedef b2AABB b2AABBV;
@@ -146,18 +187,29 @@ B2_FORCE_INLINE b2AABBV b2LoadAABBV( const b2AABB* aabb )
 	return *aabb;
 }
 
-// Same compares as the SIMD paths, no subtraction, so an inverted empty box fails and the
-// scalar build traverses exactly what the SIMD builds do
-B2_FORCE_INLINE bool b2OverlapChild( b2AABBV av, const b2TreeChild* child )
+B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 {
-	const b2AABB* bv = &child->aabb;
-	return av.lowerBound.x <= bv->upperBound.x && av.lowerBound.y <= bv->upperBound.y &&
-		   bv->lowerBound.x <= av.upperBound.x && bv->lowerBound.y <= av.upperBound.y;
+	const b2AABB* bv = &node->aabb;
+	return av.lowerBound.x <= bv->upperBound.x && av.lowerBound.y <= bv->upperBound.y && bv->lowerBound.x <= av.upperBound.x &&
+		   bv->lowerBound.y <= av.upperBound.y;
 }
 
 B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 {
 	return b2AABB_Union( a, b );
+}
+
+B2_FORCE_INLINE b2AABBV b2UnionPairV( const b2TreeNode* pair )
+{
+	return b2AABB_Union( pair[0].aabb, pair[1].aabb );
+}
+
+B2_FORCE_INLINE void b2StoreAABBV( b2AABB* aabb, b2AABBV value, bool condition )
+{
+	if ( condition )
+	{
+		*aabb = value;
+	}
 }
 
 #endif

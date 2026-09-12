@@ -673,67 +673,47 @@ B2_API b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* se
  * @{
  */
 
-/// A node child.
-/// todo consider b2TreeSlot or b2NodeSlot or b2TreeNodeSlot
-typedef struct b2TreeChild
+/// A node in the dynamic tree. Siblings sit together at an even index so two nodes fit in
+/// a 64 byte cache line. The root is at index zero and index one always empty.
+typedef struct b2TreeNode
 {
 	/// The node bounding box
 	b2AABB aabb;
 
-	/// In 3D this is the z components
+	/// In 3D this space is used by the AABB z components.
 	uint64_t padding;
 
 	/// bit 31 : 1 for leaf node
 	/// bit 30 : 1 for moved flag
-	/// bits 0-29 : index to child node
+	/// bits 0-29 : index of the sibling pair node or the proxy id for a leaf
 	uint32_t flagIndex;
 
 	union
 	{
 		/// The total number of leaves below for an internal node.
+		/// todo not used
 		int32_t leafCount;
 
-		/// The truncated user data for a leaf. Avoids a lookup.
-		uint32_t truncatedUserData;
+		/// The shape index for a leaf. Truncated from proxy user data.
+		int32_t shapeIndex;
 	};
 
-} b2TreeChild;
-
-/// An internal node in the dynamic tree.
-/// 64 bytes to fit a cache line.
-typedef struct b2TreeNode
-{
-	/// Left and right child.
-	b2TreeChild children[2];
 } b2TreeNode;
-
-/// Separate storage cold node data.
-typedef struct b2TreeLink
-{
-	union
-	{
-		/// Index of parent internal node.
-		int32_t parent;
-		
-		/// Next index when in the free list
-		int32_t next;
-	};
-
-	/// b2TreeLinkFlags
-	uint32_t flags;
-} b2TreeLink;
 
 /// Separate storage for tree leaves.
 typedef struct b2TreeProxy
 {
-	/// Same link used for internal nodes also needed for proxies.
-	b2TreeLink link;
+	/// User data is an index instead of void* because it is used internally as a shape index.
+	uint64_t userData;
 
 	/// Category bits for collision filtering.
 	uint64_t categoryBits;
 
-	/// User data is an index instead of void* because it is used internally as a shape index.
-	uint64_t userData;
+	/// The leaf node. B2_NULL_INDEX for a free proxy.
+	int32_t node;
+
+	/// Next free proxy.
+	int32_t next;
 
 } b2TreeProxy;
 
@@ -741,23 +721,24 @@ typedef struct b2TreeProxy
 /// It is placed here for performance reasons.
 typedef struct b2DynamicTree
 {
-	/// Array of internal nodes.
+	/// Array of nodes. The root is at index zero and index 1 is empty.
+	// Otherwise siblings are paired at even indices. Has holes for free node pairs.
 	b2TreeNode* nodes;
 
-	/// Cold data per internal node.
-	b2TreeLink* links;
+	/// Parent index per node. The free list is interweaved.
+	int32_t* parents;
 
 	/// Proxy data split from node array as cold data.
 	b2TreeProxy* proxies;
 
-	/// The number of nodes
-	int32_t nodeCount;
+	/// Every allocated node has a lower index than this.
+	int32_t nodeEnd;
 
 	/// The allocated node space
 	int32_t nodeCapacity;
 
-	/// Node free list
-	int32_t nodeFreeList;
+	/// Free pairs below nodeEnd
+	int32_t pairFreeList;
 
 	/// Number of proxies created
 	int32_t proxyCount;
@@ -768,14 +749,14 @@ typedef struct b2DynamicTree
 	/// Proxy free list
 	int32_t proxyFreeList;
 
-	/// Array of internal nodes for rebuild.
+	/// Array of nodes for rebuild.
 	b2TreeNode* swapNodes;
 
 	/// Leaf indices for rebuild
 	int32_t* leafIndices;
 
-	/// Children for rebuild
-	b2TreeChild* leafChildren;
+	/// Leaves for the rebuild. May represent a proxy or a retained subtree.
+	b2TreeNode* leafNodes;
 
 	/// Leaf bounding boxes for rebuild
 	b2AABB* leafBoxes;
@@ -789,9 +770,9 @@ typedef struct b2DynamicTree
 	/// Allocated space for rebuilding
 	int32_t rebuildCapacity;
 
-	/// Node count recorded at last DFS rebuild. The current node count may have holes
-	/// due to proxy deletion.
-	int32_t dfsNodeCount;
+	/// Rebuild orders the nodes so the children follow parents. Cache friendly for queries
+	/// and refitting. The order can be disrupted by proxy creation.
+	bool dfsOrdered;
 
 } b2DynamicTree;
 

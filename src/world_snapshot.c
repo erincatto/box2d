@@ -32,7 +32,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 7u // compact tree
+#define B2_SNAP_VERSION 8u // sibling pairs
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -67,8 +67,6 @@ static uint32_t b2ComputeLayoutHash( void )
 	MIX( sizeof( b2GraphColor ) )
 	MIX( sizeof( b2DynamicTree ) )
 	MIX( sizeof( b2TreeNode ) )
-	MIX( sizeof( b2TreeChild ) )
-	MIX( sizeof( b2TreeLink ) )
 	MIX( sizeof( b2TreeProxy ) )
 	MIX( sizeof( b2SetItem ) )
 	MIX( sizeof( b2IdPool ) )
@@ -318,65 +316,47 @@ static void b2DesHashSet( b2SnapReader* r, b2HashSet* hs )
 
 static void b2SerTree( b2RecBuffer* buf, const b2DynamicTree* tree )
 {
-	b2SnapW_I32( buf, tree->nodeCount );
+	b2SnapW_I32( buf, tree->nodeEnd );
 	b2SnapW_I32( buf, tree->nodeCapacity );
-	b2SnapW_I32( buf, tree->nodeFreeList );
+	b2SnapW_I32( buf, tree->pairFreeList );
 	b2SnapW_I32( buf, tree->proxyCount );
 	b2SnapW_I32( buf, tree->proxyCapacity );
 	b2SnapW_I32( buf, tree->proxyFreeList );
-	b2SnapW_I32( buf, tree->dfsNodeCount );
+	b2SnapW_I32( buf, tree->dfsOrdered ? 1 : 0 );
 
-	b2SnapW_Bytes( buf, tree->links, tree->nodeCapacity * (int)sizeof( b2TreeLink ) );
-	for ( int i = 0; i < tree->nodeCapacity; ++i )
-	{
-		if ( b2IsAllocated( tree->links + i ) )
-		{
-			b2SnapW_Bytes( buf, tree->nodes + i, (int)sizeof( b2TreeNode ) );
-		}
-	}
-
-	for ( int i = 0; i < tree->proxyCapacity; ++i )
-	{
-		b2SnapW_Bytes( buf, &tree->proxies[i].link, (int)sizeof( b2TreeLink ) );
-	}
-
-	for ( int i = 0; i < tree->proxyCapacity; ++i )
-	{
-		const b2TreeProxy* proxy = tree->proxies + i;
-		if ( b2IsAllocated( &proxy->link ) )
-		{
-			b2SnapW_Bytes( buf, &proxy->categoryBits, 2 * (int)sizeof( uint64_t ) );
-		}
-	}
+	b2SnapW_Bytes( buf, tree->nodes, tree->nodeEnd * (int)sizeof( b2TreeNode ) );
+	b2SnapW_Bytes( buf, tree->parents, tree->nodeEnd * (int)sizeof( int32_t ) );
+	b2SnapW_Bytes( buf, tree->proxies, tree->proxyCapacity * (int)sizeof( b2TreeProxy ) );
 }
 
 static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 {
-	int nodeCount = b2SnapR_I32( r );
+	int nodeEnd = b2SnapR_I32( r );
 	int nodeCapacity = b2SnapR_I32( r );
-	int nodeFreeList = b2SnapR_I32( r );
+	int pairFreeList = b2SnapR_I32( r );
 	int proxyCount = b2SnapR_I32( r );
 	int proxyCapacity = b2SnapR_I32( r );
 	int proxyFreeList = b2SnapR_I32( r );
-	int dfsNodeCount = b2SnapR_I32( r );
+	int ordered = b2SnapR_I32( r );
 
-	if ( r->ok && ( nodeCount < 1 || nodeCapacity < nodeCount || proxyCount < 0 || proxyCapacity < 1 || proxyCapacity < proxyCount ) )
+	if ( r->ok && ( nodeEnd < 2 || ( nodeEnd & 1 ) != 0 || nodeCapacity < nodeEnd || proxyCount < 0 || proxyCapacity < 1 ||
+					proxyCapacity < proxyCount ) )
 	{
 		r->ok = false;
 	}
 
 	// Allocation bounds against the capacities, stream bounds against what is actually written
-	if ( r->ok && b2SnapCheckCount( r, nodeCapacity, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeLink ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, nodeCapacity, (int)sizeof( b2TreeNode ), 0 ) == false )
 	{
 		r->ok = false;
 	}
 
-	if ( r->ok && b2SnapCheckCount( r, nodeCount, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, nodeEnd, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) + (int)sizeof( int32_t ) ) == false )
 	{
 		r->ok = false;
 	}
 
-	if ( r->ok && b2SnapCheckCount( r, proxyCapacity, (int)sizeof( b2TreeProxy ), (int)sizeof( b2TreeLink ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, proxyCapacity, (int)sizeof( b2TreeProxy ), (int)sizeof( b2TreeProxy ) ) == false )
 	{
 		r->ok = false;
 	}
@@ -392,49 +372,22 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 		return;
 	}
 
-	tree->nodeCount = nodeCount;
+	tree->nodeEnd = nodeEnd;
 	tree->nodeCapacity = nodeCapacity;
-	tree->nodeFreeList = nodeFreeList;
+	tree->pairFreeList = pairFreeList;
 	tree->proxyCount = proxyCount;
 	tree->proxyCapacity = proxyCapacity;
 	tree->proxyFreeList = proxyFreeList;
-	tree->dfsNodeCount = dfsNodeCount;
-
-	tree->links = b2Alloc( nodeCapacity * sizeof( b2TreeLink ) );
-	b2SnapR_Bytes( r, tree->links, nodeCapacity * (int)sizeof( b2TreeLink ) );
+	tree->dfsOrdered = ordered != 0;
 
 	tree->nodes = b2AllocZero( nodeCapacity * sizeof( b2TreeNode ) );
-	int liveNodeCount = 0;
-	for ( int i = 0; i < nodeCapacity && r->ok; ++i )
-	{
-		if ( b2IsAllocated( tree->links + i ) )
-		{
-			b2SnapR_Bytes( r, tree->nodes + i, (int)sizeof( b2TreeNode ) );
-			liveNodeCount += 1;
-		}
-	}
+	b2SnapR_Bytes( r, tree->nodes, nodeEnd * (int)sizeof( b2TreeNode ) );
+
+	tree->parents = b2AllocZero( nodeCapacity * sizeof( int32_t ) );
+	b2SnapR_Bytes( r, tree->parents, nodeEnd * (int)sizeof( int32_t ) );
 
 	tree->proxies = b2AllocZero( proxyCapacity * sizeof( b2TreeProxy ) );
-	for ( int i = 0; i < proxyCapacity && r->ok; ++i )
-	{
-		b2SnapR_Bytes( r, &tree->proxies[i].link, (int)sizeof( b2TreeLink ) );
-	}
-
-	int liveProxyCount = 0;
-	for ( int i = 0; i < proxyCapacity && r->ok; ++i )
-	{
-		b2TreeProxy* proxy = tree->proxies + i;
-		if ( b2IsAllocated( &proxy->link ) )
-		{
-			b2SnapR_Bytes( r, &proxy->categoryBits, 2 * (int)sizeof( uint64_t ) );
-			liveProxyCount += 1;
-		}
-	}
-
-	if ( liveNodeCount != nodeCount || liveProxyCount != proxyCount )
-	{
-		r->ok = false;
-	}
+	b2SnapR_Bytes( r, tree->proxies, proxyCapacity * (int)sizeof( b2TreeProxy ) );
 }
 
 // Solver set: setIndex + 5 POD arrays

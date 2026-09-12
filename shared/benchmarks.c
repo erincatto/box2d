@@ -1142,3 +1142,489 @@ void GetQueryBenchmarkRay( int index, b2Pos* origin, b2Vec2* translation )
 	*origin = g_queryBenchmark.origins[index];
 	*translation = g_queryBenchmark.translations[index];
 }
+
+// Tree cast benchmark. The queries grid goes into a bare dynamic tree one proxy at a time and is
+// never rebuilt, which is the tree a game runs on. Every step casts the same rays through
+// b2DynamicTree_RayCast at full extent, at 25 units and at 5 units, with the default mask and with
+// a mask that hits one category in three, then the same directions as box casts. The callback
+// clips to the tight box, so hits and fraction sums match across builds and nothing but the tree
+// is in the step time. Full extent rays shrink the fraction as they go, 25 unit rays sit at the
+// cache edge of this tree, 5 unit rays are the game case.
+
+#define TREE_CAST_RAY_COUNT ( BENCHMARK_DEBUG ? 100 : 1000 )
+#define TREE_CAST_LENGTH_COUNT 3
+
+// Static proxies get the speculative distance twice, once in the shape box and once as the margin
+#define TREE_CAST_MARGIN ( 2.0f * B2_SPECULATIVE_DISTANCE )
+
+// The queries benchmark casts a circle of this radius, the tree sees its box
+#define TREE_CAST_BOX_EXTENT 0.1f
+
+typedef struct TreeCastBenchmark
+{
+	b2DynamicTree tree;
+	b2AABB* tightBoxes;
+	int proxyCount;
+	int proxyCapacity;
+	b2Vec2 origins[1000];
+	b2Vec2 translations[TREE_CAST_LENGTH_COUNT][1000];
+	b2TreeStats stats;
+	bool created;
+} TreeCastBenchmark;
+
+typedef struct TreeCastContext
+{
+	const b2AABB* tightBoxes;
+	float fraction;
+} TreeCastContext;
+
+static TreeCastBenchmark g_treeCast;
+
+// Entry fraction of a ray into a box, negative for a miss. An origin inside or on the box is a miss,
+// which matches the polygon cast the world runs, and zero would end the traversal.
+static float TreeCastRayBox( b2AABB box, b2Vec2 p, b2Vec2 d, float maxFraction )
+{
+	float tmin = 0.0f;
+	float tmax = maxFraction;
+
+	if ( d.x == 0.0f )
+	{
+		if ( p.x < box.lowerBound.x || box.upperBound.x < p.x )
+		{
+			return -1.0f;
+		}
+	}
+	else
+	{
+		float inv = 1.0f / d.x;
+		float t1 = ( box.lowerBound.x - p.x ) * inv;
+		float t2 = ( box.upperBound.x - p.x ) * inv;
+		if ( t1 > t2 )
+		{
+			float t = t1;
+			t1 = t2;
+			t2 = t;
+		}
+
+		tmin = b2MaxFloat( tmin, t1 );
+		tmax = b2MinFloat( tmax, t2 );
+		if ( tmin > tmax )
+		{
+			return -1.0f;
+		}
+	}
+
+	if ( d.y == 0.0f )
+	{
+		if ( p.y < box.lowerBound.y || box.upperBound.y < p.y )
+		{
+			return -1.0f;
+		}
+	}
+	else
+	{
+		float inv = 1.0f / d.y;
+		float t1 = ( box.lowerBound.y - p.y ) * inv;
+		float t2 = ( box.upperBound.y - p.y ) * inv;
+		if ( t1 > t2 )
+		{
+			float t = t1;
+			t1 = t2;
+			t2 = t;
+		}
+
+		tmin = b2MaxFloat( tmin, t1 );
+		tmax = b2MinFloat( tmax, t2 );
+		if ( tmin > tmax )
+		{
+			return -1.0f;
+		}
+	}
+
+	if ( tmin <= 0.0f )
+	{
+		return -1.0f;
+	}
+
+	return tmin;
+}
+
+static float TreeCastRayCallback( const b2RayCastInput* input, int proxyId, uint64_t userData, void* context )
+{
+	(void)proxyId;
+	TreeCastContext* cast = context;
+	float fraction = TreeCastRayBox( cast->tightBoxes[userData], input->origin, input->translation, input->maxFraction );
+	if ( fraction < 0.0f )
+	{
+		return -1.0f;
+	}
+
+	cast->fraction = fraction;
+	return fraction;
+}
+
+// A box sweep against a box is a ray from the cast box center against the target grown by the extents
+static float TreeCastBoxCallback( const b2BoxCastInput* input, int proxyId, uint64_t userData, void* context )
+{
+	(void)proxyId;
+	TreeCastContext* cast = context;
+	b2AABB tight = cast->tightBoxes[userData];
+	b2Vec2 extents = b2AABB_Extents( input->box );
+	b2AABB grown = { b2Sub( tight.lowerBound, extents ), b2Add( tight.upperBound, extents ) };
+	float fraction = TreeCastRayBox( grown, b2AABB_Center( input->box ), input->translation, input->maxFraction );
+	if ( fraction < 0.0f )
+	{
+		return -1.0f;
+	}
+
+	cast->fraction = fraction;
+	return fraction;
+}
+
+static void TreeCastAddBox( b2Vec2 center, float hx, float hy, uint64_t categoryBits )
+{
+	TreeCastBenchmark* data = &g_treeCast;
+	assert( data->proxyCount < data->proxyCapacity );
+
+	b2AABB tight = { { center.x - hx, center.y - hy }, { center.x + hx, center.y + hy } };
+	b2AABB fat = {
+		{ tight.lowerBound.x - TREE_CAST_MARGIN, tight.lowerBound.y - TREE_CAST_MARGIN },
+		{ tight.upperBound.x + TREE_CAST_MARGIN, tight.upperBound.y + TREE_CAST_MARGIN },
+	};
+
+	int index = data->proxyCount;
+	data->tightBoxes[index] = tight;
+	data->proxyCount += 1;
+	b2DynamicTree_CreateProxy( &data->tree, fat, categoryBits, (uint64_t)index, false );
+}
+
+void DestroyTreeCast( void )
+{
+	TreeCastBenchmark* data = &g_treeCast;
+	if ( data->created )
+	{
+		b2DynamicTree_Destroy( &data->tree );
+		free( data->tightBoxes );
+	}
+
+	// The harness destroys after each run and prints the stats after the last one
+	b2TreeStats stats = data->stats;
+	memset( data, 0, sizeof( TreeCastBenchmark ) );
+	data->stats = stats;
+}
+
+void CreateTreeCast( b2WorldId worldId )
+{
+	(void)worldId;
+	DestroyTreeCast();
+
+	TreeCastBenchmark* data = &g_treeCast;
+
+	// Same generator and seed as the queries benchmark so the grid matches it
+	g_queryRandomState = 1234;
+
+	float extent = BENCHMARK_DEBUG ? 100.0f : 500.0f;
+	int cellCount = BENCHMARK_DEBUG ? 100 : 500;
+	float fill = 0.1f;
+
+	// The pile keeps this region of the grid clear
+	float pileX = 0.4f * extent;
+	float pileY = 0.3f * extent;
+	b2AABB clear = { { pileX - 10.0f, pileY - 10.0f }, { pileX + 50.0f, pileY + 60.0f } };
+
+	// A tenth of the cells fill, the ground and the sensors come after
+	data->proxyCapacity = cellCount * cellCount / 5;
+	data->tightBoxes = malloc( data->proxyCapacity * sizeof( b2AABB ) );
+	data->tree = b2DynamicTree_Create( data->proxyCapacity );
+	data->created = true;
+
+	for ( int i = 0; i < cellCount; ++i )
+	{
+		float y = (float)i;
+		for ( int j = 0; j < cellCount; ++j )
+		{
+			float x = (float)j;
+
+			float fillTest = QueryRandom( 0.0f, 1.0f );
+			float ratio = QueryRandom( 1.0f, 5.0f );
+			float halfWidth = QueryRandom( 0.05f, 0.25f );
+			float orientation = QueryRandom( 0.0f, 1.0f );
+			int category = (int)QueryRandom( 0.0f, 2.999f );
+
+			if ( fillTest > fill )
+			{
+				continue;
+			}
+
+			if ( clear.lowerBound.x <= x && x <= clear.upperBound.x && clear.lowerBound.y <= y && y <= clear.upperBound.y )
+			{
+				continue;
+			}
+
+			float hx = orientation > 0.5f ? ratio * halfWidth : halfWidth;
+			float hy = orientation > 0.5f ? halfWidth : ratio * halfWidth;
+			TreeCastAddBox( (b2Vec2){ x, y }, hx, hy, 1ull << category );
+		}
+	}
+
+	// Ground for the pile, a degenerate box
+	TreeCastAddBox( (b2Vec2){ pileX + 20.0f, pileY }, 30.0f, 0.0f, 1 );
+
+	// Static sensors sitting in the pile
+	for ( int i = 0; i < 8; ++i )
+	{
+		TreeCastAddBox( (b2Vec2){ pileX + 4.0f * i, pileY + 2.0f }, 2.0f, 2.0f, 1 );
+	}
+
+	// Rays cross the whole world, then the same directions cut to the shorter lengths
+	float lengths[TREE_CAST_LENGTH_COUNT] = { 0.0f, 25.0f, 5.0f };
+	for ( int i = 0; i < TREE_CAST_RAY_COUNT; ++i )
+	{
+		float x1 = QueryRandom( 0.0f, extent );
+		float y1 = QueryRandom( 0.0f, extent );
+		float x2 = QueryRandom( 0.0f, extent );
+		float y2 = QueryRandom( 0.0f, extent );
+		b2Vec2 t = { x2 - x1, y2 - y1 };
+		data->origins[i] = (b2Vec2){ x1, y1 };
+		data->translations[0][i] = t;
+
+		float length = b2Length( t );
+		for ( int k = 1; k < TREE_CAST_LENGTH_COUNT; ++k )
+		{
+			float scale = length > 0.0f ? lengths[k] / length : 0.0f;
+			data->translations[k][i] = b2MulSV( scale, t );
+		}
+	}
+
+	data->stats = (b2TreeStats){ 0 };
+}
+
+float StepTreeCast( b2WorldId worldId, int stepCount )
+{
+	(void)worldId;
+	(void)stepCount;
+
+	TreeCastBenchmark* data = &g_treeCast;
+	const b2DynamicTree* tree = &data->tree;
+	uint64_t masks[2] = { B2_DEFAULT_MASK_BITS, 1 };
+	int rayCount = TREE_CAST_RAY_COUNT;
+	b2TreeStats stats = { 0 };
+	int hitCount = 0;
+
+	for ( int k = 0; k < TREE_CAST_LENGTH_COUNT; ++k )
+	{
+		const b2Vec2* translations = data->translations[k];
+
+		for ( int m = 0; m < 2; ++m )
+		{
+			for ( int i = 0; i < rayCount; ++i )
+			{
+				b2RayCastInput input = { data->origins[i], translations[i], 1.0f };
+				TreeCastContext context = { data->tightBoxes, 1.0f };
+				b2TreeStats castStats = b2DynamicTree_RayCast( tree, &input, masks[m], TreeCastRayCallback, &context );
+				stats.nodeVisits += castStats.nodeVisits;
+				stats.leafVisits += castStats.leafVisits;
+				hitCount += context.fraction < 1.0f ? 1 : 0;
+			}
+		}
+
+		for ( int i = 0; i < rayCount; ++i )
+		{
+			b2Vec2 o = data->origins[i];
+			b2AABB box = { { o.x - TREE_CAST_BOX_EXTENT, o.y - TREE_CAST_BOX_EXTENT },
+						   { o.x + TREE_CAST_BOX_EXTENT, o.y + TREE_CAST_BOX_EXTENT } };
+			b2BoxCastInput input = { box, translations[i], 1.0f };
+			TreeCastContext context = { data->tightBoxes, 1.0f };
+			b2TreeStats castStats = b2DynamicTree_BoxCast( tree, &input, B2_DEFAULT_MASK_BITS, TreeCastBoxCallback, &context );
+			stats.nodeVisits += castStats.nodeVisits;
+			stats.leafVisits += castStats.leafVisits;
+			hitCount += context.fraction < 1.0f ? 1 : 0;
+		}
+	}
+
+	data->stats.nodeVisits += stats.nodeVisits;
+	data->stats.leafVisits += stats.leafVisits;
+
+	return (float)hitCount;
+}
+
+b2TreeStats GetTreeCastBenchmarkStats( void )
+{
+	return g_treeCast.stats;
+}
+
+// Tile world benchmark. The TileWorld sample's terrain, a wall of rounded boxes whose height follows
+// a sine, on a static body every ten columns, with a box stack every twelfth cycle. Each step streams
+// the terrain, the leftmost ground body is destroyed and a new one continues the sine on the right,
+// then short rays and box overlaps are cast across the live span. A large static tree under churn,
+// the shape of a level that streams.
+
+#define TILE_PERIOD 40.0f
+#define TILE_CYCLE_COUNT ( BENCHMARK_DEBUG ? 10 : 600 )
+#define TILE_GRID_SIZE 1.0f
+#define TILE_COLUMNS_PER_BODY 10
+#define TILE_QUERY_COUNT ( BENCHMARK_DEBUG ? 50 : 500 )
+#define TILE_RAY_LENGTH 25.0f
+
+typedef struct TileWorldBenchmark
+{
+	b2BodyId* groundIds;
+	int groundCount;
+	int groundHead;
+	float bodySpan;
+	float xLeft;
+	float xNext;
+	b2TreeStats stats;
+} TileWorldBenchmark;
+
+static TileWorldBenchmark g_tileWorld;
+
+static float TileRandom( uint32_t* state, float lower, float upper )
+{
+	*state = 1664525u * *state + 1013904223u;
+	float unit = (float)( *state >> 8 ) * ( 1.0f / 16777216.0f );
+	return lower + ( upper - lower ) * unit;
+}
+
+// Ten columns on one body, the column height from the sine at the column's world x
+static b2BodyId CreateTileGround( b2WorldId worldId, float xBody )
+{
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.position.x = xBody;
+	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.invokeContactCreation = false;
+
+	float omega = 2.0f * B2_PI / TILE_PERIOD;
+	float xShape = 0.0f;
+	for ( int i = 0; i < TILE_COLUMNS_PER_BODY; ++i )
+	{
+		int columnCount = (int)roundf( 4.0f * cosf( omega * ( xBody + xShape ) ) ) + 12;
+		float y = 0.0f;
+		for ( int j = 0; j < columnCount; ++j )
+		{
+			b2Polygon square =
+				b2MakeOffsetBox( 0.4f * TILE_GRID_SIZE, 0.4f * TILE_GRID_SIZE, (b2Vec2){ xShape, y }, b2Rot_identity );
+			square.radius = 0.1f;
+			b2CreatePolygonShape( groundId, &shapeDef, &square );
+			y += TILE_GRID_SIZE;
+		}
+
+		xShape += TILE_GRID_SIZE;
+	}
+
+	return groundId;
+}
+
+void DestroyTileWorld( void )
+{
+	TileWorldBenchmark* data = &g_tileWorld;
+	free( data->groundIds );
+
+	// The harness destroys after each run and prints the stats after the last one
+	b2TreeStats stats = data->stats;
+	memset( data, 0, sizeof( TileWorldBenchmark ) );
+	data->stats = stats;
+}
+
+void CreateTileWorld( b2WorldId worldId )
+{
+	DestroyTileWorld();
+
+	TileWorldBenchmark* data = &g_tileWorld;
+
+	int gridCount = (int)( TILE_CYCLE_COUNT * TILE_PERIOD / TILE_GRID_SIZE );
+	data->groundCount = gridCount / TILE_COLUMNS_PER_BODY;
+	data->groundIds = malloc( data->groundCount * sizeof( b2BodyId ) );
+	data->bodySpan = TILE_COLUMNS_PER_BODY * TILE_GRID_SIZE;
+	data->xLeft = -0.5f * ( TILE_CYCLE_COUNT * TILE_PERIOD );
+	data->xNext = data->xLeft;
+	data->groundHead = 0;
+
+	for ( int i = 0; i < data->groundCount; ++i )
+	{
+		data->groundIds[i] = CreateTileGround( worldId, data->xNext );
+		data->xNext += data->bodySpan;
+	}
+
+	// Box stacks in the valleys of every twelfth cycle, past the fifth of the span that streams out
+	// during the run
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Polygon box = b2MakeBox( 0.3f, 0.2f );
+
+	for ( int cycleIndex = TILE_CYCLE_COUNT / 5; cycleIndex < TILE_CYCLE_COUNT; cycleIndex += 12 )
+	{
+		float xBase = ( 0.5f + cycleIndex ) * TILE_PERIOD + data->xLeft;
+		bodyDef.position.x = xBase - 3.0f;
+		for ( int i = 0; i < 10; ++i )
+		{
+			bodyDef.position.y = 10.0f;
+			for ( int j = 0; j < 5; ++j )
+			{
+				b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+				b2CreatePolygonShape( bodyId, &shapeDef, &box );
+				bodyDef.position.y += 0.5f;
+			}
+
+			bodyDef.position.x += 0.6f;
+		}
+	}
+}
+
+static bool TileOverlapCount( b2ShapeId shapeId, void* context )
+{
+	(void)shapeId;
+	*(int*)context += 1;
+	return true;
+}
+
+float StepTileWorld( b2WorldId worldId, int stepCount )
+{
+	TileWorldBenchmark* data = &g_tileWorld;
+
+	// Stream one ground body, the leftmost goes and the sine continues on the right
+	b2DestroyBody( data->groundIds[data->groundHead] );
+	data->groundIds[data->groundHead] = CreateTileGround( worldId, data->xNext );
+	data->groundHead = ( data->groundHead + 1 ) % data->groundCount;
+	data->xNext += data->bodySpan;
+	data->xLeft += data->bodySpan;
+
+	// A fresh set of short rays and box overlaps across the live span each step
+	uint32_t state = 1234u + 7919u * (uint32_t)stepCount;
+	float span = data->groundCount * data->bodySpan;
+	b2QueryFilter filter = b2DefaultQueryFilter();
+	b2AABB aabb = { { -5.0f, -5.0f }, { 5.0f, 5.0f } };
+	b2TreeStats stats = { 0 };
+	int hitCount = 0;
+
+	for ( int i = 0; i < TILE_QUERY_COUNT; ++i )
+	{
+		b2Pos origin = { data->xLeft + TileRandom( &state, 0.0f, span ), TileRandom( &state, -2.0f, 18.0f ) };
+		float angle = TileRandom( &state, 0.0f, 2.0f * B2_PI );
+		b2Vec2 translation = { TILE_RAY_LENGTH * cosf( angle ), TILE_RAY_LENGTH * sinf( angle ) };
+
+		b2RayResult result = b2World_CastRayClosest( worldId, origin, translation, filter );
+		stats.nodeVisits += result.nodeVisits;
+		stats.leafVisits += result.leafVisits;
+		hitCount += result.hit ? 1 : 0;
+
+		int overlapCount = 0;
+		b2TreeStats overlapStats = b2World_OverlapAABB( worldId, origin, aabb, filter, TileOverlapCount, &overlapCount );
+		stats.nodeVisits += overlapStats.nodeVisits;
+		stats.leafVisits += overlapStats.leafVisits;
+		hitCount += overlapCount;
+	}
+
+	data->stats.nodeVisits += stats.nodeVisits;
+	data->stats.leafVisits += stats.leafVisits;
+
+	return (float)hitCount;
+}
+
+b2TreeStats GetTileWorldBenchmarkStats( void )
+{
+	return g_tileWorld.stats;
+}

@@ -28,6 +28,7 @@
 
 typedef void CreateFcn( b2WorldId worldId );
 typedef float StepFcn( b2WorldId worldId, int stepCount );
+typedef void DestroyFcn( void );
 
 typedef struct Benchmark
 {
@@ -35,6 +36,9 @@ typedef struct Benchmark
 	CreateFcn* createFcn;
 	StepFcn* stepFcn;
 	int totalStepCount;
+
+	// For a benchmark that owns data outside the world
+	DestroyFcn* destroyFcn;
 } Benchmark;
 
 static void MinProfile( b2Profile* p1, const b2Profile* p2 )
@@ -158,6 +162,8 @@ int main( int argc, char** argv )
 		{ "tumbler", CreateTumbler, NULL, 750 },
 		{ "washer", CreateWasher, NULL, 500 },
 		{ "queries", CreateQueries, StepQueries, 200 },
+		{ "tree_cast", CreateTreeCast, StepTreeCast, 200, DestroyTreeCast },
+		{ "tile_world", CreateTileWorld, StepTileWorld, 300, DestroyTileWorld },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
@@ -380,6 +386,11 @@ int main( int argc, char** argv )
 				}
 
 				b2DestroyWorld( worldId );
+
+				if ( benchmark->destroyFcn != NULL )
+				{
+					benchmark->destroyFcn();
+				}
 			}
 
 			if ( recordStepTimes )
@@ -403,9 +414,11 @@ int main( int argc, char** argv )
 			}
 		}
 
-		if ( benchmark->stepFcn == StepQueries )
+		if ( benchmark->stepFcn == StepQueries || benchmark->stepFcn == StepTreeCast || benchmark->stepFcn == StepTileWorld )
 		{
-			b2TreeStats stats = GetQueryBenchmarkStats();
+			b2TreeStats stats = benchmark->stepFcn == StepQueries	 ? GetQueryBenchmarkStats()
+								: benchmark->stepFcn == StepTreeCast ? GetTreeCastBenchmarkStats()
+																	 : GetTileWorldBenchmarkStats();
 			printf( "query visits per step: %d node, %d leaf\n", stats.nodeVisits / stepCount, stats.leafVisits / stepCount );
 		}
 

@@ -29,7 +29,7 @@ typedef struct b2BroadPhase
 {
 	b2DynamicTree trees[b2_bodyTypeCount];
 
-	int* movedNodes;
+	int* movedSiblings;
 	b2MovePair* movePairs;
 	b2MoveResult* moveResults;
 	int movePairCapacity;
