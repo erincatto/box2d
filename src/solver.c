@@ -501,7 +501,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				fastBodySim->flags |= b2_enlargeBounds;
 
 				// Regular bodies mark the hierarchy as enlarged using atomic operations.
-				// Bullets are handled seperately at a later stage.
+				// Bullets are handled separately at a later stage.
 				if ( isBullet == false )
 				{
 					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );

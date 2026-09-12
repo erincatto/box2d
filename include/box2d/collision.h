@@ -793,19 +793,15 @@ B2_API b2DynamicTree b2DynamicTree_Create( int proxyCapacity );
 B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );
 
 /// Create a proxy. Provide an AABB and a userData value.
-B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
-									  bool markMoved );
+B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData);
 
 /// Destroy a proxy. This asserts if the id is invalid.
 B2_API void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId );
 
 /// Move a proxy to a new AABB by removing and reinserting into the tree.
-B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, bool markMoved );
+B2_API void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 
-/// Enlarge a proxy and enlarge ancestors as necessary.
-B2_API void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
-
-/// Modify the category bits on a proxy. This is an expensive operation.
+/// Modify the category bits on a proxy.
 B2_API void b2DynamicTree_SetCategoryBits( b2DynamicTree* tree, int proxyId, uint64_t categoryBits );
 
 /// Get the category bits on a proxy.
@@ -846,7 +842,7 @@ typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId
 /// @param callback a callback class that is called for each proxy that is hit by the ray
 /// @param context user context that is passed to the callback
 ///	@return performance data
-B2_API b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
+B2_API b2TreeStats b2DynamicTree_CastRay( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 										  b2TreeRayCastCallbackFcn* callback, void* context );
 
 /// Input for casting an AABB through a dynamic tree
@@ -877,7 +873,7 @@ typedef float b2TreeBoxCastCallbackFcn( const b2BoxCastInput* input, int proxyId
 /// @param callback a callback that is called for each proxy the swept box may hit
 /// @param context user context that is passed to the callback
 ///	@return performance data
-B2_API b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
+B2_API b2TreeStats b2DynamicTree_CastBox( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
 										  b2TreeBoxCastCallbackFcn* callback, void* context );
 
 /// Get the height of the binary tree. Expensive.
@@ -892,9 +888,6 @@ B2_API b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree );
 /// Get the number of proxies created
 B2_API int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree );
 
-/// Rebuild the tree while retaining subtrees that haven't changed. Returns the number of boxes sorted.
-B2_API int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
-
 /// Get the number of bytes used by this tree
 B2_API int b2DynamicTree_GetByteCount( const b2DynamicTree* tree );
 
@@ -904,11 +897,8 @@ B2_API uint64_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyI
 /// Get the AABB of a proxy
 B2_API b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId );
 
-/// Validate this tree. For testing.
+/// Validate the tree.
 B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
-
-/// Validate this tree has no enlarged AABBs. For testing.
-B2_API void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree );
 
 /**@}*/
 

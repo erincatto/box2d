@@ -799,10 +799,6 @@ public:
 			m_camera->zoom = 12.0f;
 		}
 
-		std::atomic<uint16_t> foo( 7 );
-
-		foo.fetch_or( 0x11 );
-
 		b2BodyDef groundBodyDef = b2DefaultBodyDef();
 		b2BodyId groundId = b2CreateBody( m_worldId, &groundBodyDef );
 
@@ -901,6 +897,8 @@ public:
 		if ( contactArea < 4.0f * B2_LINEAR_SLOP )
 		{
 			manifold->pointCount = 0;
+
+			// PreSolve is called from a thread and should not have data race.
 			m_rejectedCount.fetch_add( 1, std::memory_order_relaxed );
 		}
 	}

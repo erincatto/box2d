@@ -563,7 +563,8 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int proxyId )
 
 // Create a proxy in the tree as a leaf node. We return the index of the node instead of a pointer so that we can grow
 // the node pool.
-int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData, bool markMoved )
+int b2DynamicTree_CreateProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
+									   bool markMoved )
 {
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
 
@@ -579,6 +580,11 @@ int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t catego
 	return proxyId;
 }
 
+int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData )
+{
+	return b2DynamicTree_CreateProxyInternal( tree, aabb, categoryBits, userData, false );
+}
+
 void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId )
 {
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
@@ -592,7 +598,7 @@ int b2DynamicTree_GetProxyCount( const b2DynamicTree* tree )
 	return tree->proxyCount;
 }
 
-void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, bool markMoved )
+void b2DynamicTree_MoveProxyInternal( b2DynamicTree* tree, int proxyId, b2AABB aabb, bool markMoved )
 {
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
 	B2_VALIDATE( aabb.upperBound.x - aabb.lowerBound.x < B2_HUGE );
@@ -603,6 +609,11 @@ void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb, boo
 
 	bool shouldRotate = false;
 	b2InsertLeaf( tree, aabb, proxyId, markMoved, shouldRotate );
+}
+
+void b2DynamicTree_MoveProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
+{
+	b2DynamicTree_MoveProxyInternal( tree, proxyId, aabb, false );
 }
 
 void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb )
@@ -855,7 +866,7 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 #endif
 }
 
-void b2DynamicTree_ValidateNoEnlarged( const b2DynamicTree* tree )
+void b2DynamicTree_ValidateNoMoved( const b2DynamicTree* tree )
 {
 #if B2_ENABLE_VALIDATION == 1
 	const b2TreeNode* nodes = tree->nodes;
@@ -1029,7 +1040,7 @@ b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2Tr
 // A lot of optimization work went into this. It beats the slab test by a significant margin.
 // It is faster than having category bits in the nodes because of the cache line friendly node
 // size (64 bytes).
-b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
+b2TreeStats b2DynamicTree_CastRay( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
 								   b2TreeRayCastCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
@@ -1169,7 +1180,7 @@ b2TreeStats b2DynamicTree_RayCast( const b2DynamicTree* tree, const b2RayCastInp
 }
 
 // Follows structure of ray cast with small tweaks to handle a swept box.
-b2TreeStats b2DynamicTree_BoxCast( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
+b2TreeStats b2DynamicTree_CastBox( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
 								   b2TreeBoxCastCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
@@ -1915,7 +1926,7 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 	tree->dfsOrdered = true;
 
 	b2DynamicTree_Validate( tree );
-	b2DynamicTree_ValidateNoEnlarged( tree );
+	b2DynamicTree_ValidateNoMoved( tree );
 
 	return leafCount;
 }

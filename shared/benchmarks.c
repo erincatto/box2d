@@ -1295,7 +1295,7 @@ static void TreeCastAddBox( b2Vec2 center, float hx, float hy, uint64_t category
 	int index = data->proxyCount;
 	data->tightBoxes[index] = tight;
 	data->proxyCount += 1;
-	b2DynamicTree_CreateProxy( &data->tree, fat, categoryBits, (uint64_t)index, false );
+	b2DynamicTree_CreateProxyInternal( &data->tree, fat, categoryBits, (uint64_t)index, false );
 }
 
 void DestroyTreeCast( void )
@@ -1421,7 +1421,7 @@ float StepTreeCast( b2WorldId worldId, int stepCount )
 			{
 				b2RayCastInput input = { data->origins[i], translations[i], 1.0f };
 				TreeCastContext context = { data->tightBoxes, 1.0f };
-				b2TreeStats castStats = b2DynamicTree_RayCast( tree, &input, masks[m], TreeCastRayCallback, &context );
+				b2TreeStats castStats = b2DynamicTree_CastRay( tree, &input, masks[m], TreeCastRayCallback, &context );
 				stats.nodeVisits += castStats.nodeVisits;
 				stats.leafVisits += castStats.leafVisits;
 				hitCount += context.fraction < 1.0f ? 1 : 0;
@@ -1435,7 +1435,7 @@ float StepTreeCast( b2WorldId worldId, int stepCount )
 						   { o.x + TREE_CAST_BOX_EXTENT, o.y + TREE_CAST_BOX_EXTENT } };
 			b2BoxCastInput input = { box, translations[i], 1.0f };
 			TreeCastContext context = { data->tightBoxes, 1.0f };
-			b2TreeStats castStats = b2DynamicTree_BoxCast( tree, &input, B2_DEFAULT_MASK_BITS, TreeCastBoxCallback, &context );
+			b2TreeStats castStats = b2DynamicTree_CastBox( tree, &input, B2_DEFAULT_MASK_BITS, TreeCastBoxCallback, &context );
 			stats.nodeVisits += castStats.nodeVisits;
 			stats.leafVisits += castStats.leafVisits;
 			hitCount += context.fraction < 1.0f ? 1 : 0;

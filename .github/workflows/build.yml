@@ -129,7 +129,9 @@ jobs:
       run: ./bin/test
 
   # Build-only: running the wasm test needs a node + pthread/SharedArrayBuffer harness.
-  # This still catches compile breaks in the box2d library and the test target.
+  # This still catches compile breaks in the box2d library and the test target. Built
+  # twice, with the SSE2 path CMake selects for wasm and with SIMD disabled, since the
+  # test target has to inherit the selection either way.
   emscripten:
     name: emscripten
     runs-on: ubuntu-latest
@@ -141,10 +143,16 @@ jobs:
     - uses: mymindstorm/setup-emsdk@v14
 
     - name: Configure CMake
-      run: emcmake cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_C_FLAGS="-msimd128 -msse2" -DCMAKE_CXX_FLAGS="-msimd128 -msse2"
+      run: emcmake cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON
 
     - name: Build
       run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: Configure CMake (SIMD disabled)
+      run: emcmake cmake -B build-nosimd -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DBOX2D_DISABLE_SIMD=ON
+
+    - name: Build (SIMD disabled)
+      run: cmake --build build-nosimd --config ${{env.BUILD_TYPE}}
 
   # Cross compile to catch NEON breaks, the SIMD code paths only compile on ARM.
   # Build-only: the x64 runner cannot execute aarch64 binaries.

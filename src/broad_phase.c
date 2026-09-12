@@ -59,7 +59,7 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 	bool mark = ( proxyType != b2_staticBody || forcePairCreation );
 
-	int proxyId = b2DynamicTree_CreateProxy( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
+	int proxyId = b2DynamicTree_CreateProxyInternal( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
 	int proxyKey = B2_PROXY_KEY( proxyId, proxyType );
 	return proxyKey;
 }
@@ -79,7 +79,7 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 	int proxyId = B2_PROXY_ID( proxyKey );
 
 	bool mark = true;
-	b2DynamicTree_MoveProxy( bp->trees + proxyType, proxyId, aabb, mark );
+	b2DynamicTree_MoveProxyInternal( bp->trees + proxyType, proxyId, aabb, mark );
 }
 
 // Gather the sibling pairs with a moved node. This is done serially it is cache friendly.
@@ -659,7 +659,7 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 	for ( int j = 0; j < b2_bodyTypeCount; ++j )
 	{
 		const b2DynamicTree* tree = bp->trees + j;
-		b2DynamicTree_ValidateNoEnlarged( tree );
+		b2DynamicTree_ValidateNoMoved( tree );
 	}
 #else
 	B2_UNUSED( bp );

@@ -228,8 +228,18 @@ B2_FORCE_INLINE void b2StoreAABBV( b2AABB* aabb, b2AABBV value, bool condition )
 
 #endif
 
+int b2DynamicTree_CreateProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
+									  bool markMoved );
+void b2DynamicTree_MoveProxyInternal( b2DynamicTree* tree, int proxyId, b2AABB aabb, bool markMoved );
+void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );
+
+/// Rebuild the tree while retaining subtrees that haven't changed. Returns the number of boxes sorted.
+int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild );
+
 void b2DynamicTree_MarkProxyMovedSerial( b2DynamicTree* tree, int proxyId );
 void b2DynamicTree_MarkProxyMoved( b2DynamicTree* tree, int proxyId, b2AABB aabb );
 void b2DynamicTree_ClearMoved( b2DynamicTree* tree );
 int b2DynamicTree_GatherMovedProxies( const b2DynamicTree* tree, int* proxyIds );
 void b2DynamicTree_Refit( b2DynamicTree* tree );
+
+void b2DynamicTree_ValidateNoMoved( const b2DynamicTree* tree );

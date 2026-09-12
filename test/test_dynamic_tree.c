@@ -20,7 +20,7 @@ static int TreeCreateDestroy( void )
 	};
 
 	b2DynamicTree tree = b2DynamicTree_Create( 16 );
-	b2DynamicTree_CreateProxy( &tree, a, 1, 0, 0 );
+	b2DynamicTree_CreateProxyInternal( &tree, a, 1, 0, 0 );
 
 	ENSURE( tree.nodeEnd == 2 );
 	ENSURE( tree.proxyCount == 1 );
@@ -48,7 +48,7 @@ static int TreeRayCastTest( void )
 	// Test AABB centered at origin with bounds [-1, -1] to [1, 1]
 	b2AABB a = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f }, };
 	b2DynamicTree tree = b2DynamicTree_Create( 16 );
-	int proxyId = b2DynamicTree_CreateProxy( &tree, a, 1, 0, 0 );
+	int proxyId = b2DynamicTree_CreateProxyInternal( &tree, a, 1, 0, 0 );
 
 	b2RayCastInput input = {};
 	input.maxFraction = 1.0f;
@@ -62,7 +62,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -75,7 +75,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -88,7 +88,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -101,7 +101,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -114,7 +114,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == -1 );
 	}
@@ -127,7 +127,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == -1 );
 	}
@@ -140,7 +140,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -153,7 +153,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -166,7 +166,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == -1 );
 	}
@@ -179,7 +179,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -192,7 +192,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == -1 );
 	}
@@ -205,7 +205,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -218,7 +218,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyId );
 	}
@@ -226,7 +226,7 @@ static int TreeRayCastTest( void )
 	// An off center box catches an axis aligned ray tested against the wrong axis, which the origin
 	// centered box above cannot. Two leaves also give the root a child pair.
 	b2AABB b = { .lowerBound = { 10.0f, 4.0f }, .upperBound = { 11.0f, 6.0f } };
-	int proxyIdB = b2DynamicTree_CreateProxy( &tree, b, 1, 1, 0 );
+	int proxyIdB = b2DynamicTree_CreateProxyInternal( &tree, b, 1, 1, 0 );
 
 	// Test 14: Horizontal ray through the off center box
 	{
@@ -236,7 +236,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyIdB );
 	}
@@ -249,7 +249,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == proxyIdB );
 	}
@@ -262,7 +262,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == -1 );
 	}
@@ -275,7 +275,7 @@ static int TreeRayCastTest( void )
 		input.translation = b2Sub( p2, p1 );
 
 		int proxyHit = -1;
-		b2DynamicTree_RayCast( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
+		b2DynamicTree_CastRay( &tree, &input, 1, RayCastCallbackFcn, &proxyHit );
 
 		ENSURE( proxyHit == -1 );
 	}
@@ -311,9 +311,9 @@ static int TreeMultipleProxiesTest( void )
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
 	b2AABB a3 = { .lowerBound = { 3.0f, -1.0f }, .upperBound = { 5.0f, 1.0f } };
 
-	int id1 = b2DynamicTree_CreateProxy( &tree, a1, 0x1ull, 42, 0 );
-	int id2 = b2DynamicTree_CreateProxy( &tree, a2, 0x2ull, 43, 0 );
-	int id3 = b2DynamicTree_CreateProxy( &tree, a3, 0x4ull, 44, 0 );
+	int id1 = b2DynamicTree_CreateProxyInternal( &tree, a1, 0x1ull, 42, 0 );
+	int id2 = b2DynamicTree_CreateProxyInternal( &tree, a2, 0x2ull, 43, 0 );
+	int id3 = b2DynamicTree_CreateProxyInternal( &tree, a3, 0x4ull, 44, 0 );
 
 	ENSURE( b2DynamicTree_GetProxyCount( &tree ) == 3 );
 
@@ -337,9 +337,9 @@ static int TreeQueryTest( void )
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
 	b2AABB a3 = { .lowerBound = { 3.0f, -1.0f }, .upperBound = { 5.0f, 1.0f } };
 
-	int id1 = b2DynamicTree_CreateProxy( &tree, a1, 0xFFull, 0, 0 );
-	int id2 = b2DynamicTree_CreateProxy( &tree, a2, 0xFFull, 0, 0 );
-	int id3 = b2DynamicTree_CreateProxy( &tree, a3, 0xFFull, 0, 0 );
+	int id1 = b2DynamicTree_CreateProxyInternal( &tree, a1, 0xFFull, 0, 0 );
+	int id2 = b2DynamicTree_CreateProxyInternal( &tree, a2, 0xFFull, 0, 0 );
+	int id3 = b2DynamicTree_CreateProxyInternal( &tree, a3, 0xFFull, 0, 0 );
 
 	b2AABB queryA = { .lowerBound = { -2.0f, -2.0f }, .upperBound = { 2.0f, 2.0f } };
 
@@ -366,11 +366,11 @@ static int TreeMoveAndEnlargeTest( void )
 	b2DynamicTree tree = b2DynamicTree_Create( 16 );
 
 	b2AABB a = { .lowerBound = { 0.0f, 0.0f }, .upperBound = { 1.0f, 1.0f } };
-	int id = b2DynamicTree_CreateProxy( &tree, a, 0x1ull, 100, 0 );
+	int id = b2DynamicTree_CreateProxyInternal( &tree, a, 0x1ull, 100, 0 );
 
 	// Move proxy to a new place
 	b2AABB moved = { .lowerBound = { 10.0f, 10.0f }, .upperBound = { 11.0f, 11.0f } };
-	b2DynamicTree_MoveProxy( &tree, id, moved, 0 );
+	b2DynamicTree_MoveProxyInternal( &tree, id, moved, 0 );
 
 	b2AABB got = b2DynamicTree_GetAABB( &tree, id );
 	ENSURE( got.lowerBound.x == moved.lowerBound.x );
@@ -399,7 +399,7 @@ static int TreeRebuildAndValidateTest( void )
 	{
 		float x = (float)i * 2.0f;
 		b2AABB a = { .lowerBound = { x - 0.5f, -0.5f }, .upperBound = { x + 0.5f, 0.5f } };
-		b2DynamicTree_CreateProxy( &tree, a, 0xFFull, (uint64_t)i, 0 );
+		b2DynamicTree_CreateProxyInternal( &tree, a, 0xFFull, (uint64_t)i, 0 );
 	}
 
 	int sorted = b2DynamicTree_Rebuild( &tree, true );
@@ -421,7 +421,7 @@ static int TreeRowHeightTest( void )
 	{
 		float x = 1.0f * i;
 		b2AABB a = { .lowerBound = { x, 0.0f }, .upperBound = { x + 1.0f, 1.0f } };
-		b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i, 0 );
+		b2DynamicTree_CreateProxyInternal( &tree, a, 1, (uint64_t)i, 0 );
 	}
 
 	float minHeight = log2f((float)columnCount);
@@ -446,7 +446,7 @@ static int TreeGridHeightTest( void )
 		{
 			float y = 1.0f * j;
 			b2AABB a = { .lowerBound = { x, y }, .upperBound = { x + 1.0f, y + 1.0f } };
-			b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i, 0 );
+			b2DynamicTree_CreateProxyInternal( &tree, a, 1, (uint64_t)i, 0 );
 		}
 	}
 
@@ -474,7 +474,7 @@ static int TreeGridMovementTest( void )
 		{
 			float y = 1.0f * j;
 			b2AABB a = { .lowerBound = { x, y }, .upperBound = { x + 1.0f, y + 1.0f } };
-			proxyIds[index] = b2DynamicTree_CreateProxy( &tree, a, 1, (uint64_t)i, 0 );
+			proxyIds[index] = b2DynamicTree_CreateProxyInternal( &tree, a, 1, (uint64_t)i, 0 );
 			index += 1;
 		}
 	}
@@ -496,7 +496,7 @@ static int TreeGridMovementTest( void )
 			b2AABB a = b2DynamicTree_GetAABB( &tree, proxyIds[index] );
 			a.lowerBound = b2Add( a.lowerBound, offset );
 			a.upperBound = b2Add( a.upperBound, offset );
-			b2DynamicTree_MoveProxy( &tree, proxyIds[index], a, 0 );
+			b2DynamicTree_MoveProxyInternal( &tree, proxyIds[index], a, 0 );
 			index += 1;
 		}
 	}
@@ -657,7 +657,7 @@ static int CompareRayCast( const b2DynamicTree* tree, const int* proxyIds, int p
 {
 	TreeCastHit hit = { tree, B2_NULL_INDEX, 1.0f };
 	b2RayCastInput input = { .origin = origin, .translation = translation, .maxFraction = 1.0f };
-	b2DynamicTree_RayCast( tree, &input, B2_DEFAULT_MASK_BITS, ClosestRayCallback, &hit );
+	b2DynamicTree_CastRay( tree, &input, B2_DEFAULT_MASK_BITS, ClosestRayCallback, &hit );
 
 	int bestId = B2_NULL_INDEX;
 	float bestFraction = 1.0f;
@@ -696,7 +696,7 @@ static int CompareBoxCast( const b2DynamicTree* tree, const int* proxyIds, int p
 {
 	TreeCastHit hit = { tree, B2_NULL_INDEX, 1.0f };
 	b2BoxCastInput input = { .box = box, .translation = translation, .maxFraction = 1.0f };
-	b2DynamicTree_BoxCast( tree, &input, B2_DEFAULT_MASK_BITS, ClosestBoxCallback, &hit );
+	b2DynamicTree_CastBox( tree, &input, B2_DEFAULT_MASK_BITS, ClosestBoxCallback, &hit );
 
 	int bestId = B2_NULL_INDEX;
 	float bestFraction = 1.0f;
@@ -797,7 +797,7 @@ static int TreeOneProxyTest( void )
 {
 	b2DynamicTree tree = b2DynamicTree_Create( 1 );
 	b2AABB box = { { 0.0f, 0.0f }, { 1.0f, 1.0f } };
-	int proxyId = b2DynamicTree_CreateProxy( &tree, box, 1, 7, false );
+	int proxyId = b2DynamicTree_CreateProxyInternal( &tree, box, 1, 7, false );
 	int proxyIds[1] = { proxyId };
 	b2DynamicTree_Validate( &tree );
 
@@ -820,7 +820,7 @@ static int TreeOneProxyTest( void )
 	b2Vec2 translation = { 3.0f, 0.0f };
 	TreeCastHit hit = { &tree, B2_NULL_INDEX, 1.0f };
 	b2RayCastInput input = { .origin = origin, .translation = translation, .maxFraction = 1.0f };
-	b2DynamicTree_RayCast( &tree, &input, B2_DEFAULT_MASK_BITS, ClosestRayCallback, &hit );
+	b2DynamicTree_CastRay( &tree, &input, B2_DEFAULT_MASK_BITS, ClosestRayCallback, &hit );
 	ENSURE( hit.proxyId == proxyId );
 	ENSURE( CompareRayCast( &tree, proxyIds, 1, origin, translation ) == 0 );
 
@@ -848,7 +848,7 @@ static int TreeOneProxyTest( void )
 	ENSURE( BoxEquals( b2DynamicTree_GetRootBounds( &tree ), enlarged ) );
 	ENSURE( b2DynamicTree_Rebuild( &tree, false ) == 1 );
 	ENSURE( RootMarked( &tree ) == false );
-	b2DynamicTree_ValidateNoEnlarged( &tree );
+	b2DynamicTree_ValidateNoMoved( &tree );
 
 	b2DynamicTree_DestroyProxy( &tree, proxyId );
 	b2DynamicTree_Validate( &tree );
@@ -873,8 +873,8 @@ static int TreeLeafRootTest( void )
 	b2AABB boxD = { { 30.0f, 0.0f }, { 31.0f, 1.0f } };
 	b2AABB all = { { -1.0f, -1.0f }, { 40.0f, 2.0f } };
 
-	int idA = b2DynamicTree_CreateProxy( &tree, boxA, 1, 0, false );
-	int idB = b2DynamicTree_CreateProxy( &tree, boxB, 1, 1, false );
+	int idA = b2DynamicTree_CreateProxyInternal( &tree, boxA, 1, 0, false );
+	int idB = b2DynamicTree_CreateProxyInternal( &tree, boxB, 1, 1, false );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( tree.nodeEnd == 4 );
 	ENSURE( tree.proxyCount == 2 );
@@ -892,7 +892,7 @@ static int TreeLeafRootTest( void )
 	ENSURE( CompareQuery( &tree, idsB, 1, boxA ) == 0 );
 
 	// The freed pair is reused
-	int idC = b2DynamicTree_CreateProxy( &tree, boxC, 1, 2, false );
+	int idC = b2DynamicTree_CreateProxyInternal( &tree, boxC, 1, 2, false );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( tree.nodeEnd == 4 );
 	ENSURE( tree.pairFreeList == B2_NULL_INDEX );
@@ -901,7 +901,7 @@ static int TreeLeafRootTest( void )
 	ENSURE( CompareQuery( &tree, idsBC, 2, all ) == 0 );
 
 	// A third proxy extends the array
-	int idD = b2DynamicTree_CreateProxy( &tree, boxD, 1, 3, false );
+	int idD = b2DynamicTree_CreateProxyInternal( &tree, boxD, 1, 3, false );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( tree.nodeEnd == 6 );
 	ENSURE( tree.proxyCount == 3 );
@@ -943,7 +943,7 @@ static int TreeQueryBruteForceTest( void )
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; ++i )
 	{
-		proxyIds[i] = b2DynamicTree_CreateProxy( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
+		proxyIds[i] = b2DynamicTree_CreateProxyInternal( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
 	}
 
 	b2DynamicTree_Validate( &tree );
@@ -962,7 +962,7 @@ static int TreeQueryBruteForceTest( void )
 	// Moves leave the built order behind
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; i += 2 )
 	{
-		b2DynamicTree_MoveProxy( &tree, proxyIds[i], RandomTreeBox( 2.0f ), false );
+		b2DynamicTree_MoveProxyInternal( &tree, proxyIds[i], RandomTreeBox( 2.0f ), false );
 	}
 
 	b2DynamicTree_Validate( &tree );
@@ -981,7 +981,7 @@ static int TreeCastBruteForceTest( void )
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; ++i )
 	{
-		proxyIds[i] = b2DynamicTree_CreateProxy( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
+		proxyIds[i] = b2DynamicTree_CreateProxyInternal( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
 	}
 
 	ENSURE( b2DynamicTree_Rebuild( &tree, true ) == TREE_TEST_PROXY_COUNT );
@@ -1011,7 +1011,7 @@ static int TreeMarkAndRefitTest( void )
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; ++i )
 	{
-		proxyIds[i] = b2DynamicTree_CreateProxy( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
+		proxyIds[i] = b2DynamicTree_CreateProxyInternal( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
 	}
 
 	ENSURE( b2DynamicTree_Rebuild( &tree, true ) == TREE_TEST_PROXY_COUNT );
@@ -1080,7 +1080,7 @@ static int TreeMarkAndRefitTest( void )
 	b2DynamicTree_Refit( &tree );
 	ENSURE( CheckBounds( &tree, B2_ROOT_NODE, &bounds ) == 0 );
 	ENSURE( b2DynamicTree_Rebuild( &tree, false ) > 0 );
-	b2DynamicTree_ValidateNoEnlarged( &tree );
+	b2DynamicTree_ValidateNoMoved( &tree );
 
 	b2DynamicTree_Destroy( &tree );
 	return 0;
@@ -1095,7 +1095,7 @@ static int TreeDfsOrderTest( void )
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < proxyCount; ++i )
 	{
-		proxyIds[i] = b2DynamicTree_CreateProxy( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
+		proxyIds[i] = b2DynamicTree_CreateProxyInternal( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)i, false );
 	}
 
 	ENSURE( b2DynamicTree_Rebuild( &tree, true ) == proxyCount );
@@ -1105,14 +1105,14 @@ static int TreeDfsOrderTest( void )
 
 	// A fresh pair lands above everything, so the order survives when the sibling is a leaf.
 	// Validate checks the flag against the array either way.
-	proxyIds[proxyCount] = b2DynamicTree_CreateProxy( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)proxyCount, false );
+	proxyIds[proxyCount] = b2DynamicTree_CreateProxyInternal( &tree, RandomTreeBox( 2.0f ), 1, (uint64_t)proxyCount, false );
 	proxyCount += 1;
 	b2DynamicTree_Validate( &tree );
 
 	ENSURE( b2DynamicTree_Rebuild( &tree, true ) == proxyCount );
 	ENSURE( tree.dfsOrdered );
 
-	b2DynamicTree_MoveProxy( &tree, proxyIds[7], RandomTreeBox( 2.0f ), false );
+	b2DynamicTree_MoveProxyInternal( &tree, proxyIds[7], RandomTreeBox( 2.0f ), false );
 	b2DynamicTree_Validate( &tree );
 
 	ENSURE( b2DynamicTree_Rebuild( &tree, true ) == proxyCount );
@@ -1152,7 +1152,7 @@ static int TreeDfsOrderTest( void )
 	// A box around everything makes the root the best sibling, so the root's subtree moves into
 	// the new pair below its own children and the order is lost with nothing marked
 	b2AABB huge = { { -100.0f, -100.0f }, { 100.0f, 100.0f } };
-	proxyIds[proxyCount] = b2DynamicTree_CreateProxy( &tree, huge, 1, (uint64_t)proxyCount, false );
+	proxyIds[proxyCount] = b2DynamicTree_CreateProxyInternal( &tree, huge, 1, (uint64_t)proxyCount, false );
 	proxyCount += 1;
 	ENSURE( tree.dfsOrdered == false );
 	ENSURE( RootMarked( &tree ) == false );
@@ -1190,7 +1190,7 @@ static int TreeStaleAfterInsertRemoveTest( void )
 	for ( int i = 0; i < 16; ++i )
 	{
 		b2AABB box = { { 2.0f * i, 0.0f }, { 2.0f * i + 1.0f, 1.0f } };
-		ids[i] = b2DynamicTree_CreateProxy( &tree, box, 1, (uint64_t)i, true );
+		ids[i] = b2DynamicTree_CreateProxyInternal( &tree, box, 1, (uint64_t)i, true );
 	}
 
 	ENSURE( b2DynamicTree_Rebuild( &tree, false ) == 16 );
@@ -1204,7 +1204,7 @@ static int TreeStaleAfterInsertRemoveTest( void )
 
 	// Insert and remove between steps leaves no marks
 	b2AABB extra = { { 100.0f, 100.0f }, { 101.0f, 101.0f } };
-	int extraId = b2DynamicTree_CreateProxy( &tree, extra, 1, 99, true );
+	int extraId = b2DynamicTree_CreateProxyInternal( &tree, extra, 1, 99, true );
 	b2DynamicTree_DestroyProxy( &tree, extraId );
 	ENSURE( b2HasTreeMoved( &tree ) == false );
 

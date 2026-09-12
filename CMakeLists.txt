@@ -70,6 +70,27 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
 	cmake_dependent_option(BOX2D_AVX2 "Enable AVX2" OFF "NOT BOX2D_DISABLE_SIMD" OFF)
 endif()
 
+# core.h selects the SIMD path from these definitions and dynamic_tree.h carries inline
+# SIMD code, so the unit tests, which include the src headers, must compile with the same
+# definitions and instruction set flags as the library. Selected once here for both.
+set(BOX2D_SIMD_DEFINITIONS "")
+set(BOX2D_SIMD_OPTIONS "")
+if (BOX2D_DISABLE_SIMD)
+	message(STATUS "Box2D SIMD disabled")
+	set(BOX2D_SIMD_DEFINITIONS BOX2D_DISABLE_SIMD)
+elseif (EMSCRIPTEN)
+	# core.h maps wasm onto the SSE2 path, the intrinsics only compile with simd128 enabled
+	set(BOX2D_SIMD_OPTIONS -msimd128 -msse2)
+elseif (BOX2D_AVX2 AND NOT APPLE)
+	message(STATUS "Box2D using AVX2")
+	set(BOX2D_SIMD_DEFINITIONS BOX2D_AVX2)
+	if (MSVC)
+		set(BOX2D_SIMD_OPTIONS /arch:AVX2)
+	else()
+		set(BOX2D_SIMD_OPTIONS -mavx2)
+	endif()
+endif()
+
 # These are read by the library build, so they must precede add_subdirectory(src),
 # otherwise the first configure and a re-configure produce different libraries.
 # Top level only, so they stay hidden from FetchContent consumers.
