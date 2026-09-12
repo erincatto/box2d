@@ -3,6 +3,7 @@
 
 #include "benchmarks.h"
 
+#include "dynamic_tree.h"
 #include "human.h"
 
 #include "box2d/box2d.h"
@@ -964,7 +965,8 @@ void CreateQueries( b2WorldId worldId )
 			bodyDef.position = (b2Pos){ x, y };
 			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
-			b2Polygon box = orientation > 0.5f ? b2MakeBox( ratio * halfWidth, halfWidth ) : b2MakeBox( halfWidth, ratio * halfWidth );
+			b2Polygon box =
+				orientation > 0.5f ? b2MakeBox( ratio * halfWidth, halfWidth ) : b2MakeBox( halfWidth, ratio * halfWidth );
 			shapeDef.filter.categoryBits = 1ull << category;
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
@@ -1098,8 +1100,8 @@ float StepQueries( b2WorldId worldId, int stepCount )
 		for ( int i = 0; i < queryCount; ++i )
 		{
 			float fraction = 1.0f;
-			b2TreeStats castStats =
-				b2World_CastShape( worldId, data->origins[i], &circle, data->translations[i], filter, QueryCastClosest, &fraction );
+			b2TreeStats castStats = b2World_CastShape( worldId, data->origins[i], &circle, data->translations[i], filter,
+													   QueryCastClosest, &fraction );
 			stats.nodeVisits += castStats.nodeVisits;
 			stats.leafVisits += castStats.leafVisits;
 			hitCount += fraction < 1.0f ? 1 : 0;
@@ -1109,7 +1111,8 @@ float StepQueries( b2WorldId worldId, int stepCount )
 		{
 			int overlapCount = 0;
 			b2AABB aabb = { { -5.0f, -5.0f }, { 5.0f, 5.0f } };
-			b2TreeStats overlapStats = b2World_OverlapAABB( worldId, data->origins[i], aabb, filter, QueryOverlapCount, &overlapCount );
+			b2TreeStats overlapStats =
+				b2World_OverlapAABB( worldId, data->origins[i], aabb, filter, QueryOverlapCount, &overlapCount );
 			stats.nodeVisits += overlapStats.nodeVisits;
 			stats.leafVisits += overlapStats.leafVisits;
 			hitCount += overlapCount;
