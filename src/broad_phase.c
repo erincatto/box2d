@@ -350,7 +350,7 @@ B2_FORCE_INLINE void b2VisitPair( const b2TreeNode* arrayA, const b2TreeNode* ar
 // Colliding children of A (B and C) can give pairs (D,F) (D,G) (E,F) and (E,G).
 // Then colliding children of B can give the pair (D,E) and for C (F,G).
 // So no duplicates even when used for self-collision.
-// When ever a proxy is moved, the flag is propagated up the hierachy to the root. So
+// Whenever a proxy is moved, the flag is propagated up the hierarchy to the root. So
 // self collision gathers all those moved internal nodes and collides their subtrees together.
 // See Real-time collision detection section 6.3.2. This is faster than querying every moved
 // proxy against the whole tree. Scaling is linear instead of linear * log.
@@ -529,14 +529,12 @@ void b2UpdateBroadPhasePairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
-	bool moved = b2HasTreeMoved( bp->trees + b2_staticBody );
-	moved = moved || b2HasTreeMoved( bp->trees + b2_kinematicBody );
-	moved = moved || b2HasTreeMoved( bp->trees + b2_dynamicBody );
+	bool needUpdate = b2HasTreeMoved( bp->trees + b2_staticBody );
+	needUpdate = needUpdate || b2NeedsRebuild( bp->trees + b2_kinematicBody );
+	needUpdate = needUpdate || b2NeedsRebuild( bp->trees + b2_dynamicBody );
 
-	if ( moved == false )
+	if ( needUpdate == false )
 	{
-		B2_VALIDATE( bp->trees[b2_kinematicBody].dfsOrdered );
-		B2_VALIDATE( bp->trees[b2_dynamicBody].dfsOrdered );
 		return;
 	}
 

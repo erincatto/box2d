@@ -137,8 +137,9 @@ static int b2AllocateProxy( b2DynamicTree* tree )
 		B2_ASSERT( tree->proxyCount == tree->proxyCapacity );
 
 		// The free list is empty. Rebuild a bigger pool.
+		// A restored pool can have capacity 1, so guarantee strict growth.
 		int oldCapacity = tree->proxyCapacity;
-		tree->proxyCapacity += oldCapacity >> 1;
+		tree->proxyCapacity += b2MaxInt( oldCapacity >> 1, 1 );
 		tree->proxies = B2_GROW_ZERO( tree->proxies, oldCapacity, tree->proxyCapacity );
 
 		// Build a linked list for the free list.

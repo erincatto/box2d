@@ -1575,6 +1575,8 @@ void CreateTileWorld( b2WorldId worldId )
 			bodyDef.position.x += 0.6f;
 		}
 	}
+
+	data->stats = (b2TreeStats){ 0 };
 }
 
 static bool TileOverlapCount( b2ShapeId shapeId, void* context )
