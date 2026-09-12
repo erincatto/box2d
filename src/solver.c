@@ -504,7 +504,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				// Bullets are handled seperately at a later stage.
 				if ( isBullet == false )
 				{
-					b2BroadPhase_MarkEnlarged( &world->broadPhase, shape->proxyKey, fatAABB );
+					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );
 				}
 			}
 
@@ -545,7 +545,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 				if ( isBullet == false )
 				{
-					b2BroadPhase_MarkEnlarged( &world->broadPhase, shape->proxyKey, fatAABB );
+					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );
 				}
 			}
 
@@ -746,7 +746,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 					shape->fatAABB = fatAABB;
 
 					// Mark the hierarchy as enlarged using atomic operations.
-					b2BroadPhase_MarkEnlarged( &world->broadPhase, shape->proxyKey, fatAABB );
+					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );
 
 					// Bit-set to keep the move array sorted
 					b2SetBit( enlargedSimBitSet, simIndex );

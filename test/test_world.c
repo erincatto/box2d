@@ -724,7 +724,8 @@ static int EnlargedProxyDestroyedTest( void )
 }
 
 // Broad phase pair creation through every route that marks a proxy: creation, teleport, a static
-// shape that asks for contacts, refiltering, collide connected, and the filters that reject a pair.
+// shape that asks for contacts, refiltering, collide connected, enable, a type change, a static
+// rebuild that must keep its pending marks, and the filters that reject a pair.
 // Bodies never move on their own here, gravity is off and sleep is disabled, so a contact can only
 // come from the route under test. The count is every live contact, touching or not, which is what
 // the broad phase decides.
@@ -812,7 +813,7 @@ static int PairCreation( int workerCount )
 	return 0;
 }
 
-// A teleport marks the moved proxy, static ones included
+// A teleport marks the moved proxy, kinematic and static ones included
 static int PairTeleport( int workerCount )
 {
 	b2WorldId worldId = CreatePairWorld( workerCount );
@@ -832,6 +833,16 @@ static int PairTeleport( int workerCount )
 	b2Body_SetTransform( wall.bodyId, (b2Pos){ 20.5f, 0.0f }, b2Rot_identity );
 	StepPairWorld( worldId );
 	ENSURE( PairContactCount( worldId ) == 2 );
+
+	// Kinematic onto a resting dynamic, the mark is on the kinematic side
+	CreatePairBox( worldId, b2_dynamicBody, 40.0f, 0.0f, &shapeDef );
+	PairBox pusher = CreatePairBox( worldId, b2_kinematicBody, 50.0f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 2 );
+
+	b2Body_SetTransform( pusher.bodyId, (b2Pos){ 40.5f, 0.0f }, b2Rot_identity );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 3 );
 
 	b2DestroyWorld( worldId );
 	return 0;
@@ -1025,6 +1036,182 @@ static int PairSleepEscape( int workerCount, bool sleepBeforePairs )
 	return 0;
 }
 
+// Enable recreates the proxies with marks, on either side of a resting pair. The fat boxes
+// overlap across the gap while the shapes do not, so nothing pushes and nothing moves.
+static int PairEnable( int workerCount )
+{
+	b2WorldId worldId = CreatePairWorld( workerCount );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	PairBox ground = CreatePairBox( worldId, b2_staticBody, 0.0f, 0.0f, &shapeDef );
+	PairBox box = CreatePairBox( worldId, b2_dynamicBody, 1.1f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2Body_Disable( box.bodyId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 0 );
+
+	b2Body_Enable( box.bodyId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	// The static side, the resting box has no mark of its own
+	b2Body_Disable( ground.bodyId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 0 );
+
+	b2Body_Enable( ground.bodyId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A type change recreates the proxies with marks and must find the resting neighbors again
+static int PairSetType( int workerCount )
+{
+	b2WorldId worldId = CreatePairWorld( workerCount );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	CreatePairBox( worldId, b2_staticBody, 0.0f, 0.0f, &shapeDef );
+	PairBox middle = CreatePairBox( worldId, b2_dynamicBody, 1.1f, 0.0f, &shapeDef );
+	CreatePairBox( worldId, b2_dynamicBody, 2.2f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 2 );
+
+	// Kinematic drops the static pair and keeps the dynamic one
+	b2Body_SetType( middle.bodyId, b2_kinematicBody );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2Body_SetType( middle.bodyId, b2_dynamicBody );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 2 );
+
+	// Static drops the static pair too and the dynamic pair becomes static versus dynamic
+	b2Body_SetType( middle.bodyId, b2_staticBody );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2Body_SetType( middle.bodyId, b2_dynamicBody );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 2 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// Bullet is a flag only, the pair must be untouched
+static int PairSetBullet( int workerCount )
+{
+	b2WorldId worldId = CreatePairWorld( workerCount );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	CreatePairBox( worldId, b2_staticBody, 0.0f, 0.0f, &shapeDef );
+	PairBox box = CreatePairBox( worldId, b2_dynamicBody, 1.1f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2Body_SetBullet( box.bodyId, true );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2Body_SetBullet( box.bodyId, false );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A static rebuild must keep the pending marks. The resting box has none of its own, so a lost
+// mark means the pair is never found.
+static int PairRebuildStatic( int workerCount )
+{
+	b2WorldId worldId = CreatePairWorld( workerCount );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+	PairBox box = CreatePairBox( worldId, b2_dynamicBody, 0.0f, 0.0f, &shapeDef );
+	CreatePairBox( worldId, b2_staticBody, 10.0f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 0 );
+
+	// No marks to keep
+	b2World_RebuildStaticTree( worldId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 0 );
+
+	CreatePairBox( worldId, b2_staticBody, 1.1f, 0.0f, &shapeDef );
+	b2World_RebuildStaticTree( worldId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	// A quiet static shape has no mark to keep
+	b2ShapeDef quietDef = b2DefaultShapeDef();
+	quietDef.invokeContactCreation = false;
+	CreatePairBox( worldId, b2_staticBody, -1.1f, 0.0f, &quietDef );
+	b2World_RebuildStaticTree( worldId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	// Overlapping the resting box, the contact must touch on the first step after the rebuild
+	CreatePairBox( worldId, b2_staticBody, 0.0f, 0.5f, &shapeDef );
+	b2World_RebuildStaticTree( worldId );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 2 );
+
+	b2ContactData contactData[4];
+	int touchingCount = b2Body_GetContactData( box.bodyId, contactData, 4 );
+	ENSURE( touchingCount == 1 );
+	ENSURE( contactData[0].manifold.pointCount > 0 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A static shape created over a sleeping body still gets its contact, parked with the sleeper
+// until it wakes. The world counter only sees awake contacts, so this counts on the body.
+static int PairSleepingStatic( int workerCount )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2_zero;
+	worldDef.workerCount = workerCount;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	PairBox sleeper = CreatePairBox( worldId, b2_dynamicBody, 0.0f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	b2Body_SetAwake( sleeper.bodyId, false );
+	ENSURE( b2Body_IsAwake( sleeper.bodyId ) == false );
+
+	CreatePairBox( worldId, b2_staticBody, 0.5f, 0.0f, &shapeDef );
+	StepPairWorld( worldId );
+	ENSURE( b2Body_GetContactCapacity( sleeper.bodyId ) == 1 );
+	ENSURE( b2Body_IsAwake( sleeper.bodyId ) == false );
+
+	// The quiet kind never pairs with a sleeper
+	b2ShapeDef quietDef = b2DefaultShapeDef();
+	quietDef.invokeContactCreation = false;
+	CreatePairBox( worldId, b2_staticBody, -0.5f, 0.0f, &quietDef );
+	StepPairWorld( worldId );
+	ENSURE( b2Body_GetContactCapacity( sleeper.bodyId ) == 1 );
+
+	// Waking brings the parked contact into the step and it touches at once
+	b2Body_SetAwake( sleeper.bodyId, true );
+	StepPairWorld( worldId );
+	ENSURE( PairContactCount( worldId ) == 1 );
+
+	b2ContactData contactData[4];
+	int touchingCount = b2Body_GetContactData( sleeper.bodyId, contactData, 4 );
+	ENSURE( touchingCount == 1 );
+	ENSURE( contactData[0].manifold.pointCount > 0 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
 static int BroadPhasePairsTest( void )
 {
 	int workerCounts[2] = { 1, 4 };
@@ -1036,8 +1223,13 @@ static int BroadPhasePairsTest( void )
 		ENSURE( PairRefilter( workerCount ) == 0 );
 		ENSURE( PairCollideConnected( workerCount ) == 0 );
 		ENSURE( PairFilters( workerCount ) == 0 );
+		ENSURE( PairEnable( workerCount ) == 0 );
+		ENSURE( PairSetType( workerCount ) == 0 );
+		ENSURE( PairSetBullet( workerCount ) == 0 );
+		ENSURE( PairRebuildStatic( workerCount ) == 0 );
 		ENSURE( PairSleepEscape( workerCount, false ) == 0 );
 		ENSURE( PairSleepEscape( workerCount, true ) == 0 );
+		ENSURE( PairSleepingStatic( workerCount ) == 0 );
 	}
 
 	return 0;

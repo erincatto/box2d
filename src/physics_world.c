@@ -3194,7 +3194,28 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 	B2_REC( world, WorldRebuildStaticTree, worldId );
 
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
+
+	// todo the pending marks must survive the rebuild or resting bodies never pair with the new static shapes
+	int movedCount = 0;
+	int* movedProxies = NULL;
+	int proxyCount = b2DynamicTree_GetProxyCount( staticTree );
+	if ( b2HasTreeMoved( staticTree ) )
+	{
+		movedProxies = b2Alloc( proxyCount * sizeof( int ) );
+		movedCount = b2DynamicTree_GatherMovedProxies( staticTree, movedProxies );
+	}
+
 	b2DynamicTree_Rebuild( staticTree, true );
+
+	for ( int i = 0; i < movedCount; ++i )
+	{
+		b2DynamicTree_MarkProxyMovedSerial( staticTree, movedProxies[i] );
+	}
+
+	if ( movedProxies != NULL )
+	{
+		b2Free( movedProxies, proxyCount * sizeof( int ) );
+	}
 }
 
 #if B2_ENABLE_VALIDATION

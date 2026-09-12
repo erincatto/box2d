@@ -345,12 +345,7 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 		r->ok = false;
 	}
 
-	// Allocation bounds against the capacities, stream bounds against what is actually written
-	if ( r->ok && b2SnapCheckCount( r, nodeCapacity, (int)sizeof( b2TreeNode ), 0 ) == false )
-	{
-		r->ok = false;
-	}
-
+	// Stream bounds against what is actually written
 	if ( r->ok && b2SnapCheckCount( r, nodeEnd, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) + (int)sizeof( int32_t ) ) == false )
 	{
 		r->ok = false;
@@ -371,6 +366,9 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 		*tree = b2DynamicTree_Create( 0 );
 		return;
 	}
+
+	// todo the image capacity is only an allocation hint, a bad image must not demand a huge allocation
+	nodeCapacity = b2MinInt( nodeCapacity, 2 * nodeEnd );
 
 	tree->nodeEnd = nodeEnd;
 	tree->nodeCapacity = nodeCapacity;

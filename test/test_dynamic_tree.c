@@ -840,7 +840,7 @@ static int TreeOneProxyTest( void )
 
 	// The leaf is the root, so a mark and refit show up in the root bounds directly
 	b2AABB enlarged = EnlargeTreeBox( box, 0.5f );
-	b2DynamicTree_MarkEnlarged( &tree, proxyId, enlarged );
+	b2DynamicTree_MarkProxyMoved( &tree, proxyId, enlarged );
 	ENSURE( RootMarked( &tree ) );
 	b2DynamicTree_Refit( &tree );
 	b2DynamicTree_Validate( &tree );
@@ -1025,7 +1025,7 @@ static int TreeMarkAndRefitTest( void )
 	{
 		int proxyId = proxyIds[i];
 		enlarged[proxyId] = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, proxyId ), 0.5f );
-		b2DynamicTree_MarkEnlarged( &tree, proxyId, enlarged[proxyId] );
+		b2DynamicTree_MarkProxyMoved( &tree, proxyId, enlarged[proxyId] );
 		marked[proxyId] = true;
 	}
 
@@ -1073,7 +1073,7 @@ static int TreeMarkAndRefitTest( void )
 	// A single deep leaf still marks the whole path to the root
 	int loneId = proxyIds[TREE_TEST_PROXY_COUNT / 2];
 	enlarged[loneId] = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, loneId ), 0.5f );
-	b2DynamicTree_MarkEnlarged( &tree, loneId, enlarged[loneId] );
+	b2DynamicTree_MarkProxyMoved( &tree, loneId, enlarged[loneId] );
 	marked[loneId] = true;
 	ENSURE( CheckMarks( &tree, B2_ROOT_NODE, marked, &markedBelow ) == 0 );
 	ENSURE( markedBelow );
@@ -1131,7 +1131,7 @@ static int TreeDfsOrderTest( void )
 	b2DynamicTree_Validate( &tree );
 
 	b2AABB enlarged = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, proxyIds[10] ), 0.5f );
-	b2DynamicTree_MarkEnlarged( &tree, proxyIds[10], enlarged );
+	b2DynamicTree_MarkProxyMoved( &tree, proxyIds[10], enlarged );
 	ENSURE( RootMarked( &tree ) );
 	b2DynamicTree_Refit( &tree );
 	b2DynamicTree_Validate( &tree );
@@ -1160,11 +1160,11 @@ static int TreeDfsOrderTest( void )
 
 	// The refit falls back to a descent on an unordered array
 	enlarged = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, proxyIds[10] ), 0.5f );
-	b2DynamicTree_MarkEnlarged( &tree, proxyIds[10], enlarged );
+	b2DynamicTree_MarkProxyMoved( &tree, proxyIds[10], enlarged );
 	b2DynamicTree_Refit( &tree );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( CheckBounds( &tree, B2_ROOT_NODE, &bounds ) == 0 );
-	b2DynamicTree_ClearEnlarged( &tree );
+	b2DynamicTree_ClearMoved( &tree );
 	ENSURE( RootMarked( &tree ) == false );
 
 	// The rebuild runs for the order alone
@@ -1197,7 +1197,7 @@ static int TreeStaleAfterInsertRemoveTest( void )
 
 	// Control: enlarge and refit on the ordered tree
 	b2AABB big = { { 0.0f, 0.0f }, { 40.0f, 40.0f } };
-	b2DynamicTree_MarkEnlarged( &tree, ids[0], big );
+	b2DynamicTree_MarkProxyMoved( &tree, ids[0], big );
 	b2DynamicTree_Refit( &tree );
 	ENSURE( b2AABB_Contains( b2DynamicTree_GetRootBounds( &tree ), big ) );
 	ENSURE( b2DynamicTree_Rebuild( &tree, false ) > 0 );
@@ -1211,7 +1211,7 @@ static int TreeStaleAfterInsertRemoveTest( void )
 	// The world's rebuild call, then a proxy enlarges during the step
 	b2DynamicTree_Rebuild( &tree, false );
 	b2AABB bigger = { { -10.0f, -10.0f }, { 60.0f, 60.0f } };
-	b2DynamicTree_MarkEnlarged( &tree, ids[0], bigger );
+	b2DynamicTree_MarkProxyMoved( &tree, ids[0], bigger );
 	b2DynamicTree_Refit( &tree );
 	ENSURE( b2AABB_Contains( b2DynamicTree_GetRootBounds( &tree ), bigger ) );
 	b2DynamicTree_Validate( &tree );

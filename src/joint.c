@@ -950,7 +950,7 @@ void b2Joint_SetCollideConnected( b2JointId jointId, bool shouldCollide )
 
 			if ( shape->proxyKey != B2_NULL_INDEX )
 			{
-				b2BroadPhase_MarkEnlargedFlag( &world->broadPhase, shape->proxyKey );
+				b2BroadPhase_MarkProxyMovedSerial( &world->broadPhase, shape->proxyKey );
 			}
 
 			shapeId = shape->nextShapeId;

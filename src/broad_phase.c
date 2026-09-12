@@ -242,6 +242,7 @@ static void b2FlushCandidatePairs( b2PairContext* context )
 			}
 		}
 
+		// The pair passed the gauntlet. A new contact will be created.
 		b2Array_Push( *pairKeys, B2_SHAPE_PAIR_KEY( shapeIdA, shapeIdB ) );
 	}
 }
@@ -347,6 +348,8 @@ B2_FORCE_INLINE void b2VisitPair( const b2TreeNode* arrayA, const b2TreeNode* ar
 // Colliding children of A (B and C) can give pairs (D,F) (D,G) (E,F) and (E,G).
 // Then colliding children of B can give the pair (D,E) and for C (F,G).
 // So no duplicates even when used for self-collision.
+// When ever a proxy is moved, the flag is propagated up the hierachy to the root. So
+// self collision gathers all those moved internal nodes and collides their subtrees together.
 // See Real-time collision detection section 6.3.2.
 static void b2CollideCrossPairs( const b2TreeNode* arrayA, const b2TreeNode* arrayB, const b2TreeNode* subtreeA,
 								 const b2TreeNode* subtreeB, b2PairContext* context )
@@ -397,7 +400,7 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 #define B2_CROSS_SEED_COUNT 64
 _Static_assert( ( B2_CROSS_SEED_COUNT & ( B2_CROSS_SEED_COUNT - 1 ) ) == 0, "must be power of 2" );
 
-// This does a serial cross-tree breadth first search until the queue is full. Then returns
+// This does a serial cross-tree breadth first search until the queue is full. Then it returns
 // the queue pairs as seeds for a parallel search.
 static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* treeB, b2NodePair* seeds )
 {
@@ -434,6 +437,7 @@ static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* 
 		const b2TreeNode* a = nodesA + b2GetLeftChild( &pair.a );
 		const b2TreeNode* b = nodesB + b2GetLeftChild( &pair.b );
 
+		// Nodes have two children each, so four combinations.
 		for ( int i = 0; i < 2; ++i )
 		{
 			for ( int j = 0; j < 2; ++j )
@@ -527,10 +531,8 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	if ( moved == false )
 	{
-		// A destroyed shape may lead to no moves, but the tree could still be moved
-		// todo I think this is no longer true since the move array is gone
-		b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
-		b2EnqueueTreeUpdate( world );
+		B2_VALIDATE( bp->trees[b2_kinematicBody].dfsOrdered );
+		B2_VALIDATE( bp->trees[b2_dynamicBody].dfsOrdered );
 		return;
 	}
 
@@ -572,7 +574,7 @@ void b2UpdateBroadPhasePairs( b2World* world )
 		b2ParallelFor( world, &b2SelfPairsTask, dynamicMoveCount, 64, world );
 	}
 
-	b2DynamicTree_ClearEnlarged( bp->trees + b2_staticBody );
+	b2DynamicTree_ClearMoved( bp->trees + b2_staticBody );
 
 	b2TracyCZoneEnd( update_pairs );
 
@@ -637,26 +639,6 @@ void b2UpdateBroadPhasePairs( b2World* world )
 	b2ValidateSolverSets( world );
 
 	b2TracyCZoneEnd( create_contacts );
-}
-
-bool b2BroadPhase_TestOverlap( const b2BroadPhase* bp, int proxyKeyA, int proxyKeyB )
-{
-	int typeIndexA = B2_PROXY_TYPE( proxyKeyA );
-	int proxyIdA = B2_PROXY_ID( proxyKeyA );
-	int typeIndexB = B2_PROXY_TYPE( proxyKeyB );
-	int proxyIdB = B2_PROXY_ID( proxyKeyB );
-
-	b2AABB aabbA = b2DynamicTree_GetAABB( bp->trees + typeIndexA, proxyIdA );
-	b2AABB aabbB = b2DynamicTree_GetAABB( bp->trees + typeIndexB, proxyIdB );
-	return b2AABB_Overlaps( aabbA, aabbB );
-}
-
-int b2BroadPhase_GetShapeIndex( b2BroadPhase* bp, int proxyKey )
-{
-	int typeIndex = B2_PROXY_TYPE( proxyKey );
-	int proxyId = B2_PROXY_ID( proxyKey );
-
-	return (int)b2DynamicTree_GetUserData( bp->trees + typeIndex, proxyId );
 }
 
 void b2ValidateBroadphase( const b2BroadPhase* bp )

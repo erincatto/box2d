@@ -1887,7 +1887,8 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 	return leafCount;
 }
 
-void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId )
+// Set the moved flag on the ancestors of the proxy. Serial use case.
+void b2DynamicTree_MarkProxyMovedSerial( b2DynamicTree* tree, int proxyId )
 {
 	B2_VALIDATE( 0 <= proxyId && proxyId < tree->proxyCapacity );
 
@@ -1905,7 +1906,8 @@ void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId )
 	}
 }
 
-void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
+// Update a proxy AABB and flag the ancestors as moved. Thred-safe using atomics.
+void b2DynamicTree_MarkProxyMoved( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 {
 	B2_VALIDATE( 0 <= proxyId && proxyId < tree->proxyCapacity );
 
@@ -1945,7 +1947,8 @@ void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb )
 	}
 }
 
-void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree )
+// Clear the moved flags from the entire tree.
+void b2DynamicTree_ClearMoved( b2DynamicTree* tree )
 {
 	b2TreeNode* nodes = tree->nodes;
 
@@ -1976,11 +1979,65 @@ void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree )
 				node->flagIndex &= ~B2_MOVED_NODE;
 				if ( b2IsLeaf( node ) == false )
 				{
-					stack[stackCount++] = b2GetLeftChild( node );
+					if ( stackCount < B2_TREE_STACK_SIZE )
+					{
+						stack[stackCount++] = b2GetLeftChild( node );
+					}
+					else
+					{
+						// Bad stuff will happen if the moved flags don't get cleared.
+						B2_ASSERT( false );
+					}
 				}
 			}
 		}
 	}
+}
+
+int b2DynamicTree_GatherMovedProxies( const b2DynamicTree* tree, int* proxyIds )
+{
+	const b2TreeNode* nodes = tree->nodes;
+	const b2TreeNode* root = nodes + B2_ROOT_NODE;
+	if ( b2IsNodeMoved( root ) == false )
+	{
+		return 0;
+	}
+
+	if ( b2IsLeaf( root ) )
+	{
+		proxyIds[0] = b2GetProxyId( root );
+		return 1;
+	}
+
+	int count = 0;
+	int stack[B2_TREE_STACK_SIZE];
+	int stackCount = 0;
+	stack[stackCount++] = b2GetLeftChild( root );
+
+	while ( stackCount > 0 )
+	{
+		int pair = stack[--stackCount];
+		for ( int i = 0; i < 2; ++i )
+		{
+			const b2TreeNode* node = nodes + pair + i;
+			if ( b2IsNodeMoved( node ) == false )
+			{
+				continue;
+			}
+
+			if ( b2IsLeaf( node ) )
+			{
+				proxyIds[count++] = b2GetProxyId( node );
+			}
+			else
+			{
+				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
+				stack[stackCount++] = b2GetLeftChild( node );
+			}
+		}
+	}
+
+	return count;
 }
 
 // Slow refit for unit tests.

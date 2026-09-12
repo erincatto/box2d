@@ -8,6 +8,14 @@
 #include "box2d/collision.h"
 
 #define B2_TREE_STACK_SIZE 512
+
+// Used to mark a node as being moved such that pairs need to be generated and the tree
+// may need to be rebuilt. This mark comes from a few sources:
+// - updating the transform and AABB in the solver from movement
+// - a joint disabling collision
+// - creating a proxy
+// - setting the transform on a body
+
 #define B2_MOVED_NODE ( 1u << 30 )
 #define B2_LEAF_NODE ( 1u << 31 )
 #define B2_NODE_INDEX_MASK ( 0xFFFFFFFFu & ~( B2_MOVED_NODE | B2_LEAF_NODE ) )
@@ -214,7 +222,8 @@ B2_FORCE_INLINE void b2StoreAABBV( b2AABB* aabb, b2AABBV value, bool condition )
 
 #endif
 
-void b2DynamicTree_MarkEnlargedFlag( b2DynamicTree* tree, int proxyId );
-void b2DynamicTree_MarkEnlarged( b2DynamicTree* tree, int proxyId, b2AABB aabb );
-void b2DynamicTree_ClearEnlarged( b2DynamicTree* tree );
+void b2DynamicTree_MarkProxyMovedSerial( b2DynamicTree* tree, int proxyId );
+void b2DynamicTree_MarkProxyMoved( b2DynamicTree* tree, int proxyId, b2AABB aabb );
+void b2DynamicTree_ClearMoved( b2DynamicTree* tree );
+int b2DynamicTree_GatherMovedProxies( const b2DynamicTree* tree, int* proxyIds );
 void b2DynamicTree_Refit( b2DynamicTree* tree );

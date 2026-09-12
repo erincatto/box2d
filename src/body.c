@@ -648,7 +648,6 @@ void b2UpdateBodyMassData( b2World* world, b2Body* body )
 		contactSim->simFlags &= ~b2_simRelativeTransformValid;
 
 		edgeKey = contact->edges[edgeIndex].nextKey;
-		b2DestroyContact( world, contact );
 	}
 }
 
@@ -1448,7 +1447,6 @@ void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 		contactSim->simFlags &= ~b2_simRelativeTransformValid;
 
 		edgeKey = contact->edges[edgeIndex].nextKey;
-		b2DestroyContact( world, contact );
 	}
 
 	// Motion locks take priority over mass data.

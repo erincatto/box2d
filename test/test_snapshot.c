@@ -366,6 +366,34 @@ int SnapshotTest( void )
 	ENSURE( b2HashWorldStateDeep( rWorld ) == preBadHash );
 	b2Free( corrupt, imageSize );
 
+	// The node capacity in the image is only an allocation hint. A huge one must not drive the
+	// allocation, the live nodes bound it. Find the static tree record by the fields that survive
+	// a restore exactly, the capacity itself may have been clamped.
+	const b2DynamicTree* staticTree = rWorld->broadPhase.trees + b2_staticBody;
+	int32_t treeHead = (int32_t)staticTree->nodeEnd;
+	int32_t treeTail[5] = { (int32_t)staticTree->pairFreeList, (int32_t)staticTree->proxyCount,
+							(int32_t)staticTree->proxyCapacity, (int32_t)staticTree->proxyFreeList,
+							staticTree->dfsOrdered ? 1 : 0 };
+	int treeOffset = -1;
+	for ( int i = 0; i + 28 <= imageSize; ++i )
+	{
+		if ( memcmp( image + i, &treeHead, 4 ) == 0 && memcmp( image + i + 8, treeTail, 20 ) == 0 )
+		{
+			treeOffset = i;
+			break;
+		}
+	}
+	ENSURE( treeOffset >= 0 );
+
+	uint8_t* greedy = b2Alloc( imageSize );
+	memcpy( greedy, image, imageSize );
+	int32_t hugeCapacity = INT32_MAX / 64;
+	memcpy( greedy + treeOffset + 4, &hugeCapacity, 4 );
+	ENSURE( b2World_Restore( rId, greedy, imageSize ) );
+	ENSURE( b2HashWorldStateDeep( rWorld ) == snapHash );
+	ENSURE( staticTree->nodeCapacity <= 2 * staticTree->nodeEnd );
+	b2Free( greedy, imageSize );
+
 	// Repeated in-place restore over the chain/sensor/island heap must not leak
 	for ( int i = 0; i < 3; ++i )
 	{

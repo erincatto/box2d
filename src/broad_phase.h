@@ -25,8 +25,10 @@ typedef struct b2World b2World;
 /// It is up to the client to consume the new pairs and to track subsequent overlap.
 typedef struct b2BroadPhase
 {
+	// One tree for each body type.
 	b2DynamicTree trees[b2_bodyTypeCount];
 
+	// The moved siblings gathered from the dynamic body tree.
 	int* movedSiblings;
 
 	// Tracks shape pairs that have a b2Contact
@@ -42,24 +44,21 @@ void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey );
 
 void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb );
 
-int b2BroadPhase_GetShapeIndex( b2BroadPhase* bp, int proxyKey );
-
 void b2UpdateBroadPhasePairs( b2World* world );
-bool b2BroadPhase_TestOverlap( const b2BroadPhase* bp, int proxyKeyA, int proxyKeyB );
 
 void b2ValidateBroadphase( const b2BroadPhase* bp );
 void b2ValidateNoEnlarged( const b2BroadPhase* bp );
 
-static inline void b2BroadPhase_MarkEnlargedFlag( b2BroadPhase* bp, int proxyKey )
+static inline void b2BroadPhase_MarkProxyMovedSerial( b2BroadPhase* bp, int proxyKey )
 {
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
-	b2DynamicTree_MarkEnlargedFlag( bp->trees + proxyType, proxyId );
+	b2DynamicTree_MarkProxyMovedSerial( bp->trees + proxyType, proxyId );
 }
 
-static inline void b2BroadPhase_MarkEnlarged( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
+static inline void b2BroadPhase_MarkProxyMoved( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
 {
 	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
 	int proxyId = B2_PROXY_ID( proxyKey );
-	b2DynamicTree_MarkEnlarged( bp->trees + proxyType, proxyId, aabb );
+	b2DynamicTree_MarkProxyMoved( bp->trees + proxyType, proxyId, aabb );
 }
