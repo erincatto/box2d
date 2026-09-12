@@ -21,12 +21,6 @@ if (BOX2D_COMPILE_WARNING_AS_ERROR)
 	set_target_properties(shared PROPERTIES COMPILE_WARNING_AS_ERROR ON)
 endif()
 
-# Special access to Box2D internals for testing. The internal headers select the SIMD path
-# from the build configuration, so the tests must see the same selection as the library.
-target_include_directories(shared PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_compile_definitions(shared PRIVATE ${BOX2D_SIMD_DEFINITIONS})
-target_compile_options(shared PRIVATE ${BOX2D_SIMD_OPTIONS})
-
 target_include_directories(shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(shared PRIVATE box2d)
 

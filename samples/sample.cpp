@@ -769,7 +769,7 @@ void Sample::DrawMetrics()
 				float pairsT = now[1];
 				float collideT = now[2];
 				float solveT = now[3];
-				float sensorsT = now[21];
+				float sensorsT = now[20];
 				float otherT = b2MaxFloat( stepNow - pairsT - collideT - solveT - sensorsT, 0.0f );
 
 				float availWidth = ImGui::GetContentRegionAvail().x;
