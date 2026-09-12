@@ -3182,6 +3182,7 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	b2DynamicTree_Query( world->broadPhase.trees + b2_dynamicBody, aabb, maskBits, ExplosionCallback, &explosionContext );
 }
 
+// This is for internal testing. Not optimized.
 void b2World_RebuildStaticTree( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -3195,7 +3196,7 @@ void b2World_RebuildStaticTree( b2WorldId worldId )
 
 	b2DynamicTree* staticTree = world->broadPhase.trees + b2_staticBody;
 
-	// todo the pending marks must survive the rebuild or resting bodies never pair with the new static shapes
+	// Moved proxies must retain the flag in the rebuild.
 	int movedCount = 0;
 	int* movedProxies = NULL;
 	int proxyCount = b2DynamicTree_GetProxyCount( staticTree );

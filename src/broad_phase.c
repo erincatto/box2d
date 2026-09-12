@@ -350,7 +350,9 @@ B2_FORCE_INLINE void b2VisitPair( const b2TreeNode* arrayA, const b2TreeNode* ar
 // So no duplicates even when used for self-collision.
 // When ever a proxy is moved, the flag is propagated up the hierachy to the root. So
 // self collision gathers all those moved internal nodes and collides their subtrees together.
-// See Real-time collision detection section 6.3.2.
+// See Real-time collision detection section 6.3.2. This is faster than querying every moved
+// proxy against the whole tree. Scaling is linear instead of linear * log.
+// Many other physics engines do this (Bepu, Rapier, etc). So nothing new here.
 static void b2CollideCrossPairs( const b2TreeNode* arrayA, const b2TreeNode* arrayB, const b2TreeNode* subtreeA,
 								 const b2TreeNode* subtreeB, b2PairContext* context )
 {
