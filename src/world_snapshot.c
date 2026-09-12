@@ -367,7 +367,7 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 		return;
 	}
 
-	// todo the image capacity is only an allocation hint, a bad image must not demand a huge allocation
+	// This is just an allocation hint and the exact value doesn't matter.
 	nodeCapacity = b2MinInt( nodeCapacity, 2 * nodeEnd );
 
 	tree->nodeEnd = nodeEnd;

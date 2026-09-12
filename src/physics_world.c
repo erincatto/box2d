@@ -762,7 +762,7 @@ static void b2Collide( b2StepContext* context )
 	contactSims = NULL;
 
 	// Serially update contact state
-	// todo_erin bring this zone together with island merge
+	// todo bring this zone together with island merge
 	b2TracyCZoneNC( contact_state, "Contact State", b2_colorLightSlateGray, true );
 
 	// Bitwise OR all contact bits
