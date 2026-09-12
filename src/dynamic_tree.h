@@ -75,6 +75,11 @@ static inline bool b2HasTreeMoved( const b2DynamicTree* tree )
 	return b2IsNodeMoved( tree->nodes + B2_ROOT_NODE );
 }
 
+static inline bool b2NeedsRebuild( const b2DynamicTree* tree )
+{
+	return b2IsNodeMoved( tree->nodes + B2_ROOT_NODE ) || tree->dfsOrdered == false;
+}
+
 #if defined( B2_SIMD_NEON )
 
 #include <arm_neon.h>
