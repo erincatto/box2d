@@ -1513,6 +1513,7 @@ public:
 		{
 			b2Vec2 points[4] = { { 1.0f, 0.0f }, { -1.0f, 0.0f }, { -1.0f, -1.0f }, { 1.0f, -1.0f } };
 			b2ChainDef chainDef = b2DefaultChainDef();
+			chainDef.userData = shapeDef.userData;
 			chainDef.points = points;
 			chainDef.count = 4;
 			chainDef.isLoop = true;

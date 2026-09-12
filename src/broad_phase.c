@@ -124,7 +124,7 @@ typedef struct b2Candidate
 typedef struct b2PairContext
 {
 	b2World* world;
-	b2Array( uint64_t )* pairKeys;
+	b2Array( uint64_t ) * pairKeys;
 	b2CandidatePair batch[B2_CANDIDATE_BATCH];
 	int batchCount;
 } b2PairContext;
@@ -140,8 +140,7 @@ typedef struct b2IndexPair
 	int a, b;
 } b2IndexPair;
 
-// todo profile with and without prefetch
-static void b2FlushPairs( b2PairContext* context )
+static void b2FlushCandidatePairs( b2PairContext* context )
 {
 	b2World* world = context->world;
 	b2BroadPhase* bp = &world->broadPhase;
@@ -149,7 +148,9 @@ static void b2FlushPairs( b2PairContext* context )
 	int count1 = context->batchCount;
 	context->batchCount = 0;
 
-	// Prefetch hash set entries.
+	// Prefetch hash set entries. Less than 1% gain from this but it might
+	// matter more for Box3D. Also, if I switch to verstable then this might
+	// not be possible.
 	uint64_t keys[B2_CANDIDATE_BATCH];
 	uint64_t hashes[B2_CANDIDATE_BATCH];
 	for ( int i = 0; i < count1; ++i )
@@ -173,7 +174,7 @@ static void b2FlushPairs( b2PairContext* context )
 		}
 	}
 
-	// Prefetch shapes.
+	// Prefetch shapes. Again, less than a 1% gain from this. Might matter more for Box3D.
 	const b2Shape* shapes = world->shapes.data;
 	for ( int i = 0; i < count2; ++i )
 	{
@@ -254,7 +255,7 @@ B2_FORCE_INLINE void b2AddCandidatePair( int shapeIdA, int shapeIdB, b2PairConte
 	context->batchCount += 1;
 	if ( context->batchCount == B2_CANDIDATE_BATCH )
 	{
-		b2FlushPairs( context );
+		b2FlushCandidatePairs( context );
 	}
 }
 
@@ -388,7 +389,7 @@ static void b2SelfPairsTask( int startIndex, int endIndex, int workerIndex, void
 		b2CollideCrossPairs( nodes, nodes, nodes + nodeIndex, nodes + nodeIndex + 1, &pairContext );
 	}
 
-	b2FlushPairs( &pairContext );
+	b2FlushCandidatePairs( &pairContext );
 
 	b2TracyCZoneEnd( self_pairs );
 }
@@ -483,7 +484,7 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 		b2CollideCrossPairs( dynamicNodes, nodesB, &seed.a, &seed.b, &pairContext );
 	}
 
-	b2FlushPairs( &pairContext );
+	b2FlushCandidatePairs( &pairContext );
 
 	b2TracyCZoneEnd( cross_pairs );
 }
