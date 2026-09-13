@@ -533,10 +533,10 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 		for ( int i = 0; i < n; ++i )
 		{
 			B2_VALIDATE( i + 1 < def->pointCount );
-			chainSegment.ghost1 = i == 0 ? def->ghostBegin : points[i - 1];
+			chainSegment.ghost1 = i == 0 ? def->ghost1 : points[i - 1];
 			chainSegment.segment.point1 = points[i + 0];
 			chainSegment.segment.point2 = points[i + 1];
-			chainSegment.ghost2 = i == n - 1 ? def->ghostEnd : points[i + 2];
+			chainSegment.ghost2 = i == n - 1 ? def->ghost2 : points[i + 2];
 
 			B2_VALIDATE( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
 			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );

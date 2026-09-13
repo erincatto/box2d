@@ -1540,7 +1540,7 @@ B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
  */
 
 /// Replay a recording by re-running the engine and asserting recorded ids and state match.
-/// @param data Recorded bytes, e.g. from b2Recording_GetData or a loaded file
+/// @param data Recorded bytes.
 /// @param size Number of recorded bytes
 /// @param workerCount Worker count to use for replay. 0 uses the serial single-worker fallback.
 /// @return true if replay completed without divergence, false on any mismatch

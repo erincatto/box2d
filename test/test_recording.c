@@ -326,8 +326,8 @@ int RecordingTest( void )
 	b2ChainDef chainDef = b2DefaultChainDef();
 	chainDef.points = chainPoints;
 	chainDef.pointCount = 6;
-	chainDef.ghostBegin = (b2Vec2){ -12.0f, 0.0f };
-	chainDef.ghostEnd = (b2Vec2){ 8.0f, 8.0f };
+	chainDef.ghost1 = (b2Vec2){ -12.0f, 0.0f };
+	chainDef.ghost2 = (b2Vec2){ 8.0f, 8.0f };
 	chainDef.materials = chainMats;
 	chainDef.materialCount = 1;
 	chainDef.isLoop = false;

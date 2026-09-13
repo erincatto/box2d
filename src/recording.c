@@ -311,8 +311,8 @@ void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v )
 	{
 		b2RecW_VEC2( buf, v.points[i] );
 	}
-	b2RecW_VEC2( buf, v.ghostBegin );
-	b2RecW_VEC2( buf, v.ghostEnd );
+	b2RecW_VEC2( buf, v.ghost1 );
+	b2RecW_VEC2( buf, v.ghost2 );
 	b2RecW_I32( buf, v.materialCount );
 	for ( int i = 0; i < v.materialCount; ++i )
 	{

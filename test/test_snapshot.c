@@ -156,8 +156,8 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = chainPoints;
 		chainDef.pointCount = 3;
-		chainDef.ghostBegin = (b2Vec2){ -4.0f, 0.0f };
-		chainDef.ghostEnd = (b2Vec2){ 4.0f, 2.0f };
+		chainDef.ghost1 = (b2Vec2){ -4.0f, 0.0f };
+		chainDef.ghost2 = (b2Vec2){ 4.0f, 2.0f };
 		chainDef.materials = &chainMat;
 		chainDef.materialCount = 1;
 		chainDef.isLoop = false;

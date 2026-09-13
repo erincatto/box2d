@@ -496,11 +496,11 @@ typedef struct b2ChainDef
 
 	/// Leading ghost point for an open chain. Distance from first point must be greater
 	/// than B2_LINEAR_SLOP. Ignored for loops.
-	b2Vec2 ghostBegin;
+	b2Vec2 ghost1;
 
 	/// Ending ghost point for an open chain. Distance from last point must be greater
 	/// than B2_LINEAR_SLOP. Ignored for loops.
-	b2Vec2 ghostEnd;
+	b2Vec2 ghost2;
 
 	/// One material for the whole chain or one for each segment. Cloned.
 	const b2SurfaceMaterial* materials;

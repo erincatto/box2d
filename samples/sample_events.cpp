@@ -697,8 +697,8 @@ public:
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
 			chainDef.pointCount = 18;
-			chainDef.ghostBegin = { 10.0f, 0.0f };
-			chainDef.ghostEnd = { -9.0f, 0.0f };
+			chainDef.ghost1 = { 10.0f, 0.0f };
+			chainDef.ghost2 = { -9.0f, 0.0f };
 			chainDef.filter.categoryBits = GROUND;
 			chainDef.filter.maskBits = FOOT | PLAYER;
 			chainDef.isLoop = false;

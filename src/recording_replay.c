@@ -385,8 +385,8 @@ b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr )
 	}
 	def.points = pointCount > 0 ? rdr->chainPoints : NULL;
 	def.pointCount = pointCount;
-	def.ghostBegin = b2RecR_VEC2( rdr );
-	def.ghostEnd = b2RecR_VEC2( rdr );
+	def.ghost1 = b2RecR_VEC2( rdr );
+	def.ghost2 = b2RecR_VEC2( rdr );
 
 	int materialCount = b2RecR_I32( rdr );
 	if ( materialCount < 0 )

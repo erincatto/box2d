@@ -1724,8 +1724,8 @@ public:
 			chainDef.pointCount = count1;
 
 			// The other chain carries on past both ends of this one
-			chainDef.ghostBegin = { 40.0f, 1.0f };
-			chainDef.ghostEnd = { 40.0f, -1.0f };
+			chainDef.ghost1 = { 40.0f, 1.0f };
+			chainDef.ghost2 = { 40.0f, -1.0f };
 			chainDef.isLoop = false;
 			b2CreateChain( groundId, &chainDef );
 		}
@@ -1734,8 +1734,8 @@ public:
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points2;
 			chainDef.pointCount = count2;
-			chainDef.ghostBegin = { -40.0f, -1.0f };
-			chainDef.ghostEnd = { -40.0f, 0.0f };
+			chainDef.ghost1 = { -40.0f, -1.0f };
+			chainDef.ghost2 = { -40.0f, 0.0f };
 			chainDef.isLoop = false;
 			b2CreateChain( groundId, &chainDef );
 		}

@@ -86,8 +86,8 @@ static b2ChainId CreateTaggedChain( b2BodyId bodyId, const b2Vec2* points, int p
 	chainDef.materials = materials;
 	chainDef.materialCount = materialCount;
 	chainDef.isLoop = isLoop;
-	chainDef.ghostBegin = ghostBegin;
-	chainDef.ghostEnd = ghostEnd;
+	chainDef.ghost1 = ghostBegin;
+	chainDef.ghost2 = ghostEnd;
 
 	return b2CreateChain( bodyId, &chainDef );
 }
