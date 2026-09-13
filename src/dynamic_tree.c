@@ -4,8 +4,8 @@
 #include "dynamic_tree.h"
 
 #include "aabb.h"
-#include "atomic.h"
 #include "core.h"
+#include "platform.h"
 
 #include "box2d/collision.h"
 #include "box2d/constants.h"

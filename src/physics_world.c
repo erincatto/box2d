@@ -9,7 +9,6 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
-#include "atomic.h"
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
@@ -20,6 +19,7 @@
 #include "island.h"
 #include "joint.h"
 #include "parallel_for.h"
+#include "platform.h"
 #include "recording.h"
 #include "scheduler.h"
 #include "sensor.h"
@@ -504,10 +504,10 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invIB = bodySimB->invInertia;
 
 			// todo plan to get rid of b2Body from this hot path due to cache misses.
-			//B2_VALIDATE( ( bodyA->flags & b2_isFast ) == ( bodySimA->flags & b2_isFast ) );
-			//B2_VALIDATE( ( bodyB->flags & b2_isFast ) == ( bodySimB->flags & b2_isFast ) );
-			//B2_VALIDATE( bodyA->setIndex == b2_staticSet || bodyA->setIndex == b2_awakeSet );
-			//B2_VALIDATE( bodyB->setIndex == b2_staticSet || bodyB->setIndex == b2_awakeSet );
+			// B2_VALIDATE( ( bodyA->flags & b2_isFast ) == ( bodySimA->flags & b2_isFast ) );
+			// B2_VALIDATE( ( bodyB->flags & b2_isFast ) == ( bodySimB->flags & b2_isFast ) );
+			// B2_VALIDATE( bodyA->setIndex == b2_staticSet || bodyA->setIndex == b2_awakeSet );
+			// B2_VALIDATE( bodyB->setIndex == b2_staticSet || bodyB->setIndex == b2_awakeSet );
 
 			bool isFast = ( bodyA->flags & b2_isFast ) || ( bodyB->flags & b2_isFast );
 

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "atomic.h"
+#include "platform.h"
 
 #include "box2d/base.h"
 
@@ -81,7 +81,7 @@ static inline int b2GetSetCapacity( b2HashSet* set )
 	return set->capacity;
 }
 
-static inline void b2PrefetchHash(b2HashSet* set, uint64_t hash)
+static inline void b2PrefetchHash( b2HashSet* set, uint64_t hash )
 {
 	uint32_t capacity = set->capacity;
 	uint32_t index = (uint32_t)hash & ( capacity - 1 );

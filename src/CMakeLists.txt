@@ -6,7 +6,6 @@ set(BOX2D_SOURCE_FILES
 	aabb.h
 	arena_allocator.c
 	arena_allocator.h
-	atomic.h
 	bitset.c
 	bitset.h
 	body.c
@@ -42,6 +41,7 @@ set(BOX2D_SOURCE_FILES
 	mover.c
 	parallel_for.c
 	parallel_for.h
+	platform.h
 	physics_world.c
 	physics_world.h
 	pogo_joint.c

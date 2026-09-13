@@ -5,7 +5,6 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
-#include "atomic.h"
 #include "bitset.h"
 #include "body.h"
 #include "contact.h"
@@ -16,6 +15,7 @@
 #include "joint.h"
 #include "parallel_for.h"
 #include "physics_world.h"
+#include "platform.h"
 #include "sensor.h"
 #include "shape.h"
 #include "solver_set.h"

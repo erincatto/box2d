@@ -30,7 +30,7 @@
 
 #endif
 
-#include "atomic.h"
+#include "platform.h"
 
 // This allows the user to change the length units at runtime
 static float b2_lengthUnitsPerMeter = 1.0f;

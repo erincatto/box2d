@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "atomic.h"
-#include "core.h"
 #include "scheduler.h"
+
+#include "core.h"
+#include "platform.h"
 
 #include "box2d/base.h"
 #include "box2d/constants.h"
