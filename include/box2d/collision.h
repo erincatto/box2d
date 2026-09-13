@@ -4,7 +4,7 @@
 #pragma once
 
 #include "base.h"
-#include "math_functions.h"
+#include "math_types.h"
 
 #include <stdbool.h>
 

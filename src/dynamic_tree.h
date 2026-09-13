@@ -6,6 +6,7 @@
 #include "core.h"
 
 #include "box2d/collision.h"
+#include "box2d/math_functions.h"
 
 #define B2_TREE_STACK_SIZE 512
 

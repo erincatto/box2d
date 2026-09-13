@@ -6,7 +6,7 @@
 #include "base.h"
 #include "collision.h"
 #include "id.h"
-#include "math_functions.h"
+#include "math_types.h"
 
 #include <stdbool.h>
 #include <stdint.h>

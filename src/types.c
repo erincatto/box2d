@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "core.h"
+
+#include "box2d/math_functions.h"
 #include "box2d/types.h"
 
-#include "core.h"
+#include <float.h>
 
 b2WorldDef b2DefaultWorldDef( void )
 {
