@@ -518,58 +518,56 @@ typedef struct b2ChainDef
 /// @ingroup shape
 B2_API b2ChainDef b2DefaultChainDef( void );
 
-//! @cond
 /// Profiling data. Times are in milliseconds.
+/// Comments below are just to make Doxygen happy.
 typedef struct b2Profile
 {
-	float step;
-	float pairs;
-	float collide;
-	float solve;
-	float solverSetup;
-	float constraints;
-	float prepareConstraints;
-	float integrateVelocities;
-	float warmStart;
-	float solveImpulses;
-	float integratePositions;
-	float relaxImpulses;
-	float storeImpulses;
-	float splitIslands;
-	float transforms;
-	float sensorHits;
-	float jointEvents;
-	float hitEvents;
-	float refit;
-	float bullets;
-	float sleepIslands;
-	float sensors;
+	float step;				   ///< profile
+	float pairs;			   ///< profile
+	float collide;			   ///< profile
+	float solve;			   ///< profile
+	float solverSetup;		   ///< profile
+	float constraints;		   ///< profile
+	float prepareConstraints;  ///< profile
+	float integrateVelocities; ///< profile
+	float warmStart;		   ///< profile
+	float solveImpulses;	   ///< profile
+	float integratePositions;  ///< profile
+	float relaxImpulses;	   ///< profile
+	float storeImpulses;	   ///< profile
+	float splitIslands;		   ///< profile
+	float transforms;		   ///< profile
+	float sensorHits;		   ///< profile
+	float jointEvents;		   ///< profile
+	float hitEvents;		   ///< profile
+	float refit;			   ///< profile
+	float bullets;			   ///< profile
+	float sleepIslands;		   ///< profile
+	float sensors;			   ///< profile
 } b2Profile;
 
 /// Counters that give details of the simulation size.
 typedef struct b2Counters
 {
-	int64_t byteCount;
+	int64_t byteCount;	  ///< counter
+	int bodyCount;		  ///< counter
+	int shapeCount;		  ///< counter
+	int contactCount;	  ///< counter
+	int jointCount;		  ///< counter
+	int islandCount;	  ///< counter
+	int stackUsed;		  ///< counter
+	int staticTreeHeight; ///< counter
+	int treeHeight;		  ///< counter
+	int taskCount;		  ///< counter
+	int colorCounts[24];  ///< counter
 
-	int bodyCount;
-	int shapeCount;
-	int contactCount;
-	int jointCount;
-	int islandCount;
-	int stackUsed;
-	int staticTreeHeight;
-	int treeHeight;
-	int taskCount;
-	int colorCounts[24];
-
-	// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
+	/// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
 	int awakeContactCount;
 
-	// Number of contacts recycled in the most recent step.
+	/// Number of contacts recycled in the most recent step.
 	int recycledContactCount;
 
 } b2Counters;
-//! @endcond
 
 /// Joint type enumeration
 ///

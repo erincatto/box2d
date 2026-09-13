@@ -34,6 +34,7 @@ extern int DynamicTreeTest( void );
 extern int IdTest( void );
 extern int LargeWorldTest( void );
 extern int MathTest( void );
+extern int MoverTest( void );
 extern int RecordingTest( void );
 extern int RecordingOutlinerTest( void );
 extern int RecordingKeyframeTest( void );
@@ -85,6 +86,7 @@ int main( int argc, char** argv )
 
 	MAYBE_RUN_TEST( TableTest );
 	MAYBE_RUN_TEST( MathTest );
+	MAYBE_RUN_TEST( MoverTest );
 	MAYBE_RUN_TEST( BitSetTest );
 	MAYBE_RUN_TEST( CollisionTest );
 	MAYBE_RUN_TEST( ContainerTest );

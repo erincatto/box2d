@@ -12,6 +12,7 @@ set(BOX2D_TEST_FILES
     test_large_world.c
     test_macros.h
     test_math.c
+    test_mover.c
     test_recording.c
     test_restitution.c
     test_shape.c

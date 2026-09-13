@@ -66,7 +66,10 @@ typedef struct b2WorldTransform
 
 #else
 
+/// Alias in single precision.
 typedef b2Vec2 b2Pos;
+
+/// Alias in single precision.
 typedef b2Transform b2WorldTransform;
 
 #endif
@@ -159,7 +162,7 @@ B2_INLINE int b2ClampInt( int a, int lower, int upper )
 	return a < lower ? lower : ( a > upper ? upper : a );
 }
 
-// https://en.wikipedia.org/wiki/Floor_and_ceiling_functions
+/// https://en.wikipedia.org/wiki/Floor_and_ceiling_functions
 B2_INLINE int b2CeilingInt( int numerator, int denominator )
 {
 	B2_VALIDATE( denominator > 0 && numerator >= 0 );
