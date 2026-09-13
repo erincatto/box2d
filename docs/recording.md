@@ -106,7 +106,7 @@ determinism contract below). `b2RecPlayer_IsAtEnd` reports when the recording is
 is non-fatal during playback so the viewer can keep playing and show where the run starts to
 differ.
 
-## Snapshots (#snapshot)
+## Snapshots
 
 A recording is seeded by a snapshot: a serialized image of a world's simulation state at a step
 boundary. It captures everything the engine needs to continue the simulation: bodies, shapes,

@@ -96,7 +96,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 			chainDef.materials = &material;
 			chainDef.materialCount = 1;
@@ -686,9 +686,9 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			b2Vec2 points[20];
-			float x = 10.0f;
-			for ( int i = 0; i < 20; ++i )
+			b2Vec2 points[18];
+			float x = 9.0f;
+			for ( int i = 0; i < 18; ++i )
 			{
 				points[i] = { x, 0.0f };
 				x -= 1.0f;
@@ -696,7 +696,9 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = 20;
+			chainDef.pointCount = 18;
+			chainDef.ghostBegin = { 10.0f, 0.0f };
+			chainDef.ghostEnd = { -9.0f, 0.0f };
 			chainDef.filter.categoryBits = GROUND;
 			chainDef.filter.maskBits = FOOT | PLAYER;
 			chainDef.isLoop = false;
@@ -825,7 +827,7 @@ public:
 			b2Vec2 points[] = { { 40.0f, -40.0f }, { -40.0f, -40.0f }, { -40.0f, 40.0f }, { 40.0f, 40.0f } };
 
 			b2ChainDef chainDef = b2DefaultChainDef();
-			chainDef.count = 4;
+			chainDef.pointCount = 4;
 			chainDef.points = points;
 			chainDef.isLoop = true;
 
@@ -1857,7 +1859,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = 22;
+			chainDef.pointCount = 22;
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId, &chainDef );

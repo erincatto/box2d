@@ -76,7 +76,7 @@ public:
 			{ 51.5935059, -16.2057514 },  { 43.6559982, -10.9139996 },	{ 35.7184982, -10.9139996 }, { 27.7809982, -10.9139996 },
 			{ 21.1664963, -14.2212505 },  { 11.9059982, -16.2057514 },	{ 0, -16.2057514 },			 { -10.5835037, -14.8827496 },
 			{ -17.1980019, -13.5597477 }, { -21.1665001, -12.2370014 }, { -25.1355019, -9.5909977 }, { -31.75, -3.63799858 },
-			{ -38.3644981, 6.2840004 },	  { -42.3334999, 9.59125137 },	{ -47.625, 11.5755005 },	 { -56.885498, 12.8985004 },
+			{ -38.3644981, 6.2840004 },	  { -42.3334999, 9.59125137 },	{ -47.625, 11.5755005 },
 		};
 
 		int count = sizeof( points ) / sizeof( points[0] );
@@ -115,7 +115,7 @@ public:
 
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
-		chainDef.count = count;
+		chainDef.pointCount = count;
 		chainDef.materials = &m_material;
 		chainDef.materialCount = 1;
 		chainDef.isLoop = true;
@@ -1457,7 +1457,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 			chainDef.materials = materials;
 			chainDef.materialCount = count;
@@ -1709,10 +1709,8 @@ public:
 			m_context->camera.zoom = 25.0f * 0.5f;
 		}
 
-		b2Vec2 points1[] = { { 40.0f, 1.0f },	{ 0.0f, 0.0f },	 { -40.0f, 0.0f },
-							 { -40.0f, -1.0f }, { 0.0f, -1.0f }, { 40.0f, -1.0f } };
-		b2Vec2 points2[] = { { -40.0f, -1.0f }, { 0.0f, -1.0f }, { 40.0f, -1.0f },
-							 { 40.0f, 0.0f },	{ 0.0f, 0.0f },	 { -40.0f, 0.0f } };
+		b2Vec2 points1[] = { { 0.0f, 0.0f }, { -40.0f, 0.0f }, { -40.0f, -1.0f }, { 0.0f, -1.0f } };
+		b2Vec2 points2[] = { { 0.0f, -1.0f }, { 40.0f, -1.0f }, { 40.0f, 0.0f }, { 0.0f, 0.0f } };
 
 		int count1 = std::size( points1 );
 		int count2 = std::size( points2 );
@@ -1723,7 +1721,11 @@ public:
 		{
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points1;
-			chainDef.count = count1;
+			chainDef.pointCount = count1;
+
+			// The other chain carries on past both ends of this one
+			chainDef.ghostBegin = { 40.0f, 1.0f };
+			chainDef.ghostEnd = { 40.0f, -1.0f };
 			chainDef.isLoop = false;
 			b2CreateChain( groundId, &chainDef );
 		}
@@ -1731,7 +1733,9 @@ public:
 		{
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points2;
-			chainDef.count = count2;
+			chainDef.pointCount = count2;
+			chainDef.ghostBegin = { -40.0f, -1.0f };
+			chainDef.ghostEnd = { -40.0f, 0.0f };
 			chainDef.isLoop = false;
 			b2CreateChain( groundId, &chainDef );
 		}

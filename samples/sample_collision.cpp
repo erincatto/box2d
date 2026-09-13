@@ -1443,7 +1443,7 @@ public:
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.userData = shapeDef.userData;
 			chainDef.points = points;
-			chainDef.count = 4;
+			chainDef.pointCount = 4;
 			chainDef.isLoop = true;
 			b2CreateChain( m_bodyIds[m_bodyIndex], &chainDef );
 		}
@@ -3407,9 +3407,10 @@ public:
 
 		b2CastOutput output = b2ShapeCast( &input );
 
+		float t = output.hit ? output.fraction : 1.0f;
 		b2Transform transform;
 		transform.q = m_transform.q;
-		transform.p = b2MulAdd( m_transform.p, output.fraction, input.translationB );
+		transform.p = b2MulAdd( m_transform.p, t, input.translationB );
 
 		b2DistanceInput distanceInput;
 		distanceInput.proxyA = m_proxyA;

@@ -3,6 +3,7 @@
 set(BOX2D_TEST_FILES
     main.c
     test_bitset.c
+    test_chain.c
     test_collision.c
     test_container.c
     test_determinism.c
@@ -12,6 +13,7 @@ set(BOX2D_TEST_FILES
     test_large_world.c
     test_macros.h
     test_math.c
+    test_mover.c
     test_recording.c
     test_restitution.c
     test_shape.c

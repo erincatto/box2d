@@ -103,6 +103,7 @@ typedef struct b2WorldCastOutput
 
 #else
 
+/// This is an alias in single precision.
 typedef b2CastOutput b2WorldCastOutput;
 
 #endif

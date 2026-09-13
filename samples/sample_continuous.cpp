@@ -295,7 +295,7 @@ public:
 
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
-		chainDef.count = 4;
+		chainDef.pointCount = 4;
 		chainDef.isLoop = true;
 
 		b2CreateChain( groundId, &chainDef );
@@ -413,7 +413,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId, &chainDef );
@@ -706,7 +706,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = 20;
+			chainDef.pointCount = 20;
 			chainDef.isLoop = true;
 			chainDef.materials = &material;
 			chainDef.materialCount = 1;
@@ -1555,7 +1555,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = vs;
-			chainDef.count = 5;
+			chainDef.pointCount = 5;
 			chainDef.isLoop = true;
 			b2CreateChain( groundId, &chainDef );
 		}

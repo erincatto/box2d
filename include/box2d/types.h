@@ -472,11 +472,10 @@ B2_API b2ShapeDef b2DefaultShapeDef( void );
 /// - chains have no mass and should be used on static bodies
 /// - chains have a counter-clockwise winding order (normal points right of segment direction)
 /// - chains are either a loop or open
-/// - a chain must have at least 4 points
 /// - the distance between any two points must be greater than B2_LINEAR_SLOP
 /// - a chain shape should not self intersect (this is not validated)
-/// - an open chain shape has NO COLLISION on the first and final edge
-/// - you may overlap two open chains on their first three and/or last three points to get smooth collision
+/// - an open chain shape needs a leading and trailing ghost point.
+/// - you may overlap two open chains using the ghost points to get smooth collision.
 /// - a chain shape creates multiple line segment shapes on the body
 /// https://en.wikipedia.org/wiki/Polygonal_chain
 /// Must be initialized using b2DefaultChainDef().
@@ -487,24 +486,32 @@ typedef struct b2ChainDef
 	/// Use this to store application specific shape data.
 	void* userData;
 
-	/// An array of at least 4 points. These are cloned and may be temporary.
+	/// Array of chain points. Each consecutive pair forms a segment. For a loop
+	/// the last and first point form a segment. Cloned.
 	const b2Vec2* points;
 
-	/// The point count, must be 4 or more.
-	int count;
+	/// The point count. At least 2 for an open chain and at least 3 for a loop.
+	/// segmentCount = isLoop ? pointCount : pointCount - 1
+	int pointCount;
 
-	/// Surface materials for each segment. These are cloned.
+	/// Leading ghost point for an open chain. Distance from first point must be greater
+	/// than B2_LINEAR_SLOP. Ignored for loops.
+	b2Vec2 ghostBegin;
+
+	/// Ending ghost point for an open chain. Distance from last point must be greater
+	/// than B2_LINEAR_SLOP. Ignored for loops.
+	b2Vec2 ghostEnd;
+
+	/// One material for the whole chain or one for each segment. Cloned.
 	const b2SurfaceMaterial* materials;
 
-	/// The material count. Must be 1 or count. This allows you to provide one
-	/// material for all segments or a unique material per segment. For open
-	/// chains, the material on the ghost segments are place holders.
+	/// The material count. Must be 1 or the segment count.
 	int materialCount;
 
 	/// Contact filtering data.
 	b2Filter filter;
 
-	/// Indicates a closed chain formed by connecting the first and last points
+	/// Indicates a closed chain formed by connecting the first and last point.
 	bool isLoop;
 
 	/// Enable sensors to detect this chain. False by default.
@@ -518,58 +525,57 @@ typedef struct b2ChainDef
 /// @ingroup shape
 B2_API b2ChainDef b2DefaultChainDef( void );
 
-//! @cond
 /// Profiling data. Times are in milliseconds.
+/// Comments below are just to make Doxygen happy.
 typedef struct b2Profile
 {
-	float step;
-	float pairs;
-	float collide;
-	float solve;
-	float solverSetup;
-	float constraints;
-	float prepareConstraints;
-	float integrateVelocities;
-	float warmStart;
-	float solveImpulses;
-	float integratePositions;
-	float relaxImpulses;
-	float storeImpulses;
-	float splitIslands;
-	float transforms;
-	float sensorHits;
-	float jointEvents;
-	float hitEvents;
-	float refit;
-	float bullets;
-	float sleepIslands;
-	float sensors;
+	float step;				   ///< profile
+	float pairs;			   ///< profile
+	float collide;			   ///< profile
+	float solve;			   ///< profile
+	float solverSetup;		   ///< profile
+	float constraints;		   ///< profile
+	float prepareConstraints;  ///< profile
+	float integrateVelocities; ///< profile
+	float warmStart;		   ///< profile
+	float solveImpulses;	   ///< profile
+	float integratePositions;  ///< profile
+	float relaxImpulses;	   ///< profile
+	float storeImpulses;	   ///< profile
+	float splitIslands;		   ///< profile
+	float transforms;		   ///< profile
+	float sensorHits;		   ///< profile
+	float jointEvents;		   ///< profile
+	float hitEvents;		   ///< profile
+	float refit;			   ///< profile
+	float bullets;			   ///< profile
+	float sleepIslands;		   ///< profile
+	float sensors;			   ///< profile
 } b2Profile;
 
 /// Counters that give details of the simulation size.
+/// Comments below are just to make Doxygen happy.
 typedef struct b2Counters
 {
-	int64_t byteCount;
+	int64_t byteCount;	  ///< counter
+	int bodyCount;		  ///< counter
+	int shapeCount;		  ///< counter
+	int contactCount;	  ///< counter
+	int jointCount;		  ///< counter
+	int islandCount;	  ///< counter
+	int stackUsed;		  ///< counter
+	int staticTreeHeight; ///< counter
+	int treeHeight;		  ///< counter
+	int taskCount;		  ///< counter
+	int colorCounts[24];  ///< counter
 
-	int bodyCount;
-	int shapeCount;
-	int contactCount;
-	int jointCount;
-	int islandCount;
-	int stackUsed;
-	int staticTreeHeight;
-	int treeHeight;
-	int taskCount;
-	int colorCounts[24];
-
-	// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
+	/// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
 	int awakeContactCount;
 
-	// Number of contacts recycled in the most recent step.
+	/// Number of contacts recycled in the most recent step.
 	int recycledContactCount;
 
 } b2Counters;
-//! @endcond
 
 /// Joint type enumeration
 ///

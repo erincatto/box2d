@@ -370,21 +370,23 @@ b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr )
 	b2ChainDef def = b2DefaultChainDef();
 	(void)b2RecR_U64( rdr ); // userData (not preserved)
 
-	int count = b2RecR_I32( rdr );
-	if ( count < 0 )
+	int pointCount = b2RecR_I32( rdr );
+	if ( pointCount < 0 )
 	{
-		count = 0;
+		pointCount = 0;
 	}
-	if ( b2RecReserveScratch( rdr, (void**)&rdr->chainPoints, &rdr->chainPointCap, count, (int)sizeof( b2Vec2 ) ) == false )
+	if ( b2RecReserveScratch( rdr, (void**)&rdr->chainPoints, &rdr->chainPointCap, pointCount, (int)sizeof( b2Vec2 ) ) == false )
 	{
-		count = 0; // corrupt count, the read has already failed
+		pointCount = 0; // corrupt count, the read has already failed
 	}
-	for ( int i = 0; i < count; ++i )
+	for ( int i = 0; i < pointCount; ++i )
 	{
 		rdr->chainPoints[i] = b2RecR_VEC2( rdr );
 	}
-	def.points = count > 0 ? rdr->chainPoints : NULL;
-	def.count = count;
+	def.points = pointCount > 0 ? rdr->chainPoints : NULL;
+	def.pointCount = pointCount;
+	def.ghostBegin = b2RecR_VEC2( rdr );
+	def.ghostEnd = b2RecR_VEC2( rdr );
 
 	int materialCount = b2RecR_I32( rdr );
 	if ( materialCount < 0 )
@@ -1201,7 +1203,12 @@ static void b2RecDispatch_DestroyChain( const b2RecArgs_DestroyChain* a, b2RecRe
 
 static void b2RecDispatch_ChainSetSurfaceMaterial( const b2RecArgs_ChainSetSurfaceMaterial* a, b2RecReader* rdr )
 {
-	b2Chain_SetSurfaceMaterial( b2RecMakeChainId( rdr, a->chain ), &a->material, a->materialIndex );
+	b2Chain_SetSurfaceMaterial( b2RecMakeChainId( rdr, a->chain ), &a->material, a->segmentIndex );
+}
+
+static void b2RecDispatch_ChainSetAllSurfaceMaterials( const b2RecArgs_ChainSetAllSurfaceMaterials* a, b2RecReader* rdr )
+{
+	b2Chain_SetAllSurfaceMaterials( b2RecMakeChainId( rdr, a->chain ), &a->material );
 }
 
 // Joint create: body ids in the def are remapped to the replay world before the call.

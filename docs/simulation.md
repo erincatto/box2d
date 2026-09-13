@@ -922,7 +922,7 @@ b2Vec2 points[4] = {
 
 b2ChainDef chainDef = b2DefaultChainDef();
 chainDef.points = points;
-chainDef.count = 4;
+chainDef.pointCount = 4;
 
 b2ChainId myChainId = b2CreateChain(myBodyId, &chainDef);
 
@@ -940,7 +940,7 @@ The segment normal depends on the winding order. A counter-clockwise winding ord
 ![Chain Shape Inwards Loop](images/chain_loop_inwards.svg)
 
 You may have a scrolling game world and would like to connect several chains together.
-You can connect chains together using ghost vertices. To do this you must have the first three or last three points of each chain overlap. See the sample `ChainLink` for details.
+You can connect chains together using ghost points. See the sample `ChainLink` for details.
 
 ![Chain Shape](images/chain_shape.svg)
 

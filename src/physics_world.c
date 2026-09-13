@@ -382,7 +382,6 @@ void b2DestroyWorld( b2WorldId worldId )
 		else
 		{
 			B2_ASSERT( chain->shapeIndices == NULL );
-			B2_ASSERT( chain->materials == NULL );
 		}
 	}
 
@@ -2175,8 +2174,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 			continue;
 		}
 
-		chainDataBytes += chain->count * (int)sizeof( int );
-		chainDataBytes += chain->materialCount * (int)sizeof( b2SurfaceMaterial );
+		chainDataBytes += chain->segmentCount * (int)sizeof( int );
 	}
 
 	// Sensors own overlap tracking arrays. The sensor array is dense.

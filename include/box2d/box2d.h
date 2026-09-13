@@ -901,15 +901,14 @@ B2_API int b2Chain_GetSegmentCount( b2ChainId chainId );
 /// the actual number of segments returned.
 B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity );
 
-/// Get the number of materials used on this chain. Must be 1 or the number of segments.
-B2_API int b2Chain_GetSurfaceMaterialCount( b2ChainId chainId );
+/// Set the chain material on all segments.
+B2_API void b2Chain_SetAllSurfaceMaterials( b2ChainId chainId, const b2SurfaceMaterial* material );
 
-/// Set a chain material. If the chain has only one material, this material is applied to all
-/// segments. Otherwise it is applied to a single segment.
-B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex );
+/// Set a chain material by segment index.
+B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int segmentIndex );
 
-/// Get a chain material by index.
-B2_API b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int materialIndex );
+/// Get a chain material by segment index.
+B2_API b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int segmentIndex );
 
 /// Chain identifier validation. Provides validation for up to 64K allocations.
 B2_API bool b2Chain_IsValid( b2ChainId id );
