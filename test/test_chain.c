@@ -49,14 +49,6 @@ static int CountingAssertFcn( const char* condition, const char* fileName, int l
 	return 0;
 }
 
-// Matches the library default, restored so a later assert still breaks
-static int BreakingAssertFcn( const char* condition, const char* fileName, int lineNumber )
-{
-	fprintf( stderr, "BOX2D ASSERTION: %s, %s, line %d\n", condition, fileName, lineNumber );
-	fflush( stderr );
-	return 1;
-}
-
 static void BeginCountingAsserts( void )
 {
 	assertCount = 0;
@@ -66,7 +58,7 @@ static void BeginCountingAsserts( void )
 // Always zero in a build without asserts, so a check on this is a debug signal only
 static int EndCountingAsserts( void )
 {
-	b2SetAssertFcn( BreakingAssertFcn );
+	b2SetAssertFcn( TestAssertFcn );
 	return assertCount;
 }
 
@@ -324,8 +316,12 @@ static int SingleMaterialTest( void )
 	uint64_t broadcast[5];
 	ReadSegmentTags( chainId, broadcast, 5 );
 
+	// One material at creation must not narrow the segment index, which is what the old count
+	// bound would have rejected here
 	material.userMaterialId = 98;
+	BeginCountingAsserts();
 	b2Chain_SetSurfaceMaterial( chainId, &material, 2 );
+	assertsTripped += EndCountingAsserts();
 
 	uint64_t single[5];
 	uint64_t reported[5];

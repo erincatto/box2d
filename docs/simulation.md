@@ -923,6 +923,7 @@ b2Vec2 points[4] = {
 b2ChainDef chainDef = b2DefaultChainDef();
 chainDef.points = points;
 chainDef.pointCount = 4;
+chainDef.isLoop = true;
 
 b2ChainId myChainId = b2CreateChain(myBodyId, &chainDef);
 

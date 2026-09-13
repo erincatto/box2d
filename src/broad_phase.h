@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "bitset.h"
+#include "dynamic_tree.h"
 #include "table.h"
 
 #include "box2d/collision.h"
@@ -47,5 +47,16 @@ void b2UpdateBroadPhasePairs( b2World* world );
 void b2ValidateBroadphase( const b2BroadPhase* bp );
 void b2ValidateNoEnlarged( const b2BroadPhase* bp );
 
-void b2BroadPhase_MarkProxyMovedSerial( b2BroadPhase* bp, int proxyKey );
-void b2BroadPhase_MarkProxyMoved( b2BroadPhase* bp, int proxyKey, b2AABB aabb );
+static inline void b2BroadPhase_MarkProxyMovedSerial( b2BroadPhase* bp, int proxyKey )
+{
+	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
+	int proxyId = B2_PROXY_ID( proxyKey );
+	b2DynamicTree_MarkProxyMovedSerial( bp->trees + proxyType, proxyId );
+}
+
+static inline void b2BroadPhase_MarkProxyMoved( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
+{
+	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
+	int proxyId = B2_PROXY_ID( proxyKey );
+	b2DynamicTree_MarkProxyMoved( bp->trees + proxyType, proxyId, aabb );
+}

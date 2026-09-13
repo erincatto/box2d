@@ -7,12 +7,16 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+// Installed for the whole run. A test that swaps in its own handler restores this one, since the
+// library default is not reachable and there is no way to read the current handler back.
+int TestAssertFcn( const char* condition, const char* fileName, int lineNumber );
+
 #define RUN_TEST( T )                                                                                                            \
 	do                                                                                                                           \
 	{                                                                                                                            \
-		uint64_t testTicks = b2GetTicks();                                                                                           \
+		uint64_t testTicks = b2GetTicks();                                                                                       \
 		int result = T();                                                                                                        \
-		float s = 0.001f * b2GetMilliseconds( testTicks );                                                                                   \
+		float s = 0.001f * b2GetMilliseconds( testTicks );                                                                       \
 		if ( result == 1 )                                                                                                       \
 		{                                                                                                                        \
 			printf( "test failed: " #T "\n" );                                                                                   \
@@ -20,7 +24,7 @@
 		}                                                                                                                        \
 		else                                                                                                                     \
 		{                                                                                                                        \
-			printf( "test passed: " #T " after %.2f s\n", s );                                                                 \
+			printf( "test passed: " #T " after %.2f s\n", s );                                                                   \
 		}                                                                                                                        \
 	}                                                                                                                            \
 	while ( false )

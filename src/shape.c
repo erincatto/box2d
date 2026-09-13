@@ -435,6 +435,15 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 	}
 }
 
+static inline void b2ValidateMaterial( const b2SurfaceMaterial* material )
+{
+	B2_UNUSED( material );
+	B2_ASSERT( b2IsValidFloat( material->friction ) && material->friction >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( material->restitution ) && material->restitution >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( material->rollingResistance ) && material->rollingResistance >= 0.0f );
+	B2_ASSERT( b2IsValidFloat( material->tangentSpeed ) );
+}
+
 b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 {
 	B2_CHECK_DEF( def );
@@ -474,16 +483,6 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 
 	int materialCount = def->materialCount;
 
-	for ( int i = 0; i < materialCount; ++i )
-	{
-		const b2SurfaceMaterial* material = def->materials + i;
-		B2_UNUSED( material );
-		B2_ASSERT( b2IsValidFloat( material->friction ) && material->friction >= 0.0f );
-		B2_ASSERT( b2IsValidFloat( material->restitution ) && material->restitution >= 0.0f );
-		B2_ASSERT( b2IsValidFloat( material->rollingResistance ) && material->rollingResistance >= 0.0f );
-		B2_ASSERT( b2IsValidFloat( material->tangentSpeed ) );
-	}
-
 	body->headChainId = chainId;
 
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -512,14 +511,14 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 			chainSegment.segment.point2 = points[( i + 1 ) % n];
 			chainSegment.ghost2 = points[( i + 2 ) % n];
 
-			B2_VALIDATE( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
-			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );
-			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point2, chainSegment.ghost2) > tolSqr );
+			B2_ASSERT( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
+			B2_ASSERT( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );
 
 			chainSegment.chainId = chainId;
 			prevIndex = i;
 
 			int materialIndex = materialCount == 1 ? 0 : i;
+			b2ValidateMaterial( def->materials + materialIndex );
 			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
@@ -528,23 +527,28 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	}
 	else
 	{
+		// These are set to INFINITY in the default def as a sentinel to ensure they are set.
+		B2_ASSERT( b2IsValidVec2( def->ghost1 ) );
+		B2_ASSERT( b2IsValidVec2( def->ghost2 ) );
+
 		b2ChainSegment chainSegment;
 
 		for ( int i = 0; i < n; ++i )
 		{
-			B2_VALIDATE( i + 1 < def->pointCount );
+			B2_ASSERT( i + 1 < def->pointCount );
 			chainSegment.ghost1 = i == 0 ? def->ghost1 : points[i - 1];
 			chainSegment.segment.point1 = points[i + 0];
 			chainSegment.segment.point2 = points[i + 1];
 			chainSegment.ghost2 = i == n - 1 ? def->ghost2 : points[i + 2];
 
-			B2_VALIDATE( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
-			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );
-			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point2, chainSegment.ghost2 ) > tolSqr );
+			B2_ASSERT( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
+			B2_ASSERT( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );
+			B2_ASSERT( b2DistanceSquared( chainSegment.segment.point2, chainSegment.ghost2 ) > tolSqr );
 
 			chainSegment.chainId = chainId;
 
 			int materialIndex = materialCount == 1 ? 0 : i;
+			b2ValidateMaterial( def->materials + materialIndex );
 			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
@@ -658,6 +662,8 @@ int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacit
 
 void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int segmentIndex )
 {
+	b2ValidateMaterial(material );
+
 	b2World* world = b2GetWorldLocked( chainId.world0 );
 	if ( world == NULL )
 	{
@@ -675,6 +681,8 @@ void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* mat
 
 void b2Chain_SetAllSurfaceMaterials( b2ChainId chainId, const b2SurfaceMaterial* material )
 {
+	b2ValidateMaterial( material );
+
 	b2World* world = b2GetWorldLocked( chainId.world0 );
 	if ( world == NULL )
 	{

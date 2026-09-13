@@ -671,17 +671,3 @@ void b2ValidateNoEnlarged( const b2BroadPhase* bp )
 	B2_UNUSED( bp );
 #endif
 }
-
-void b2BroadPhase_MarkProxyMovedSerial( b2BroadPhase* bp, int proxyKey )
-{
-	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
-	int proxyId = B2_PROXY_ID( proxyKey );
-	b2DynamicTree_MarkProxyMovedSerial( bp->trees + proxyType, proxyId );
-}
-
-void b2BroadPhase_MarkProxyMoved( b2BroadPhase* bp, int proxyKey, b2AABB aabb )
-{
-	b2BodyType proxyType = B2_PROXY_TYPE( proxyKey );
-	int proxyId = B2_PROXY_ID( proxyKey );
-	b2DynamicTree_MarkProxyMoved( bp->trees + proxyType, proxyId, aabb );
-}

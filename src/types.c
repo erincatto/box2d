@@ -86,6 +86,11 @@ b2ChainDef b2DefaultChainDef( void )
 	b2ChainDef def = { 0 };
 	def.materials = &defaultMaterial;
 	def.materialCount = 1;
+	// using infinity as a sentinel
+	def.ghost1.x = INFINITY;
+	def.ghost1.y = INFINITY;
+	def.ghost2.x = INFINITY;
+	def.ghost2.y = INFINITY;
 	def.filter = b2DefaultFilter();
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;

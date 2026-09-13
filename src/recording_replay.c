@@ -17,9 +17,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// Keyframe ring tuning. A memory budget caps the snapshots kept; the spacing starts at the min and
+// Keyframe ring tuning. A memory budget caps the snapshots kept. The spacing starts at the min and
 // doubles when adding the next keyframe would exceed the budget, so memory stays bounded and seek
-// cost grows only once a recording outgrows the budget. The Replay sample exposes both as sliders.
+// cost grows only once a recording outgrows the budget.
 #define B2_REC_KEYFRAME_INTERVAL_DEFAULT 16
 #define B2_REC_KEYFRAME_BUDGET_DEFAULT ( 512 * 1024 * 1024 )
 

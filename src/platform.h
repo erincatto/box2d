@@ -274,6 +274,7 @@ static inline int b2PopCount64( uint64_t block )
 {
 	return (int)__popcnt64( block );
 }
+
 #else
 
 static inline uint32_t b2CTZ32( uint32_t block )
