@@ -498,6 +498,7 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	chainShape->shapeIndices = b2Alloc( n * sizeof( int ) );
 
 	float tolSqr = B2_LINEAR_SLOP * B2_LINEAR_SLOP;
+	B2_UNUSED( tolSqr );
 
 	if ( def->isLoop )
 	{
