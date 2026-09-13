@@ -547,6 +547,7 @@ typedef struct b2Profile
 } b2Profile;
 
 /// Counters that give details of the simulation size.
+/// Comments below are just to make Doxygen happy.
 typedef struct b2Counters
 {
 	int64_t byteCount;	  ///< counter
