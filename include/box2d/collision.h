@@ -4,7 +4,7 @@
 #pragma once
 
 #include "base.h"
-#include "math_functions.h"
+#include "math_types.h"
 
 #include <stdbool.h>
 
@@ -103,6 +103,7 @@ typedef struct b2WorldCastOutput
 
 #else
 
+/// This is an alias in single precision.
 typedef b2CastOutput b2WorldCastOutput;
 
 #endif

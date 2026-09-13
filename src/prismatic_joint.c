@@ -12,8 +12,6 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-#include <stdio.h>
-
 void b2PrismaticJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 {
 	b2World* world = b2GetWorld( jointId.world0 );

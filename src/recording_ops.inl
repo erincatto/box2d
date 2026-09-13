@@ -103,7 +103,8 @@ B2_REC_OP( 0x5F, ShapeApplyWind, RET_NONE,
 // Chain
 B2_REC_OP( 0x70, CreateChain, RET_CHAINID, ARG( BODYID, body ) ARG( CHAINDEF, def ) )
 B2_REC_OP( 0x71, DestroyChain, RET_NONE, ARG( CHAINID, chain ) )
-B2_REC_OP( 0x72, ChainSetSurfaceMaterial, RET_NONE, ARG( CHAINID, chain ) ARG( MATERIAL, material ) ARG( I32, materialIndex ) )
+B2_REC_OP( 0x72, ChainSetSurfaceMaterial, RET_NONE, ARG( CHAINID, chain ) ARG( MATERIAL, material ) ARG( I32, segmentIndex ) )
+B2_REC_OP( 0x73, ChainSetAllSurfaceMaterials, RET_NONE, ARG( CHAINID, chain ) ARG( MATERIAL, material ) )
 
 // Joint destroy
 B2_REC_OP( 0x90, DestroyJoint, RET_NONE, ARG( JOINTID, joint ) )

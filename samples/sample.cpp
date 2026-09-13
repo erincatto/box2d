@@ -1042,7 +1042,8 @@ void Sample::DrawHud( float frameTime )
 					  1000.0f * frameTime, m_stepCount );
 }
 
-// Parse an SVG path element with only straight lines. Example:
+// Parse an SVG path element with only straight lines. Removes the loop point.
+// Example:
 // "M 47.625004,185.20833 H 161.39585 l 29.10417,-2.64583 26.45834,-7.9375 26.45833,-13.22917 23.81251,-21.16666 h "
 // "13.22916 v 44.97916 H 592.66669 V 0 h 21.16671 v 206.375 l -566.208398,-1e-5 z"
 int Sample::ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int capacity, float scale, bool reverseOrder )
@@ -1175,7 +1176,15 @@ int Sample::ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int c
 
 	if ( reverseOrder )
 	{
+		// todo
 	}
+
+	// Remove the loop point for chain shapes.
+	if ( pointCount > 2 && b2Distance( points[0], points[pointCount - 1] ) <= B2_LINEAR_SLOP)
+	{
+		pointCount -= 1;
+	}
+
 	return pointCount;
 }
 

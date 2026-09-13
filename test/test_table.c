@@ -1,9 +1,8 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "atomic.h"
 #include "core.h"
-#include "ctz.h"
+#include "platform.h"
 #include "table.h"
 #include "test_macros.h"
 
@@ -136,7 +135,7 @@ static int HashSetGrowthTest( void )
 	// With capacity 16, growth should happen when count reaches 8
 	for ( uint64_t i = 0; i < 8; ++i )
 	{
-		b2AddKey( &set, i + 1);
+		b2AddKey( &set, i + 1 );
 	}
 
 	// Should have grown

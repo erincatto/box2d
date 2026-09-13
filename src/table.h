@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "atomic.h"
-
 #include "box2d/base.h"
 
 #include <stdbool.h>
@@ -79,11 +77,4 @@ static inline int b2GetSetCount( b2HashSet* set )
 static inline int b2GetSetCapacity( b2HashSet* set )
 {
 	return set->capacity;
-}
-
-static inline void b2PrefetchHash(b2HashSet* set, uint64_t hash)
-{
-	uint32_t capacity = set->capacity;
-	uint32_t index = (uint32_t)hash & ( capacity - 1 );
-	b2Prefetch( set->items + index );
 }

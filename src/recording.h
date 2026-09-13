@@ -6,13 +6,16 @@
 #include "core.h"
 
 #include "box2d/id.h"
-#include "box2d/math_functions.h"
+#include "box2d/math_types.h"
 #include "box2d/types.h"
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
+#if defined( _MSC_VER )
+#include <vcruntime_string.h>
+#else
 #include <string.h>
+#endif
 
 // FNV-1a 64-bit constants
 #define B2_SNAP_FNV_INIT 14695981039346656037ull
@@ -45,7 +48,7 @@ typedef struct b2World b2World;
 // Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
 // changes that keep the 32 byte header shape.
 #define B2_REC_VERSION_MAJOR 3
-#define B2_REC_VERSION_MINOR 8 // sibling pairs
+#define B2_REC_VERSION_MINOR 9 // chain ghost points
 
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader

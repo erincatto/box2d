@@ -9,17 +9,17 @@
 
 #include "aabb.h"
 #include "arena_allocator.h"
-#include "atomic.h"
 #include "bitset.h"
 #include "body.h"
 #include "broad_phase.h"
 #include "constraint_graph.h"
 #include "contact.h"
 #include "core.h"
-#include "ctz.h"
+#include "dynamic_tree.h"
 #include "island.h"
 #include "joint.h"
 #include "parallel_for.h"
+#include "platform.h"
 #include "recording.h"
 #include "scheduler.h"
 #include "sensor.h"
@@ -33,12 +33,6 @@
 #include <float.h>
 #include <stdio.h>
 #include <string.h>
-
-#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
-#include <xmmintrin.h>
-#elif ( defined( _M_ARM64 ) || defined( __aarch64__ ) ) && defined( _MSC_VER )
-#include <intrin.h>
-#endif
 
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
@@ -382,7 +376,6 @@ void b2DestroyWorld( b2WorldId worldId )
 		else
 		{
 			B2_ASSERT( chain->shapeIndices == NULL );
-			B2_ASSERT( chain->materials == NULL );
 		}
 	}
 
@@ -505,10 +498,10 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invIB = bodySimB->invInertia;
 
 			// todo plan to get rid of b2Body from this hot path due to cache misses.
-			//B2_VALIDATE( ( bodyA->flags & b2_isFast ) == ( bodySimA->flags & b2_isFast ) );
-			//B2_VALIDATE( ( bodyB->flags & b2_isFast ) == ( bodySimB->flags & b2_isFast ) );
-			//B2_VALIDATE( bodyA->setIndex == b2_staticSet || bodyA->setIndex == b2_awakeSet );
-			//B2_VALIDATE( bodyB->setIndex == b2_staticSet || bodyB->setIndex == b2_awakeSet );
+			// B2_VALIDATE( ( bodyA->flags & b2_isFast ) == ( bodySimA->flags & b2_isFast ) );
+			// B2_VALIDATE( ( bodyB->flags & b2_isFast ) == ( bodySimB->flags & b2_isFast ) );
+			// B2_VALIDATE( bodyA->setIndex == b2_staticSet || bodyA->setIndex == b2_awakeSet );
+			// B2_VALIDATE( bodyB->setIndex == b2_staticSet || bodyB->setIndex == b2_awakeSet );
 
 			bool isFast = ( bodyA->flags & b2_isFast ) || ( bodyB->flags & b2_isFast );
 
@@ -2175,8 +2168,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 			continue;
 		}
 
-		chainDataBytes += chain->count * (int)sizeof( int );
-		chainDataBytes += chain->materialCount * (int)sizeof( b2SurfaceMaterial );
+		chainDataBytes += chain->segmentCount * (int)sizeof( int );
 	}
 
 	// Sensors own overlap tracking arrays. The sensor array is dense.

@@ -3,10 +3,9 @@
 
 #include "table.h"
 
-#include "atomic.h"
 #include "bitset.h"
 #include "core.h"
-#include "ctz.h"
+#include "platform.h"
 
 #include <stdbool.h>
 #include <string.h>

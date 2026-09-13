@@ -12,12 +12,13 @@
 #include "body.h"
 #include "contact.h"
 #include "core.h"
-#include "ctz.h"
 #include "dynamic_tree.h"
 #include "parallel_for.h"
 #include "physics_world.h"
+#include "platform.h"
 #include "qsort.h"
 #include "shape.h"
+#include "simd.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -129,6 +130,13 @@ typedef struct b2IndexPair
 {
 	int a, b;
 } b2IndexPair;
+
+static inline void b2PrefetchHash( b2HashSet* set, uint64_t hash )
+{
+	uint32_t capacity = set->capacity;
+	uint32_t index = (uint32_t)hash & ( capacity - 1 );
+	b2Prefetch( set->items + index );
+}
 
 static void b2FlushCandidatePairs( b2PairContext* context )
 {

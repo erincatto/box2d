@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 #include "test_macros.h"
+
 #include "box2d/base.h"
 
 #include <string.h>
 
 #if defined( _MSC_VER )
-	#include <crtdbg.h>
+#include <crtdbg.h>
 
 // int MyAllocHook(int allocType, void* userData, size_t size, int blockType, long requestNumber, const unsigned char* filename,
 //	int lineNumber)
@@ -26,6 +27,7 @@
 #endif
 
 extern int BitSetTest( void );
+extern int ChainTest( void );
 extern int CollisionTest( void );
 extern int ContainerTest( void );
 extern int DeterminismTest( void );
@@ -34,6 +36,7 @@ extern int DynamicTreeTest( void );
 extern int IdTest( void );
 extern int LargeWorldTest( void );
 extern int MathTest( void );
+extern int MoverTest( void );
 extern int RecordingTest( void );
 extern int RecordingOutlinerTest( void );
 extern int RecordingKeyframeTest( void );
@@ -46,6 +49,13 @@ extern int SnapshotTest( void );
 extern int TableTest( void );
 extern int ThreadTest( void );
 extern int WorldTest( void );
+
+int TestAssertFcn( const char* condition, const char* fileName, int lineNumber )
+{
+	fprintf( stderr, "BOX2D ASSERTION: %s, %s, line %d\n", condition, fileName, lineNumber );
+	fflush( stderr );
+	return 1;
+}
 
 int main( int argc, char** argv )
 {
@@ -68,6 +78,8 @@ int main( int argc, char** argv )
 	___tracy_startup_profiler();
 #endif
 
+	b2SetAssertFcn( TestAssertFcn );
+
 	const char* filter = NULL;
 	if ( argc > 1 )
 	{
@@ -84,8 +96,8 @@ int main( int argc, char** argv )
 	printf( "======================================\n" );
 
 	MAYBE_RUN_TEST( TableTest );
-	MAYBE_RUN_TEST( MathTest );
 	MAYBE_RUN_TEST( BitSetTest );
+	MAYBE_RUN_TEST( ChainTest );
 	MAYBE_RUN_TEST( CollisionTest );
 	MAYBE_RUN_TEST( ContainerTest );
 	MAYBE_RUN_TEST( DeterminismTest );
@@ -93,11 +105,13 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( DynamicTreeTest );
 	MAYBE_RUN_TEST( IdTest );
 	MAYBE_RUN_TEST( LargeWorldTest );
-	MAYBE_RUN_TEST( RecordingTest );
-	MAYBE_RUN_TEST( RecordingOutlinerTest );
+	MAYBE_RUN_TEST( MathTest );
+	MAYBE_RUN_TEST( MoverTest );
 	MAYBE_RUN_TEST( RecordingKeyframeTest );
-	MAYBE_RUN_TEST( RecordingScrubTest );
+	MAYBE_RUN_TEST( RecordingOutlinerTest );
 	MAYBE_RUN_TEST( RecordingQueryScrubTest );
+	MAYBE_RUN_TEST( RecordingScrubTest );
+	MAYBE_RUN_TEST( RecordingTest );
 	MAYBE_RUN_TEST( ReStepRaceTest );
 	MAYBE_RUN_TEST( RestitutionTest );
 	MAYBE_RUN_TEST( ShapeTest );
@@ -107,7 +121,7 @@ int main( int argc, char** argv )
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );
-	
+
 	float duration = b2GetMilliseconds( ticks );
 	printf( "Test duration = %.2f s\n", 0.001f * duration );
 

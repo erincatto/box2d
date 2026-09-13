@@ -435,7 +435,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 			chainDef.materials = &material;
 			chainDef.materialCount = 1;

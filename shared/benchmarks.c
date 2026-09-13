@@ -376,7 +376,7 @@ void CreateSpinner( b2WorldId worldId )
 
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = points;
-		chainDef.count = SPINNER_POINT_COUNT;
+		chainDef.pointCount = SPINNER_POINT_COUNT;
 		chainDef.isLoop = true;
 		chainDef.materials = &material;
 		chainDef.materialCount = 1;

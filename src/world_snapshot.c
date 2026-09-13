@@ -32,7 +32,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 8u // sibling pairs
+#define B2_SNAP_VERSION 9u // chain segment count
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -91,7 +91,7 @@ typedef struct b2SnapHeader
 // reordered: resync the matching code in b2SerializeWorld / b2DeserializeIntoShell and bump
 // B2_SNAP_VERSION.
 #if INTPTR_MAX == INT64_MAX
-_Static_assert( sizeof( b2ChainShape ) == 48, "b2ChainShape layout changed; resync snapshot chain serialization" );
+_Static_assert( sizeof( b2ChainShape ) == 32, "b2ChainShape layout changed; resync snapshot chain serialization" );
 _Static_assert( sizeof( b2Sensor ) == 56, "b2Sensor layout changed; resync snapshot sensor serialization" );
 _Static_assert( sizeof( b2Island ) == 64, "b2Island layout changed; resync snapshot island serialization" );
 #endif
@@ -536,14 +536,12 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 		b2SnapW_I32( buf, chain->id );
 		b2SnapW_I32( buf, chain->bodyId );
 		b2SnapW_I32( buf, chain->nextChainId );
-		b2SnapW_I32( buf, chain->count );
-		b2SnapW_I32( buf, chain->materialCount );
+		b2SnapW_I32( buf, chain->segmentCount );
 		b2SnapW_Bytes( buf, &chain->generation, sizeof( uint16_t ) );
 		if ( chain->id != B2_NULL_INDEX )
 		{
 			// Live slot: write the two heap arrays
-			b2SnapW_Bytes( buf, chain->shapeIndices, chain->count * (int)sizeof( int ) );
-			b2SnapW_Bytes( buf, chain->materials, chain->materialCount * (int)sizeof( b2SurfaceMaterial ) );
+			b2SnapW_Bytes( buf, chain->shapeIndices, chain->segmentCount * (int)sizeof( int ) );
 		}
 	}
 
@@ -685,9 +683,9 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 		b2Array_Destroy( world->chainShapes );
 		b2Array_Create( world->chainShapes );
 
-		// Each chain writes 5 ints plus a uint16 generation
+		// Each chain writes 4 ints plus a uint16 generation
 		int chainCount = b2SnapR_I32( r );
-		if ( r->ok && b2SnapCheckCount( r, chainCount, (int)sizeof( b2ChainShape ), 5 * (int)sizeof( int ) + (int)sizeof( uint16_t ) ) == false )
+		if ( r->ok && b2SnapCheckCount( r, chainCount, (int)sizeof( b2ChainShape ), 4 * (int)sizeof( int ) + (int)sizeof( uint16_t ) ) == false )
 		{
 			r->ok = false;
 		}
@@ -704,29 +702,24 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 			chain->id = b2SnapR_I32( r );
 			chain->bodyId = b2SnapR_I32( r );
 			chain->nextChainId = b2SnapR_I32( r );
-			chain->count = b2SnapR_I32( r );
-			chain->materialCount = b2SnapR_I32( r );
+			chain->segmentCount = b2SnapR_I32( r );
 			b2SnapR_Bytes( r, &chain->generation, sizeof( uint16_t ) );
 			// A partial read leaves id as 0, which is a valid slot value, so gate the live branch on r->ok
 			if ( r->ok && chain->id != B2_NULL_INDEX )
 			{
-				if ( b2SnapCheckCount( r, chain->count, (int)sizeof( int ), (int)sizeof( int ) ) == false ||
-					 b2SnapCheckCount( r, chain->materialCount, (int)sizeof( b2SurfaceMaterial ), (int)sizeof( b2SurfaceMaterial ) ) == false )
+				if ( b2SnapCheckCount( r, chain->segmentCount, (int)sizeof( int ), (int)sizeof( int ) ) == false )
 				{
 					r->ok = false;
 					break;
 				}
 				// Live slot: allocate and copy heap arrays
-				chain->shapeIndices = b2Alloc( chain->count * (int)sizeof( int ) );
-				b2SnapR_Bytes( r, chain->shapeIndices, chain->count * (int)sizeof( int ) );
-				chain->materials = b2Alloc( chain->materialCount * (int)sizeof( b2SurfaceMaterial ) );
-				b2SnapR_Bytes( r, chain->materials, chain->materialCount * (int)sizeof( b2SurfaceMaterial ) );
+				chain->shapeIndices = b2Alloc( chain->segmentCount * (int)sizeof( int ) );
+				b2SnapR_Bytes( r, chain->shapeIndices, chain->segmentCount * (int)sizeof( int ) );
 			}
 			else
 			{
 				// Free slot must have NULL pointers; zero init above handles this
 				chain->shapeIndices = NULL;
-				chain->materials = NULL;
 			}
 		}
 	}

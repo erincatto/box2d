@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2023 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "core.h"
+
+#include "box2d/math_functions.h"
 #include "box2d/types.h"
 
-#include "core.h"
+#include <float.h>
 
 b2WorldDef b2DefaultWorldDef( void )
 {
@@ -83,6 +86,11 @@ b2ChainDef b2DefaultChainDef( void )
 	b2ChainDef def = { 0 };
 	def.materials = &defaultMaterial;
 	def.materialCount = 1;
+	// using infinity as a sentinel
+	def.ghost1.x = INFINITY;
+	def.ghost1.y = INFINITY;
+	def.ghost2.x = INFINITY;
+	def.ghost2.y = INFINITY;
 	def.filter = b2DefaultFilter();
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;

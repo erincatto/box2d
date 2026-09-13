@@ -6,7 +6,6 @@ set(BOX2D_SOURCE_FILES
 	aabb.h
 	arena_allocator.c
 	arena_allocator.h
-	atomic.h
 	bitset.c
 	bitset.h
 	body.c
@@ -22,7 +21,6 @@ set(BOX2D_SOURCE_FILES
 	container.h
 	core.c
 	core.h
-	ctz.h
 	distance.c
 	distance_joint.c
 	dynamic_tree.c
@@ -42,6 +40,7 @@ set(BOX2D_SOURCE_FILES
 	mover.c
 	parallel_for.c
 	parallel_for.h
+	platform.h
 	physics_world.c
 	physics_world.h
 	pogo_joint.c
@@ -59,6 +58,7 @@ set(BOX2D_SOURCE_FILES
 	sensor.h
 	shape.c
 	shape.h
+	simd.h
 	solver.c
 	solver.h
 	solver_set.c
@@ -81,6 +81,7 @@ set(BOX2D_API_FILES
 	../include/box2d/constants.h
 	../include/box2d/id.h
 	../include/box2d/math_functions.h
+	../include/box2d/math_types.h
 	../include/box2d/types.h
 )
 
@@ -161,6 +162,10 @@ if (MSVC)
 
 	# Visual Studio won't load the natvis unless it is in the project
 	target_sources(box2d PRIVATE box2d.natvis)
+
+	if (CMAKE_GENERATOR MATCHES "Visual Studio")
+		target_compile_options(box2d PRIVATE /MP)
+	endif()
 
 	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		# clang-cl: /Wall maps to -Weverything which is far too aggressive

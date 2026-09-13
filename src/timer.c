@@ -20,6 +20,18 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
+#ifndef NOGDI
+#define NOGDI
+#endif
+
+#ifndef NOUSER
+#define NOUSER
+#endif
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 // On Windows this is capitalized, but not in Linux mingw.
 #include <windows.h>
 #include <limits.h>

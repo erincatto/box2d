@@ -129,8 +129,13 @@ typedef struct b2Version
 	int revision;
 } b2Version;
 
+/// Significant API and behavior changes.
 #define B2_VERSION_MAJOR 3
+
+/// API changes and features.
 #define B2_VERSION_MINOR 2
+
+/// Bug fixes. No API changes.
 #define B2_VERSION_REVISION 0
 
 /// Get the current version of Box2D

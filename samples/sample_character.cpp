@@ -77,7 +77,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId1, &chainDef );
@@ -106,7 +106,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId2, &chainDef );
@@ -437,7 +437,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId1, &chainDef );
@@ -466,7 +466,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 
 			b2CreateChain( groundId2, &chainDef );
@@ -603,7 +603,7 @@ public:
 
 		if ( B2_ID_EQUALS( idA, m_elevatorId ) && B2_ID_EQUALS( idB, m_mover.m_moverId ) )
 		{
-			if (manifold->normal.y < 0.0f)
+			if ( manifold->normal.y < 0.0f )
 			{
 				manifold->pointCount = 0;
 			}
