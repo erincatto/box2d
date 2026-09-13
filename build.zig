@@ -184,6 +184,7 @@ fn buildTests(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, box2d_l
         .files = &[_][]const u8{
             "test/main.c",
             "test/test_bitset.c",
+            "test/test_chain.c",
             "test/test_collision.c",
             "test/test_container.c",
             "test/test_determinism.c",
