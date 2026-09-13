@@ -5,7 +5,6 @@
 
 #include "bitset.h"
 #include "core.h"
-#include "ctz.h"
 #include "platform.h"
 
 #include <stdbool.h>

@@ -5,7 +5,7 @@
 
 #include "body.h"
 #include "contact.h"
-#include "ctz.h"
+#include "platform.h"
 #include "parallel_for.h"
 #include "physics_world.h"
 #include "shape.h"

@@ -1,8 +1,7 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "core.h"
-#include "ctz.h"
 #include "platform.h"
 #include "table.h"
 #include "test_macros.h"

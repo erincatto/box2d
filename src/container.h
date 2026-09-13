@@ -6,7 +6,11 @@
 #include "core.h"
 
 #include <stddef.h>
+#if defined( _MSC_VER )
+#include <vcruntime_string.h>
+#else
 #include <string.h>
+#endif
 
 #define b2DeclareArray( T )                                                                                                      \
 	typedef struct b2DynamicArray_##T                                                                                            \

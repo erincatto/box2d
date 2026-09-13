@@ -21,7 +21,6 @@ set(BOX2D_SOURCE_FILES
 	container.h
 	core.c
 	core.h
-	ctz.h
 	distance.c
 	distance_joint.c
 	dynamic_tree.c
@@ -59,6 +58,7 @@ set(BOX2D_SOURCE_FILES
 	sensor.h
 	shape.c
 	shape.h
+	simd.h
 	solver.c
 	solver.h
 	solver_set.c
@@ -162,6 +162,10 @@ if (MSVC)
 
 	# Visual Studio won't load the natvis unless it is in the project
 	target_sources(box2d PRIVATE box2d.natvis)
+
+	if (CMAKE_GENERATOR MATCHES "Visual Studio")
+		target_compile_options(box2d PRIVATE /MP)
+	endif()
 
 	if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		# clang-cl: /Wall maps to -Weverything which is far too aggressive

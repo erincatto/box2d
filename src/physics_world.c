@@ -15,7 +15,7 @@
 #include "constraint_graph.h"
 #include "contact.h"
 #include "core.h"
-#include "ctz.h"
+#include "dynamic_tree.h"
 #include "island.h"
 #include "joint.h"
 #include "parallel_for.h"
@@ -33,12 +33,6 @@
 #include <float.h>
 #include <stdio.h>
 #include <string.h>
-
-#if defined( _M_X64 ) || defined( __x86_64__ ) || defined( _M_IX86 ) || defined( __i386__ )
-#include <xmmintrin.h>
-#elif ( defined( _M_ARM64 ) || defined( __aarch64__ ) ) && defined( _MSC_VER )
-#include <intrin.h>
-#endif
 
 _Static_assert( B2_MAX_WORLDS > 0, "must be 1 or more" );
 _Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
