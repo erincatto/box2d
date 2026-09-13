@@ -26,6 +26,7 @@
 #endif
 
 extern int BitSetTest( void );
+extern int ChainTest( void );
 extern int CollisionTest( void );
 extern int ContainerTest( void );
 extern int DeterminismTest( void );
@@ -106,6 +107,9 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( SnapshotTest );
 	MAYBE_RUN_TEST( ThreadTest );
 	MAYBE_RUN_TEST( WorldTest );
+
+	// Fails until issue 1091 is resolved, so keep it last
+	MAYBE_RUN_TEST( ChainTest );
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );

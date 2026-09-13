@@ -51,11 +51,9 @@ typedef struct b2ChainShape
 	int id;
 	int bodyId;
 	int nextChainId;
-	int count;
-	int materialCount;
-	int* shapeIndices;
-	b2SurfaceMaterial* materials;
+	int segmentCount;
 	uint16_t generation;
+	int* shapeIndices;
 } b2ChainShape;
 
 typedef struct b2ShapeExtent

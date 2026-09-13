@@ -438,8 +438,11 @@ void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass )
 b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 {
 	B2_CHECK_DEF( def );
-	B2_ASSERT( def->count >= 4 );
-	B2_ASSERT( def->materialCount == 1 || def->materialCount == def->count );
+	B2_ASSERT( def->isLoop ? def->pointCount >= 3 : def->pointCount >= 2 );
+
+	int segmentCount = def->isLoop ? def->pointCount : def->pointCount - 1;
+
+	B2_ASSERT( def->materialCount == 1 || def->materialCount == segmentCount );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -466,21 +469,19 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	chainShape->id = chainId;
 	chainShape->bodyId = body->id;
 	chainShape->nextChainId = body->headChainId;
+	chainShape->segmentCount = segmentCount;
 	chainShape->generation += 1;
 
 	int materialCount = def->materialCount;
-	chainShape->materialCount = materialCount;
-	chainShape->materials = b2Alloc( materialCount * sizeof( b2SurfaceMaterial ) );
 
 	for ( int i = 0; i < materialCount; ++i )
 	{
 		const b2SurfaceMaterial* material = def->materials + i;
+		B2_UNUSED( material );
 		B2_ASSERT( b2IsValidFloat( material->friction ) && material->friction >= 0.0f );
 		B2_ASSERT( b2IsValidFloat( material->restitution ) && material->restitution >= 0.0f );
 		B2_ASSERT( b2IsValidFloat( material->rollingResistance ) && material->rollingResistance >= 0.0f );
 		B2_ASSERT( b2IsValidFloat( material->tangentSpeed ) );
-
-		chainShape->materials[i] = *material;
 	}
 
 	body->headChainId = chainId;
@@ -493,22 +494,27 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 	shapeDef.enableHitEvents = false;
 
 	const b2Vec2* points = def->points;
-	int n = def->count;
+	int n = segmentCount;
+	chainShape->shapeIndices = b2Alloc( n * sizeof( int ) );
+
+	float tolSqr = B2_LINEAR_SLOP * B2_LINEAR_SLOP;
 
 	if ( def->isLoop )
 	{
-		chainShape->count = n;
-		chainShape->shapeIndices = b2Alloc( chainShape->count * sizeof( int ) );
-
 		b2ChainSegment chainSegment;
 
 		int prevIndex = n - 1;
-		for ( int i = 0; i < n - 2; ++i )
+		for ( int i = 0; i < n; ++i )
 		{
 			chainSegment.ghost1 = points[prevIndex];
 			chainSegment.segment.point1 = points[i];
-			chainSegment.segment.point2 = points[i + 1];
-			chainSegment.ghost2 = points[i + 2];
+			chainSegment.segment.point2 = points[( i + 1 ) % n];
+			chainSegment.ghost2 = points[( i + 2 ) % n];
+
+			B2_VALIDATE( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
+			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );
+			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point2, chainSegment.ghost2) > tolSqr );
+
 			chainSegment.chainId = chainId;
 			prevIndex = i;
 
@@ -518,52 +524,26 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
 			chainShape->shapeIndices[i] = shape->id;
 		}
-
-		{
-			chainSegment.ghost1 = points[n - 3];
-			chainSegment.segment.point1 = points[n - 2];
-			chainSegment.segment.point2 = points[n - 1];
-			chainSegment.ghost2 = points[0];
-			chainSegment.chainId = chainId;
-
-			int materialIndex = materialCount == 1 ? 0 : n - 2;
-			shapeDef.material = def->materials[materialIndex];
-
-			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
-			chainShape->shapeIndices[n - 2] = shape->id;
-		}
-
-		{
-			chainSegment.ghost1 = points[n - 2];
-			chainSegment.segment.point1 = points[n - 1];
-			chainSegment.segment.point2 = points[0];
-			chainSegment.ghost2 = points[1];
-			chainSegment.chainId = chainId;
-
-			int materialIndex = materialCount == 1 ? 0 : n - 1;
-			shapeDef.material = def->materials[materialIndex];
-
-			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
-			chainShape->shapeIndices[n - 1] = shape->id;
-		}
 	}
 	else
 	{
-		chainShape->count = n - 3;
-		chainShape->shapeIndices = b2Alloc( chainShape->count * sizeof( int ) );
-
 		b2ChainSegment chainSegment;
 
-		for ( int i = 0; i < n - 3; ++i )
+		for ( int i = 0; i < n; ++i )
 		{
-			chainSegment.ghost1 = points[i];
-			chainSegment.segment.point1 = points[i + 1];
-			chainSegment.segment.point2 = points[i + 2];
-			chainSegment.ghost2 = points[i + 3];
+			B2_VALIDATE( i + 1 < def->pointCount );
+			chainSegment.ghost1 = i == 0 ? def->ghostBegin : points[i - 1];
+			chainSegment.segment.point1 = points[i + 0];
+			chainSegment.segment.point2 = points[i + 1];
+			chainSegment.ghost2 = i == n - 1 ? def->ghostEnd : points[i + 2];
+
+			B2_VALIDATE( b2DistanceSquared( chainSegment.ghost1, chainSegment.segment.point1 ) > tolSqr );
+			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point1, chainSegment.segment.point2 ) > tolSqr );
+			B2_VALIDATE( b2DistanceSquared( chainSegment.segment.point2, chainSegment.ghost2 ) > tolSqr );
+
 			chainSegment.chainId = chainId;
 
-			// Material is associated with leading point of solid segment
-			int materialIndex = materialCount == 1 ? 0 : i + 1;
+			int materialIndex = materialCount == 1 ? 0 : i;
 			shapeDef.material = def->materials[materialIndex];
 
 			b2Shape* shape = b2CreateShapeInternal( world, body, transform, &shapeDef, &chainSegment, b2_chainSegmentShape );
@@ -580,11 +560,8 @@ b2ChainId b2CreateChain( b2BodyId bodyId, const b2ChainDef* def )
 
 void b2FreeChainData( b2ChainShape* chain )
 {
-	b2Free( chain->shapeIndices, chain->count * sizeof( int ) );
+	b2Free( chain->shapeIndices, chain->segmentCount * sizeof( int ) );
 	chain->shapeIndices = NULL;
-
-	b2Free( chain->materials, chain->materialCount * sizeof( b2SurfaceMaterial ) );
-	chain->materials = NULL;
 }
 
 void b2DestroyChain( b2ChainId chainId )
@@ -622,7 +599,7 @@ void b2DestroyChain( b2ChainId chainId )
 		return;
 	}
 
-	int count = chain->count;
+	int count = chain->segmentCount;
 	for ( int i = 0; i < count; ++i )
 	{
 		int shapeId = chain->shapeIndices[i];
@@ -654,7 +631,7 @@ int b2Chain_GetSegmentCount( b2ChainId chainId )
 	}
 
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
-	return chain->count;
+	return chain->segmentCount;
 }
 
 int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity )
@@ -667,7 +644,7 @@ int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacit
 
 	b2ChainShape* chain = b2GetChainShape( world, chainId );
 
-	int count = b2MinInt( chain->count, capacity );
+	int count = b2MinInt( chain->segmentCount, capacity );
 	for ( int i = 0; i < count; ++i )
 	{
 		int shapeId = chain->shapeIndices[i];
@@ -676,6 +653,53 @@ int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacit
 	}
 
 	return count;
+}
+
+void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int segmentIndex )
+{
+	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	B2_REC( world, ChainSetSurfaceMaterial, chainId, *material, segmentIndex );
+
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	B2_ASSERT( 0 <= segmentIndex && segmentIndex < chainShape->segmentCount );
+	int shapeId = chainShape->shapeIndices[segmentIndex];
+	b2Shape* shape = b2Array_Get( world->shapes, shapeId );
+	shape->material = *material;
+}
+
+void b2Chain_SetAllSurfaceMaterials( b2ChainId chainId, const b2SurfaceMaterial* material )
+{
+	b2World* world = b2GetWorldLocked( chainId.world0 );
+	if ( world == NULL )
+	{
+		return;
+	}
+
+	B2_REC( world, ChainSetAllSurfaceMaterials, chainId, *material );
+
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+
+	for ( int i = 0; i < chainShape->segmentCount; ++i )
+	{
+		int shapeId = chainShape->shapeIndices[i];
+		b2Shape* shape = b2Array_Get( world->shapes, shapeId );
+		shape->material = *material;
+	}
+}
+
+b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int segmentIndex )
+{
+	b2World* world = b2GetWorld( chainId.world0 );
+	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
+	B2_ASSERT( 0 <= segmentIndex && segmentIndex < chainShape->segmentCount );
+	int shapeId = chainShape->shapeIndices[segmentIndex];
+	b2Shape* shape = b2Array_Get( world->shapes, shapeId );
+	return shape->material;
 }
 
 b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2WorldTransform xf )
@@ -1654,55 +1678,6 @@ b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId )
 	}
 
 	return (b2ChainId){ 0 };
-}
-
-int b2Chain_GetSurfaceMaterialCount( b2ChainId chainId )
-{
-	b2World* world = b2GetWorld( chainId.world0 );
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	return chainShape->materialCount;
-}
-
-void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int materialIndex )
-{
-	b2World* world = b2GetWorldLocked( chainId.world0 );
-	if ( world == NULL )
-	{
-		return;
-	}
-
-	B2_REC( world, ChainSetSurfaceMaterial, chainId, *material, materialIndex );
-
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	B2_ASSERT( 0 <= materialIndex && materialIndex < chainShape->materialCount );
-	chainShape->materials[materialIndex] = *material;
-
-	B2_ASSERT( chainShape->materialCount == 1 || chainShape->materialCount == chainShape->count );
-	int count = chainShape->count;
-
-	if ( chainShape->materialCount == 1 )
-	{
-		for ( int i = 0; i < count; ++i )
-		{
-			int shapeId = chainShape->shapeIndices[i];
-			b2Shape* shape = b2Array_Get( world->shapes, shapeId );
-			shape->material = *material;
-		}
-	}
-	else
-	{
-		int shapeId = chainShape->shapeIndices[materialIndex];
-		b2Shape* shape = b2Array_Get( world->shapes, shapeId );
-		shape->material = *material;
-	}
-}
-
-b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int segmentIndex )
-{
-	b2World* world = b2GetWorld( chainId.world0 );
-	b2ChainShape* chainShape = b2GetChainShape( world, chainId );
-	B2_ASSERT( 0 <= segmentIndex && segmentIndex < chainShape->count );
-	return chainShape->materials[segmentIndex];
 }
 
 int b2Shape_GetContactCapacity( b2ShapeId shapeId )

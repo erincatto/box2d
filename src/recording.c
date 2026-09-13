@@ -306,11 +306,13 @@ void b2RecW_CHAINDEF( b2RecBuffer* buf, b2ChainDef v )
 {
 	// userData: not preserved
 	b2RecW_U64( buf, 0u );
-	b2RecW_I32( buf, v.count );
-	for ( int i = 0; i < v.count; ++i )
+	b2RecW_I32( buf, v.pointCount );
+	for ( int i = 0; i < v.pointCount; ++i )
 	{
 		b2RecW_VEC2( buf, v.points[i] );
 	}
+	b2RecW_VEC2( buf, v.ghostBegin );
+	b2RecW_VEC2( buf, v.ghostEnd );
 	b2RecW_I32( buf, v.materialCount );
 	for ( int i = 0; i < v.materialCount; ++i )
 	{

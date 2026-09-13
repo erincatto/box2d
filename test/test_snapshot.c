@@ -1,12 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "core.h"
 #include "determinism.h"
+#include "physics_world.h"
 #include "test_macros.h"
 #include "world_snapshot.h"
-
-#include "core.h"
-#include "physics_world.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -151,14 +150,14 @@ static b2WorldId BuildScene( int workerCount, SnapshotIds* outIds )
 		cbd.position = (b2Pos){ -10.0f, 0.0f };
 		b2BodyId chainBodyId = b2CreateBody( worldId, &cbd );
 
-		b2Vec2 chainPoints[5] = {
-			{ -4.0f, 0.0f }, { -2.0f, 0.0f }, { 0.0f, 0.0f }, { 2.0f, 0.0f }, { 4.0f, 2.0f }
-		};
+		b2Vec2 chainPoints[3] = { { -2.0f, 0.0f }, { 0.0f, 0.0f }, { 2.0f, 0.0f } };
 		b2SurfaceMaterial chainMat = b2DefaultSurfaceMaterial();
 		chainMat.friction = 0.4f;
 		b2ChainDef chainDef = b2DefaultChainDef();
 		chainDef.points = chainPoints;
-		chainDef.count = 5;
+		chainDef.pointCount = 3;
+		chainDef.ghostBegin = (b2Vec2){ -4.0f, 0.0f };
+		chainDef.ghostEnd = (b2Vec2){ 4.0f, 2.0f };
 		chainDef.materials = &chainMat;
 		chainDef.materialCount = 1;
 		chainDef.isLoop = false;
@@ -299,8 +298,8 @@ int SnapshotTest( void )
 		uint64_t sB = b2HashWorldState( worldB );
 		if ( sA != sB )
 		{
-			printf( "shallow hash mismatch at lockstep step %d (A=%llu B=%llu)\n", step,
-					(unsigned long long)sA, (unsigned long long)sB );
+			printf( "shallow hash mismatch at lockstep step %d (A=%llu B=%llu)\n", step, (unsigned long long)sA,
+					(unsigned long long)sB );
 			ENSURE( false );
 		}
 
@@ -308,8 +307,8 @@ int SnapshotTest( void )
 		uint64_t dB = b2HashWorldStateDeep( worldB );
 		if ( dA != dB )
 		{
-			printf( "deep hash mismatch at lockstep step %d (A=%llu B=%llu)\n", step,
-					(unsigned long long)dA, (unsigned long long)dB );
+			printf( "deep hash mismatch at lockstep step %d (A=%llu B=%llu)\n", step, (unsigned long long)dA,
+					(unsigned long long)dB );
 			ENSURE( false );
 		}
 	}
@@ -339,8 +338,8 @@ int SnapshotTest( void )
 		uint64_t sC = b2HashWorldState( worldC );
 		if ( sA1 != sC )
 		{
-			printf( "one vs four worker hash mismatch at step %d (1w=%llu 4w=%llu)\n", step,
-					(unsigned long long)sA1, (unsigned long long)sC );
+			printf( "one vs four worker hash mismatch at step %d (1w=%llu 4w=%llu)\n", step, (unsigned long long)sA1,
+					(unsigned long long)sC );
 			ENSURE( false );
 		}
 	}

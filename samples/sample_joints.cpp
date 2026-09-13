@@ -1948,8 +1948,7 @@ public:
 			else
 			{
 				b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
-				DrawString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "(%.1f, %.1f)", force.x,
-								 force.y );
+				DrawString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "(%.1f, %.1f)", force.x, force.y );
 			}
 		}
 
@@ -2173,7 +2172,7 @@ public:
 			float angular = b2Joint_GetAngularSeparation( m_jointIds[i] );
 			b2Transform localFrame = b2Joint_GetLocalFrameA( m_jointIds[i] );
 			DrawString( m_draw, m_camera, b2ToPos( localFrame.p ), b2_colorWhite, "%.2f m, %.1f deg", linear,
-							 180.0f * angular / B2_PI );
+						180.0f * angular / B2_PI );
 		}
 
 		Sample::Step();
@@ -2362,7 +2361,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = 25;
+			chainDef.pointCount = 25;
 			chainDef.isLoop = true;
 			b2CreateChain( groundId, &chainDef );
 
@@ -2984,7 +2983,7 @@ public:
 
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.points = points;
-			chainDef.count = count;
+			chainDef.pointCount = count;
 			chainDef.isLoop = true;
 			chainDef.materials = &material;
 			chainDef.materialCount = 1;

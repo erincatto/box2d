@@ -1443,7 +1443,7 @@ public:
 			b2ChainDef chainDef = b2DefaultChainDef();
 			chainDef.userData = shapeDef.userData;
 			chainDef.points = points;
-			chainDef.count = 4;
+			chainDef.pointCount = 4;
 			chainDef.isLoop = true;
 			b2CreateChain( m_bodyIds[m_bodyIndex], &chainDef );
 		}

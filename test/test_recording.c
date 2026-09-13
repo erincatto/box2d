@@ -325,7 +325,9 @@ int RecordingTest( void )
 	b2SurfaceMaterial chainMats[1] = { b2DefaultSurfaceMaterial() };
 	b2ChainDef chainDef = b2DefaultChainDef();
 	chainDef.points = chainPoints;
-	chainDef.count = 6;
+	chainDef.pointCount = 6;
+	chainDef.ghostBegin = (b2Vec2){ -12.0f, 0.0f };
+	chainDef.ghostEnd = (b2Vec2){ 8.0f, 8.0f };
 	chainDef.materials = chainMats;
 	chainDef.materialCount = 1;
 	chainDef.isLoop = false;
@@ -334,7 +336,11 @@ int RecordingTest( void )
 
 	b2SurfaceMaterial chainSurface = b2DefaultSurfaceMaterial();
 	chainSurface.friction = 0.4f;
-	b2Chain_SetSurfaceMaterial( chainId, &chainSurface, 0 );
+	b2Chain_SetAllSurfaceMaterials( chainId, &chainSurface );
+
+	// Leave one segment different from the broadcast so both opcodes are observable
+	chainSurface.friction = 0.7f;
+	b2Chain_SetSurfaceMaterial( chainId, &chainSurface, 3 );
 
 	b2ChainId tmpChainId = b2CreateChain( chainBodyId, &chainDef );
 	b2DestroyChain( tmpChainId );
