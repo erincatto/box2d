@@ -495,12 +495,12 @@ public:
 	{
 		free( m_proxies );
 		free( m_moveBuffer );
-		b2DynamicTree_Destroy( &m_tree );
+		b2DestroyDynamicTree( &m_tree );
 	}
 
 	void BuildTree()
 	{
-		b2DynamicTree_Destroy( &m_tree );
+		b2DestroyDynamicTree( &m_tree );
 		free( m_proxies );
 		free( m_moveBuffer );
 
@@ -513,7 +513,7 @@ public:
 
 		float y = -4.0f;
 
-		m_tree = b2DynamicTree_Create( 16 );
+		m_tree = b2CreateDynamicTree( 16 );
 
 		const b2Vec2 aabbMargin = { 0.1f, 0.1f };
 

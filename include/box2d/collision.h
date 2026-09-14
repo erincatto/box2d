@@ -788,10 +788,10 @@ typedef struct b2TreeStats
 } b2TreeStats;
 
 /// Constructing the tree initializes the node pool.
-B2_API b2DynamicTree b2DynamicTree_Create( int proxyCapacity );
+B2_API b2DynamicTree b2CreateDynamicTree( int proxyCapacity );
 
 /// Destroy the tree, freeing the node pool.
-B2_API void b2DynamicTree_Destroy( b2DynamicTree* tree );
+B2_API void b2DestroyDynamicTree( b2DynamicTree* tree );
 
 /// Create a proxy. Provide an AABB and a userData value.
 B2_API int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData);

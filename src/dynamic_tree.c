@@ -62,7 +62,7 @@ static void b2FreePair( b2DynamicTree* tree, int pair )
 	tree->pairFreeList = pair;
 }
 
-b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
+b2DynamicTree b2CreateDynamicTree( int proxyCapacity )
 {
 	int capacity = b2MaxInt( proxyCapacity, 16 );
 
@@ -114,7 +114,7 @@ b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 	return tree;
 }
 
-void b2DynamicTree_Destroy( b2DynamicTree* tree )
+void b2DestroyDynamicTree( b2DynamicTree* tree )
 {
 	b2Free( tree->nodes, tree->nodeCapacity * sizeof( b2TreeNode ) );
 	b2Free( tree->parents, tree->nodeCapacity * sizeof( int32_t ) );

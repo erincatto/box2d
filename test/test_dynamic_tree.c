@@ -19,13 +19,13 @@ static int TreeCreateDestroy( void )
 		.upperBound = { 2.0f, 2.0f },
 	};
 
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 	b2DynamicTree_CreateProxyInternal( &tree, a, 1, 0, 0 );
 
 	ENSURE( tree.nodeEnd == 2 );
 	ENSURE( tree.proxyCount == 1 );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 
 	ENSURE( tree.nodeEnd == 0 );
 	ENSURE( tree.proxyCount == 0 );
@@ -47,7 +47,7 @@ static int TreeRayCastTest( void )
 {
 	// Test AABB centered at origin with bounds [-1, -1] to [1, 1]
 	b2AABB a = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f }, };
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 	int proxyId = b2DynamicTree_CreateProxyInternal( &tree, a, 1, 0, 0 );
 
 	b2RayCastInput input = {};
@@ -280,7 +280,7 @@ static int TreeRayCastTest( void )
 		ENSURE( proxyHit == -1 );
 	}
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 
 	return 0;
 }
@@ -305,7 +305,7 @@ static bool QueryCollectListCallback( int proxyId, uint64_t userData, void* cont
 
 static int TreeMultipleProxiesTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	b2AABB a1 = { .lowerBound = { -5.0f, -1.0f }, .upperBound = { -3.0f, 1.0f } };
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
@@ -325,13 +325,13 @@ static int TreeMultipleProxiesTest( void )
 	ENSURE( b2DynamicTree_GetCategoryBits( &tree, id2 ) == 0x2ull );
 	ENSURE( b2DynamicTree_GetCategoryBits( &tree, id3 ) == 0x4ull );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 static int TreeQueryTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	b2AABB a1 = { .lowerBound = { -5.0f, -1.0f }, .upperBound = { -3.0f, 1.0f } };
 	b2AABB a2 = { .lowerBound = { -1.0f, -1.0f }, .upperBound = { 1.0f, 1.0f } };
@@ -356,14 +356,14 @@ static int TreeQueryTest( void )
 	ENSURE( list[0] >= 1 ); // at least one proxy should be collected
 	ENSURE( allStats.leafVisits >= 1 );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	(void)id1; (void)id3;
 	return 0;
 }
 
 static int TreeMoveAndEnlargeTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	b2AABB a = { .lowerBound = { 0.0f, 0.0f }, .upperBound = { 1.0f, 1.0f } };
 	int id = b2DynamicTree_CreateProxyInternal( &tree, a, 0x1ull, 100, 0 );
@@ -386,13 +386,13 @@ static int TreeMoveAndEnlargeTest( void )
 	ENSURE( got2.lowerBound.x <= enlarge.lowerBound.x + 1e-6f );
 	ENSURE( got2.upperBound.x >= enlarge.upperBound.x - 1e-6f );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 static int TreeRebuildAndValidateTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	// Create a number of proxies to make rebuild meaningful
 	for ( int i = 0; i < 12; ++i )
@@ -408,13 +408,13 @@ static int TreeRebuildAndValidateTest( void )
 	ENSURE( b2DynamicTree_GetByteCount( &tree ) > 0 );
 	ENSURE( b2DynamicTree_GetHeight( &tree ) > 0 );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 static int TreeRowHeightTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	int columnCount = 200;
 	for (int i = 0; i < columnCount; ++i)
@@ -429,13 +429,13 @@ static int TreeRowHeightTest( void )
 	b2DynamicTree_Validate( &tree );
 	ENSURE( b2DynamicTree_GetHeight( &tree ) < 2.0f * minHeight );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 static int TreeGridHeightTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	int columnCount = 20;
 	int rowCount = 20;
@@ -455,7 +455,7 @@ static int TreeGridHeightTest( void )
 	b2DynamicTree_Validate( &tree );
 	ENSURE( b2DynamicTree_GetHeight( &tree ) < 2.0f * minHeight );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
@@ -463,7 +463,7 @@ static int TreeGridHeightTest( void )
 
 static int TreeGridMovementTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 
 	int proxyIds[GRID_COUNT * GRID_COUNT];
 	int index = 0;
@@ -511,7 +511,7 @@ static int TreeGridMovementTest( void )
 	int height3 = b2DynamicTree_GetHeight( &tree );
 	ENSURE( height3 < 2.0f * minHeight );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
@@ -795,7 +795,7 @@ static bool RootMarked( const b2DynamicTree* tree )
 
 static int TreeOneProxyTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 1 );
+	b2DynamicTree tree = b2CreateDynamicTree( 1 );
 	b2AABB box = { { 0.0f, 0.0f }, { 1.0f, 1.0f } };
 	int proxyId = b2DynamicTree_CreateProxyInternal( &tree, box, 1, 7, false );
 	int proxyIds[1] = { proxyId };
@@ -858,7 +858,7 @@ static int TreeOneProxyTest( void )
 	ENSURE( b2DynamicTree_GetHeight( &tree ) == 0 );
 	ENSURE( CompareQuery( &tree, proxyIds, 0, inside ) == 0 );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
@@ -866,7 +866,7 @@ static int TreeOneProxyTest( void )
 // pair for the two of them from the hole, and a full build compacts the holes.
 static int TreeLeafRootTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 	b2AABB boxA = { { 0.0f, 0.0f }, { 1.0f, 1.0f } };
 	b2AABB boxB = { { 10.0f, 0.0f }, { 11.0f, 1.0f } };
 	b2AABB boxC = { { 20.0f, 0.0f }, { 21.0f, 1.0f } };
@@ -933,13 +933,13 @@ static int TreeLeafRootTest( void )
 	ENSURE( b2DynamicTree_GetHeight( &tree ) == 0 );
 	ENSURE( CompareQuery( &tree, idsBCD, 0, all ) == 0 );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 static int TreeQueryBruteForceTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( TREE_TEST_PROXY_COUNT );
+	b2DynamicTree tree = b2CreateDynamicTree( TREE_TEST_PROXY_COUNT );
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; ++i )
 	{
@@ -971,13 +971,13 @@ static int TreeQueryBruteForceTest( void )
 		ENSURE( CompareQuery( &tree, proxyIds, TREE_TEST_PROXY_COUNT, RandomTreeBox( 8.0f ) ) == 0 );
 	}
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 static int TreeCastBruteForceTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( TREE_TEST_PROXY_COUNT );
+	b2DynamicTree tree = b2CreateDynamicTree( TREE_TEST_PROXY_COUNT );
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; ++i )
 	{
@@ -1000,14 +1000,14 @@ static int TreeCastBruteForceTest( void )
 		ENSURE( CompareBoxCast( &tree, proxyIds, TREE_TEST_PROXY_COUNT, box, translation ) == 0 );
 	}
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
 // Marks reach the root from any leaf, the sweep refit writes exact unions, and the rebuild clears
 static int TreeMarkAndRefitTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( TREE_TEST_PROXY_COUNT );
+	b2DynamicTree tree = b2CreateDynamicTree( TREE_TEST_PROXY_COUNT );
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; ++i )
 	{
@@ -1082,7 +1082,7 @@ static int TreeMarkAndRefitTest( void )
 	ENSURE( b2DynamicTree_Rebuild( &tree, false ) > 0 );
 	b2DynamicTree_ValidateNoMoved( &tree );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
@@ -1091,7 +1091,7 @@ static int TreeMarkAndRefitTest( void )
 static int TreeDfsOrderTest( void )
 {
 	int proxyCount = 50;
-	b2DynamicTree tree = b2DynamicTree_Create( TREE_TEST_PROXY_COUNT );
+	b2DynamicTree tree = b2CreateDynamicTree( TREE_TEST_PROXY_COUNT );
 	int proxyIds[TREE_TEST_PROXY_COUNT];
 	for ( int i = 0; i < proxyCount; ++i )
 	{
@@ -1177,7 +1177,7 @@ static int TreeDfsOrderTest( void )
 		ENSURE( CompareQuery( &tree, proxyIds, proxyCount, RandomTreeBox( 8.0f ) ) == 0 );
 	}
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
@@ -1185,7 +1185,7 @@ static int TreeDfsOrderTest( void )
 // array lost its order, or the next enlarge and refit leave the ancestors stale.
 static int TreeStaleAfterInsertRemoveTest( void )
 {
-	b2DynamicTree tree = b2DynamicTree_Create( 16 );
+	b2DynamicTree tree = b2CreateDynamicTree( 16 );
 	int ids[16];
 	for ( int i = 0; i < 16; ++i )
 	{
@@ -1216,7 +1216,7 @@ static int TreeStaleAfterInsertRemoveTest( void )
 	ENSURE( b2AABB_Contains( b2DynamicTree_GetRootBounds( &tree ), bigger ) );
 	b2DynamicTree_Validate( &tree );
 
-	b2DynamicTree_Destroy( &tree );
+	b2DestroyDynamicTree( &tree );
 	return 0;
 }
 
