@@ -1297,7 +1297,7 @@ static void TreeCastAddBox( b2Vec2 center, float hx, float hy, uint64_t category
 	int index = data->proxyCount;
 	data->tightBoxes[index] = tight;
 	data->proxyCount += 1;
-	b2DynamicTree_CreateProxy( &data->tree, fat, categoryBits, (uint64_t)index );
+	b2CreateTreeProxy( &data->tree, fat, categoryBits, (uint64_t)index );
 }
 
 void DestroyTreeCast( void )
@@ -1305,7 +1305,7 @@ void DestroyTreeCast( void )
 	TreeCastBenchmark* data = &g_treeCast;
 	if ( data->created )
 	{
-		b2DynamicTree_Destroy( &data->tree );
+		b2DestroyDynamicTree( &data->tree );
 		free( data->tightBoxes );
 	}
 
@@ -1337,7 +1337,7 @@ void CreateTreeCast( b2WorldId worldId )
 	// A tenth of the cells fill, the ground and the sensors come after
 	data->proxyCapacity = cellCount * cellCount / 5;
 	data->tightBoxes = malloc( data->proxyCapacity * sizeof( b2AABB ) );
-	data->tree = b2DynamicTree_Create( data->proxyCapacity );
+	data->tree = b2CreateDynamicTree( data->proxyCapacity );
 	data->created = true;
 
 	for ( int i = 0; i < cellCount; ++i )

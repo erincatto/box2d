@@ -533,7 +533,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 				// Note: far from the origin the margin can be snapped to the nearest ULP.
 				// This relevant for DP mode. So we lose the broad-phase hysteresis.
-				// todo consider using b2Expand to ensure at least one ULP of margin.
+				// todo consider using b2EnlargeAABB to ensure at least one ULP of margin.
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - margin;
 				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - margin;
@@ -642,7 +642,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		sim->force = b2Vec2_zero;
 		sim->torque = 0.0f;
 
-		// If you hit this then it means you deferred mass computation but never called b2Body_ApplyMassFromShapes
+		// If you hit this then it means you deferred mass computation but never called b2Body_UpdateMassFromShapes
 		B2_ASSERT( ( body->flags & b2_dirtyMass ) == 0 );
 
 		body->flags &= ~b2_bodyTransientFlags;
@@ -1705,7 +1705,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 
 		B2_ASSERT( world->contactHitEvents.count == 0 );
 
-		// Fast path: if no worker flagged any hit-event candidates during b2StoreImpulsesTask, skip entirely.
+		// Fast path: skip if no worker flagged any hit-event candidates during impulse storing.
 		bool anyHitEvents = false;
 		for ( int i = 0; i < world->workerCount; ++i )
 		{

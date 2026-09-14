@@ -14,15 +14,15 @@ set(BOX2D_SOURCE_FILES
 	broad_phase.h
 	constraint_graph.c
 	constraint_graph.h
-	contact.c
-	contact.h
 	contact_solver.c
 	contact_solver.h
+	contact.c
+	contact.h
 	container.h
 	core.c
 	core.h
-	distance.c
 	distance_joint.c
+	distance.c
 	dynamic_tree.c
 	dynamic_tree.h
 	geometry.c
@@ -40,17 +40,17 @@ set(BOX2D_SOURCE_FILES
 	mover.c
 	parallel_for.c
 	parallel_for.h
-	platform.h
 	physics_world.c
 	physics_world.h
+	platform.h
 	pogo_joint.c
 	prismatic_joint.c
 	qsort.h
+	recording_ops.inl
 	recording.c
 	recording.h
-	recording_ops.inl
-	recording_replay.c
-	recording_replay.h
+	replay.c
+	replay.h
 	revolute_joint.c
 	scheduler.c
 	scheduler.h
@@ -59,18 +59,18 @@ set(BOX2D_SOURCE_FILES
 	shape.c
 	shape.h
 	simd.h
-	solver.c
-	solver.h
+	snapshot.c
+	snapshot.h
 	solver_set.c
 	solver_set.h
+	solver.c
+	solver.h
 	table.c
 	table.h
 	timer.c
 	types.c
 	weld_joint.c
 	wheel_joint.c
-	world_snapshot.c
-	world_snapshot.h
 )
 
 set(BOX2D_API_FILES

@@ -504,7 +504,7 @@ After setting a body's mass directly, you may wish to revert to the
 mass determined by the shapes. You can do this with:
 
 ```c
-b2Body_ApplyMassFromShapes(myBodyId);
+b2Body_UpdateMassFromShapes(myBodyId);
 ```
 
 The body's mass data is available through the following functions:
@@ -527,14 +527,15 @@ b2BodyType bodyType = b2Body_GetType(myBodyId);
 b2Body_SetBullet(myBodyId, true);
 bool isBullet = b2Body_IsBullet(myBodyId);
 b2Body_EnableSleep(myBodyId, false);
-bool isSleepEnabled = b2Body_IsSleepingEnabled(myBodyId);
+bool isSleepEnabled = b2Body_IsSleepEnabled(myBodyId);
 b2Body_SetAwake(myBodyId, true);
 bool isAwake = b2Body_IsAwake(myBodyId);
 b2Body_Disable(myBodyId);
 b2Body_Enable(myBodyId);
 bool isEnabled = b2Body_IsEnabled(myBodyId);
-b2Body_SetFixedRotation(myBodyId, true);
-bool isFixedRotation = b2Body_IsFixedRotation(myBodyId);
+b2MotionLocks locks = {.linearX = false, .linearY = false, .angularZ = true};
+b2Body_SetMotionLocks(myBodyId, locks);
+locks = b2Body_GetMotionLocks(myBodyId);
 ```
 
 Please see the comments on these functions for more details.
@@ -743,13 +744,13 @@ similar densities for all your shapes. This will improve stacking
 stability.
 
 The mass of a body is not adjusted when you set the density. You must
-call `b2Body_ApplyMassFromShapes()` for this to occur. Generally you should establish
+call `b2Body_UpdateMassFromShapes()` for this to occur. Generally you should establish
 the shape density in `b2ShapeDef` and avoid modifying it later because this
 can be expensive, especially on a compound body.
 
 ```c
 b2Shape_SetDensity(myShapeId, 5.0f);
-b2Body_ApplyMassFromShapes(myBodyId);
+b2Body_UpdateMassFromShapes(myBodyId);
 ```
 
 ### Friction

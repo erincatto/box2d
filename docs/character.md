@@ -36,7 +36,7 @@ that attempts to find the optimal new position given the current position.
 
 These collision planes support *soft collision* using a `pushLimit`. This push limit is a distance value. A rigid surface will have a push limit of `FLT_MAX`. However, you may want some surfaces to have a limited effect on the character. For example, you may want the mover to push through other players or enemies yet still resolve the collision so they are not overlapped. Another example is a door or elevator that could otherwise push the mover through the floor.
 
-Finally after calling `b2SolverPlanes()` you can call `b2ClipVector()` to clip your velocity vector so the mover will not keep trying to push into a wall, which could lead to a huge velocity accumulation otherwise.
+Finally after calling `b2SolvePlanes()` you can call `b2ClipVector()` to clip your velocity vector so the mover will not keep trying to push into a wall, which could lead to a huge velocity accumulation otherwise.
 
 The `Mover` sample shows all these functions being used together. It also includes other common character features such as acceleration and friction, jumping, and a pogo stick.
 

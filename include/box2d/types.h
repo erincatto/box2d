@@ -42,7 +42,7 @@ typedef float b2FrictionCallback( float frictionA, uint64_t userMaterialIdA, flo
 /// @ingroup world
 typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialIdA, float restitutionB, uint64_t userMaterialIdB );
 
-/// Result from b2World_RayCastClosest
+/// Result from b2World_CastRayClosest
 /// If there is initial overlap the fraction and normal will be zero while the point is an arbitrary point in the overlap region.
 /// @ingroup world
 typedef struct b2RayResult
@@ -456,7 +456,7 @@ typedef struct b2ShapeDef
 	bool invokeContactCreation;
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
-	/// Warning: if this is false, you MUST call b2Body_ApplyMassFromShapes or b2Body_SetMassData before simulating the world.
+	/// Warning: if this is false, you MUST call b2Body_UpdateMassFromShapes or b2Body_SetMassData before simulating the world.
 	bool updateBodyMass;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
@@ -1284,7 +1284,7 @@ typedef bool b2PreContinuousFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos p
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
-/// @see b2World_OverlapABB
+/// @see b2World_OverlapAABB
 /// @return false to terminate the query.
 /// @ingroup world
 typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );

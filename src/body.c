@@ -1468,7 +1468,7 @@ b2MassData b2Body_GetMassData( b2BodyId bodyId )
 	return massData;
 }
 
-void b2Body_ApplyMassFromShapes( b2BodyId bodyId )
+void b2Body_UpdateMassFromShapes( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1476,7 +1476,7 @@ void b2Body_ApplyMassFromShapes( b2BodyId bodyId )
 		return;
 	}
 
-	B2_REC( world, BodyApplyMassFromShapes, bodyId );
+	B2_REC( world, BodyUpdateMassFromShapes, bodyId );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2UpdateBodyMassData( world, body );

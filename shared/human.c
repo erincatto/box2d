@@ -691,7 +691,7 @@ void Human_SetScale( Human* human, float scale )
 			}
 		}
 
-		b2Body_ApplyMassFromShapes( bone->bodyId );
+		b2Body_UpdateMassFromShapes( bone->bodyId );
 	}
 
 	human->scale = scale;

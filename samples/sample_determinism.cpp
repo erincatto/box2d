@@ -142,9 +142,9 @@ public:
 	{
 		Snapshot snapshot;
 		snapshot.step = m_stepCount;
-		snapshot.size = b2World_Snapshot( m_worldId, nullptr, 0 );
+		snapshot.size = b2World_GetSnapshot( m_worldId, nullptr, 0 );
 		snapshot.image = (uint8_t*)malloc( snapshot.size );
-		b2World_Snapshot( m_worldId, snapshot.image, snapshot.size );
+		b2World_GetSnapshot( m_worldId, snapshot.image, snapshot.size );
 
 		m_snapshots.push_back( snapshot );
 	}

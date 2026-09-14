@@ -1614,7 +1614,7 @@ public:
 		}
 
 		b2BodyId bodyId = b2Shape_GetBody( m_shapeId );
-		b2Body_ApplyMassFromShapes( bodyId );
+		b2Body_UpdateMassFromShapes( bodyId );
 	}
 
 	bool DrawControls() override

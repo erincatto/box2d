@@ -9,7 +9,7 @@
 
 #include "body.h"
 #include "physics_world.h"
-#include "world_snapshot.h"
+#include "snapshot.h"
 
 #include "box2d/box2d.h"
 

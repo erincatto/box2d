@@ -79,7 +79,7 @@ static inline bool b2NeedsRebuild( const b2DynamicTree* tree )
 	return b2IsNodeMoved( tree->nodes + B2_ROOT_NODE ) || tree->dfsOrdered == false;
 }
 
-int b2DynamicTree_CreateProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
+int b2CreateTreeProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
 									   bool markMoved );
 void b2DynamicTree_MoveProxyInternal( b2DynamicTree* tree, int proxyId, b2AABB aabb, bool markMoved );
 void b2DynamicTree_EnlargeProxy( b2DynamicTree* tree, int proxyId, b2AABB aabb );

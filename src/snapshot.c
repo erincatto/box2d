@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "world_snapshot.h"
+#include "snapshot.h"
 
 #include "bitset.h"
 #include "body.h"
@@ -358,12 +358,12 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 
 	// Free what the shell or a live world holds, rebuild scratch included. Destroy zeroes the
 	// struct, which covers every field the image does not carry.
-	b2DynamicTree_Destroy( tree );
+	b2DestroyDynamicTree( tree );
 
 	if ( !r->ok )
 	{
 		// Leave a valid empty tree so the shell can still be destroyed
-		*tree = b2DynamicTree_Create( 0 );
+		*tree = b2CreateDynamicTree( 0 );
 		return;
 	}
 
@@ -953,7 +953,7 @@ bool b2World_Restore( b2WorldId worldId, const uint8_t* image, int size )
 	return b2DeserializeIntoShell( r, world );
 }
 
-int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity )
+int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 

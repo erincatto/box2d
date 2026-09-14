@@ -2382,7 +2382,7 @@ void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context )
 //
 // Runs as a flat parallel-for over the whole wide constraint range. Per-color
 // contact sims are looked up through the prepareSpans cursor rather than the
-// block's colorIndex, matching the layout of b2PrepareContactsTask.
+// block's colorIndex, matching the layout of b2PrepareContacts_Wide.
 //
 // I could store the manifold pointer in the b2ContactConstraintWide to simplify
 // this. But it is important to keep the constraint small.

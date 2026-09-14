@@ -1119,7 +1119,7 @@ public:
 					}
 
 					// All shapes have been added so I can efficiently compute the mass properties.
-					b2Body_ApplyMassFromShapes( bodyId );
+					b2Body_UpdateMassFromShapes( bodyId );
 				}
 			}
 		}
@@ -1178,7 +1178,7 @@ public:
 		}
 
 		// All shapes have been added so I can efficiently compute the mass properties.
-		b2Body_ApplyMassFromShapes( bodyId );
+		b2Body_UpdateMassFromShapes( bodyId );
 	}
 
 	static Sample* Create( SampleContext* context )

@@ -30,13 +30,13 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 	bp->pairSet = b2CreateSet( b2MaxInt( 32, 2 * capacity->contactCount ) );
 
 	int staticCapacity = b2MaxInt( 16, capacity->staticShapeCount );
-	bp->trees[b2_staticBody] = b2DynamicTree_Create( staticCapacity );
+	bp->trees[b2_staticBody] = b2CreateDynamicTree( staticCapacity );
 
 	int kinematicCapacity = 16;
-	bp->trees[b2_kinematicBody] = b2DynamicTree_Create( kinematicCapacity );
+	bp->trees[b2_kinematicBody] = b2CreateDynamicTree( kinematicCapacity );
 
 	int dynamicCapacity = b2MaxInt( 16, capacity->dynamicShapeCount );
-	bp->trees[b2_dynamicBody] = b2DynamicTree_Create( dynamicCapacity );
+	bp->trees[b2_dynamicBody] = b2CreateDynamicTree( dynamicCapacity );
 
 	bp->movedSiblings = NULL;
 }
@@ -45,7 +45,7 @@ void b2DestroyBroadPhase( b2BroadPhase* bp )
 {
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Destroy( bp->trees + i );
+		b2DestroyDynamicTree( bp->trees + i );
 	}
 
 	b2DestroySet( &bp->pairSet );
@@ -60,7 +60,7 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 	bool mark = ( proxyType != b2_staticBody || forcePairCreation );
 
-	int proxyId = b2DynamicTree_CreateProxyInternal( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
+	int proxyId = b2CreateTreeProxyInternal( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
 	int proxyKey = B2_PROXY_KEY( proxyId, proxyType );
 	return proxyKey;
 }
@@ -71,7 +71,7 @@ void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey )
 	int proxyId = B2_PROXY_ID( proxyKey );
 
 	B2_ASSERT( 0 <= proxyType && proxyType < b2_bodyTypeCount );
-	b2DynamicTree_DestroyProxy( bp->trees + proxyType, proxyId );
+	b2DestroyTreeProxy( bp->trees + proxyType, proxyId );
 }
 
 void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb )

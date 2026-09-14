@@ -56,7 +56,7 @@ B2_REC_OP( 0x2A, BodyApplyLinearImpulse, RET_NONE, ARG( BODYID, body ) ARG( VEC2
 B2_REC_OP( 0x2B, BodyApplyLinearImpulseToCenter, RET_NONE, ARG( BODYID, body ) ARG( VEC2, impulse ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x2C, BodyApplyAngularImpulse, RET_NONE, ARG( BODYID, body ) ARG( F32, impulse ) ARG( BOOL, wake ) )
 B2_REC_OP( 0x2D, BodySetMassData, RET_NONE, ARG( BODYID, body ) ARG( MASSDATA, massData ) )
-B2_REC_OP( 0x2E, BodyApplyMassFromShapes, RET_NONE, ARG( BODYID, body ) )
+B2_REC_OP( 0x2E, BodyUpdateMassFromShapes, RET_NONE, ARG( BODYID, body ) )
 B2_REC_OP( 0x2F, BodySetLinearDamping, RET_NONE, ARG( BODYID, body ) ARG( F32, damping ) )
 B2_REC_OP( 0x30, BodySetAngularDamping, RET_NONE, ARG( BODYID, body ) ARG( F32, damping ) )
 B2_REC_OP( 0x31, BodySetGravityScale, RET_NONE, ARG( BODYID, body ) ARG( F32, scale ) )
