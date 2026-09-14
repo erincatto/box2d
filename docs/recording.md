@@ -87,22 +87,22 @@ world between steps, use the player handle. The player copies the bytes it is gi
 free the source buffer immediately after creating it.
 
 ```c
-b2RecPlayer* player = b2RecPlayer_Create( data, size, 0 );
-b2WorldId worldId = b2RecPlayer_GetWorldId( player );
+b2Replay* player = b2CreateReplay( data, size, 0 );
+b2WorldId worldId = b2Replay_GetWorldId( player );
 
-while ( b2RecPlayer_StepFrame( player ) )
+while ( b2Replay_StepFrame( player ) )
 {
-    // The replay world now holds the state after b2RecPlayer_GetFrame( player ) steps.
+    // The replay world now holds the state after b2Replay_GetFrame( player ) steps.
     // Read it with the normal b2Body_Get* and b2World_* functions, or draw it.
 }
 
-b2RecPlayer_Restart( player );   // rewind to frame 0 in place; the world id stays the same
-b2RecPlayer_Destroy( player );
+b2Replay_Restart( player );   // rewind to frame 0 in place; the world id stays the same
+b2DestroyReplay( player );
 ```
 
-`b2RecPlayer_Create` returns `NULL` if the bytes are malformed or fail the layout gate (see the
-determinism contract below). `b2RecPlayer_IsAtEnd` reports when the recording is exhausted, and
-`b2RecPlayer_HasDiverged` reports whether a recorded state hash failed to reproduce. Divergence
+`b2CreateReplay` returns `NULL` if the bytes are malformed or fail the layout gate (see the
+determinism contract below). `b2Replay_IsAtEnd` reports when the recording is exhausted, and
+`b2Replay_HasDiverged` reports whether a recorded state hash failed to reproduce. Divergence
 is non-fatal during playback so the viewer can keep playing and show where the run starts to
 differ.
 
@@ -146,7 +146,7 @@ restores and continues with any worker count.
 
 The samples app has a **Replay** category with a recording viewer:
 
-- **Replay File** loads a `.b2rec` into a buffer and plays it back using a `b2RecPlayer`. It
+- **Replay File** loads a `.b2rec` into a buffer and plays it back using a `b2Replay`. It
   supports play, pause, single-step, restart, and camera control. A `DIVERGED` overlay appears
   if a recorded state hash fails to reproduce, which is a real determinism break, not a viewer
   bug.
@@ -171,7 +171,7 @@ your responsibility:
 
 - **Struct layout** is enforced. A recording opens by deserializing a snapshot, which is a raw
   struct image, so the reader's build must have identical struct layouts. The image carries a
-  layout hash and `b2RecPlayer_Create` / `b2ValidateReplay` reject a recording whose hash differs
+  layout hash and `b2CreateReplay` / `b2ValidateReplay` reject a recording whose hash differs
   rather than producing a silently wrong replay. A recording therefore does not replay across a
   build whose internal layout changed.
 - **Pointer width**, **endianness**, and the format version are enforced the same way.
@@ -183,7 +183,7 @@ your responsibility:
 Overlap and cast queries issued during a recorded step (ray casts, shape casts, overlap tests,
 and the character mover casts) are recorded too. On replay each query is re-issued against the
 replayed world and its results are compared against what was recorded, so a query that returns
-different hits is flagged like any other divergence. `b2RecPlayer_DrawFrameQueries` draws the
+different hits is flagged like any other divergence. `b2Replay_DrawFrameQueries` draws the
 queries from the most recently replayed frame, layered on top of the world; call it after
 `b2World_Draw`.
 

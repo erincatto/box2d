@@ -980,7 +980,7 @@ static void b2RecDispatch_BodySetMassData( const b2RecArgs_BodySetMassData* a, b
 
 static void b2RecDispatch_BodyApplyMassFromShapes( const b2RecArgs_BodyApplyMassFromShapes* a, b2RecReader* rdr )
 {
-	b2Body_ApplyMassFromShapes( b2RecMakeBodyId( rdr, a->body ) );
+	b2Body_UpdateMassFromShapes( b2RecMakeBodyId( rdr, a->body ) );
 }
 
 static void b2RecDispatch_BodySetLinearDamping( const b2RecArgs_BodySetLinearDamping* a, b2RecReader* rdr )
@@ -2130,7 +2130,7 @@ b2Replay* b2CreateReplay( const void* data, int size, int workerCount )
 {
 	if ( data == NULL || size < 32 )
 	{
-		printf( "b2RecPlayer_Create: recording too small\n" );
+		printf( "b2CreateReplay: recording too small\n" );
 		return NULL;
 	}
 
@@ -2140,34 +2140,34 @@ b2Replay* b2CreateReplay( const void* data, int size, int workerCount )
 
 	if ( hdr.magic != B2_REC_MAGIC )
 	{
-		printf( "b2RecPlayer_Create: bad magic (got 0x%08X)\n", hdr.magic );
+		printf( "b2CreateReplay: bad magic (got 0x%08X)\n", hdr.magic );
 		return NULL;
 	}
 
 	if ( hdr.versionMajor != B2_REC_VERSION_MAJOR || hdr.versionMinor != B2_REC_VERSION_MINOR )
 	{
-		printf( "b2RecPlayer_Create: version mismatch (file=%u.%u, runtime=%u.%u)\n", hdr.versionMajor, hdr.versionMinor,
+		printf( "b2CreateReplay: version mismatch (file=%u.%u, runtime=%u.%u)\n", hdr.versionMajor, hdr.versionMinor,
 				B2_REC_VERSION_MAJOR, B2_REC_VERSION_MINOR );
 		return NULL;
 	}
 
 	if ( hdr.pointerWidth != (uint8_t)sizeof( void* ) )
 	{
-		printf( "b2RecPlayer_Create: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth,
+		printf( "b2CreateReplay: pointer width mismatch (file=%u, runtime=%u)\n", hdr.pointerWidth,
 				(unsigned)sizeof( void* ) );
 		return NULL;
 	}
 
 	if ( hdr.bigEndian != 0 )
 	{
-		printf( "b2RecPlayer_Create: big-endian recording not supported\n" );
+		printf( "b2CreateReplay: big-endian recording not supported\n" );
 		return NULL;
 	}
 
 	// Every recording is snapshot-seeded: the blob sits between the header and the op stream
 	if ( hdr.snapshotSize == 0 || hdr.snapshotSize > (uint64_t)( size - 32 ) )
 	{
-		printf( "b2RecPlayer_Create: missing or oversized snapshot\n" );
+		printf( "b2CreateReplay: missing or oversized snapshot\n" );
 		return NULL;
 	}
 	int headerEnd = 32 + (int)hdr.snapshotSize;
@@ -2242,7 +2242,7 @@ b2Replay* b2CreateReplay( const void* data, int size, int workerCount )
 	player->rdr.replayWorldId = b2CreateWorldFromSnapshot( copy + 32, (int)hdr.snapshotSize, workerCount );
 	if ( b2World_IsValid( player->rdr.replayWorldId ) == false )
 	{
-		printf( "b2RecPlayer_Create: snapshot deserialize failed\n" );
+		printf( "b2CreateReplay: snapshot deserialize failed\n" );
 		b2DestroyReplay( player );
 		return NULL;
 	}
@@ -2348,9 +2348,9 @@ static void b2RecCaptureKeyframe( b2Replay* player )
 }
 
 // Restore the world and player state from a keyframe, so a backward seek resumes from it instead of
-// frame 0. Mirrors b2RecPlayer_Restart but targets a mid-stream image. b2World_Restore is in place,
+// frame 0. Mirrors b2Replay_Restart but targets a mid-stream image. b2World_Restore is in place,
 // so the replay world id stays stable.
-static void b2RecPlayerRestoreKeyframe( b2Replay* player, const b2RecKeyframe* kf )
+static void b2ReplayRestoreKeyframe( b2Replay* player, const b2RecKeyframe* kf )
 {
 	if ( b2World_Restore( player->rdr.replayWorldId, kf->image, kf->imageSize ) == false )
 	{
@@ -2499,7 +2499,7 @@ void b2Replay_SeekFrame( b2Replay* player, int targetFrame )
 	{
 		if ( best != NULL )
 		{
-			b2RecPlayerRestoreKeyframe( player, best );
+			b2ReplayRestoreKeyframe( player, best );
 		}
 		else
 		{
@@ -2508,7 +2508,7 @@ void b2Replay_SeekFrame( b2Replay* player, int targetFrame )
 	}
 	else if ( best != NULL && best->frame > player->frame )
 	{
-		b2RecPlayerRestoreKeyframe( player, best );
+		b2ReplayRestoreKeyframe( player, best );
 	}
 
 	while ( player->frame < targetFrame && b2Replay_StepFrame( player ) )
@@ -2833,8 +2833,8 @@ void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int queryIn
 
 // Public query inspection. The internal b2RecQueryKind values match the public b2RecQueryType, so
 // the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift.
-_Static_assert( b2_recQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
-_Static_assert( b2_recQueryShapeRayCast == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
+_Static_assert( b2_replayQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
+_Static_assert( b2_replayQueryShapeRayCast == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
 
 int b2Replay_GetFrameQueryCount( const b2Replay* player )
 {

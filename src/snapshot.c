@@ -953,7 +953,7 @@ bool b2World_Restore( b2WorldId worldId, const uint8_t* image, int size )
 	return b2DeserializeIntoShell( r, world );
 }
 
-int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity )
+int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 

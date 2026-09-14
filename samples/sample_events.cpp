@@ -1191,7 +1191,7 @@ public:
 		if ( destroyCount > 0 )
 		{
 			// Update mass just once
-			b2Body_ApplyMassFromShapes( m_playerId );
+			b2Body_UpdateMassFromShapes( m_playerId );
 		}
 
 		if ( m_context->hertz > 0.0f && m_context->pause == false )

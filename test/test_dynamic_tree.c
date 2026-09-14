@@ -850,7 +850,7 @@ static int TreeOneProxyTest( void )
 	ENSURE( RootMarked( &tree ) == false );
 	b2DynamicTree_ValidateNoMoved( &tree );
 
-	b2DynamicTree_DestroyProxy( &tree, proxyId );
+	b2DestroyTreeProxy( &tree, proxyId );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( tree.proxyCount == 0 );
 	ENSURE( tree.nodeEnd == 2 );
@@ -881,7 +881,7 @@ static int TreeLeafRootTest( void )
 	ENSURE( b2IsLeaf( tree.nodes + B2_ROOT_NODE ) == false );
 	ENSURE( b2DynamicTree_GetHeight( &tree ) == 1 );
 
-	b2DynamicTree_DestroyProxy( &tree, idA );
+	b2DestroyTreeProxy( &tree, idA );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( b2IsLeaf( tree.nodes + B2_ROOT_NODE ) );
 	ENSURE( tree.nodeEnd == 4 );
@@ -910,7 +910,7 @@ static int TreeLeafRootTest( void )
 	ENSURE( CompareQuery( &tree, idsBCD, 3, boxC ) == 0 );
 
 	// A remove leaves a hole that the full build compacts
-	b2DynamicTree_DestroyProxy( &tree, idB );
+	b2DestroyTreeProxy( &tree, idB );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( tree.nodeEnd == 6 );
 	ENSURE( tree.pairFreeList != B2_NULL_INDEX );
@@ -922,11 +922,11 @@ static int TreeLeafRootTest( void )
 	ENSURE( tree.pairFreeList == B2_NULL_INDEX );
 	ENSURE( CompareQuery( &tree, idsCD, 2, all ) == 0 );
 
-	b2DynamicTree_DestroyProxy( &tree, idC );
+	b2DestroyTreeProxy( &tree, idC );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( b2IsLeaf( tree.nodes + B2_ROOT_NODE ) );
 
-	b2DynamicTree_DestroyProxy( &tree, idD );
+	b2DestroyTreeProxy( &tree, idD );
 	b2DynamicTree_Validate( &tree );
 	ENSURE( tree.proxyCount == 0 );
 	ENSURE( b2IsEmptyNode( tree.nodes + B2_ROOT_NODE ) );
@@ -1120,8 +1120,8 @@ static int TreeDfsOrderTest( void )
 	int orderedEnd = tree.nodeEnd;
 
 	// Removes leave holes but every survivor stays above its parent
-	b2DynamicTree_DestroyProxy( &tree, proxyIds[3] );
-	b2DynamicTree_DestroyProxy( &tree, proxyIds[20] );
+	b2DestroyTreeProxy( &tree, proxyIds[3] );
+	b2DestroyTreeProxy( &tree, proxyIds[20] );
 	proxyIds[3] = proxyIds[proxyCount - 1];
 	proxyIds[20] = proxyIds[proxyCount - 2];
 	proxyCount -= 2;
@@ -1205,7 +1205,7 @@ static int TreeStaleAfterInsertRemoveTest( void )
 	// Insert and remove between steps leaves no marks
 	b2AABB extra = { { 100.0f, 100.0f }, { 101.0f, 101.0f } };
 	int extraId = b2DynamicTree_CreateProxyInternal( &tree, extra, 1, 99, true );
-	b2DynamicTree_DestroyProxy( &tree, extraId );
+	b2DestroyTreeProxy( &tree, extraId );
 	ENSURE( b2HasTreeMoved( &tree ) == false );
 
 	// The world's rebuild call, then a proxy enlarges during the step

@@ -582,12 +582,12 @@ int b2DynamicTree_CreateProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_
 	return proxyId;
 }
 
-int b2DynamicTree_CreateProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData )
+int b2CreateTreeProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData )
 {
 	return b2DynamicTree_CreateProxyInternal( tree, aabb, categoryBits, userData, false );
 }
 
-void b2DynamicTree_DestroyProxy( b2DynamicTree* tree, int proxyId )
+void b2DestroyTreeProxy( b2DynamicTree* tree, int proxyId )
 {
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
 

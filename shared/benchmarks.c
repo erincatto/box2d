@@ -1297,7 +1297,7 @@ static void TreeCastAddBox( b2Vec2 center, float hx, float hy, uint64_t category
 	int index = data->proxyCount;
 	data->tightBoxes[index] = tight;
 	data->proxyCount += 1;
-	b2DynamicTree_CreateProxy( &data->tree, fat, categoryBits, (uint64_t)index );
+	b2CreateTreeProxy( &data->tree, fat, categoryBits, (uint64_t)index );
 }
 
 void DestroyTreeCast( void )

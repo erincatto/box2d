@@ -350,10 +350,10 @@ int SnapshotTest( void )
 	b2World* rWorld = b2GetWorldFromId( rId );
 
 	// Producer: size query, then fill a caller-owned buffer
-	int imageSize = b2World_Snapshot( rId, NULL, 0 );
+	int imageSize = b2World_GetSnapshot( rId, NULL, 0 );
 	ENSURE( imageSize > 0 );
 	uint8_t* image = b2Alloc( imageSize );
-	int written = b2World_Snapshot( rId, image, imageSize );
+	int written = b2World_GetSnapshot( rId, image, imageSize );
 	ENSURE( written == imageSize );
 
 	uint64_t snapHash = b2HashWorldStateDeep( rWorld );
@@ -531,9 +531,9 @@ int SnapshotTest( void )
 			b2World_Step( wId, dt, subSteps );
 		}
 
-		int snapSize = b2World_Snapshot( wId, NULL, 0 );
+		int snapSize = b2World_GetSnapshot( wId, NULL, 0 );
 		uint8_t* snap = b2Alloc( snapSize );
-		b2World_Snapshot( wId, snap, snapSize );
+		b2World_GetSnapshot( wId, snap, snapSize );
 
 		b2World* origin = b2GetWorldFromId( wId );
 
@@ -640,9 +640,9 @@ int SnapshotTest( void )
 		// The public state hash accessor must match the internal deep hash
 		ENSURE( b2World_GetStateHash( wId ) == b2HashWorldStateDeep( w ) );
 
-		int snapSize = b2World_Snapshot( wId, NULL, 0 );
+		int snapSize = b2World_GetSnapshot( wId, NULL, 0 );
 		uint8_t* snap = b2Alloc( snapSize );
-		b2World_Snapshot( wId, snap, snapSize );
+		b2World_GetSnapshot( wId, snap, snapSize );
 
 		// Disabling the resting box destroys its touching contact and queues an end event,
 		// exactly the between-step mutation a rollback would discard

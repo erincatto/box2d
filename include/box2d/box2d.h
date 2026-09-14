@@ -298,8 +298,8 @@ B2_API b2Recording* b2LoadRecordingFromFile( const char* path );
  * Ids: every b2BodyId / b2ShapeId / b2JointId / b2ChainId carries the world slot it
  * was created in. b2World_Restore reuses the same world, so ids you held at the
  * snapshot instant keep working. b2CreateWorldFromSnapshot allocates a new world,
- * so ids from the origin world will not match it. Ids minted after the snapshot
- * instant fail validation after a restore rather than aliasing a different object.
+ * so ids from the original world will not match it. Ids created after the snapshot
+ * fail validation after a restore rather than aliasing a different object.
  * @{
  */
 
@@ -311,7 +311,7 @@ B2_API b2Recording* b2LoadRecordingFromFile( const char* path );
 /// @param capacity Size of image in bytes, ignored when querying
 /// @return The number of bytes the snapshot needs. If it exceeds capacity nothing is written.
 ///         Returns 0 if the world is mid-step.
-B2_API int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity );
+B2_API int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity );
 
 /// Restore a world's simulation state from a snapshot image, in place. The world keeps
 /// its slot and generation, so this b2WorldId and any ids held from this same world stay
@@ -319,7 +319,7 @@ B2_API int b2World_Snapshot( b2WorldId worldId, uint8_t* image, int capacity );
 /// Restore into the same world the snapshot came from to keep held ids valid. Must be
 /// called at a step boundary.
 /// @param worldId The world to restore into
-/// @param image A snapshot image produced by b2World_Snapshot
+/// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
 /// @return true on success. On a rejected image (bad magic, version, or layout) the world
 ///         is left unchanged. A corrupt payload detected after the rebuild begins returns
@@ -329,7 +329,7 @@ B2_API bool b2World_Restore( b2WorldId worldId, const uint8_t* image, int size )
 /// Create a new world from a snapshot image. Use this to load a saved world when there is
 /// no existing world to restore into. The new world gets a fresh slot and id, so ids held
 /// from the origin world will not match it. Host wiring is reset to defaults.
-/// @param image A snapshot image produced by b2World_Snapshot
+/// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
 /// @param workerCount Worker count for the new world. 0 uses the serial single-worker fallback.
 /// @return The new world id, or b2_nullWorldId on failure.
@@ -520,7 +520,7 @@ B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 /// You may also use this when automatic mass computation has been disabled.
 /// You should call this regardless of body type.
 /// Note that sensor shapes may have mass.
-B2_API void b2Body_ApplyMassFromShapes( b2BodyId bodyId );
+B2_API void b2Body_UpdateMassFromShapes( b2BodyId bodyId );
 
 /// Adjust the linear damping. Normally this is set in b2BodyDef before creation.
 B2_API void b2Body_SetLinearDamping( b2BodyId bodyId, float linearDamping );
@@ -689,7 +689,7 @@ B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, c
 
 /// Destroy a shape. You may defer the body mass update which can improve performance if several shapes on a
 ///	body are destroyed at once.
-///	@see b2Body_ApplyMassFromShapes
+///	@see b2Body_UpdateMassFromShapes
 B2_API void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass );
 
 /// Shape identifier validation. Provides validation for up to 64K allocations.
@@ -718,7 +718,7 @@ B2_API void* b2Shape_GetUserData( b2ShapeId shapeId );
 
 /// Set the mass density of a shape, usually in kg/m^2.
 /// This will optionally update the mass properties on the parent body.
-/// @see b2ShapeDef::density, b2Body_ApplyMassFromShapes
+/// @see b2ShapeDef::density, b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBodyMass );
 
 /// Get the density of a shape, usually in kg/m^2
@@ -812,12 +812,12 @@ B2_API b2Polygon b2Shape_GetPolygon( b2ShapeId shapeId );
 
 /// Allows you to change a shape to be a circle or update the current circle.
 /// This does not modify the mass properties.
-/// @see b2Body_ApplyMassFromShapes
+/// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetCircle( b2ShapeId shapeId, const b2Circle* circle );
 
 /// Allows you to change a shape to be a capsule or update the current capsule.
 /// This does not modify the mass properties.
-/// @see b2Body_ApplyMassFromShapes
+/// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule );
 
 /// Allows you to change a shape to be a segment or update the current segment.
@@ -825,7 +825,7 @@ B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 
 /// Allows you to change a shape to be a polygon or update the current polygon.
 /// This does not modify the mass properties.
-/// @see b2Body_ApplyMassFromShapes
+/// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
 
 /// Allows you to change a shape to be an orphaned chain segment or update the current chain
@@ -1632,15 +1632,15 @@ B2_API void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int 
 /// The kind of a recorded spatial query, matching the public query and cast functions.
 typedef enum b2ReplayQueryType
 {
-	b2_recQueryOverlapAABB,
-	b2_recQueryOverlapShape,
-	b2_recQueryCastRay,
-	b2_recQueryCastShape,
-	b2_recQueryCollideMover,
-	b2_recQueryCastRayClosest,
-	b2_recQueryCastMover,
-	b2_recQueryShapeTestPoint,
-	b2_recQueryShapeRayCast,
+	b2_replayQueryOverlapAABB,
+	b2_replayQueryOverlapShape,
+	b2_replayQueryCastRay,
+	b2_replayQueryCastShape,
+	b2_replayQueryCollideMover,
+	b2_replayQueryCastRayClosest,
+	b2_replayQueryCastMover,
+	b2_replayQueryShapeTestPoint,
+	b2_replayQueryShapeRayCast,
 } b2ReplayQueryType;
 
 /// A spatial query recorded during a replayed frame, exposed for inspection.

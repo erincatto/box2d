@@ -300,7 +300,7 @@ int RecordingTest( void )
 	b2Body_SetMotionLocks( bodyId, (b2MotionLocks){ false, false, true } );
 	b2MassData md = { 2.0f, { 0.0f, 0.0f }, 0.5f };
 	b2Body_SetMassData( bodyId, md );
-	b2Body_ApplyMassFromShapes( bodyId );
+	b2Body_UpdateMassFromShapes( bodyId );
 	b2Body_SetType( capsuleBodyId, b2_kinematicBody );
 	b2Body_SetType( capsuleBodyId, b2_dynamicBody );
 	b2Body_SetTargetTransform( kinematicId, (b2WorldTransform){ { -2.0f, 5.0f }, b2Rot_identity }, 1.0f / 60.0f, true );
@@ -828,7 +828,7 @@ int RecordingKeyframeTest( void )
 	// interval-doubling eviction during the 320-frame replay
 	b2Replay* probe = b2CreateReplay( recData, recSize, 0 );
 	ENSURE( probe != NULL );
-	int snapSize = b2World_Snapshot( b2Replay_GetWorldId( probe ), NULL, 0 );
+	int snapSize = b2World_GetSnapshot( b2Replay_GetWorldId( probe ), NULL, 0 );
 	b2DestroyReplay( probe );
 	ENSURE( snapSize > 0 );
 	int tightBudget = 6 * snapSize;
@@ -1002,7 +1002,7 @@ static int ScrubRecording( b2Recording* rec, int workerCount )
 
 	b2Replay* probe = b2CreateReplay( recData, recSize, 0 );
 	ENSURE( probe != NULL );
-	int snapSize = b2World_Snapshot( b2Replay_GetWorldId( probe ), NULL, 0 );
+	int snapSize = b2World_GetSnapshot( b2Replay_GetWorldId( probe ), NULL, 0 );
 	b2DestroyReplay( probe );
 	int tightBudget = 4 * snapSize;
 
@@ -1072,9 +1072,9 @@ static int RestepRaceStress( void ( *build )( b2WorldId ), const char* name, int
 		b2World_Step( liveId, dt, subSteps );
 	}
 
-	int size = b2World_Snapshot( liveId, NULL, 0 );
+	int size = b2World_GetSnapshot( liveId, NULL, 0 );
 	uint8_t* image = b2Alloc( size );
-	b2World_Snapshot( liveId, image, size );
+	b2World_GetSnapshot( liveId, image, size );
 	b2DestroyWorld( liveId );
 
 	b2WorldDef cd = b2DefaultWorldDef();

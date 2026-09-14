@@ -76,23 +76,23 @@ static const char* ReplayQueryTypeName( b2ReplayQueryType type )
 {
 	switch ( type )
 	{
-		case b2_recQueryOverlapAABB:
+		case b2_replayQueryOverlapAABB:
 			return "overlap AABB";
-		case b2_recQueryOverlapShape:
+		case b2_replayQueryOverlapShape:
 			return "overlap shape";
-		case b2_recQueryCastRay:
+		case b2_replayQueryCastRay:
 			return "cast ray";
-		case b2_recQueryCastShape:
+		case b2_replayQueryCastShape:
 			return "cast shape";
-		case b2_recQueryCollideMover:
+		case b2_replayQueryCollideMover:
 			return "collide mover";
-		case b2_recQueryCastRayClosest:
+		case b2_replayQueryCastRayClosest:
 			return "cast ray closest";
-		case b2_recQueryCastMover:
+		case b2_replayQueryCastMover:
 			return "cast mover";
-		case b2_recQueryShapeTestPoint:
+		case b2_replayQueryShapeTestPoint:
 			return "shape test point";
-		case b2_recQueryShapeRayCast:
+		case b2_replayQueryShapeRayCast:
 			return "shape ray cast";
 		default:
 			return "?";
@@ -1032,7 +1032,7 @@ public:
 		}
 
 		ImGui::Text( "type     %s", ReplayQueryTypeName( q.type ) );
-		bool shapeLocal = q.type == b2_recQueryShapeTestPoint || q.type == b2_recQueryShapeRayCast;
+		bool shapeLocal = q.type == b2_replayQueryShapeTestPoint || q.type == b2_replayQueryShapeRayCast;
 		if ( shapeLocal == false )
 		{
 			ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );
