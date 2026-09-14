@@ -4,11 +4,10 @@
 #include "core.h"
 #include "determinism.h"
 #include "physics_world.h"
+#include "snapshot.h"
 #include "test_macros.h"
-#include "world_snapshot.h"
 
 #include "box2d/box2d.h"
-#include "box2d/math_functions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -492,32 +491,32 @@ int SnapshotTest( void )
 		b2DestroyRecording( loaded );
 
 		// The player opens the recording and the replay world id is stable across a restart
-		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
+		b2Replay* player = b2CreateReplay( recData, recSize, 0 );
 		ENSURE( player != NULL );
-		b2WorldId pid0 = b2RecPlayer_GetWorldId( player );
+		b2WorldId pid0 = b2Replay_GetWorldId( player );
 
 		int frames = 0;
-		while ( b2RecPlayer_StepFrame( player ) )
+		while ( b2Replay_StepFrame( player ) )
 		{
 			frames += 1;
 		}
 		ENSURE( frames == 60 );
-		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+		ENSURE( b2Replay_HasDiverged( player ) == false );
 
-		b2RecPlayer_Restart( player );
-		b2WorldId pid1 = b2RecPlayer_GetWorldId( player );
+		b2Replay_Restart( player );
+		b2WorldId pid1 = b2Replay_GetWorldId( player );
 		ENSURE( pid0.index1 == pid1.index1 && pid0.generation == pid1.generation );
-		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
+		ENSURE( b2Replay_GetFrame( player ) == 0 );
 
 		int frames2 = 0;
-		while ( b2RecPlayer_StepFrame( player ) )
+		while ( b2Replay_StepFrame( player ) )
 		{
 			frames2 += 1;
 		}
 		ENSURE( frames2 == 60 );
-		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+		ENSURE( b2Replay_HasDiverged( player ) == false );
 
-		b2RecPlayer_Destroy( player );
+		b2DestroyReplay( player );
 		b2DestroyRecording( rec );
 	}
 
@@ -592,18 +591,18 @@ int SnapshotTest( void )
 		b2World_StopRecording( wId );
 		b2DestroyWorld( wId );
 
-		b2RecPlayer* player = b2RecPlayer_Create( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 0 );
+		b2Replay* player = b2CreateReplay( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 0 );
 		ENSURE( player != NULL );
-		b2WorldId pid0 = b2RecPlayer_GetWorldId( player );
+		b2WorldId pid0 = b2Replay_GetWorldId( player );
 		for ( int i = 0; i < 5; ++i )
 		{
-			b2RecPlayer_StepFrame( player );
+			b2Replay_StepFrame( player );
 		}
-		b2RecPlayer_Restart( player );
-		b2WorldId pid1 = b2RecPlayer_GetWorldId( player );
+		b2Replay_Restart( player );
+		b2WorldId pid1 = b2Replay_GetWorldId( player );
 		ENSURE( pid0.index1 == pid1.index1 && pid0.generation == pid1.generation );
-		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
-		b2RecPlayer_Destroy( player );
+		ENSURE( b2Replay_GetFrame( player ) == 0 );
+		b2DestroyReplay( player );
 		b2DestroyRecording( rec );
 	}
 

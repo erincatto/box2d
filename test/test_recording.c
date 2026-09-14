@@ -7,8 +7,8 @@
 
 #include "benchmarks.h"
 #include "physics_world.h"
+#include "snapshot.h"
 #include "test_macros.h"
-#include "world_snapshot.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -138,12 +138,12 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 }
 
 // Safety factor of the named body in a replay world, or -1 if the body is not in the list
-static float ReplaySafetyFactor( b2RecPlayer* player, const char* name )
+static float ReplaySafetyFactor( b2Replay* player, const char* name )
 {
-	int count = b2RecPlayer_GetBodyCount( player );
+	int count = b2Replay_GetBodyCount( player );
 	for ( int i = 0; i < count; ++i )
 	{
-		b2BodyId bodyId = b2RecPlayer_GetBodyId( player, i );
+		b2BodyId bodyId = b2Replay_GetBodyId( player, i );
 		if ( b2Body_IsValid( bodyId ) && strcmp( b2Body_GetName( bodyId ), name ) == 0 )
 		{
 			return b2Body_GetSafetyFactor( bodyId );
@@ -551,12 +551,12 @@ int RecordingTest( void )
 	// Drive the incremental player directly. It underpins the viewer and exercises
 	// per-frame stepping, restart, and the getters beyond what b2ValidateReplay covers.
 	{
-		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
+		b2Replay* player = b2CreateReplay( recData, recSize, 0 );
 		ENSURE( player != NULL );
 
 		// Recorded bounds frame the whole session, so they must enclose the static ground circle
 		// and segment that bracket the scene from x in [-20, 20] down to the bottom of the circle
-		b2AABB recBounds = b2RecPlayer_GetInfo( player ).bounds;
+		b2AABB recBounds = b2Replay_GetInfo( player ).bounds;
 		b2Vec2 recExtents = b2AABB_Extents( recBounds );
 		ENSURE( recExtents.x > 0.0f && recExtents.y > 0.0f );
 		ENSURE( recBounds.lowerBound.x <= -20.0f && recBounds.upperBound.x >= 20.0f );
@@ -570,58 +570,58 @@ int RecordingTest( void )
 		dd.DrawSolidCapsuleFcn = s_DrawCapsule;
 
 		int frames = 0;
-		while ( b2RecPlayer_StepFrame( player ) )
+		while ( b2Replay_StepFrame( player ) )
 		{
 			// Exercise the draw path on every other frame
 			if ( frames % 2 == 0 )
 			{
-				b2RecPlayer_DrawFrameQueries( player, &dd, -1 );
+				b2Replay_DrawFrameQueries( player, &dd, -1 );
 			}
 			frames += 1;
 		}
 		ENSURE( frames == 60 );
-		ENSURE( b2RecPlayer_GetFrame( player ) == 60 );
-		ENSURE( b2RecPlayer_IsAtEnd( player ) );
-		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+		ENSURE( b2Replay_GetFrame( player ) == 60 );
+		ENSURE( b2Replay_IsAtEnd( player ) );
+		ENSURE( b2Replay_HasDiverged( player ) == false );
 
 		// The trailing DestroyWorld is an end marker; the world stays valid so a viewer can keep
 		// drawing the final step rather than blanking at the end
-		ENSURE( b2World_IsValid( b2RecPlayer_GetWorldId( player ) ) );
+		ENSURE( b2World_IsValid( b2Replay_GetWorldId( player ) ) );
 
 		// Restart reproduces the same run without reloading the file
-		b2RecPlayer_Restart( player );
-		ENSURE( b2RecPlayer_GetFrame( player ) == 0 );
-		ENSURE( b2RecPlayer_IsAtEnd( player ) == false );
+		b2Replay_Restart( player );
+		ENSURE( b2Replay_GetFrame( player ) == 0 );
+		ENSURE( b2Replay_IsAtEnd( player ) == false );
 
 		int frames2 = 0;
-		while ( b2RecPlayer_StepFrame( player ) )
+		while ( b2Replay_StepFrame( player ) )
 		{
 			frames2 += 1;
 		}
 		ENSURE( frames2 == 60 );
-		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+		ENSURE( b2Replay_HasDiverged( player ) == false );
 
-		b2RecPlayer_Destroy( player );
+		b2DestroyReplay( player );
 	}
 
 	// The state hash only proves the op stream stayed aligned. Read the safety factor back out of
 	// the replay world so a value that is written but never restored is caught too.
 	{
-		b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
+		b2Replay* player = b2CreateReplay( recData, recSize, 0 );
 		ENSURE( player != NULL );
 
 		// Frame 0 replays the pre-step creates, so the def value is in place
-		ENSURE( b2RecPlayer_StepFrame( player ) );
+		ENSURE( b2Replay_StepFrame( player ) );
 		ENSURE( ReplaySafetyFactor( player, "fastBody" ) == 0.1f );
 		ENSURE( ReplaySafetyFactor( player, "dropBody" ) == 0.25f );
 
 		// The setter is injected at frame 30
-		while ( b2RecPlayer_StepFrame( player ) )
+		while ( b2Replay_StepFrame( player ) )
 		{
 		}
 		ENSURE( ReplaySafetyFactor( player, "fastBody" ) == 0.4f );
 
-		b2RecPlayer_Destroy( player );
+		b2DestroyReplay( player );
 	}
 
 	b2DestroyRecording( rec );
@@ -675,39 +675,39 @@ int RecordingOutlinerTest( void )
 	int recSize = b2Recording_GetSize( rec );
 	ENSURE( recSize > 0 );
 
-	b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, 0 );
+	b2Replay* player = b2CreateReplay( recData, recSize, 0 );
 	ENSURE( player != NULL );
 
 	// The outliner list must be populated from the seed snapshot before any frame is stepped, and
 	// match the live body count of the restored world (no destroys yet, so no nulled holes)
-	b2WorldId replayWorldId = b2RecPlayer_GetWorldId( player );
-	int seedCount = b2RecPlayer_GetBodyCount( player );
+	b2WorldId replayWorldId = b2Replay_GetWorldId( player );
+	int seedCount = b2Replay_GetBodyCount( player );
 	ENSURE( seedCount == expectedBodies );
 	ENSURE( seedCount == b2World_GetCounters( replayWorldId ).bodyCount );
 
 	// Each seeded id is a valid handle into the replay world
 	for ( int ord = 0; ord < seedCount; ++ord )
 	{
-		ENSURE( b2Body_IsValid( b2RecPlayer_GetBodyId( player, ord ) ) );
+		ENSURE( b2Body_IsValid( b2Replay_GetBodyId( player, ord ) ) );
 	}
 
-	while ( b2RecPlayer_StepFrame( player ) )
+	while ( b2Replay_StepFrame( player ) )
 	{
 	}
 
 	// Restart rolls the outliner list back to its frame-0 seed contents
-	b2RecPlayer_Restart( player );
-	ENSURE( b2RecPlayer_GetBodyCount( player ) == seedCount );
+	b2Replay_Restart( player );
+	ENSURE( b2Replay_GetBodyCount( player ) == seedCount );
 
-	b2RecPlayer_Destroy( player );
+	b2DestroyReplay( player );
 	b2DestroyRecording( rec );
 	return 0;
 }
 
 // Deep hash of a replay world, the ground truth a keyframe seek must reproduce
-static uint64_t ReplayDeepHash( b2RecPlayer* player )
+static uint64_t ReplayDeepHash( b2Replay* player )
 {
-	return b2HashWorldStateDeep( b2GetWorldFromId( b2RecPlayer_GetWorldId( player ) ) );
+	return b2HashWorldStateDeep( b2GetWorldFromId( b2Replay_GetWorldId( player ) ) );
 }
 
 // A backward seek restores the nearest keyframe and re-steps the gap, so it must land on the exact
@@ -719,9 +719,9 @@ static int CheckKeyframeSeek( const uint8_t* recData, int recSize, int workerCou
 {
 	// Forward-only reference: a fresh player never seeks backward, so it never restores a keyframe
 	// and gives the linear ground truth deep hash at every frame
-	b2RecPlayer* ref = b2RecPlayer_Create( recData, recSize, workerCount );
+	b2Replay* ref = b2CreateReplay( recData, recSize, workerCount );
 	ENSURE( ref != NULL );
-	int frameCount = b2RecPlayer_GetInfo( ref ).frameCount;
+	int frameCount = b2Replay_GetInfo( ref ).frameCount;
 	ENSURE( frameCount > 0 );
 
 	uint64_t* refHash = malloc( (size_t)( frameCount + 1 ) * sizeof( uint64_t ) );
@@ -729,24 +729,24 @@ static int CheckKeyframeSeek( const uint8_t* recData, int recSize, int workerCou
 	refHash[0] = ReplayDeepHash( ref );
 	for ( int f = 1; f <= frameCount; ++f )
 	{
-		ENSURE( b2RecPlayer_StepFrame( ref ) );
+		ENSURE( b2Replay_StepFrame( ref ) );
 		refHash[f] = ReplayDeepHash( ref );
 	}
-	ENSURE( b2RecPlayer_HasDiverged( ref ) == false );
-	b2RecPlayer_Destroy( ref );
+	ENSURE( b2Replay_HasDiverged( ref ) == false );
+	b2DestroyReplay( ref );
 
 	// Player under test: play to the end so the keyframe ring is fully populated (and an eviction
 	// has fired under a tight budget), then seek around it
-	b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, workerCount );
+	b2Replay* player = b2CreateReplay( recData, recSize, workerCount );
 	ENSURE( player != NULL );
 	if ( budgetBytes > 0 )
 	{
-		b2RecPlayer_SetKeyframePolicy( player, budgetBytes, minInterval );
+		b2Replay_SetKeyframePolicy( player, budgetBytes, minInterval );
 	}
-	while ( b2RecPlayer_StepFrame( player ) )
+	while ( b2Replay_StepFrame( player ) )
 	{
 	}
-	ENSURE( b2RecPlayer_GetFrame( player ) == frameCount );
+	ENSURE( b2Replay_GetFrame( player ) == frameCount );
 
 	// Targets jump backward and forward: below the first keyframe (1, 5), onto exact interval
 	// multiples (128, 256), and around the eviction boundary near frame 272
@@ -758,21 +758,21 @@ static int CheckKeyframeSeek( const uint8_t* recData, int recSize, int workerCou
 		{
 			t = frameCount;
 		}
-		b2RecPlayer_SeekFrame( player, t );
-		ENSURE( b2RecPlayer_GetFrame( player ) == t );
-		ENSURE( b2RecPlayer_HasDiverged( player ) == false );
+		b2Replay_SeekFrame( player, t );
+		ENSURE( b2Replay_GetFrame( player ) == t );
+		ENSURE( b2Replay_HasDiverged( player ) == false );
 		uint64_t got = ReplayDeepHash( player );
 		if ( got != refHash[t] )
 		{
 			printf( "keyframe seek mismatch at frame %d (wc %d): got %llu want %llu\n", t, workerCount, (unsigned long long)got,
 					(unsigned long long)refHash[t] );
 			free( refHash );
-			b2RecPlayer_Destroy( player );
+			b2DestroyReplay( player );
 			return 1;
 		}
 	}
 
-	b2RecPlayer_Destroy( player );
+	b2DestroyReplay( player );
 	free( refHash );
 	return 0;
 }
@@ -826,10 +826,10 @@ int RecordingKeyframeTest( void )
 
 	// Measure one snapshot so the tight budget holds only a handful of keyframes, forcing the
 	// interval-doubling eviction during the 320-frame replay
-	b2RecPlayer* probe = b2RecPlayer_Create( recData, recSize, 0 );
+	b2Replay* probe = b2CreateReplay( recData, recSize, 0 );
 	ENSURE( probe != NULL );
-	int snapSize = b2World_Snapshot( b2RecPlayer_GetWorldId( probe ), NULL, 0 );
-	b2RecPlayer_Destroy( probe );
+	int snapSize = b2World_Snapshot( b2Replay_GetWorldId( probe ), NULL, 0 );
+	b2DestroyReplay( probe );
 	ENSURE( snapSize > 0 );
 	int tightBudget = 6 * snapSize;
 
@@ -942,9 +942,9 @@ static b2Recording* RecordScene( void ( *build )( b2WorldId ), int workerCount, 
 // the stress a calm sparse seek list never reaches. Returns 0 on success, 1 on the first bad frame.
 static int CheckScrubAllFrames( const uint8_t* recData, int recSize, int workerCount, int budgetBytes, int minInterval )
 {
-	b2RecPlayer* ref = b2RecPlayer_Create( recData, recSize, workerCount );
+	b2Replay* ref = b2CreateReplay( recData, recSize, workerCount );
 	ENSURE( ref != NULL );
-	int frameCount = b2RecPlayer_GetInfo( ref ).frameCount;
+	int frameCount = b2Replay_GetInfo( ref ).frameCount;
 	ENSURE( frameCount > 0 );
 
 	uint64_t* refHash = malloc( (size_t)( frameCount + 1 ) * sizeof( uint64_t ) );
@@ -952,28 +952,28 @@ static int CheckScrubAllFrames( const uint8_t* recData, int recSize, int workerC
 	refHash[0] = ReplayDeepHash( ref );
 	for ( int f = 1; f <= frameCount; ++f )
 	{
-		ENSURE( b2RecPlayer_StepFrame( ref ) );
+		ENSURE( b2Replay_StepFrame( ref ) );
 		refHash[f] = ReplayDeepHash( ref );
 	}
-	ENSURE( b2RecPlayer_HasDiverged( ref ) == false );
-	b2RecPlayer_Destroy( ref );
+	ENSURE( b2Replay_HasDiverged( ref ) == false );
+	b2DestroyReplay( ref );
 
-	b2RecPlayer* player = b2RecPlayer_Create( recData, recSize, workerCount );
+	b2Replay* player = b2CreateReplay( recData, recSize, workerCount );
 	ENSURE( player != NULL );
 	if ( budgetBytes > 0 )
 	{
-		b2RecPlayer_SetKeyframePolicy( player, budgetBytes, minInterval );
+		b2Replay_SetKeyframePolicy( player, budgetBytes, minInterval );
 	}
-	while ( b2RecPlayer_StepFrame( player ) )
+	while ( b2Replay_StepFrame( player ) )
 	{
 	}
 
 	for ( int t = frameCount; t >= 0; --t )
 	{
-		b2RecPlayer_SeekFrame( player, t );
-		ENSURE( b2RecPlayer_GetFrame( player ) == t );
+		b2Replay_SeekFrame( player, t );
+		ENSURE( b2Replay_GetFrame( player ) == t );
 		uint64_t got = ReplayDeepHash( player );
-		bool diverged = b2RecPlayer_HasDiverged( player );
+		bool diverged = b2Replay_HasDiverged( player );
 		if ( got != refHash[t] || diverged )
 		{
 			// Deep hash matches but the player diverged => an order sensitive query re-verification
@@ -982,13 +982,13 @@ static int CheckScrubAllFrames( const uint8_t* recData, int recSize, int workerC
 			printf( "scrub mismatch at frame %d (wc %d budget %d): %s divergence (deep got %llu want %llu)\n", t, workerCount,
 					budgetBytes, kind, (unsigned long long)got, (unsigned long long)refHash[t] );
 			free( refHash );
-			b2RecPlayer_Destroy( player );
+			b2DestroyReplay( player );
 			return 1;
 		}
 	}
 
 	free( refHash );
-	b2RecPlayer_Destroy( player );
+	b2DestroyReplay( player );
 	return 0;
 }
 
@@ -1000,10 +1000,10 @@ static int ScrubRecording( b2Recording* rec, int workerCount )
 	int recSize = b2Recording_GetSize( rec );
 	ENSURE( recSize > 0 );
 
-	b2RecPlayer* probe = b2RecPlayer_Create( recData, recSize, 0 );
+	b2Replay* probe = b2CreateReplay( recData, recSize, 0 );
 	ENSURE( probe != NULL );
-	int snapSize = b2World_Snapshot( b2RecPlayer_GetWorldId( probe ), NULL, 0 );
-	b2RecPlayer_Destroy( probe );
+	int snapSize = b2World_Snapshot( b2Replay_GetWorldId( probe ), NULL, 0 );
+	b2DestroyReplay( probe );
 	int tightBudget = 4 * snapSize;
 
 	ENSURE( CheckScrubAllFrames( recData, recSize, workerCount, tightBudget, 8 ) == 0 );

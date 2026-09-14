@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
-#include "world_snapshot.h"
+#include "snapshot.h"
 
 #include "bitset.h"
 #include "body.h"

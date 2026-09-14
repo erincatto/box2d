@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct b2RecPlayer b2RecPlayer;
+typedef struct b2Replay b2Replay;
 
 // A single recorded callback hit, used both as reader scratch and as the per-frame draw store
 typedef struct b2RecRecordedHit
@@ -75,7 +75,7 @@ typedef struct b2RecReader
 	b2RecRecordedHit* hits;
 	int hitCap;
 
-	b2RecPlayer* owner; // player that owns this reader
+	b2Replay* owner; // player that owns this reader
 } b2RecReader;
 
 // A restore point captured during forward replay, so a backward seek can re-simulate only the gap
@@ -94,7 +94,7 @@ typedef struct b2RecKeyframe
 } b2RecKeyframe;
 
 // Incremental player. Owns a private copy of the recording bytes and drives replay one step at a time.
-struct b2RecPlayer
+struct b2Replay
 {
 	uint8_t* data; // recording bytes, a private copy owned here
 	int size;
