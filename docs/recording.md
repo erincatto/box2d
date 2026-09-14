@@ -119,9 +119,9 @@ rollback:
 
 ```c
 // Serialize: query the size, then fill a buffer you own.
-int size = b2World_Snapshot( worldId, NULL, 0 );
+int size = b2World_GetSnapshot( worldId, NULL, 0 );
 uint8_t* image = malloc( size );
-b2World_Snapshot( worldId, image, size );
+b2World_GetSnapshot( worldId, image, size );
 
 // ... keep simulating ...
 

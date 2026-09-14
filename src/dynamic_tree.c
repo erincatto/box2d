@@ -565,7 +565,7 @@ static void b2RemoveLeaf( b2DynamicTree* tree, int proxyId )
 
 // Create a proxy in the tree as a leaf node. We return the index of the node instead of a pointer so that we can grow
 // the node pool.
-int b2DynamicTree_CreateProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
+int b2CreateTreeProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData,
 									   bool markMoved )
 {
 	B2_VALIDATE( b2IsValidAABB( aabb ) );
@@ -584,7 +584,7 @@ int b2DynamicTree_CreateProxyInternal( b2DynamicTree* tree, b2AABB aabb, uint64_
 
 int b2CreateTreeProxy( b2DynamicTree* tree, b2AABB aabb, uint64_t categoryBits, uint64_t userData )
 {
-	return b2DynamicTree_CreateProxyInternal( tree, aabb, categoryBits, userData, false );
+	return b2CreateTreeProxyInternal( tree, aabb, categoryBits, userData, false );
 }
 
 void b2DestroyTreeProxy( b2DynamicTree* tree, int proxyId )

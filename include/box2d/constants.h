@@ -46,7 +46,7 @@
 
 /// The maximum rotation of a body per time step. This limit is very large and is used
 /// to prevent numerical problems. You shouldn't need to adjust this.
-/// @warning increasing this to 0.5f * b2_pi or greater will break continuous collision.
+/// @warning increasing this to 0.5f * B2_PI or greater will break continuous collision.
 #define B2_MAX_ROTATION ( 0.25f * B2_PI )
 
 /// Box2D uses limited speculative collision. This reduces jitter.

@@ -1476,7 +1476,7 @@ void b2Body_UpdateMassFromShapes( b2BodyId bodyId )
 		return;
 	}
 
-	B2_REC( world, BodyApplyMassFromShapes, bodyId );
+	B2_REC( world, BodyUpdateMassFromShapes, bodyId );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	b2UpdateBodyMassData( world, body );

@@ -978,7 +978,7 @@ static void b2RecDispatch_BodySetMassData( const b2RecArgs_BodySetMassData* a, b
 	b2Body_SetMassData( b2RecMakeBodyId( rdr, a->body ), a->massData );
 }
 
-static void b2RecDispatch_BodyApplyMassFromShapes( const b2RecArgs_BodyApplyMassFromShapes* a, b2RecReader* rdr )
+static void b2RecDispatch_BodyUpdateMassFromShapes( const b2RecArgs_BodyUpdateMassFromShapes* a, b2RecReader* rdr )
 {
 	b2Body_UpdateMassFromShapes( b2RecMakeBodyId( rdr, a->body ) );
 }
@@ -2831,7 +2831,7 @@ void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int queryIn
 	}
 }
 
-// Public query inspection. The internal b2RecQueryKind values match the public b2RecQueryType, so
+// Public query inspection. The internal b2RecQueryKind values match the public b2ReplayQueryType, so
 // the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift.
 _Static_assert( b2_replayQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
 _Static_assert( b2_replayQueryShapeRayCast == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );

@@ -60,7 +60,7 @@ int b2BroadPhase_CreateProxy( b2BroadPhase* bp, b2BodyType proxyType, b2AABB aab
 
 	bool mark = ( proxyType != b2_staticBody || forcePairCreation );
 
-	int proxyId = b2DynamicTree_CreateProxyInternal( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
+	int proxyId = b2CreateTreeProxyInternal( bp->trees + proxyType, aabb, categoryBits, shapeIndex, mark );
 	int proxyKey = B2_PROXY_KEY( proxyId, proxyType );
 	return proxyKey;
 }

@@ -247,7 +247,7 @@ Even more generic, you can use `b2ShapeCast()` to linearly cast one point cloud 
 ### Distance
 `b2ShapeDistance()` function can be used to compute the distance between two
 shapes. The distance function needs both shapes to be converted into a
-`b2DistanceProxy` (which are point clouds with radii). There is also some caching used to warm start the
+`b2ShapeProxy` (which are point clouds with radii). There is also some caching used to warm start the
 distance function for repeated calls. This can improve performance when the shapes move by small amounts.
 
 ![Distance Function](images/distance.svg)
@@ -279,7 +279,7 @@ may be cases where collisions are missed for small rotations. Normally,
 these missed rotational collisions should not harm game play. They tend
 to be glancing collisions.
 
-The function requires two shapes (converted to `b2DistanceProxy`) and two
+The function requires two shapes (converted to `b2ShapeProxy`) and two
 `b2Sweep` structures. The sweep structure defines the initial and final
 transforms of the shapes.
 

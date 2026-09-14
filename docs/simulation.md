@@ -527,14 +527,15 @@ b2BodyType bodyType = b2Body_GetType(myBodyId);
 b2Body_SetBullet(myBodyId, true);
 bool isBullet = b2Body_IsBullet(myBodyId);
 b2Body_EnableSleep(myBodyId, false);
-bool isSleepEnabled = b2Body_IsSleepingEnabled(myBodyId);
+bool isSleepEnabled = b2Body_IsSleepEnabled(myBodyId);
 b2Body_SetAwake(myBodyId, true);
 bool isAwake = b2Body_IsAwake(myBodyId);
 b2Body_Disable(myBodyId);
 b2Body_Enable(myBodyId);
 bool isEnabled = b2Body_IsEnabled(myBodyId);
-b2Body_SetFixedRotation(myBodyId, true);
-bool isFixedRotation = b2Body_IsFixedRotation(myBodyId);
+b2MotionLocks locks = {.linearX = false, .linearY = false, .angularZ = true};
+b2Body_SetMotionLocks(myBodyId, locks);
+locks = b2Body_GetMotionLocks(myBodyId);
 ```
 
 Please see the comments on these functions for more details.

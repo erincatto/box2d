@@ -186,7 +186,7 @@ jointDef.enableMotor = true;
 jointDef.lowerAngle = -0.25f * b2_pi;
 jointDef.upperAngle = 0.5f * b2_pi;
 jointDef.enableLimit = true;:
-b2RevolutionJoint* joint = (b2RevoluteJoint*)world->CreateJoint(&jointDef);
+b2RevoluteJoint* joint = (b2RevoluteJoint*)world->CreateJoint(&jointDef);
 ```
 Version 3.0:
 ```c
