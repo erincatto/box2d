@@ -342,8 +342,8 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->bodyIdB = shapeB->bodyId;
 #endif
 
-	contactSim->bodySimIndexA = B2_NULL_INDEX;
-	contactSim->bodySimIndexB = B2_NULL_INDEX;
+	contactSim->encodedBodySimA = b2EncodeBodySimIndex( bodyA );
+	contactSim->encodedBodySimB = b2EncodeBodySimIndex( bodyB );
 	contactSim->invMassA = 0.0f;
 	contactSim->invIA = 0.0f;
 	contactSim->invMassB = 0.0f;

@@ -37,8 +37,9 @@ enum b2BodyFlags
 	// This body has no limit on angular velocity
 	b2_allowFastRotation = 0x00000080,
 
-	// This body need's to have its AABB increased
-	b2_enlargeBounds = 0x00000100,
+	// This bullet body needs to have its AABB increased. Needed because bullets don't follow
+	// the standard broad-phase update.
+	b2_enlargeBulletBounds = 0x00000100,
 
 	// This body is dynamic so the solver should write to it.
 	// This prevents writing to kinematic bodies that causes a multithreaded sharing
@@ -218,9 +219,9 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId );
 
 bool b2ShouldBodiesCollide( b2World* world, b2Body* bodyA, b2Body* bodyB );
 
-void b2RemoveBodySim( b2Array( b2BodySim ) * bodySims, b2Array( b2Body ) * bodies, int localIndex );
+void b2RefreshBodyContactIndices( b2World* world, b2Body* body );
 
-// careful calling this because it can invalidate body, state, joint, and contact pointers
+// Careful calling this because it can invalidate body, state, joint, and contact pointers.
 bool b2WakeBody( b2World* world, b2Body* body );
 
 void b2UpdateBodyMassData( b2World* world, b2Body* body );
@@ -255,4 +256,40 @@ static inline b2BodyState* b2GetBodyState( b2World* world, b2Body* body )
 	}
 
 	return NULL;
+}
+
+// This encodes the body sim index for storage in the contact sim. This helps
+// avoid a lookup and cache miss in the narrow phase.
+static inline int b2EncodeBodySimIndex( const b2Body* body )
+{
+	if ( body->setIndex == b2_awakeSet )
+	{
+		return body->localIndex;
+	}
+
+	if ( body->setIndex == b2_staticSet )
+	{
+		return -( body->localIndex + 2 );
+	}
+
+	return B2_NULL_INDEX;
+}
+
+static inline bool b2IsStaticSimIndex( int encodedBodySimIndex )
+{
+	return encodedBodySimIndex < B2_NULL_INDEX;
+}
+
+// In the contact solver a static body sim is expected to have null index.
+static inline int b2DecodeAwakeIndex( int encodedBodySimIndex )
+{
+	return encodedBodySimIndex >= 0 ? encodedBodySimIndex : B2_NULL_INDEX;
+}
+
+// When a body goes to sleep the contact sim has a null index for it. This
+// also handles the case where the body is static and has an encoded
+// sim index of -2 or less.
+static inline int b2SleepBodySimIndex( int encodedIndex )
+{
+	return encodedIndex >= 0 ? B2_NULL_INDEX : encodedIndex;
 }

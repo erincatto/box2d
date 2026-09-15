@@ -488,7 +488,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 			b2AABB aabb = b2ComputeFatShapeAABB( shape, fastBodySim->transform, speculativeDistance );
 			shape->aabb = aabb;
 
-			if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
+			b2AABB* shapeFatAABB = world->fatAABBs.data + shapeId;
+			if ( b2AABB_Contains( *shapeFatAABB, aabb ) == false )
 			{
 				float margin = shape->aabbMargin;
 				b2AABB fatAABB;
@@ -496,15 +497,17 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 				fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
 				fatAABB.upperBound.x = aabb.upperBound.x + margin;
 				fatAABB.upperBound.y = aabb.upperBound.y + margin;
-				shape->fatAABB = fatAABB;
-
-				fastBodySim->flags |= b2_enlargeBounds;
+				*shapeFatAABB = fatAABB;
 
 				// Regular bodies mark the hierarchy as enlarged using atomic operations.
 				// Bullets are handled separately at a later stage.
 				if ( isBullet == false )
 				{
 					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );
+				}
+				else
+				{
+					fastBodySim->flags |= b2_enlargeBulletBounds;
 				}
 			}
 
@@ -527,25 +530,27 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 			// shape->aabb is still valid from above
 
-			if ( b2AABB_Contains( shape->fatAABB, shape->aabb ) == false )
+			b2AABB* shapeFatAABB = world->fatAABBs.data + shapeId;
+			if ( b2AABB_Contains( *shapeFatAABB, shape->aabb ) == false )
 			{
 				float margin = shape->aabbMargin;
 
 				// Note: far from the origin the margin can be snapped to the nearest ULP.
 				// This relevant for DP mode. So we lose the broad-phase hysteresis.
-				// todo consider using b2EnlargeAABB to ensure at least one ULP of margin.
 				b2AABB fatAABB;
 				fatAABB.lowerBound.x = shape->aabb.lowerBound.x - margin;
 				fatAABB.lowerBound.y = shape->aabb.lowerBound.y - margin;
 				fatAABB.upperBound.x = shape->aabb.upperBound.x + margin;
 				fatAABB.upperBound.y = shape->aabb.upperBound.y + margin;
-				shape->fatAABB = fatAABB;
-
-				fastBodySim->flags |= b2_enlargeBounds;
+				*shapeFatAABB = fatAABB;
 
 				if ( isBullet == false )
 				{
 					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );
+				}
+				else
+				{
+					fastBodySim->flags |= b2_enlargeBulletBounds;
 				}
 			}
 
@@ -645,10 +650,13 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		// If you hit this then it means you deferred mass computation but never called b2Body_UpdateMassFromShapes
 		B2_ASSERT( ( body->flags & b2_dirtyMass ) == 0 );
 
+		// Clear the transient flags (fast, speed capped, had TOI). These flags are conditionally set
+		// as part of the code below.
 		body->flags &= ~b2_bodyTransientFlags;
-		body->flags |= ( sim->flags & ( b2_isSpeedCapped | b2_hadTimeOfImpact ) );
-		body->flags |= ( state->flags & ( b2_isSpeedCapped | b2_hadTimeOfImpact ) );
 		sim->flags &= ~b2_bodyTransientFlags;
+
+		// The body state flag knows about speed capping (used for debug draw).
+		body->flags |= ( state->flags & b2_isSpeedCapped );
 		state->flags &= ~b2_bodyTransientFlags;
 
 		if ( enableSleep == false || ( body->flags & b2_enableSleep ) == 0 || sleepVelocity > body->sleepThreshold )
@@ -662,9 +670,10 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			{
 				// This flag is used for debug draw and contact recycling.
 				body->flags |= b2_isFast;
+				sim->flags |= b2_isFast;
 
-				// Store in fast array for the continuous collision stage
-				// This is deterministic because the order of TOI sweeps doesn't matter
+				// Store fast bullets for processing later.
+				// This is deterministic because the order of TOI sweeps doesn't matter.
 				if ( sim->flags & b2_isBullet )
 				{
 					int bulletIndex = b2AtomicFetchAddInt( &stepContext->bulletBodyCount, 1 );
@@ -735,7 +744,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 				b2AABB aabb = b2ComputeFatShapeAABB( shape, transform, speculativeDistance );
 				shape->aabb = aabb;
 
-				if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
+				b2AABB* shapeFatAABB = world->fatAABBs.data + shapeId;
+				if ( b2AABB_Contains( *shapeFatAABB, aabb ) == false )
 				{
 					float margin = shape->aabbMargin;
 					b2AABB fatAABB;
@@ -743,7 +753,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 					fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
 					fatAABB.upperBound.x = aabb.upperBound.x + margin;
 					fatAABB.upperBound.y = aabb.upperBound.y + margin;
-					shape->fatAABB = fatAABB;
+					*shapeFatAABB = fatAABB;
 
 					// Mark the hierarchy as enlarged using atomic operations.
 					b2BroadPhase_MarkProxyMoved( &world->broadPhase, shape->proxyKey, fatAABB );
@@ -1831,6 +1841,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneEnd( refit_bvh );
 	}
 
+	// Bullet are processed after the broad-phase refit so they can so they can query the
+	// final non-bullet world.
 	int bulletBodyCount = b2AtomicLoadInt( &stepContext->bulletBodyCount );
 	if ( bulletBodyCount > 0 )
 	{
@@ -1842,7 +1854,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		int minRange = 8;
 		b2ParallelFor( world, &b2BulletBodyTask, bulletBodyCount, minRange, stepContext );
 
-		// Serially enlarge broad-phase proxies for bullet shapes
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
 
@@ -1850,21 +1861,22 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2Body* bodyArray = world->bodies.data;
 		b2BodySim* bodySimArray = awakeSet->bodySims.data;
 		b2Shape* shapeArray = world->shapes.data;
-
-		// Serially enlarge broad-phase proxies for bullet shapes
 		int* bulletBodySimIndices = stepContext->bulletBodies;
 
-		// This loop has non-deterministic order but it shouldn't affect the result
+		// Serially enlarge broad-phase proxies for bullet shapes.
+		// This loop has non-deterministic order but it shouldn't affect the result.
 		for ( int i = 0; i < bulletBodyCount; ++i )
 		{
 			b2BodySim* bulletBodySim = bodySimArray + bulletBodySimIndices[i];
-			if ( ( bulletBodySim->flags & b2_enlargeBounds ) == 0 )
+
+			// It is worth tracking this flag because bullets may be moving slowly.
+			if ( ( bulletBodySim->flags & b2_enlargeBulletBounds ) == 0 )
 			{
 				continue;
 			}
 
 			// Clear flag
-			bulletBodySim->flags &= ~b2_enlargeBounds;
+			bulletBodySim->flags &= ~b2_enlargeBulletBounds;
 
 			int bodyId = bulletBodySim->bodyId;
 			B2_ASSERT( 0 <= bodyId && bodyId < world->bodies.count );
@@ -1879,10 +1891,13 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				B2_VALIDATE( B2_PROXY_TYPE( proxyKey ) == b2_dynamicBody );
 
 				b2AABB treeAABB = b2DynamicTree_GetAABB( dynamicTree, proxyId );
+				b2AABB shapeFatAABB = world->fatAABBs.data[shapeId];
 
-				if ( b2AABB_Contains( treeAABB, shape->fatAABB ) == false )
+				// Double check containment because a bullet can have multiple
+				// shapes and maybe just one needs an update.
+				if ( b2AABB_Contains( treeAABB, shapeFatAABB ) == false )
 				{
-					b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shape->fatAABB );
+					b2DynamicTree_EnlargeProxy( dynamicTree, proxyId, shapeFatAABB );
 				}
 
 				shapeId = shape->nextShapeId;

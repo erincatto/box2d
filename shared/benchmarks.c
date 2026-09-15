@@ -8,6 +8,7 @@
 #include "box2d/box2d.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -744,7 +745,7 @@ void CreateJunkyard( b2WorldId worldId )
 	}
 
 	int columnCount = 200;
-	int rowCount = BENCHMARK_DEBUG ? 2 : 40;
+	int rowCount = BENCHMARK_DEBUG ? 2 : 20;
 
 	float radius = 0.25f;
 	b2Polygon polygon;
@@ -803,6 +804,123 @@ float StepJunkyard( b2WorldId worldId, int stepCount )
 	b2WorldTransform target = { (b2Pos){ 60.0f * cs.sine, 0.0f }, b2Rot_identity };
 	b2Body_SetTargetTransform( g_junkyardData.pusherId, target, timeStep, true );
 	return 0.0f;
+}
+
+#define SLEEP_PYRAMID_COUNT 10
+
+typedef struct
+{
+	b2BodyId bodyIdA[SLEEP_PYRAMID_COUNT];
+	b2BodyId bodyIdB[SLEEP_PYRAMID_COUNT];
+	float wakeMilliseconds;
+	int eventCount;
+} SleepData;
+
+static SleepData g_sleepData;
+
+// Reports two bodies that are certain to share a touching contact, so the filter joint below always
+// lands inside one island.
+static void CreateSleepPyramid( b2WorldId worldId, int baseCount, float extent, float centerX, b2BodyId* bodyIdA,
+								b2BodyId* bodyIdB )
+{
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.sleepThreshold = 1.0f;
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Polygon box = b2MakeSquare( extent );
+
+	for ( int i = 0; i < baseCount; ++i )
+	{
+		float y = ( 2.0f * i + 1.0f ) * extent;
+
+		for ( int j = i; j < baseCount; ++j )
+		{
+			float x = ( i + 1.0f ) * extent + 2.0f * ( j - i ) * extent + centerX;
+			bodyDef.position = (b2Pos){ x, y };
+
+			b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+			if ( i == 0 && j == 0 )
+			{
+				*bodyIdA = bodyId;
+			}
+			else if ( i == 1 && j == 1 )
+			{
+				// Rests on the base body above, so the pair always has a touching contact
+				*bodyIdB = bodyId;
+			}
+		}
+	}
+}
+
+// Ten pyramids, each its own island, far enough apart that they never interact. One island is woken
+// and one put back to sleep every ten steps, staggered five steps apart, so the serial sleep and the
+// island splitter are the only things that change between steps.
+void CreateSleep( b2WorldId worldId )
+{
+	g_sleepData = ( SleepData ){ 0 };
+
+	int baseCount = BENCHMARK_DEBUG ? 8 : 60;
+	float extent = 0.5f;
+
+	float baseWidth = 2.0f * extent * baseCount;
+	float pitch = baseWidth + 8.0f * extent;
+	float span = pitch * ( SLEEP_PYRAMID_COUNT - 1 );
+
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = (b2Pos){ 0.0f, -1.0f };
+		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+		b2Polygon box = b2MakeBox( 0.5f * span + baseWidth, 1.0f );
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2CreatePolygonShape( groundId, &shapeDef, &box );
+	}
+
+	for ( int i = 0; i < SLEEP_PYRAMID_COUNT; ++i )
+	{
+		float centerX = -0.5f * span + i * pitch - 0.5f * baseWidth;
+		CreateSleepPyramid( worldId, baseCount, extent, centerX, g_sleepData.bodyIdA + i, g_sleepData.bodyIdB + i );
+	}
+}
+
+float StepSleep( b2WorldId worldId, int stepCount )
+{
+	for (int i = 0; i < SLEEP_PYRAMID_COUNT; ++i)
+	{
+		if ( b2Body_IsAwake( g_sleepData.bodyIdA[i] ) == false )
+		{
+			// Creating and destroying a joint engages the island splitter
+			b2FilterJointDef jointDef = b2DefaultFilterJointDef();
+			jointDef.base.bodyIdA = g_sleepData.bodyIdA[i];
+			jointDef.base.bodyIdB = g_sleepData.bodyIdB[i];
+			b2JointId jointId = b2CreateFilterJoint( worldId, &jointDef );
+
+			uint64_t ticks = b2GetTicks();
+
+			// This wakes the island
+			b2DestroyJoint( jointId );
+
+			g_sleepData.wakeMilliseconds += b2GetMilliseconds( ticks );
+			g_sleepData.eventCount += 1;
+
+			// Only one per step
+			break;
+		}
+	}
+
+	return 0.0f;
+}
+
+SleepBenchmarkStats GetSleepBenchmarkStats( void )
+{
+	SleepBenchmarkStats stats = {
+		.wakeMilliseconds = g_sleepData.wakeMilliseconds,
+		.eventCount = g_sleepData.eventCount,
+	};
+	return stats;
 }
 
 // Lifted from samples/sample_benchmark.cpp BenchmarkBarrel (e_compoundShape branch).

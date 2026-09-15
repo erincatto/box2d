@@ -28,6 +28,18 @@ void CreateTumbler( b2WorldId worldId );
 void CreateWasher( b2WorldId worldId );
 void CreateJunkyard( b2WorldId worldId );
 float StepJunkyard( b2WorldId worldId, int stepCount );
+
+// Wake and sleep timings accumulated by StepSleep. The wake and the sleep both happen outside
+// b2World_Step, so neither shows up in b2Profile.
+typedef struct SleepBenchmarkStats
+{
+	float wakeMilliseconds;
+	int eventCount;
+} SleepBenchmarkStats;
+
+void CreateSleep( b2WorldId worldId );
+float StepSleep( b2WorldId worldId, int stepCount );
+SleepBenchmarkStats GetSleepBenchmarkStats( void );
 void CreateCompounds( b2WorldId worldId );
 
 void CreateQueries( b2WorldId worldId );

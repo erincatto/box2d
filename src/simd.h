@@ -86,6 +86,22 @@ B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 	return _mm_movemask_ps( _mm_cmple_ps( t1, t2 ) ) == 0xF;
 }
 
+B2_FORCE_INLINE bool b2OverlapV( b2AABB a, b2AABB b )
+{
+	// Unaligned load
+	// [lower.x lower.y upper.x upper.y]
+	__m128 av = _mm_loadu_ps( &a.lowerBound.x );
+	__m128 bv = _mm_loadu_ps( &b.lowerBound.x );
+
+	// [alx aly blx bly]
+	__m128 t1 = _mm_movelh_ps( av, bv );
+
+	// [bux buy aux auy]
+	__m128 t2 = _mm_movehl_ps( av, bv );
+
+	return _mm_movemask_ps( _mm_cmple_ps( t1, t2 ) ) == 0xF;
+}
+
 B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 {
 	// Unaligned load

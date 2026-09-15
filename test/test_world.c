@@ -1212,6 +1212,410 @@ static int PairSleepingStatic( int workerCount )
 	return 0;
 }
 
+// The contact sim carries a persistent locator for each body sim instead of a copy written by the
+// collide task every step. These scenarios drive every site that changes a body's set or local index
+// while its contacts are live, then step under validation so b2ValidateSolverSets and the prepare
+// asserts are the real check. Worker count parity on the state hash guards the multithreaded paths.
+
+static void StepLocatorWorld( b2WorldId worldId, int stepCount )
+{
+	for ( int i = 0; i < stepCount; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+}
+
+static bool StepUntilAsleep( b2WorldId worldId, b2BodyId bodyId, int maxSteps )
+{
+	for ( int i = 0; i < maxSteps; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+		if ( b2Body_IsAwake( bodyId ) == false )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static b2WorldId CreateLocatorWorld( int workerCount, bool enableSleep )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = (b2Vec2){ 0.0f, -10.0f };
+	worldDef.enableSleep = enableSleep;
+	worldDef.workerCount = workerCount;
+	return b2CreateWorld( &worldDef );
+}
+
+static b2BodyId CreateLocatorGround( b2WorldId worldId, float x, float halfWidth )
+{
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.position = (b2Pos){ x, -0.5f };
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Polygon box = b2MakeBox( halfWidth, 0.5f );
+	b2CreatePolygonShape( bodyId, &shapeDef, &box );
+	return bodyId;
+}
+
+static b2BodyId CreateLocatorBox( b2WorldId worldId, b2BodyType type, float x, float y )
+{
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = type;
+	bodyDef.position = (b2Pos){ x, y };
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Polygon square = b2MakeSquare( 0.5f );
+	b2CreatePolygonShape( bodyId, &shapeDef, &square );
+	return bodyId;
+}
+
+// A pile sleeps on static ground and a dropped body wakes it. Covers first touch, the graph add and
+// the wake of a whole sleeping set.
+static int LocatorSleepWake( int workerCount, uint64_t* hash )
+{
+	b2WorldId worldId = CreateLocatorWorld( workerCount, true );
+	CreateLocatorGround( worldId, 0.0f, 10.0f );
+
+	b2BodyId pile[3];
+	for ( int i = 0; i < 3; ++i )
+	{
+		pile[i] = CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 0.5f + i );
+	}
+
+	ENSURE( StepUntilAsleep( worldId, pile[0], 600 ) );
+	ENSURE( b2Body_IsAwake( pile[2] ) == false );
+
+	b2BodyId dropper = CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 6.0f );
+	ENSURE( b2Body_IsAwake( pile[0] ) == false );
+
+	StepLocatorWorld( worldId, 60 );
+	ENSURE( b2Body_IsAwake( pile[0] ) );
+	ENSURE( b2Body_IsAwake( dropper ) );
+
+	ENSURE( StepUntilAsleep( worldId, dropper, 900 ) );
+	ENSURE( b2Body_IsAwake( pile[0] ) == false );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// Destroying a body in the middle of the awake set swaps the last awake sim into the hole while that
+// body's contacts are live.
+static int LocatorDestroyAwakeBody( int workerCount, uint64_t* hash )
+{
+	b2WorldId worldId = CreateLocatorWorld( workerCount, false );
+	CreateLocatorGround( worldId, 0.0f, 20.0f );
+
+	b2BodyId stack[4];
+	for ( int i = 0; i < 4; ++i )
+	{
+		stack[i] = CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 0.5f + i );
+	}
+
+	// A second stack far away owns the tail of the awake set
+	b2BodyId neighbors[3];
+	for ( int i = 0; i < 3; ++i )
+	{
+		neighbors[i] = CreateLocatorBox( worldId, b2_dynamicBody, 10.0f, 0.5f + i );
+	}
+
+	StepLocatorWorld( worldId, 120 );
+	float restY = (float)b2Body_GetPosition( neighbors[2] ).y;
+
+	b2DestroyBody( stack[0] );
+	StepLocatorWorld( worldId, 30 );
+
+	ENSURE_SMALL( (float)b2Body_GetPosition( neighbors[2] ).y - restY, 0.01f );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// Destroying a static body swaps the last static sim into the hole. The moved body still has awake
+// contacts, so its side of them has to be re-encoded or the collide task reads past the static set.
+static int LocatorDestroyStaticBody( int workerCount, uint64_t* hash )
+{
+	b2WorldId worldId = CreateLocatorWorld( workerCount, false );
+
+	b2BodyId platforms[3];
+	b2BodyId boxes[3];
+	for ( int i = 0; i < 3; ++i )
+	{
+		float x = 10.0f * i;
+		platforms[i] = CreateLocatorGround( worldId, x, 2.0f );
+		boxes[i] = CreateLocatorBox( worldId, b2_dynamicBody, x, 0.5f );
+	}
+
+	StepLocatorWorld( worldId, 60 );
+	float restY = (float)b2Body_GetPosition( boxes[2] ).y;
+
+	b2DestroyBody( platforms[0] );
+	StepLocatorWorld( worldId, 40 );
+
+	ENSURE_SMALL( (float)b2Body_GetPosition( boxes[2] ).y - restY, 0.01f );
+	ENSURE( (float)b2Body_GetPosition( boxes[0] ).y < -1.0f );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A kinematic that never sleeps keeps a non touching contact to a body that falls asleep. That
+// contact stays in the awake set with its sleeping side on the cold path, then the kinematic closes
+// the gap and wakes it.
+static int LocatorSleepingNeighbor( int workerCount, uint64_t* hash )
+{
+	b2WorldId worldId = CreateLocatorWorld( workerCount, true );
+	CreateLocatorGround( worldId, 0.0f, 10.0f );
+
+	b2BodyId sleeper = CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 0.5f );
+
+	// The fat boxes overlap across a tenth of a meter, well past the speculative distance
+	b2BodyId mover = CreateLocatorBox( worldId, b2_kinematicBody, 1.1f, 0.5f );
+	b2Body_EnableSleep( mover, false );
+
+	ENSURE( StepUntilAsleep( worldId, sleeper, 600 ) );
+	ENSURE( b2Body_IsAwake( mover ) );
+
+	b2ContactData contactData[4];
+	ENSURE( b2Body_GetContactCapacity( mover ) == 1 );
+	ENSURE( b2Body_GetContactData( mover, contactData, 4 ) == 0 );
+
+	StepLocatorWorld( worldId, 30 );
+	ENSURE( b2Body_IsAwake( sleeper ) == false );
+
+	b2Body_SetLinearVelocity( mover, (b2Vec2){ -2.0f, 0.0f } );
+	StepLocatorWorld( worldId, 10 );
+	ENSURE( b2Body_IsAwake( sleeper ) );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// Type change, disable and enable all route through the body transfer, which pulls a body sim out of
+// the middle of a set while other bodies hold contacts.
+static int LocatorTypeChange( int workerCount, uint64_t* hash )
+{
+	b2WorldId worldId = CreateLocatorWorld( workerCount, false );
+	CreateLocatorGround( worldId, 0.0f, 20.0f );
+
+	b2BodyId subject = CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 0.5f );
+	CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 1.5f );
+
+	b2BodyId neighbors[3];
+	for ( int i = 0; i < 3; ++i )
+	{
+		neighbors[i] = CreateLocatorBox( worldId, b2_dynamicBody, 10.0f, 0.5f + i );
+	}
+
+	StepLocatorWorld( worldId, 120 );
+	float restY = (float)b2Body_GetPosition( neighbors[2] ).y;
+
+	b2Body_SetType( subject, b2_staticBody );
+	StepLocatorWorld( worldId, 30 );
+	ENSURE( b2Body_GetType( subject ) == b2_staticBody );
+
+	b2Body_SetType( subject, b2_dynamicBody );
+	StepLocatorWorld( worldId, 30 );
+	ENSURE( b2Body_GetType( subject ) == b2_dynamicBody );
+
+	b2Body_Disable( subject );
+	StepLocatorWorld( worldId, 10 );
+	ENSURE( b2Body_IsEnabled( subject ) == false );
+
+	b2Body_Enable( subject );
+	StepLocatorWorld( worldId, 30 );
+	ENSURE( b2Body_IsEnabled( subject ) );
+
+	ENSURE_SMALL( (float)b2Body_GetPosition( neighbors[2] ).y - restY, 0.01f );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A joint between two sleeping bodies merges their sets instead of waking them, while an awake
+// kinematic holds a non touching contact to one of them across the merge.
+static int LocatorSetMerge( int workerCount, uint64_t* hash )
+{
+	b2WorldId worldId = CreateLocatorWorld( workerCount, true );
+	CreateLocatorGround( worldId, 0.0f, 20.0f );
+
+	b2BodyId left = CreateLocatorBox( worldId, b2_dynamicBody, -5.0f, 0.5f );
+	b2BodyId right = CreateLocatorBox( worldId, b2_dynamicBody, 5.0f, 0.5f );
+
+	b2BodyId watcher = CreateLocatorBox( worldId, b2_kinematicBody, -3.9f, 0.5f );
+	b2Body_EnableSleep( watcher, false );
+
+	ENSURE( StepUntilAsleep( worldId, left, 600 ) );
+	ENSURE( b2Body_IsAwake( right ) == false );
+	ENSURE( b2Body_IsAwake( watcher ) );
+	ENSURE( b2Body_GetContactCapacity( watcher ) == 1 );
+
+	b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
+	jointDef.base.bodyIdA = left;
+	jointDef.base.bodyIdB = right;
+	jointDef.length = 10.0f;
+	b2JointId jointId = b2CreateDistanceJoint( worldId, &jointDef );
+
+	ENSURE( b2Body_IsAwake( left ) == false );
+	ENSURE( b2Body_IsAwake( right ) == false );
+
+	StepLocatorWorld( worldId, 30 );
+	ENSURE( b2Body_IsAwake( left ) == false );
+
+	b2Body_SetAwake( left, true );
+	StepLocatorWorld( worldId, 10 );
+	ENSURE( b2Body_IsAwake( right ) );
+
+	b2DestroyJoint( jointId );
+	StepLocatorWorld( worldId, 10 );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A body moving far enough in one step carries the fast flag, which the collide task now reads off
+// the sim. A public setter mid flight makes sure a flag sync does not drop it.
+static int LocatorFastBody( int workerCount, uint64_t* hash )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2_zero;
+	worldDef.workerCount = workerCount;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	CreateLocatorBox( worldId, b2_staticBody, 10.0f, 0.0f );
+	b2BodyId bullet = CreateLocatorBox( worldId, b2_dynamicBody, 0.0f, 0.0f );
+	b2Body_SetLinearVelocity( bullet, (b2Vec2){ 40.0f, 0.0f } );
+
+	// A step carries it two thirds of a meter, well past half its minimum extent
+	StepLocatorWorld( worldId, 4 );
+	ENSURE( (float)b2Body_GetPosition( bullet ).x > 2.0f );
+
+	b2Body_EnableSleep( bullet, false );
+	StepLocatorWorld( worldId, 4 );
+
+	b2Body_EnableSleep( bullet, true );
+	StepLocatorWorld( worldId, 30 );
+
+	// It stopped at the wall instead of tunneling through
+	ENSURE( (float)b2Body_GetPosition( bullet ).x < 9.1f );
+	ENSURE( (float)b2Body_GetPosition( bullet ).x > 8.5f );
+
+	*hash = b2World_GetStateHash( worldId );
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A row of boxes at rest in zero gravity is unaffected by sleeping, so the run that sleeps and wakes
+// on impact has to land where the run that never sleeps lands. Positions rather than the state hash
+// because the hash folds in set and local index, which sleeping is entitled to change.
+static int LocatorSleepParity( int workerCount )
+{
+	float finalX[2][3];
+
+	for ( int pass = 0; pass < 2; ++pass )
+	{
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		worldDef.gravity = b2Vec2_zero;
+		worldDef.enableSleep = pass == 0;
+		worldDef.workerCount = workerCount;
+		b2WorldId worldId = b2CreateWorld( &worldDef );
+
+		b2BodyId boxes[3];
+		for ( int i = 0; i < 3; ++i )
+		{
+			boxes[i] = CreateLocatorBox( worldId, b2_dynamicBody, (float)i, 0.0f );
+		}
+
+		StepLocatorWorld( worldId, 60 );
+		ENSURE( b2Body_IsAwake( boxes[0] ) == ( pass == 1 ) );
+
+		b2BodyId impactor = CreateLocatorBox( worldId, b2_dynamicBody, -5.0f, 0.0f );
+		b2Body_SetLinearVelocity( impactor, (b2Vec2){ 5.0f, 0.0f } );
+
+		StepLocatorWorld( worldId, 120 );
+		ENSURE( b2Body_IsAwake( boxes[2] ) );
+
+		for ( int i = 0; i < 3; ++i )
+		{
+			finalX[pass][i] = (float)b2Body_GetPosition( boxes[i] ).x;
+		}
+
+		b2DestroyWorld( worldId );
+	}
+
+	for ( int i = 0; i < 3; ++i )
+	{
+		ENSURE_SMALL( finalX[0][i] - finalX[1][i], 0.01f );
+	}
+
+	return 0;
+}
+
+static int BodySimLocatorTest( void )
+{
+	int workerCounts[2] = { 1, 4 };
+	uint64_t hashes[2];
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorSleepWake( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorDestroyAwakeBody( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorDestroyStaticBody( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorSleepingNeighbor( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorTypeChange( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorSetMerge( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorFastBody( workerCounts[i], hashes + i ) == 0 );
+	}
+	ENSURE( hashes[0] == hashes[1] );
+
+	for ( int i = 0; i < 2; ++i )
+	{
+		ENSURE( LocatorSleepParity( workerCounts[i] ) == 0 );
+	}
+
+	return 0;
+}
+
 static int BroadPhasePairsTest( void )
 {
 	int workerCounts[2] = { 1, 4 };
@@ -1252,6 +1656,7 @@ int WorldTest( void )
 	RUN_SUBTEST( EnableContactRecyclingTest );
 	RUN_SUBTEST( EnlargedProxyDestroyedTest );
 	RUN_SUBTEST( BroadPhasePairsTest );
+	RUN_SUBTEST( BodySimLocatorTest );
 
 	return 0;
 }
