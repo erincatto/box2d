@@ -745,7 +745,7 @@ void CreateJunkyard( b2WorldId worldId )
 	}
 
 	int columnCount = 200;
-	int rowCount = BENCHMARK_DEBUG ? 2 : 20;
+	int rowCount = BENCHMARK_DEBUG ? 2 : 40;
 
 	float radius = 0.25f;
 	b2Polygon polygon;
