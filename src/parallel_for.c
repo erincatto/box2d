@@ -76,7 +76,7 @@ void b2ParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCou
 	// Target multiple blocks per worker to reduce thread stalls.
 	// block size grows once items exceed maxBlockCount * minRange
 	// so the block count stays bounded and per-block sync overhead stays low.
-	int blocksPerWorker = 4;
+	int blocksPerWorker = 8;
 	int maxBlockCount = blocksPerWorker * workerCount;
 
 	int blockSize;
