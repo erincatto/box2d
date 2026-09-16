@@ -327,7 +327,6 @@ int main( int argc, char** argv )
 		printf( "benchmark: %s, steps = %d\n", benchmarks[benchmarkIndex].name, stepCount );
 
 		float minTime[B2_MAX_WORKERS] = { 0 };
-		SleepBenchmarkStats bestSleepStats = { 0 };
 
 		for ( int threadCount = 1; threadCount <= maxThreadCount; ++threadCount )
 		{
@@ -396,16 +395,6 @@ int main( int argc, char** argv )
 					minTime[threadCount - 1] = b2MinFloat( minTime[threadCount - 1], ms );
 				}
 
-				if ( benchmark->stepFcn == StepSleep )
-				{
-					SleepBenchmarkStats sleepStats = GetSleepBenchmarkStats();
-					if ( sleepStats.eventCount > 0 &&
-						 ( bestSleepStats.eventCount == 0 || sleepStats.wakeMilliseconds < bestSleepStats.wakeMilliseconds ) )
-					{
-						bestSleepStats = sleepStats;
-					}
-				}
-
 				if ( countersAcquired == false )
 				{
 					counters = b2World_GetCounters( worldId );
@@ -447,13 +436,6 @@ int main( int argc, char** argv )
 								: benchmark->stepFcn == StepTreeCast ? GetTreeCastBenchmarkStats()
 																	 : GetTileWorldBenchmarkStats();
 			printf( "query visits per step: %d node, %d leaf\n", stats.nodeVisits / stepCount, stats.leafVisits / stepCount );
-		}
-
-		if ( bestSleepStats.eventCount > 0 )
-		{
-			// Waking happen outside b2World_Step, so they never reach b2Profile
-			printf( "wake %g ms, events %d\n", bestSleepStats.wakeMilliseconds / bestSleepStats.eventCount,
-					bestSleepStats.eventCount );
 		}
 
 		printf( "body %d / shape %d / contact %d / joint %d / stack %d\n", counters.bodyCount, counters.shapeCount,

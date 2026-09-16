@@ -8,7 +8,6 @@
 #include "box2d/box2d.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -812,8 +811,6 @@ typedef struct
 {
 	b2BodyId bodyIdA[SLEEP_PYRAMID_COUNT];
 	b2BodyId bodyIdB[SLEEP_PYRAMID_COUNT];
-	float wakeMilliseconds;
-	int eventCount;
 } SleepData;
 
 static SleepData g_sleepData;
@@ -855,9 +852,7 @@ static void CreateSleepPyramid( b2WorldId worldId, int baseCount, float extent, 
 	}
 }
 
-// Ten pyramids, each its own island, far enough apart that they never interact. One island is woken
-// and one put back to sleep every ten steps, staggered five steps apart, so the serial sleep and the
-// island splitter are the only things that change between steps.
+// Stress tests waking and sleeping.
 void CreateSleep( b2WorldId worldId )
 {
 	g_sleepData = ( SleepData ){ 0 };
@@ -898,13 +893,8 @@ float StepSleep( b2WorldId worldId, int stepCount )
 			jointDef.base.bodyIdB = g_sleepData.bodyIdB[i];
 			b2JointId jointId = b2CreateFilterJoint( worldId, &jointDef );
 
-			uint64_t ticks = b2GetTicks();
-
 			// This wakes the island
 			b2DestroyJoint( jointId );
-
-			g_sleepData.wakeMilliseconds += b2GetMilliseconds( ticks );
-			g_sleepData.eventCount += 1;
 
 			// Only one per step
 			break;
@@ -912,15 +902,6 @@ float StepSleep( b2WorldId worldId, int stepCount )
 	}
 
 	return 0.0f;
-}
-
-SleepBenchmarkStats GetSleepBenchmarkStats( void )
-{
-	SleepBenchmarkStats stats = {
-		.wakeMilliseconds = g_sleepData.wakeMilliseconds,
-		.eventCount = g_sleepData.eventCount,
-	};
-	return stats;
 }
 
 // Lifted from samples/sample_benchmark.cpp BenchmarkBarrel (e_compoundShape branch).

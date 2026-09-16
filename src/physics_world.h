@@ -117,7 +117,7 @@ typedef struct b2World
 
 	// Shape enlarged bounds (hot data split).
 	b2Array( b2AABB ) fatAABBs;
-	
+
 	b2Array( b2ChainShape ) chainShapes;
 
 	// This is a dense array of sensor data.

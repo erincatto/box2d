@@ -891,13 +891,6 @@ public:
 			StepSleep( m_worldId, m_stepCount );
 		}
 
-		// These operations don't show up in b2Profile
-		SleepBenchmarkStats stats = GetSleepBenchmarkStats();
-		if ( stats.eventCount > 0 )
-		{
-			DrawScreenTextLine( "wake ave = %g ms", stats.wakeMilliseconds / stats.eventCount );
-		}
-
 		Sample::Step();
 	}
 

@@ -65,7 +65,8 @@
 		#if defined( __aarch64__ ) || defined( _M_ARM64 )
 			#define B2_SIMD_NEON
 		#else
-			// arm32 gets scalar math
+			// arm32 gets scalar math because 32-bit Neon has determinism problems
+			// and unverifiable performance.
 			#define B2_SIMD_NONE
 		#endif
 		#define B2_SIMD_WIDTH 4

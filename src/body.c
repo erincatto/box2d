@@ -91,18 +91,15 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 // such as the user changing the motion locks.
 void b2SyncBodyFlags( b2World* world, b2Body* body )
 {
-	// Never sync transient flags
-	uint32_t flags = body->flags & ~b2_bodyTransientFlags;
-
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 
-	// The collide task reads the fast flag set on the previous step.
-	bodySim->flags = flags | ( body->flags & b2_isFast );
+	// Preserve the fast flag for contact recycling.
+	bodySim->flags = body->flags & ~( b2_isSpeedCapped | b2_hadTimeOfImpact );
 
 	b2BodyState* bodyState = b2GetBodyState( world, body );
 	if ( bodyState != NULL )
 	{
-		bodyState->flags = flags;
+		bodyState->flags = body->flags & ~b2_bodyTransientFlags;
 	}
 }
 

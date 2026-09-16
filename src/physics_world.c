@@ -444,14 +444,6 @@ static inline float b2RelativeCos( b2Rot a, b2Rot b )
 	return a.c * b.c + a.s * b.s;
 }
 
-// This is a cache miss in the narrow phase, but it is rarely called.
-static b2BodySim* b2GetSleepingBodySim( b2World* world, int bodyId )
-{
-	b2Body* body = world->bodies.data + bodyId;
-	b2SolverSet* set = world->solverSets.data + body->setIndex;
-	return set->bodySims.data + body->localIndex;
-}
-
 static inline b2BodySim* b2ResolveContactBodySim( b2World* world, b2BodySim* awakeSims, b2BodySim* staticSims, int encodedIndex,
 												  int bodyId )
 {
@@ -465,7 +457,7 @@ static inline b2BodySim* b2ResolveContactBodySim( b2World* world, b2BodySim* awa
 		return staticSims - encodedIndex - 2;
 	}
 
-	return b2GetSleepingBodySim( world, bodyId );
+	return b2GetBodySim( world, b2Array_Get( world->bodies, bodyId ) );
 }
 
 static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* context )

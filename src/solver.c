@@ -371,7 +371,6 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 		if ( didHit )
 		{
-			fastBodySim->flags |= b2_hadTimeOfImpact;
 			continuousContext->fraction = hitFraction;
 		}
 	}
@@ -475,6 +474,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		// Update body move event
 		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents, bodySimIndex );
 		event->transform = fastBodySim->transform;
+
+		fastBody->flags |= b2_hadTimeOfImpact;
 
 		// Prepare AABBs for broad-phase.
 		// Even though a body is fast, it may not move much. So the AABB may not need enlargement.
