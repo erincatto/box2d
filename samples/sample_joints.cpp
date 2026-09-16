@@ -3723,3 +3723,353 @@ public:
 };
 
 static int sampleTheoJansen = RegisterSample( "Joints", "Theo Jansen", TheoJansen::Create );
+
+// The linkage of an Anglepoise Original 1227. The post is rigid with the base. Only the top link
+// pivots on the post. The two long links reach different points on the upper arm and are tied at the
+// bottom by the small silver link, so silver link, both long links and the span between the upper
+// arm pins form a parallelogram. That leaves the arm two degrees of freedom, carried by the pair of
+// tension springs pulling on levers below the link feet.
+class TaskLamp : public Sample
+{
+public:
+	enum
+	{
+		e_springCount = 2
+	};
+
+	explicit TaskLamp( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.2f, 1.42f };
+			m_context->camera.zoom = 1.6f;
+		}
+
+		// The parallelogram is narrow, so it wants the extra resolution
+		m_context->subStepCount = 8;
+
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		// Dimensions taken off an Original 1227 in meters, then scaled up. At life size the silver
+		// link is two centimeters, which is far too close to the linear slop.
+		float scale = 5.0f;
+
+		float baseHalfWidth = 0.070f * scale;
+		float baseHalfHeight = 0.018f * scale;
+		float postHalfWidth = 0.008f * scale;
+		float pivotHeight = 0.185f * scale;
+		float springAnchorHeight = 0.095f * scale;
+		float topLinkLength = 0.296f * scale;
+		float silverFoot = 0.024f * scale;
+		float topLeverLength = 0.019f * scale;
+		float lowerLeverLength = 0.028f * scale;
+		float upperArmLength = 0.324f * scale;
+		float tubeRadius = 0.0036f * scale;
+		float shadeLength = 0.161f * scale;
+		float shadeNeckRadius = 0.020f * scale;
+		float shadeMouthRadius = 0.061f * scale;
+
+		// The silver link measured in the top link frame. The same span separates the two pins on the
+		// upper arm, which is what closes the parallelogram.
+		b2Vec2 silverSpan = { 0.0212f * scale, 0.0109f * scale };
+		float silverLength = b2Length( silverSpan );
+
+		float topLinkAngle = -0.878f;
+		float upperArmAngle = 1.192f;
+		float shadeTilt = -0.41f;
+
+		// The arm spring balances the elevation, the head spring balances the upper arm through the
+		// parallelogram. That is what the real lamp uses two springs for.
+		m_springHertz[0] = 5.0f;
+		m_springHertz[1] = 5.0f;
+		m_springDamping = 4.0f;
+		m_lowerFriction = 100.0f;
+		m_elbowFriction = 100.0f;
+		m_headAngle = 0.0f;
+		b2Rot topRotation = b2MakeRot( topLinkAngle );
+		b2Rot upperRotation = b2MakeRot( upperArmAngle );
+
+		b2Vec2 topAxis = b2Rot_GetYAxis( topRotation );
+		b2Vec2 silverWorld = b2RotateVector( topRotation, silverSpan );
+
+		b2Pos postPivot = { 0.0f, pivotHeight };
+		b2Pos upperPin = b2OffsetPos( postPivot, b2MulSV( topLinkLength, topAxis ) );
+		b2Pos silverBase = b2OffsetPos( postPivot, b2MulSV( silverFoot, topAxis ) );
+		b2Pos lowerFoot = b2OffsetPos( silverBase, silverWorld );
+		b2Pos lowerPin = b2OffsetPos( upperPin, silverWorld );
+
+		// The lower link is parallel to the top link and shorter by the silver link foot
+		float lowerLinkLength = topLinkLength - silverFoot;
+		b2Rot silverRotation = b2MakeRotFromUnitVector( b2RightPerp( b2Normalize( silverWorld ) ) );
+
+		b2Pos headPivot = b2OffsetPos( upperPin, b2MulSV( upperArmLength, b2Rot_GetYAxis( upperRotation ) ) );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		b2BodyId baseId;
+		{
+			// The base is static so the linkage is all that moves
+			bodyDef.type = b2_staticBody;
+			bodyDef.position = b2Pos_zero;
+			bodyDef.rotation = b2Rot_identity;
+			baseId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Polygon plinth = b2MakeOffsetBox( baseHalfWidth, baseHalfHeight, { 0.0f, baseHalfHeight }, b2Rot_identity );
+			float postHalfHeight = 0.5f * ( pivotHeight - 2.0f * baseHalfHeight );
+			b2Polygon post =
+				b2MakeOffsetBox( postHalfWidth, postHalfHeight, { 0.0f, pivotHeight - postHalfHeight }, b2Rot_identity );
+
+			b2CreatePolygonShape( baseId, &shapeDef, &plinth );
+			b2CreatePolygonShape( baseId, &shapeDef, &post );
+		}
+
+		bodyDef.type = b2_dynamicBody;
+		shapeDef.density = 20.0f;
+
+		// Both long links run past their feet into the levers the springs pull on
+		{
+			bodyDef.position = postPivot;
+			bodyDef.rotation = topRotation;
+			m_topLinkId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Capsule capsule = { { 0.0f, -topLeverLength }, { 0.0f, topLinkLength }, tubeRadius };
+			b2CreateCapsuleShape( m_topLinkId, &shapeDef, &capsule );
+		}
+
+		b2BodyId lowerLinkId;
+		{
+			bodyDef.position = lowerFoot;
+			bodyDef.rotation = topRotation;
+			lowerLinkId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Capsule capsule = { { 0.0f, -lowerLeverLength }, { 0.0f, lowerLinkLength }, tubeRadius };
+			b2CreateCapsuleShape( lowerLinkId, &shapeDef, &capsule );
+		}
+
+		b2BodyId silverId;
+		{
+			bodyDef.position = silverBase;
+			bodyDef.rotation = silverRotation;
+			silverId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Capsule capsule = { { 0.0f, 0.0f }, { 0.0f, silverLength }, 1.4f * tubeRadius };
+			shapeDef.material.customColor = b2_colorSilver;
+			b2CreateCapsuleShape( silverId, &shapeDef, &capsule );
+			shapeDef.material.customColor = 0;
+		}
+
+		b2BodyId upperArmId;
+		{
+			bodyDef.position = upperPin;
+			bodyDef.rotation = upperRotation;
+			upperArmId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2Capsule capsule = { { 0.0f, 0.0f }, { 0.0f, upperArmLength }, 0.8f * tubeRadius };
+			b2CreateCapsuleShape( upperArmId, &shapeDef, &capsule );
+
+			// The coupler span reaches back to the lower link pin
+			b2Capsule bracket = { { 0.0f, 0.0f }, b2Body_GetLocalPoint( upperArmId, lowerPin ), tubeRadius };
+			b2CreateCapsuleShape( upperArmId, &shapeDef, &bracket );
+		}
+
+		b2RevoluteJointDef pinDef = b2DefaultRevoluteJointDef();
+		pinDef.base.drawScale = 0.03f * scale;
+		pinDef.base.constraintHertz = 240.0f;
+		pinDef.base.constraintDampingRatio = 2.0f;
+
+		// Only the top link reaches the post. The springs carry it, so it needs little friction.
+		pinDef.base.bodyIdA = baseId;
+		pinDef.base.bodyIdB = m_topLinkId;
+		pinDef.base.localFrameA.p = b2Body_GetLocalPoint( baseId, postPivot );
+		pinDef.base.localFrameB.p = b2Vec2_zero;
+		pinDef.enableMotor = true;
+		pinDef.maxMotorTorque = m_lowerFriction;
+		m_postJointId = b2CreateRevoluteJoint( m_worldId, &pinDef );
+
+		pinDef.enableMotor = false;
+
+		// The silver link hangs off the top link and carries the foot of the lower link
+		pinDef.base.bodyIdA = m_topLinkId;
+		pinDef.base.bodyIdB = silverId;
+		pinDef.base.localFrameA.p = { 0.0f, silverFoot };
+		pinDef.base.localFrameB.p = b2Vec2_zero;
+		b2CreateRevoluteJoint( m_worldId, &pinDef );
+
+		pinDef.base.bodyIdA = silverId;
+		pinDef.base.bodyIdB = lowerLinkId;
+		pinDef.base.localFrameA.p = { 0.0f, silverLength };
+		pinDef.base.localFrameB.p = b2Vec2_zero;
+		b2CreateRevoluteJoint( m_worldId, &pinDef );
+
+		// Both long links reach the upper arm, at points a silver link apart
+		pinDef.base.bodyIdA = lowerLinkId;
+		pinDef.base.bodyIdB = upperArmId;
+		pinDef.base.localFrameA.p = { 0.0f, lowerLinkLength };
+		pinDef.base.localFrameB.p = b2Body_GetLocalPoint( upperArmId, lowerPin );
+		b2CreateRevoluteJoint( m_worldId, &pinDef );
+
+		// No spring reaches the elbow, so it is a friction pivot like the real one
+		pinDef.base.bodyIdA = m_topLinkId;
+		pinDef.base.bodyIdB = upperArmId;
+		pinDef.base.localFrameA.p = { 0.0f, topLinkLength };
+		pinDef.base.localFrameB.p = b2Vec2_zero;
+		pinDef.enableMotor = true;
+		pinDef.maxMotorTorque = m_elbowFriction;
+		//pinDef.enableLimit = true;
+		pinDef.lowerAngle = 1.0f;
+		pinDef.upperAngle = 2.8f;
+		m_elbowJointId = b2CreateRevoluteJoint( m_worldId, &pinDef );
+
+		b2DistanceJointDef springDef = b2DefaultDistanceJointDef();
+		springDef.base.drawScale = 0.03f * scale;
+		springDef.enableSpring = true;
+		springDef.dampingRatio = m_springDamping;
+
+		// A coil spring only pulls
+		//springDef.upperSpringForce = 0.0f;
+
+		// Carwardine's trick. With almost no free length the spring torque about the pivot is
+		// k times cross(lever, anchor), which tracks the gravity torque as the arm swings, so the
+		// arm balances over its whole range instead of at one angle.
+		springDef.length = 0.01f;
+
+		b2Pos springBase = { 0.0f, springAnchorHeight };
+		b2BodyId leverIds[e_springCount] = { m_topLinkId, lowerLinkId };
+		float leverLengths[e_springCount] = { topLeverLength, lowerLeverLength };
+
+		for ( int k = 0; k < e_springCount; ++k )
+		{
+			springDef.base.bodyIdA = baseId;
+			springDef.base.bodyIdB = leverIds[k];
+			springDef.base.localFrameA.p = b2Body_GetLocalPoint( baseId, springBase );
+			springDef.base.localFrameB.p = { 0.0f, -leverLengths[k] };
+			springDef.hertz = m_springHertz[k];
+			m_springJointIds[k] = b2CreateDistanceJoint( m_worldId, &springDef );
+		}
+
+		{
+			bodyDef.position = headPivot;
+			bodyDef.rotation = b2MakeRot( shadeTilt );
+			b2BodyId headId = b2CreateBody( m_worldId, &bodyDef );
+
+			// The pivot is on the shade center line, where the arm capsule ends. The shade opens along
+			// the local negative y.
+			float neck = 0.45f * shadeLength;
+			float mouth = neck - shadeLength;
+			b2Vec2 points[4] = { { -shadeNeckRadius, neck },
+								 { shadeNeckRadius, neck },
+								 { shadeMouthRadius, mouth },
+								 { -shadeMouthRadius, mouth } };
+			b2Hull hull = b2ComputeHull( points, 4 );
+			b2Polygon shade = b2MakePolygon( &hull, 0.01f * scale );
+
+			// The shade is a thin shell, not a solid cone
+			shapeDef.density = 1.0f;
+			b2CreatePolygonShape( headId, &shapeDef, &shade );
+
+			// Offset the reference frame so the head slider reads zero at the pose above
+			pinDef.base.bodyIdA = upperArmId;
+			pinDef.base.bodyIdB = headId;
+			pinDef.base.localFrameA.p = { 0.0f, upperArmLength };
+			pinDef.base.localFrameA.q = b2InvMulRot( upperRotation, b2MakeRot( shadeTilt ) );
+			pinDef.base.localFrameB.p = b2Vec2_zero;
+			pinDef.enableMotor = false;
+			pinDef.maxMotorTorque = 10.0f;
+			pinDef.enableSpring = true;
+			pinDef.hertz = 8.0f;
+			pinDef.dampingRatio = 2.0f;
+			pinDef.targetAngle = m_headAngle;
+			pinDef.enableLimit = true;
+			pinDef.lowerAngle = -1.2f;
+			pinDef.upperAngle = 1.2f;
+			m_headJointId = b2CreateRevoluteJoint( m_worldId, &pinDef );
+		}
+	}
+
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
+
+		if ( ImGui::SliderFloat( "Arm Spring", &m_springHertz[0], 0.0f, 20.0f, "%.2f" ) )
+		{
+			b2DistanceJoint_SetSpringHertz( m_springJointIds[0], m_springHertz[0] );
+			b2Joint_WakeBodies( m_springJointIds[0] );
+		}
+
+		if ( ImGui::SliderFloat( "Head Spring", &m_springHertz[1], 0.0f, 20.0f, "%.2f" ) )
+		{
+			b2DistanceJoint_SetSpringHertz( m_springJointIds[1], m_springHertz[1] );
+			b2Joint_WakeBodies( m_springJointIds[1] );
+		}
+
+		if ( ImGui::SliderFloat( "Spring Damping", &m_springDamping, 0.0f, 5.0f, "%.1f" ) )
+		{
+			for ( int k = 0; k < e_springCount; ++k )
+			{
+				b2DistanceJoint_SetSpringDampingRatio( m_springJointIds[k], m_springDamping );
+				b2Joint_WakeBodies( m_springJointIds[k] );
+			}
+		}
+
+		if ( ImGui::SliderFloat( "Post Friction", &m_lowerFriction, 0.0f, 20.0f, "%.1f" ) )
+		{
+			b2RevoluteJoint_SetMaxMotorTorque( m_postJointId, m_lowerFriction );
+			b2Joint_WakeBodies( m_postJointId );
+		}
+
+		if ( ImGui::SliderFloat( "Elbow Friction", &m_elbowFriction, 0.0f, 60.0f, "%.0f" ) )
+		{
+			b2RevoluteJoint_SetMaxMotorTorque( m_elbowJointId, m_elbowFriction );
+			b2Joint_WakeBodies( m_elbowJointId );
+		}
+
+		if ( ImGui::SliderFloat( "Head", &m_headAngle, -1.2f, 1.2f, "%.2f" ) )
+		{
+			b2RevoluteJoint_SetTargetAngle( m_headJointId, m_headAngle );
+			b2Joint_WakeBodies( m_headJointId );
+		}
+
+		ImGui::PopItemWidth();
+
+		return true;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		// With both springs tuned the friction motors idle, so the lamp holds wherever it is put
+		float postTorque = b2RevoluteJoint_GetMotorTorque( m_postJointId );
+		float elbowTorque = b2RevoluteJoint_GetMotorTorque( m_elbowJointId );
+		DrawScreenTextLine( "friction carrying: post %.2f, elbow %.2f N m", postTorque, elbowTorque );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new TaskLamp( context );
+	}
+
+	b2JointId m_springJointIds[e_springCount];
+	b2JointId m_postJointId;
+	b2JointId m_elbowJointId;
+	b2JointId m_headJointId;
+	b2BodyId m_topLinkId;
+	float m_springHertz[e_springCount];
+	float m_springDamping;
+	float m_lowerFriction;
+	float m_elbowFriction;
+	float m_headAngle;
+};
+
+static int sampleTaskLamp = RegisterSample( "Joints", "Task Lamp", TaskLamp::Create );
