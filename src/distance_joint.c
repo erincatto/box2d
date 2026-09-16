@@ -162,6 +162,19 @@ float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId )
 	return joint->dampingRatio;
 }
 
+float b2DistanceJoint_GetSpringForce( b2JointId jointId )
+{
+	b2World* world = b2GetWorld( jointId.world0 );
+	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
+	b2DistanceJoint* joint = &base->distanceJoint;
+	if ( joint->enableSpring )
+	{
+		return joint->impulse * world->inv_h;
+	}
+
+	return 0.0f;
+}
+
 void b2DistanceJoint_EnableMotor( b2JointId jointId, bool enableMotor )
 {
 	b2World* world = b2GetWorld( jointId.world0 );

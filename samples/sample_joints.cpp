@@ -3724,12 +3724,9 @@ public:
 
 static int sampleTheoJansen = RegisterSample( "Joints", "Theo Jansen", TheoJansen::Create );
 
-// The linkage of an Anglepoise Original 1227. The post is rigid with the base. Only the top link
-// pivots on the post. The two long links reach different points on the upper arm and are tied at the
-// bottom by the small silver link, so silver link, both long links and the span between the upper
-// arm pins form a parallelogram. That leaves the arm two degrees of freedom, carried by the pair of
-// tension springs pulling on levers below the link feet.
-class TaskLamp : public Sample
+// The Anglepoise Original 1227 desk lamp.
+// https://www.anglepoise.com/usa/product-category/original-1227/
+class DeskLamp : public Sample
 {
 public:
 	enum
@@ -3737,7 +3734,7 @@ public:
 		e_springCount = 2
 	};
 
-	explicit TaskLamp( SampleContext* context )
+	explicit DeskLamp( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -3912,23 +3909,20 @@ public:
 		pinDef.base.localFrameB.p = b2Vec2_zero;
 		b2CreateRevoluteJoint( m_worldId, &pinDef );
 
-		// Both long links reach the upper arm, at points a silver link apart
+		// Both long links reach the upper arm, at points a silver link apart.
 		pinDef.base.bodyIdA = lowerLinkId;
 		pinDef.base.bodyIdB = upperArmId;
 		pinDef.base.localFrameA.p = { 0.0f, lowerLinkLength };
 		pinDef.base.localFrameB.p = b2Body_GetLocalPoint( upperArmId, lowerPin );
 		b2CreateRevoluteJoint( m_worldId, &pinDef );
 
-		// No spring reaches the elbow, so it is a friction pivot like the real one
+		// No spring reaches the elbow, so it is a friction pivot like the real one.
 		pinDef.base.bodyIdA = m_topLinkId;
 		pinDef.base.bodyIdB = upperArmId;
 		pinDef.base.localFrameA.p = { 0.0f, topLinkLength };
 		pinDef.base.localFrameB.p = b2Vec2_zero;
 		pinDef.enableMotor = true;
 		pinDef.maxMotorTorque = m_elbowFriction;
-		//pinDef.enableLimit = true;
-		pinDef.lowerAngle = 1.0f;
-		pinDef.upperAngle = 2.8f;
 		m_elbowJointId = b2CreateRevoluteJoint( m_worldId, &pinDef );
 
 		b2DistanceJointDef springDef = b2DefaultDistanceJointDef();
@@ -3974,11 +3968,11 @@ public:
 			b2Hull hull = b2ComputeHull( points, 4 );
 			b2Polygon shade = b2MakePolygon( &hull, 0.01f * scale );
 
-			// The shade is a thin shell, not a solid cone
+			// The shade is a thin shell.
 			shapeDef.density = 1.0f;
 			b2CreatePolygonShape( headId, &shapeDef, &shade );
 
-			// Offset the reference frame so the head slider reads zero at the pose above
+			// Offset the reference frame so the head slider reads zero at the pose above.
 			pinDef.base.bodyIdA = upperArmId;
 			pinDef.base.bodyIdB = headId;
 			pinDef.base.localFrameA.p = { 0.0f, upperArmLength };
@@ -4049,15 +4043,18 @@ public:
 	{
 		Sample::Step();
 
-		// With both springs tuned the friction motors idle, so the lamp holds wherever it is put
 		float postTorque = b2RevoluteJoint_GetMotorTorque( m_postJointId );
 		float elbowTorque = b2RevoluteJoint_GetMotorTorque( m_elbowJointId );
 		DrawScreenTextLine( "friction carrying: post %.2f, elbow %.2f N m", postTorque, elbowTorque );
+
+		float spring1 = b2DistanceJoint_GetSpringForce( m_springJointIds[0] );
+		float spring2 = b2DistanceJoint_GetSpringForce( m_springJointIds[1] );
+		DrawScreenTextLine( "spring forces: %.2f, %.2f N", spring1, spring2 );
 	}
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new TaskLamp( context );
+		return new DeskLamp( context );
 	}
 
 	b2JointId m_springJointIds[e_springCount];
@@ -4072,4 +4069,4 @@ public:
 	float m_headAngle;
 };
 
-static int sampleTaskLamp = RegisterSample( "Joints", "Task Lamp", TaskLamp::Create );
+static int sampleDeskLamp = RegisterSample( "Joints", "Desk Lamp", DeskLamp::Create );
