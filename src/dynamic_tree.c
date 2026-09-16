@@ -176,9 +176,9 @@ static void b2FreeProxy( b2DynamicTree* tree, int proxyId )
 	--tree->proxyCount;
 }
 
-static inline int b2GetLeafCount( const b2TreeNode* node )
+static inline int b2GetNodeHeight( const b2TreeNode* node )
 {
-	return b2IsLeaf( node ) ? 1 : node->leafCount;
+	return b2IsLeaf( node ) ? 0 : node->height;
 }
 
 // The internal node above a children pair
@@ -190,7 +190,7 @@ static inline b2TreeNode b2MakeInternalNode( const b2TreeNode* nodes, int pair )
 	b2TreeNode node = { 0 };
 	node.aabb = b2AABB_Union( c1->aabb, c2->aabb );
 	node.flagIndex = (uint32_t)pair | ( ( c1->flagIndex | c2->flagIndex ) & B2_MOVED_NODE );
-	node.leafCount = b2GetLeafCount( c1 ) + b2GetLeafCount( c2 );
+	node.height = 1 + b2MaxInt( b2GetNodeHeight( c1 ), b2GetNodeHeight( c2 ) );
 	return node;
 }
 
@@ -682,62 +682,9 @@ uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId )
 	return tree->proxies[proxyId].categoryBits;
 }
 
-// The height is the maximum leaf depth, with the root children at depth one.
-// Siblings share a depth and child pairs sit one deeper. An explicit stack
-// keeps this off the call stack, like the query traversals.
 int b2DynamicTree_GetHeight( const b2DynamicTree* tree )
 {
-	if ( tree->proxyCount == 0 )
-	{
-		return 0;
-	}
-
-	const b2TreeNode* nodes = tree->nodes;
-	const b2TreeNode* root = nodes + B2_ROOT_NODE;
-	if ( b2IsLeaf( root ) )
-	{
-		return 0;
-	}
-
-	int pairs[B2_TREE_STACK_SIZE];
-	int depths[B2_TREE_STACK_SIZE];
-	int stackCount = 0;
-	pairs[stackCount] = b2GetLeftChild( root );
-	depths[stackCount] = 1;
-	++stackCount;
-
-	int height = 0;
-	while ( stackCount > 0 )
-	{
-		--stackCount;
-		int pair = pairs[stackCount];
-		int depth = depths[stackCount];
-		height = b2MaxInt( height, depth );
-
-		for ( int i = 0; i < 2; ++i )
-		{
-			const b2TreeNode* node = nodes + pair + i;
-			if ( b2IsLeaf( node ) )
-			{
-				continue;
-			}
-
-			int childPair = b2GetLeftChild( node );
-
-			if ( stackCount < B2_TREE_STACK_SIZE )
-			{
-				pairs[stackCount] = childPair;
-				depths[stackCount] = depth + 1;
-				++stackCount;
-			}
-			else
-			{
-				B2_ASSERT( stackCount < B2_TREE_STACK_SIZE );
-			}
-		}
-	}
-
-	return height;
+	return b2GetNodeHeight( tree->nodes + B2_ROOT_NODE );
 }
 
 // The area ratio is the thing that SAH seeks to minimize. SAH
@@ -785,7 +732,7 @@ b2AABB b2DynamicTree_GetRootBounds( const b2DynamicTree* tree )
 
 #if B2_ENABLE_VALIDATION
 
-static int b2ValidateSubtree( const b2DynamicTree* tree, int nodeIndex )
+static int b2ValidateSubtree( const b2DynamicTree* tree, int nodeIndex, int* leafCount )
 {
 	B2_ASSERT( 0 <= nodeIndex && nodeIndex < tree->nodeEnd );
 	const b2TreeNode* node = tree->nodes + nodeIndex;
@@ -797,7 +744,8 @@ static int b2ValidateSubtree( const b2DynamicTree* tree, int nodeIndex )
 		B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
 		B2_ASSERT( tree->proxies[proxyId].node == nodeIndex );
 		B2_ASSERT( (int32_t)tree->proxies[proxyId].userData == node->shapeIndex );
-		return 1;
+		*leafCount += 1;
+		return 0;
 	}
 
 	int pair = b2GetLeftChild( node );
@@ -813,9 +761,11 @@ static int b2ValidateSubtree( const b2DynamicTree* tree, int nodeIndex )
 	B2_ASSERT( b2IsNodeMoved( node ) == ( b2IsNodeMoved( c1 ) || b2IsNodeMoved( c2 ) ) );
 
 	// A bad tree can stack overflow, but that is validation on its own.
-	int leafCount = b2ValidateSubtree( tree, pair ) + b2ValidateSubtree( tree, pair + 1 );
-	B2_ASSERT( node->leafCount == leafCount );
-	return leafCount;
+	int height1 = b2ValidateSubtree( tree, pair, leafCount );
+	int height2 = b2ValidateSubtree( tree, pair + 1, leafCount );
+	int height = 1 + b2MaxInt( height1, height2 );
+	B2_ASSERT( node->height == height );
+	return height;
 }
 
 #endif
@@ -860,7 +810,8 @@ void b2DynamicTree_Validate( const b2DynamicTree* tree )
 		return;
 	}
 
-	int leafCount = b2ValidateSubtree( tree, B2_ROOT_NODE );
+	int leafCount = 0;
+	b2ValidateSubtree( tree, B2_ROOT_NODE, &leafCount );
 	B2_ASSERT( leafCount == tree->proxyCount );
 
 #else

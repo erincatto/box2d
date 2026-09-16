@@ -28,6 +28,10 @@ void CreateTumbler( b2WorldId worldId );
 void CreateWasher( b2WorldId worldId );
 void CreateJunkyard( b2WorldId worldId );
 float StepJunkyard( b2WorldId worldId, int stepCount );
+
+void CreateSleep( b2WorldId worldId );
+float StepSleep( b2WorldId worldId, int stepCount );
+
 void CreateCompounds( b2WorldId worldId );
 
 void CreateQueries( b2WorldId worldId );

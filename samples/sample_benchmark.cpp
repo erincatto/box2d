@@ -872,100 +872,23 @@ static int benchmarkCreateDestroy = RegisterSample( "Benchmark", "CreateDestroy"
 class BenchmarkSleep : public Sample
 {
 public:
-	enum
-	{
-		e_maxBaseCount = 100,
-		e_maxBodyCount = e_maxBaseCount * ( e_maxBaseCount + 1 ) / 2
-	};
-
 	explicit BenchmarkSleep( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 0.0f, 50.0f };
-			m_context->camera.zoom = 25.0f * 2.2f;
+			m_context->camera.center = { 0.0f, 20.0f };
+			m_context->camera.zoom = 25.0f * 6.0f;
 		}
 
-		{
-			float groundSize = 100.0f;
-
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
-
-			b2Polygon box = b2MakeBox( groundSize, 1.0f );
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-			b2CreatePolygonShape( groundId, &shapeDef, &box );
-		}
-
-		m_baseCount = m_isDebug ? 40 : 100;
-		m_bodyCount = 0;
-
-		int count = m_baseCount;
-		float rad = 0.5f;
-		float shift = rad * 2.0f;
-		float centerx = shift * count / 2.0f;
-		float centery = shift / 2.0f + 1.0f;
-
-		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.type = b2_dynamicBody;
-
-		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.density = 1.0f;
-		shapeDef.material.friction = 0.5f;
-
-		float h = 0.5f;
-		b2Polygon box = b2MakeRoundedBox( h, h, 0.0f );
-
-		int index = 0;
-
-		for ( int i = 0; i < count; ++i )
-		{
-			float y = i * shift + centery;
-
-			for ( int j = i; j < count; ++j )
-			{
-				float x = 0.5f * i * shift + ( j - i ) * shift - centerx;
-				bodyDef.position = { x, y };
-
-				assert( index < e_maxBodyCount );
-				m_bodies[index] = b2CreateBody( m_worldId, &bodyDef );
-				b2CreatePolygonShape( m_bodies[index], &shapeDef, &box );
-
-				index += 1;
-			}
-		}
-
-		m_bodyCount = index;
-
-		m_wakeTotal = 0.0f;
-		m_sleepTotal = 0.0f;
+		CreateSleep( m_worldId );
 	}
 
 	void Step() override
 	{
-		// These operations don't show up in b2Profile
-		if ( m_stepCount > 20 )
+		if ( m_context->pause == false || m_context->singleStep == true )
 		{
-			// Creating and destroying a joint will engage the island splitter.
-			b2FilterJointDef jointDef = b2DefaultFilterJointDef();
-			jointDef.base.bodyIdA = m_bodies[0];
-			jointDef.base.bodyIdB = m_bodies[1];
-			b2JointId jointId = b2CreateFilterJoint( m_worldId, &jointDef );
-
-			uint64_t ticks = b2GetTicks();
-
-			// This will wake the island
-			b2DestroyJoint( jointId );
-			m_wakeTotal += b2GetMillisecondsAndReset( &ticks );
-
-			// Put the island back to sleep. It must be split because a constraint was removed.
-			b2Body_SetAwake( m_bodies[0], false );
-			m_sleepTotal += b2GetMillisecondsAndReset( &ticks );
-
-			int count = m_stepCount - 20;
-			DrawScreenTextLine( "wake ave = %g ms", m_wakeTotal / count );
-			DrawScreenTextLine( "sleep ave = %g ms", m_sleepTotal / count );
+			StepSleep( m_worldId, m_stepCount );
 		}
 
 		Sample::Step();
@@ -975,13 +898,6 @@ public:
 	{
 		return new BenchmarkSleep( context );
 	}
-
-	b2BodyId m_bodies[e_maxBodyCount];
-	int m_bodyCount;
-	int m_baseCount;
-	float m_wakeTotal;
-	float m_sleepTotal;
-	bool m_awake;
 };
 
 static int benchmarkSleep = RegisterSample( "Benchmark", "Sleep", BenchmarkSleep::Create );

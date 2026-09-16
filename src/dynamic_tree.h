@@ -65,7 +65,7 @@ B2_FORCE_INLINE b2TreeNode b2MakeEmptyNode( void )
 				.upperBound = { .x = -INFINITY, .y = -INFINITY },
 			},
 		.flagIndex = B2_EMPTY_NODE,
-		.leafCount = 0,
+		.height = 0,
 	};
 }
 

@@ -164,6 +164,7 @@ int main( int argc, char** argv )
 		{ "queries", CreateQueries, StepQueries, 200 },
 		{ "tree_cast", CreateTreeCast, StepTreeCast, 200, DestroyTreeCast },
 		{ "tile_world", CreateTileWorld, StepTileWorld, 300, DestroyTileWorld },
+		{ "sleep", CreateSleep, StepSleep, 300 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
@@ -205,7 +206,7 @@ int main( int argc, char** argv )
 	float* stepResults = malloc( maxSteps * sizeof( float ) );
 	memset( stepResults, 0, maxSteps * sizeof( float ) );
 
-	int maxThreadCount = b2MinInt(GetNumberOfCores(), B2_MAX_WORKERS);
+	int maxThreadCount = b2MinInt( GetNumberOfCores(), B2_MAX_WORKERS );
 	int runCount = 4;
 	int singleBenchmark = -1;
 	int singleWorkerCount = -1;
@@ -421,8 +422,8 @@ int main( int argc, char** argv )
 				for ( int stepIndex = 0; stepIndex < stepCount; ++stepIndex )
 				{
 					b2Profile p = profiles[stepIndex];
-					fprintf( file, "%g %g %g %g %g %g %g\n", p.step, p.pairs, p.collide, p.constraints, p.transforms,
-							 p.refit, p.sleepIslands );
+					fprintf( file, "%g %g %g %g %g %g %g\n", p.step, p.pairs, p.collide, p.constraints, p.transforms, p.refit,
+							 p.sleepIslands );
 				}
 
 				fclose( file );

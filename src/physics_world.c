@@ -24,6 +24,7 @@
 #include "scheduler.h"
 #include "sensor.h"
 #include "shape.h"
+#include "simd.h"
 #include "solver.h"
 #include "solver_set.h"
 
@@ -226,6 +227,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	int shapeCapacity = b2MaxInt( 16, def->capacity.staticShapeCount + def->capacity.dynamicShapeCount );
 	b2Array_CreateN( world->shapes, shapeCapacity );
+	b2Array_CreateN( world->fatAABBs, shapeCapacity );
 
 	world->chainIdPool = b2CreateIdPool();
 	b2Array_CreateN( world->chainShapes, 4 );
@@ -391,6 +393,7 @@ void b2DestroyWorld( b2WorldId worldId )
 
 	b2Array_Destroy( world->bodies );
 	b2Array_Destroy( world->shapes );
+	b2Array_Destroy( world->fatAABBs );
 	b2Array_Destroy( world->chainShapes );
 	b2Array_Destroy( world->contacts );
 	b2Array_Destroy( world->joints );
@@ -441,6 +444,22 @@ static inline float b2RelativeCos( b2Rot a, b2Rot b )
 	return a.c * b.c + a.s * b.s;
 }
 
+static inline b2BodySim* b2ResolveContactBodySim( b2World* world, b2BodySim* awakeSims, b2BodySim* staticSims, int encodedIndex,
+												  int bodyId )
+{
+	if ( encodedIndex >= 0 )
+	{
+		return awakeSims + encodedIndex;
+	}
+
+	if ( b2IsStaticSimIndex( encodedIndex ) )
+	{
+		return staticSims - encodedIndex - 2;
+	}
+
+	return b2GetBodySim( world, b2Array_Get( world->bodies, bodyId ) );
+}
+
 static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* context )
 {
 	b2TracyCZoneNC( collide_task, "Collide", b2_colorDodgerBlue, true );
@@ -448,12 +467,25 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
 	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
-	b2ContactSim** contactSims = stepContext->contactSims;
+	const b2ContactCollideSpan* spans = stepContext->collideSpans;
 	b2Shape* shapes = world->shapes.data;
-	b2Body* bodies = world->bodies.data;
-	b2BodyState* states = world->solverSets.data[b2_awakeSet].bodyStates.data;
+	const b2AABB* fatAABBs = world->fatAABBs.data;
+	b2SolverSet* solverSets = world->solverSets.data;
+	b2BodySim* awakeSims = solverSets[b2_awakeSet].bodySims.data;
+	b2BodySim* staticSims = solverSets[b2_staticSet].bodySims.data;
+	b2BodyState* states = solverSets[b2_awakeSet].bodyStates.data;
 
 	B2_ASSERT( startIndex < endIndex );
+
+	int spanIndex = 0;
+	while ( spans[spanIndex + 1].start <= startIndex )
+	{
+		spanIndex += 1;
+	}
+
+	int spanStart = spans[spanIndex].start;
+	int spanEnd = spans[spanIndex + 1].start;
+	b2ContactSim* spanBase = spans[spanIndex].contacts;
 
 	float recycleDistance = world->contactRecycleDistance;
 	float speculativeDistance = B2_SPECULATIVE_DISTANCE;
@@ -461,15 +493,22 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
-		b2ContactSim* contactSim = contactSims[contactIndex];
+		if ( contactIndex == spanEnd )
+		{
+			spanIndex += 1;
+			spanStart = spans[spanIndex].start;
+			spanEnd = spans[spanIndex + 1].start;
+			spanBase = spans[spanIndex].contacts;
+		}
+
+		b2ContactSim* contactSim = spanBase + ( contactIndex - spanStart );
 
 		int contactId = contactSim->contactId;
-
-		b2Shape* shapeA = shapes + contactSim->shapeIdA;
-		b2Shape* shapeB = shapes + contactSim->shapeIdB;
+		int shapeIdA = contactSim->shapeIdA;
+		int shapeIdB = contactSim->shapeIdB;
 
 		// Do proxies still overlap?
-		bool overlap = b2AABB_Overlaps( shapeA->fatAABB, shapeB->fatAABB );
+		bool overlap = b2OverlapV( fatAABBs + shapeIdA, fatAABBs + shapeIdB );
 		if ( overlap == false )
 		{
 			contactSim->simFlags |= b2_simDisjoint;
@@ -478,32 +517,26 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 		}
 		else
 		{
+			b2Shape* shapeA = shapes + shapeIdA;
+			b2Shape* shapeB = shapes + shapeIdB;
+
 			bool wasTouching = ( contactSim->simFlags & b2_simTouchingFlag );
 
 			// Update contact respecting shape/body order (A,B)
-			b2Body* bodyA = bodies + shapeA->bodyId;
-			b2Body* bodyB = bodies + shapeB->bodyId;
-			b2BodySim* bodySimA = b2GetBodySim( world, bodyA );
-			b2BodySim* bodySimB = b2GetBodySim( world, bodyB );
+			int encodedA = contactSim->encodedBodySimA;
+			int encodedB = contactSim->encodedBodySimB;
+			b2BodySim* bodySimA = b2ResolveContactBodySim( world, awakeSims, staticSims, encodedA, shapeA->bodyId );
+			b2BodySim* bodySimB = b2ResolveContactBodySim( world, awakeSims, staticSims, encodedB, shapeB->bodyId );
 			b2WorldTransform transformA = bodySimA->transform;
 			b2WorldTransform transformB = bodySimB->transform;
 
 			// These may not be skipped by relative transform check below
-			contactSim->bodySimIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
 			contactSim->invMassA = bodySimA->invMass;
 			contactSim->invIA = bodySimA->invInertia;
-
-			contactSim->bodySimIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			// todo plan to get rid of b2Body from this hot path due to cache misses.
-			// B2_VALIDATE( ( bodyA->flags & b2_isFast ) == ( bodySimA->flags & b2_isFast ) );
-			// B2_VALIDATE( ( bodyB->flags & b2_isFast ) == ( bodySimB->flags & b2_isFast ) );
-			// B2_VALIDATE( bodyA->setIndex == b2_staticSet || bodyA->setIndex == b2_awakeSet );
-			// B2_VALIDATE( bodyB->setIndex == b2_staticSet || bodyB->setIndex == b2_awakeSet );
-
-			bool isFast = ( bodyA->flags & b2_isFast ) || ( bodyB->flags & b2_isFast );
+			bool isFast = ( ( bodySimA->flags | bodySimB->flags ) & b2_isFast ) != 0;
 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
@@ -520,8 +553,8 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 				float cosB = b2RelativeCos( transformB.q, cachedQB );
 				float minCos = b2MinFloat( cosA, cosB );
 
-				float maxExtentA = bodyA->type == b2_staticBody ? 0.0f : bodySimA->maxExtent;
-				float maxExtentB = bodyB->type == b2_staticBody ? 0.0f : bodySimB->maxExtent;
+				float maxExtentA = b2IsStaticSimIndex( encodedA ) ? 0.0f : bodySimA->maxExtent;
+				float maxExtentB = b2IsStaticSimIndex( encodedB ) ? 0.0f : bodySimB->maxExtent;
 				float maxExtent = b2MaxFloat( maxExtentA, maxExtentB );
 				float distance = b2Distance( xf.p, xfc.p );
 				b2Rot qr = b2InvMulRot( xf.q, xfc.q );
@@ -558,7 +591,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 							mp->restitutionVelocity = 0.0f;
 						}
 
-						int indexA = contactSim->bodySimIndexA;
+						int indexA = b2DecodeAwakeIndex( encodedA );
 						b2Vec2 vrA = b2Vec2_zero;
 						if ( indexA != B2_NULL_INDEX )
 						{
@@ -566,7 +599,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 							vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
 						}
 
-						int indexB = contactSim->bodySimIndexB;
+						int indexB = b2DecodeAwakeIndex( encodedB );
 						b2Vec2 vrB = b2Vec2_zero;
 						if ( indexB != B2_NULL_INDEX )
 						{
@@ -575,7 +608,6 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						}
 
 						mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
-
 						mp->persisted = true;
 					}
 
@@ -620,7 +652,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 					mp->baseSeparation = mp->separation;
 
 					// Save relative velocity for restitution and hit events reporting.
-					int indexA = contactSim->bodySimIndexA;
+					int indexA = b2DecodeAwakeIndex( encodedA );
 					b2Vec2 vrA = b2Vec2_zero;
 					if ( indexA != B2_NULL_INDEX )
 					{
@@ -628,7 +660,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
 					}
 
-					int indexB = contactSim->bodySimIndexB;
+					int indexB = b2DecodeAwakeIndex( encodedB );
 					b2Vec2 vrB = b2Vec2_zero;
 					if ( indexB != B2_NULL_INDEX )
 					{
@@ -710,33 +742,37 @@ static void b2Collide( b2StepContext* context )
 		return;
 	}
 
-	b2ContactSim** contactSims = b2StackAlloc( &world->stack, contactCount * sizeof( b2ContactSim* ), "contacts" );
-
+	b2ContactCollideSpan collideSpans[B2_GRAPH_COLOR_COUNT + 2];
+	int spanCount = 0;
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
 		b2GraphColor* color = graphColors + i;
 		int count = color->contactSims.count;
-		b2ContactSim* base = color->contactSims.data;
-		for ( int j = 0; j < count; ++j )
+		if ( count > 0 )
 		{
-			contactSims[contactIndex] = base + j;
-			contactIndex += 1;
+			collideSpans[spanCount].start = contactIndex;
+			collideSpans[spanCount].contacts = color->contactSims.data;
+			spanCount += 1;
+			contactIndex += count;
 		}
 	}
 
+	if ( nonTouchingCount > 0 )
 	{
-		b2ContactSim* base = world->solverSets.data[b2_awakeSet].contactSims.data;
-		for ( int i = 0; i < nonTouchingCount; ++i )
-		{
-			contactSims[contactIndex] = base + i;
-			contactIndex += 1;
-		}
+		collideSpans[spanCount].start = contactIndex;
+		collideSpans[spanCount].contacts = world->solverSets.data[b2_awakeSet].contactSims.data;
+		spanCount += 1;
+		contactIndex += nonTouchingCount;
 	}
 
 	B2_ASSERT( contactIndex == contactCount );
+	B2_ASSERT( spanCount <= B2_GRAPH_COLOR_COUNT + 1 );
 
-	context->contactSims = contactSims;
+	collideSpans[spanCount].start = contactCount;
+	collideSpans[spanCount].contacts = NULL;
+
+	context->collideSpans = collideSpans;
 
 	// Contact bit set on ids because contact pointers are unstable as they move between touching and not touching.
 	int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
@@ -750,12 +786,9 @@ static void b2Collide( b2StepContext* context )
 	int minRange = 64;
 	b2ParallelFor( world, &b2CollideTask, contactCount, minRange, context );
 
-	b2StackFree( &world->stack, contactSims );
-	context->contactSims = NULL;
-	contactSims = NULL;
+	context->collideSpans = NULL;
 
 	// Serially update contact state
-	// todo bring this zone together with island merge
 	b2TracyCZoneNC( contact_state, "Contact State", b2_colorLightSlateGray, true );
 
 	// Bitwise OR all contact bits
@@ -800,16 +833,6 @@ static void b2Collide( b2StepContext* context )
 				contactSim = b2Array_Get( awakeSet->contactSims, localIndex );
 			}
 
-			const b2Shape* shapeA = shapes + contact->shapeIdA;
-			const b2Shape* shapeB = shapes + contact->shapeIdB;
-			b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
-			b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
-			b2ContactId contactFullId = {
-				.index1 = contactId + 1,
-				.world0 = worldId,
-				.padding = 0,
-				.generation = contact->generation,
-			};
 			uint32_t flags = contact->flags;
 			uint32_t simFlags = contactSim->simFlags;
 
@@ -826,6 +849,17 @@ static void b2Collide( b2StepContext* context )
 
 				if ( flags & b2_contactEnableContactEvents )
 				{
+					const b2Shape* shapeA = shapes + contact->shapeIdA;
+					const b2Shape* shapeB = shapes + contact->shapeIdB;
+					b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
+					b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
+					b2ContactId contactFullId = {
+						.index1 = contactId + 1,
+						.world0 = worldId,
+						.padding = 0,
+						.generation = contact->generation,
+					};
+
 					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2Array_Push( world->contactBeginEvents, event );
 				}
@@ -863,6 +897,17 @@ static void b2Collide( b2StepContext* context )
 
 				if ( contact->flags & b2_contactEnableContactEvents )
 				{
+					const b2Shape* shapeA = shapes + contact->shapeIdA;
+					const b2Shape* shapeB = shapes + contact->shapeIdB;
+					b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
+					b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
+					b2ContactId contactFullId = {
+						.index1 = contactId + 1,
+						.world0 = worldId,
+						.padding = 0,
+						.generation = contact->generation,
+					};
+
 					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2Array_Push( world->contactEndEvents[endEventArrayIndex], event );
 				}
@@ -1196,7 +1241,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 
 	if ( draw->drawBounds )
 	{
-		draw->DrawBoundsFcn( shape->fatAABB, b2_colorGold, draw->context );
+		draw->DrawBoundsFcn( world->fatAABBs.data[shapeId], b2_colorGold, draw->context );
 	}
 
 	return true;
@@ -1430,7 +1475,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 						while ( shapeId != B2_NULL_INDEX )
 						{
 							b2Shape* shape = b2Array_Get( world->shapes, shapeId );
-							aabb = b2AABB_Union( aabb, shape->fatAABB );
+							aabb = b2AABB_Union( aabb, world->fatAABBs.data[shapeId] );
 							shapeCount += 1;
 							shapeId = shape->nextShapeId;
 						}
@@ -2140,7 +2185,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	int jointArrayBytes = b2Array_ByteCount( world->joints );
 	int contactArrayBytes = b2Array_ByteCount( world->contacts );
 	int islandArrayBytes = b2Array_ByteCount( world->islands );
-	int shapeArrayBytes = b2Array_ByteCount( world->shapes );
+	int shapeArrayBytes = b2Array_ByteCount( world->shapes ) + b2Array_ByteCount( world->fatAABBs );
 	int chainArrayBytes = b2Array_ByteCount( world->chainShapes );
 	int sensorArrayBytes = b2Array_ByteCount( world->sensors );
 	total += bodyArrayBytes + solverSetArrayBytes + jointArrayBytes + contactArrayBytes + islandArrayBytes + islandLinkBytes +
@@ -3361,6 +3406,7 @@ void b2ValidateSolverSets( b2World* world )
 
 					uint32_t syncedFlags = body->flags & ~b2_bodyTransientFlags;
 					B2_ASSERT( ( bodySim->flags & syncedFlags ) == syncedFlags );
+					B2_ASSERT( ( bodySim->flags & b2_isFast ) == ( body->flags & b2_isFast ) );
 
 					b2BodyState* bodyState = b2GetBodyState( world, body );
 					if ( bodyState != NULL )
@@ -3480,6 +3526,11 @@ void b2ValidateSolverSets( b2World* world )
 					B2_ASSERT( contact->setIndex == setIndex );
 					B2_ASSERT( contact->colorIndex == B2_NULL_INDEX );
 					B2_ASSERT( contact->localIndex == i );
+
+					b2Body* edgeBodyA = b2Array_Get( world->bodies, contact->edges[0].bodyId );
+					b2Body* edgeBodyB = b2Array_Get( world->bodies, contact->edges[1].bodyId );
+					B2_ASSERT( contactSim->encodedBodySimA == b2EncodeBodySimIndex( edgeBodyA ) );
+					B2_ASSERT( contactSim->encodedBodySimB == b2EncodeBodySimIndex( edgeBodyB ) );
 				}
 			}
 
@@ -3552,15 +3603,18 @@ void b2ValidateSolverSets( b2World* world )
 			int bodyIdA = contact->edges[0].bodyId;
 			int bodyIdB = contact->edges[1].bodyId;
 
+			b2Body* edgeBodyA = b2Array_Get( world->bodies, bodyIdA );
+			b2Body* edgeBodyB = b2Array_Get( world->bodies, bodyIdB );
+			B2_ASSERT( contactSim->encodedBodySimA == b2EncodeBodySimIndex( edgeBodyA ) );
+			B2_ASSERT( contactSim->encodedBodySimB == b2EncodeBodySimIndex( edgeBodyB ) );
+
 			if ( colorIndex < B2_OVERFLOW_INDEX )
 			{
-				b2Body* bodyA = b2Array_Get( world->bodies, bodyIdA );
-				b2Body* bodyB = b2Array_Get( world->bodies, bodyIdB );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( bodyA->type == b2_dynamicBody ) );
-				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( bodyB->type == b2_dynamicBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdA ) == ( edgeBodyA->type == b2_dynamicBody ) );
+				B2_ASSERT( b2GetBit( &color->bodySet, bodyIdB ) == ( edgeBodyB->type == b2_dynamicBody ) );
 
-				bitCount += bodyA->type == b2_dynamicBody ? 1 : 0;
-				bitCount += bodyB->type == b2_dynamicBody ? 1 : 0;
+				bitCount += edgeBodyA->type == b2_dynamicBody ? 1 : 0;
+				bitCount += edgeBodyB->type == b2_dynamicBody ? 1 : 0;
 			}
 		}
 

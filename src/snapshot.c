@@ -32,7 +32,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 9u // chain segment count
+#define B2_SNAP_VERSION 10u // tree node height
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -523,6 +523,7 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 	// Contacts have no userData, so they go out as raw POD.
 	b2SerSimArray( buf, world->bodies, b2Body );
 	b2SerSimArray( buf, world->shapes, b2Shape );
+	b2SerPodArray( buf, world->fatAABBs );
 	b2SerPodArray( buf, world->contacts );
 	b2SerSimArray( buf, world->joints, b2Joint );
 
@@ -674,6 +675,7 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 	// it cleanly with no host pointers to scrub here.
 	b2DesPodArray( r, world->bodies );
 	b2DesPodArray( r, world->shapes );
+	b2DesPodArray( r, world->fatAABBs );
 	b2DesPodArray( r, world->contacts );
 	b2DesPodArray( r, world->joints );
 

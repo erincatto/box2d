@@ -31,15 +31,31 @@ static void b2LimitVelocity( b2BodyState* state, float maxLinearSpeed )
 	}
 }
 
-void b2RemoveBodySim( b2Array( b2BodySim ) * bodySims, b2Array( b2Body ) * bodies, int localIndex )
+// Refresh the body sim index on associated contact sims.
+void b2RefreshBodyContactIndices( b2World* world, b2Body* body )
 {
-	B2_ASSERT( 0 <= localIndex && localIndex < bodySims->count );
-	int lastIndex = bodySims->count - 1;
-	bodySims->data[localIndex] = bodySims->data[lastIndex];
-	b2Body* movedBody = b2Array_Get( *bodies, bodySims->data[localIndex].bodyId );
-	B2_ASSERT( movedBody->localIndex == lastIndex );
-	movedBody->localIndex = localIndex;
-	bodySims->count -= 1;
+	int encodedIndex = b2EncodeBodySimIndex( body );
+
+	int contactKey = body->headContactKey;
+	while ( contactKey != B2_NULL_INDEX )
+	{
+		int contactId = contactKey >> 1;
+		int edgeIndex = contactKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		b2ContactSim* contactSim = b2GetContactSim( world, contact );
+
+		if ( edgeIndex == 0 )
+		{
+			contactSim->encodedBodySimA = encodedIndex;
+		}
+		else
+		{
+			contactSim->encodedBodySimB = encodedIndex;
+		}
+
+		contactKey = contact->edges[edgeIndex].nextKey;
+	}
 }
 
 // Get a validated body from a world using an id.
@@ -71,18 +87,19 @@ b2BodyId b2MakeBodyId( b2World* world, int bodyId )
 	return (b2BodyId){ bodyId + 1, world->worldId, body->generation };
 }
 
+// Sync the body flags when something external changes them,
+// such as the user changing the motion locks.
 void b2SyncBodyFlags( b2World* world, b2Body* body )
 {
-	// Never sync transient flags
-	uint32_t flags = body->flags & ~b2_bodyTransientFlags;
-
 	b2BodySim* bodySim = b2GetBodySim( world, body );
-	bodySim->flags = flags;
+
+	// Preserve the fast flag for contact recycling.
+	bodySim->flags = body->flags & ~( b2_isSpeedCapped | b2_hadTimeOfImpact );
 
 	b2BodyState* bodyState = b2GetBodyState( world, body );
 	if ( bodyState != NULL )
 	{
-		bodyState->flags = flags;
+		bodyState->flags = body->flags & ~b2_bodyTransientFlags;
 	}
 }
 
@@ -394,7 +411,11 @@ void b2DestroyBody( b2BodyId bodyId )
 
 	// Remove body sim from solver set that owns it
 	b2SolverSet* set = b2Array_Get( world->solverSets, body->setIndex );
-	b2RemoveBodySim( &set->bodySims, &world->bodies, body->localIndex );
+	b2Body* movedBody = b2RemoveBodySim( world, set, body->localIndex );
+	if ( movedBody != NULL )
+	{
+		b2RefreshBodyContactIndices( world, movedBody );
+	}
 
 	// Remove body state from awake set
 	if ( body->setIndex == b2_awakeSet )
@@ -738,7 +759,8 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Pos position, b2Rot rotation )
 		b2AABB aabb = b2ComputeFatShapeAABB( shape, transform, speculativeDistance );
 		shape->aabb = aabb;
 
-		if ( b2AABB_Contains( shape->fatAABB, aabb ) == false )
+		b2AABB* shapeFatAABB = world->fatAABBs.data + shapeId;
+		if ( b2AABB_Contains( *shapeFatAABB, aabb ) == false )
 		{
 			float margin = shape->aabbMargin;
 			b2AABB fatAABB;
@@ -746,7 +768,7 @@ void b2Body_SetTransform( b2BodyId bodyId, b2Pos position, b2Rot rotation )
 			fatAABB.lowerBound.y = aabb.lowerBound.y - margin;
 			fatAABB.upperBound.x = aabb.upperBound.x + margin;
 			fatAABB.upperBound.y = aabb.upperBound.y + margin;
-			shape->fatAABB = fatAABB;
+			*shapeFatAABB = fatAABB;
 
 			// They body could be disabled
 			if ( shape->proxyKey != B2_NULL_INDEX )
@@ -1274,7 +1296,7 @@ void b2Body_SetType( b2BodyId bodyId, b2BodyType type )
 		shapeId = shape->nextShapeId;
 		b2DestroyShapeProxy( shape, &world->broadPhase );
 		bool forcePairCreation = true;
-		b2CreateShapeProxy( shape, &world->broadPhase, type, transform, forcePairCreation );
+		b2CreateShapeProxy( world, shape, type, transform, forcePairCreation );
 	}
 
 	// Relink all joints
@@ -1819,7 +1841,7 @@ void b2Body_Enable( b2BodyId bodyId )
 		b2Shape* shape = b2Array_Get( world->shapes, shapeId );
 		shapeId = shape->nextShapeId;
 
-		b2CreateShapeProxy( shape, &world->broadPhase, proxyType, transform, forcePairCreation );
+		b2CreateShapeProxy( world, shape, proxyType, transform, forcePairCreation );
 	}
 
 	if ( setId != b2_staticSet )

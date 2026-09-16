@@ -51,17 +51,15 @@ void b2PrepareContacts_Overflow( b2StepContext* context )
 
 		B2_ASSERT( 0 < pointCount && pointCount <= 2 );
 
-		int indexA = contactSim->bodySimIndexA;
-		int indexB = contactSim->bodySimIndexB;
+		int indexA = b2DecodeAwakeIndex( contactSim->encodedBodySimA );
+		int indexB = b2DecodeAwakeIndex( contactSim->encodedBodySimB );
 
 #if B2_ENABLE_VALIDATION
 		b2Body* bodyA = bodies + contactSim->bodyIdA;
-		int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
-		B2_ASSERT( indexA == validIndexA );
+		B2_ASSERT( contactSim->encodedBodySimA == b2EncodeBodySimIndex( bodyA ) );
 
 		b2Body* bodyB = bodies + contactSim->bodyIdB;
-		int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-		B2_ASSERT( indexB == validIndexB );
+		B2_ASSERT( contactSim->encodedBodySimB == b2EncodeBodySimIndex( bodyB ) );
 #endif
 
 		b2ContactConstraint* constraint = constraints + i;
@@ -1684,16 +1682,14 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 					contactLanes[laneIndex] = c;
 
 					// index base-1
-					cw->indexA[laneIndex] = c->bodySimIndexA + 1;
-					cw->indexB[laneIndex] = c->bodySimIndexB + 1;
+					cw->indexA[laneIndex] = b2DecodeAwakeIndex( c->encodedBodySimA ) + 1;
+					cw->indexB[laneIndex] = b2DecodeAwakeIndex( c->encodedBodySimB ) + 1;
 
 #if B2_ENABLE_VALIDATION
 					b2Body* bodyA = bodies + c->bodyIdA;
-					int validIndexA = bodyA->setIndex == b2_awakeSet ? bodyA->localIndex : B2_NULL_INDEX;
 					b2Body* bodyB = bodies + c->bodyIdB;
-					int validIndexB = bodyB->setIndex == b2_awakeSet ? bodyB->localIndex : B2_NULL_INDEX;
-					B2_ASSERT( c->bodySimIndexA == validIndexA );
-					B2_ASSERT( c->bodySimIndexB == validIndexB );
+					B2_ASSERT( c->encodedBodySimA == b2EncodeBodySimIndex( bodyA ) );
+					B2_ASSERT( c->encodedBodySimB == b2EncodeBodySimIndex( bodyB ) );
 #endif
 				}
 				else

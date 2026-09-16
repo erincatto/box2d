@@ -114,9 +114,8 @@ typedef struct b2ContactSim
 	int bodyIdB;
 #endif
 
-	// Transient body indices
-	int bodySimIndexA;
-	int bodySimIndexB;
+	int encodedBodySimA;
+	int encodedBodySimB;
 
 	int shapeIdA;
 	int shapeIdB;

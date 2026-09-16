@@ -114,6 +114,10 @@ typedef struct b2World
 
 	// These are sparse arrays that point into the pools above
 	b2Array( b2Shape ) shapes;
+
+	// Shape enlarged bounds (hot data split).
+	b2Array( b2AABB ) fatAABBs;
+
 	b2Array( b2ChainShape ) chainShapes;
 
 	// This is a dense array of sensor data.

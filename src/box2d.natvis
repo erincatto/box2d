@@ -116,7 +116,6 @@
       <Item Name="type">type</Item>
       <Item Name="density">density</Item>
       <Item Name="aabb">aabb</Item>
-      <Item Name="fatAABB">fatAABB</Item>
       <Item Name="filter">filter</Item>
       <Item Name="userData">userData</Item>
     </Expand>

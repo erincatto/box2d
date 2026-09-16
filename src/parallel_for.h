@@ -17,6 +17,6 @@ typedef void b2ParallelForCallback( int startIndex, int endIndex, int workerInde
 // up to world->workerCount tasks are enqueued, and each task loops, atomically
 // claiming the next unclaimed block until the range is drained. Blocks the
 // caller until all work is complete. minRange is the minimum block size; block
-// size grows once itemCount exceeds 4 * workerCount * minRange so block count
+// size grows once itemCount exceeds 8 * workerCount * minRange so block count
 // stays bounded.
 void b2ParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCount, int minRange, void* context );
