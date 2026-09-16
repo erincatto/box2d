@@ -94,9 +94,6 @@ struct b2ContactRegister
 	bool primary;
 };
 
-static struct b2ContactRegister s_registers[b2_shapeTypeCount][b2_shapeTypeCount];
-static bool s_initialized = false;
-
 static b2LocalManifold b2CircleManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf, b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
@@ -176,44 +173,44 @@ static b2LocalManifold b2ChainSegmentAndPolygonManifold( const b2Shape* shapeA, 
 	return b2CollideChainSegmentAndPolygon( &shapeA->chainSegment, &shapeB->polygon, xf, cache );
 }
 
-static void b2AddType( b2ManifoldFcn* fcn, b2ShapeType type1, b2ShapeType type2 )
-{
-	B2_ASSERT( 0 <= type1 && type1 < b2_shapeTypeCount );
-	B2_ASSERT( 0 <= type2 && type2 < b2_shapeTypeCount );
-
-	s_registers[type1][type2].fcn = fcn;
-	s_registers[type1][type2].primary = true;
-
-	if ( type1 != type2 )
-	{
-		s_registers[type2][type1].fcn = fcn;
-		s_registers[type2][type1].primary = false;
-	}
-}
-
-void b2InitializeContactRegisters( void )
-{
-	if ( s_initialized == false )
-	{
-		b2AddType( b2CircleManifold, b2_circleShape, b2_circleShape );
-		b2AddType( b2CapsuleAndCircleManifold, b2_capsuleShape, b2_circleShape );
-		b2AddType( b2CapsuleManifold, b2_capsuleShape, b2_capsuleShape );
-		b2AddType( b2PolygonAndCircleManifold, b2_polygonShape, b2_circleShape );
-		b2AddType( b2PolygonAndCapsuleManifold, b2_polygonShape, b2_capsuleShape );
-		b2AddType( b2PolygonManifold, b2_polygonShape, b2_polygonShape );
-		b2AddType( b2SegmentAndCircleManifold, b2_segmentShape, b2_circleShape );
-		b2AddType( b2SegmentAndCapsuleManifold, b2_segmentShape, b2_capsuleShape );
-		b2AddType( b2SegmentAndPolygonManifold, b2_segmentShape, b2_polygonShape );
-		b2AddType( b2ChainSegmentAndCircleManifold, b2_chainSegmentShape, b2_circleShape );
-		b2AddType( b2ChainSegmentAndCapsuleManifold, b2_chainSegmentShape, b2_capsuleShape );
-		b2AddType( b2ChainSegmentAndPolygonManifold, b2_chainSegmentShape, b2_polygonShape );
-		s_initialized = true;
-	}
-}
+// This works with DLL hot reloading.
+static const struct b2ContactRegister b2_contactRegistry[b2_shapeTypeCount][b2_shapeTypeCount] = {
+	[b2_circleShape] = {
+		[b2_circleShape] = { b2CircleManifold, true },
+		[b2_capsuleShape] = { b2CapsuleAndCircleManifold, false },
+		[b2_segmentShape] = { b2SegmentAndCircleManifold, false },
+		[b2_polygonShape] = { b2PolygonAndCircleManifold, false },
+		[b2_chainSegmentShape] = { b2ChainSegmentAndCircleManifold, false },
+	},
+	[b2_capsuleShape] = {
+		[b2_circleShape] = { b2CapsuleAndCircleManifold, true },
+		[b2_capsuleShape] = { b2CapsuleManifold, true },
+		[b2_segmentShape] = { b2SegmentAndCapsuleManifold, false },
+		[b2_polygonShape] = { b2PolygonAndCapsuleManifold, false },
+		[b2_chainSegmentShape] = { b2ChainSegmentAndCapsuleManifold, false },
+	},
+	[b2_segmentShape] = {
+		[b2_circleShape] = { b2SegmentAndCircleManifold, true },
+		[b2_capsuleShape] = { b2SegmentAndCapsuleManifold, true },
+		[b2_polygonShape] = { b2SegmentAndPolygonManifold, true },
+	},
+	[b2_polygonShape] = {
+		[b2_circleShape] = { b2PolygonAndCircleManifold, true },
+		[b2_capsuleShape] = { b2PolygonAndCapsuleManifold, true },
+		[b2_segmentShape] = { b2SegmentAndPolygonManifold, false },
+		[b2_polygonShape] = { b2PolygonManifold, true },
+		[b2_chainSegmentShape] = { b2ChainSegmentAndPolygonManifold, false },
+	},
+	[b2_chainSegmentShape] = {
+		[b2_circleShape] = { b2ChainSegmentAndCircleManifold, true },
+		[b2_capsuleShape] = { b2ChainSegmentAndCapsuleManifold, true },
+		[b2_polygonShape] = { b2ChainSegmentAndPolygonManifold, true },
+	},
+};
 
 bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB )
 {
-	return s_registers[typeA][typeB].fcn != NULL;
+	return b2_contactRegistry[typeA][typeB].fcn != NULL;
 }
 
 // WARNING: this should never fail to create a contact because the pair already exists in the pairSet.
@@ -225,13 +222,13 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	B2_ASSERT( 0 <= type1 && type1 < b2_shapeTypeCount );
 	B2_ASSERT( 0 <= type2 && type2 < b2_shapeTypeCount );
 
-	if ( s_registers[type1][type2].fcn == NULL )
+	if ( b2_contactRegistry[type1][type2].fcn == NULL )
 	{
 		// For example, no segment vs segment collision
 		return;
 	}
 
-	if ( s_registers[type1][type2].primary == false )
+	if ( b2_contactRegistry[type1][type2].primary == false )
 	{
 		// flip order
 		b2CreateContact( world, shapeB, shapeA );
@@ -533,7 +530,7 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	// so precision is retained far from the origin.
 	// anchorB = worldPoint - pB = rot(qA, localAnchorA) + pA - pB = anchorA + (pA - pB)
 	b2Transform relativeTransform = b2InvMulWorldTransforms( transformA, transformB );
-	b2ManifoldFcn* fcn = s_registers[shapeA->type][shapeB->type].fcn;
+	b2ManifoldFcn* fcn = b2_contactRegistry[shapeA->type][shapeB->type].fcn;
 	b2LocalManifold local = fcn( shapeA, shapeB, relativeTransform, &contactSim->cache );
 
 	contactSim->manifold = (b2Manifold){ 0 };

@@ -178,8 +178,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 		return (b2WorldId){ 0 };
 	}
 
-	b2InitializeContactRegisters();
-
 	b2World* world = b2_worlds + worldId;
 	uint16_t generation = world->generation;
 

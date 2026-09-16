@@ -140,7 +140,6 @@ typedef struct b2ContactSim
 	b2SimplexCache cache;
 } b2ContactSim;
 
-void b2InitializeContactRegisters( void );
 bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB );
 
 void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB );
