@@ -475,7 +475,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 	b2StepContext* stepContext = context;
 	b2World* world = stepContext->world;
 	b2TaskContext* taskContext = world->taskContexts.data + workerIndex;
-	b2ContactSim** contactSims = stepContext->contactSims;
+	const b2ContactCollideSpan* spans = stepContext->collideSpans;
 	b2Shape* shapes = world->shapes.data;
 	const b2AABB* fatAABBs = world->fatAABBs.data;
 	b2SolverSet* solverSets = world->solverSets.data;
@@ -485,13 +485,31 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 
 	B2_ASSERT( startIndex < endIndex );
 
+	int spanIndex = 0;
+	while ( spans[spanIndex + 1].start <= startIndex )
+	{
+		spanIndex += 1;
+	}
+
+	int spanStart = spans[spanIndex].start;
+	int spanEnd = spans[spanIndex + 1].start;
+	b2ContactSim* spanBase = spans[spanIndex].contacts;
+
 	float recycleDistance = world->contactRecycleDistance;
 	float speculativeDistance = B2_SPECULATIVE_DISTANCE;
 	float recycleDistanceNonTouching = b2MinFloat( recycleDistance, speculativeDistance );
 
 	for ( int contactIndex = startIndex; contactIndex < endIndex; ++contactIndex )
 	{
-		b2ContactSim* contactSim = contactSims[contactIndex];
+		if ( contactIndex == spanEnd )
+		{
+			spanIndex += 1;
+			spanStart = spans[spanIndex].start;
+			spanEnd = spans[spanIndex + 1].start;
+			spanBase = spans[spanIndex].contacts;
+		}
+
+		b2ContactSim* contactSim = spanBase + ( contactIndex - spanStart );
 
 		int contactId = contactSim->contactId;
 		int shapeIdA = contactSim->shapeIdA;
@@ -732,33 +750,37 @@ static void b2Collide( b2StepContext* context )
 		return;
 	}
 
-	b2ContactSim** contactSims = b2StackAlloc( &world->stack, contactCount * sizeof( b2ContactSim* ), "contacts" );
-
+	b2ContactCollideSpan collideSpans[B2_GRAPH_COLOR_COUNT + 2];
+	int spanCount = 0;
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
 	{
 		b2GraphColor* color = graphColors + i;
 		int count = color->contactSims.count;
-		b2ContactSim* base = color->contactSims.data;
-		for ( int j = 0; j < count; ++j )
+		if ( count > 0 )
 		{
-			contactSims[contactIndex] = base + j;
-			contactIndex += 1;
+			collideSpans[spanCount].start = contactIndex;
+			collideSpans[spanCount].contacts = color->contactSims.data;
+			spanCount += 1;
+			contactIndex += count;
 		}
 	}
 
+	if ( nonTouchingCount > 0 )
 	{
-		b2ContactSim* base = world->solverSets.data[b2_awakeSet].contactSims.data;
-		for ( int i = 0; i < nonTouchingCount; ++i )
-		{
-			contactSims[contactIndex] = base + i;
-			contactIndex += 1;
-		}
+		collideSpans[spanCount].start = contactIndex;
+		collideSpans[spanCount].contacts = world->solverSets.data[b2_awakeSet].contactSims.data;
+		spanCount += 1;
+		contactIndex += nonTouchingCount;
 	}
 
 	B2_ASSERT( contactIndex == contactCount );
+	B2_ASSERT( spanCount <= B2_GRAPH_COLOR_COUNT + 1 );
 
-	context->contactSims = contactSims;
+	collideSpans[spanCount].start = contactCount;
+	collideSpans[spanCount].contacts = NULL;
+
+	context->collideSpans = collideSpans;
 
 	// Contact bit set on ids because contact pointers are unstable as they move between touching and not touching.
 	int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
@@ -772,9 +794,7 @@ static void b2Collide( b2StepContext* context )
 	int minRange = 64;
 	b2ParallelFor( world, &b2CollideTask, contactCount, minRange, context );
 
-	b2StackFree( &world->stack, contactSims );
-	context->contactSims = NULL;
-	contactSims = NULL;
+	context->collideSpans = NULL;
 
 	// Serially update contact state
 	// todo bring this zone together with island merge
@@ -822,16 +842,6 @@ static void b2Collide( b2StepContext* context )
 				contactSim = b2Array_Get( awakeSet->contactSims, localIndex );
 			}
 
-			const b2Shape* shapeA = shapes + contact->shapeIdA;
-			const b2Shape* shapeB = shapes + contact->shapeIdB;
-			b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
-			b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
-			b2ContactId contactFullId = {
-				.index1 = contactId + 1,
-				.world0 = worldId,
-				.padding = 0,
-				.generation = contact->generation,
-			};
 			uint32_t flags = contact->flags;
 			uint32_t simFlags = contactSim->simFlags;
 
@@ -848,6 +858,17 @@ static void b2Collide( b2StepContext* context )
 
 				if ( flags & b2_contactEnableContactEvents )
 				{
+					const b2Shape* shapeA = shapes + contact->shapeIdA;
+					const b2Shape* shapeB = shapes + contact->shapeIdB;
+					b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
+					b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
+					b2ContactId contactFullId = {
+						.index1 = contactId + 1,
+						.world0 = worldId,
+						.padding = 0,
+						.generation = contact->generation,
+					};
+
 					b2ContactBeginTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2Array_Push( world->contactBeginEvents, event );
 				}
@@ -885,6 +906,17 @@ static void b2Collide( b2StepContext* context )
 
 				if ( contact->flags & b2_contactEnableContactEvents )
 				{
+					const b2Shape* shapeA = shapes + contact->shapeIdA;
+					const b2Shape* shapeB = shapes + contact->shapeIdB;
+					b2ShapeId shapeIdA = { shapeA->id + 1, worldId, shapeA->generation };
+					b2ShapeId shapeIdB = { shapeB->id + 1, worldId, shapeB->generation };
+					b2ContactId contactFullId = {
+						.index1 = contactId + 1,
+						.world0 = worldId,
+						.padding = 0,
+						.generation = contact->generation,
+					};
+
 					b2ContactEndTouchEvent event = { shapeIdA, shapeIdB, contactFullId };
 					b2Array_Push( world->contactEndEvents[endEventArrayIndex], event );
 				}

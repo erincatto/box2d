@@ -63,6 +63,11 @@
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies
 /// to move by a small amount without triggering a tree adjustment. This is in meters.
 /// Normally this is 5cm.
+/// This has been tuned on benchmarks and I found that keeping
+/// the margin small improves performance by reducing the number of contacts. I used
+/// to keep this larger in the past to avoid tree insert and remove churn. But the
+/// broad-phase no longer works that way and now uses a two-phase refit and rebuild
+/// setup similar to Jolt.
 /// @warning modifying this can have a significant impact on performance
 #define B2_MAX_AABB_MARGIN ( 0.05f * b2GetLengthUnitsPerMeter() )
 

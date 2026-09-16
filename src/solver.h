@@ -8,8 +8,8 @@
 // memory other threads are CAS-writing. Three properties of this design
 // matter for performance:
 //
-// 1. Distributed contention. Per-block atomic syncIndex avoids the cache line stampede
-//    that a single shared fetch_add counter would cause. Once a worker
+// 1. Distributed contention. Per-block atomic syncIndex avoids the cache line
+//    stampede that a single shared fetch_add counter would cause. Once a worker
 //    settles into a block range, its CAS targets live in its own L1.
 //
 // 2. Monotonic syncIndex across iterations. Iterative stages (warm start,
@@ -28,7 +28,7 @@
 //    W0 claims 0,1,2,3 (forward), W1 claims 4,5, etc. Under balanced load
 //    each worker re-hits the same block range every iteration, keeping that
 //    range's hot data resident in its L2. A failed CAS means a neighbour
-//    already claimed the block, so the stealing worker stops -- preserving
+//    already claimed the block, so the stealing worker stops. Preserving
 //    locality under mild imbalance while still draining the queue.
 //
 // A graph color stage lays out joint blocks first, then contact blocks:
@@ -40,8 +40,8 @@
 //        <-- graphJointBlocks --><---- graphContactBlocks ---->
 //
 // Each block carries its type so the dispatcher routes J-blocks to the joint
-// solver and C-blocks to the SIMD contact solver; both kinds run concurrently
-// within the stage -- no barrier between them. The type tag lives on the
+// solver and C-blocks to the SIMD contact solver. Both kinds run concurrently
+// within the stage. No barrier between them. The type tag lives on the
 // block (not the stage) so that mixed-type stages can keep the concurrency.
 //
 // The solver threading model is inspired by https://github.com/bepu/bepuphysics2
@@ -112,7 +112,8 @@ typedef struct b2SyncBlock
 } b2SyncBlock;
 
 // Each stage must be completed before going to the next stage.
-// Non-iterative stages use a stage instance once while iterative stages re-use the same instance each iteration.
+// Non-iterative stages use a stage instance once while iterative stages re-use the same
+// instance each iteration.
 typedef struct b2SolverStage
 {
 	b2SyncBlock* blocks;
@@ -131,8 +132,8 @@ typedef struct b2Softness
 } b2Softness;
 
 // Prepare/store run as a flat parallel-for over the whole wide-constraint
-// range. Each span maps a slice of that range back to the owning color's
-// contacts so workers can decode flat wide-slot indices without touching
+// range. Each span maps a slice of that range back to the color's
+// contact sims so workers can decode flat wide-slot indices without touching
 // graph state. The spans array has one entry per active color plus a sentinel
 // whose start == wideContactCount.
 typedef struct b2ContactPrepareSpan
@@ -141,6 +142,13 @@ typedef struct b2ContactPrepareSpan
 	int count;
 	b2ContactSim* contacts;
 } b2ContactPrepareSpan;
+
+// Similar for the narrow phase.
+typedef struct b2ContactCollideSpan
+{
+	int start;
+	b2ContactSim* contacts;
+} b2ContactCollideSpan;
 
 // Similar for joints
 typedef struct b2JointPrepareSpan
@@ -188,9 +196,8 @@ typedef struct b2StepContext
 	int* bulletBodies;
 	b2AtomicInt bulletBodyCount;
 
-	// contact pointers for simplified parallel-for access.
-	// - parallel-for collide with no gaps, includes touching and non-touching
-	b2ContactSim** contactSims;
+	// Graph color spanes the narrow-phase, including non-touching.
+	const b2ContactCollideSpan* collideSpans;
 
 	// Flat view of the wide contact constraint array used by prepare and store.
 	// prepareSpans has activeColorCount + 1 entries, the last being a sentinel
