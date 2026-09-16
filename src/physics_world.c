@@ -508,7 +508,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 		int shapeIdB = contactSim->shapeIdB;
 
 		// Do proxies still overlap?
-		bool overlap = b2OverlapV( fatAABBs[shapeIdA], fatAABBs[shapeIdB] );
+		bool overlap = b2OverlapV( fatAABBs + shapeIdA, fatAABBs + shapeIdB );
 		if ( overlap == false )
 		{
 			contactSim->simFlags |= b2_simDisjoint;

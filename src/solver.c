@@ -1842,7 +1842,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2TracyCZoneEnd( refit_bvh );
 	}
 
-	// Bullet are processed after the broad-phase refit so they can so they can query the
+	// Bullets are processed after the broad-phase refit so they can query the
 	// final non-bullet world.
 	int bulletBodyCount = b2AtomicLoadInt( &stepContext->bulletBodyCount );
 	if ( bulletBodyCount > 0 )

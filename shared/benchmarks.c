@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #include "benchmarks.h"
@@ -855,7 +855,7 @@ static void CreateSleepPyramid( b2WorldId worldId, int baseCount, float extent, 
 // Stress tests waking and sleeping.
 void CreateSleep( b2WorldId worldId )
 {
-	g_sleepData = ( SleepData ){ 0 };
+	g_sleepData = (SleepData){ 0 };
 
 	int baseCount = BENCHMARK_DEBUG ? 8 : 60;
 	float extent = 0.5f;
@@ -883,7 +883,7 @@ void CreateSleep( b2WorldId worldId )
 
 float StepSleep( b2WorldId worldId, int stepCount )
 {
-	for (int i = 0; i < SLEEP_PYRAMID_COUNT; ++i)
+	for ( int i = 0; i < SLEEP_PYRAMID_COUNT; ++i )
 	{
 		if ( b2Body_IsAwake( g_sleepData.bodyIdA[i] ) == false )
 		{

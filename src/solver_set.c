@@ -227,6 +227,8 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			B2_ASSERT( body->islandId == islandId );
 			B2_ASSERT( body->islandIndex == i );
 
+			body->flags &= ~b2_bodyTransientFlags;
+
 			// Update the body move event to indicate this body fell asleep
 			// It could happen the body is forced asleep before it ever moves.
 			if ( body->bodyMoveIndex != B2_NULL_INDEX )
@@ -240,6 +242,7 @@ void b2TrySleepIsland( b2World* world, int islandId )
 
 			int awakeBodyIndex = body->localIndex;
 			b2BodySim* awakeSim = b2Array_Get( awakeSet->bodySims, awakeBodyIndex );
+			awakeSim->flags &= ~b2_bodyTransientFlags;
 
 			// move body sim to sleep set
 			int sleepBodyIndex = sleepSet->bodySims.count;
@@ -269,24 +272,9 @@ void b2TrySleepIsland( b2World* world, int islandId )
 
 				b2Contact* contact = b2Array_Get( world->contacts, contactId );
 
-				B2_ASSERT( contact->setIndex == b2_awakeSet || contact->setIndex == b2_disabledSet );
+				B2_ASSERT( contact->setIndex == b2_awakeSet );
+
 				contactKey = contact->edges[edgeIndex].nextKey;
-
-				if ( contact->setIndex == b2_disabledSet )
-				{
-					// already moved to disabled set by another body in the island
-					b2ContactSim* disabledSim = b2Array_Get( disabledSet->contactSims, contact->localIndex );
-					if ( edgeIndex == 0 )
-					{
-						disabledSim->encodedBodySimA = B2_NULL_INDEX;
-					}
-					else
-					{
-						disabledSim->encodedBodySimB = B2_NULL_INDEX;
-					}
-
-					continue;
-				}
 
 				if ( contact->colorIndex != B2_NULL_INDEX )
 				{
