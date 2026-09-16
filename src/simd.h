@@ -33,6 +33,21 @@ B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 	return vminvq_u32( vcleq_f32( t1, t2 ) ) != 0;
 }
 
+B2_FORCE_INLINE bool b2OverlapV( b2AABB a, b2AABB b )
+{
+	// [lower.x lower.y upper.x upper.y]
+	float32x4_t av = vld1q_f32( &a.lowerBound.x );
+	float32x4_t bv = vld1q_f32( &b.lowerBound.x );
+
+	// [alx aly blx bly]
+	float32x4_t t1 = vcombine_f32( vget_low_f32( av ), vget_low_f32( bv ) );
+
+	// [bux buy aux auy]
+	float32x4_t t2 = vcombine_f32( vget_high_f32( bv ), vget_high_f32( av ) );
+
+	return vminvq_u32( vcleq_f32( t1, t2 ) ) != 0;
+}
+
 B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
 {
 	float32x4_t b1 = vld1q_f32( &a.lowerBound.x );
@@ -149,6 +164,12 @@ B2_FORCE_INLINE bool b2OverlapNode( b2AABBV av, const b2TreeNode* node )
 	const b2AABB* bv = &node->aabb;
 	return av.lowerBound.x <= bv->upperBound.x && av.lowerBound.y <= bv->upperBound.y && bv->lowerBound.x <= av.upperBound.x &&
 		   bv->lowerBound.y <= av.upperBound.y;
+}
+
+B2_FORCE_INLINE bool b2OverlapV( b2AABB a, b2AABB b )
+{
+	return a.lowerBound.x <= b.upperBound.x && a.lowerBound.y <= b.upperBound.y && b.lowerBound.x <= a.upperBound.x &&
+		   b.lowerBound.y <= a.upperBound.y;
 }
 
 B2_FORCE_INLINE b2AABB b2UnionV( b2AABB a, b2AABB b )
