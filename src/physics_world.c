@@ -797,7 +797,6 @@ static void b2Collide( b2StepContext* context )
 	context->collideSpans = NULL;
 
 	// Serially update contact state
-	// todo bring this zone together with island merge
 	b2TracyCZoneNC( contact_state, "Contact State", b2_colorLightSlateGray, true );
 
 	// Bitwise OR all contact bits

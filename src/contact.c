@@ -465,7 +465,7 @@ void b2DestroyContact( b2World* world, b2Contact* contact )
 
 	bodyB->contactCount -= 1;
 
-	// Remove contact from the array that owns it
+	// Remove contact from island.
 	if ( contact->islandId != B2_NULL_INDEX )
 	{
 		b2UnlinkContact( world, contact );

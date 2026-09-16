@@ -691,9 +691,8 @@ typedef struct b2TreeNode
 
 	union
 	{
-		/// The total number of leaves below for an internal node.
-		/// todo not used
-		int32_t leafCount;
+		/// The height of an internal node. A leaf has zero height.
+		int32_t height;
 
 		/// The shape index for a leaf. Truncated from proxy user data.
 		int32_t shapeIndex;
@@ -877,7 +876,7 @@ typedef float b2TreeBoxCastCallbackFcn( const b2BoxCastInput* input, int proxyId
 B2_API b2TreeStats b2DynamicTree_CastBox( const b2DynamicTree* tree, const b2BoxCastInput* input, uint64_t maskBits,
 										  b2TreeBoxCastCallbackFcn* callback, void* context );
 
-/// Get the height of the binary tree. Expensive.
+/// Get the height of the binary tree.
 B2_API int b2DynamicTree_GetHeight( const b2DynamicTree* tree );
 
 /// Get the ratio of the sum of the internal node areas to the root area.
