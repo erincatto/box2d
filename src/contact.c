@@ -175,37 +175,42 @@ static b2LocalManifold b2ChainSegmentAndPolygonManifold( const b2Shape* shapeA, 
 
 // This works with DLL hot reloading.
 static const struct b2ContactRegister b2_contactRegistry[b2_shapeTypeCount][b2_shapeTypeCount] = {
-	[b2_circleShape] = {
-		[b2_circleShape] = { b2CircleManifold, true },
-		[b2_capsuleShape] = { b2CapsuleAndCircleManifold, false },
-		[b2_segmentShape] = { b2SegmentAndCircleManifold, false },
-		[b2_polygonShape] = { b2PolygonAndCircleManifold, false },
-		[b2_chainSegmentShape] = { b2ChainSegmentAndCircleManifold, false },
-	},
-	[b2_capsuleShape] = {
-		[b2_circleShape] = { b2CapsuleAndCircleManifold, true },
-		[b2_capsuleShape] = { b2CapsuleManifold, true },
-		[b2_segmentShape] = { b2SegmentAndCapsuleManifold, false },
-		[b2_polygonShape] = { b2PolygonAndCapsuleManifold, false },
-		[b2_chainSegmentShape] = { b2ChainSegmentAndCapsuleManifold, false },
-	},
-	[b2_segmentShape] = {
-		[b2_circleShape] = { b2SegmentAndCircleManifold, true },
-		[b2_capsuleShape] = { b2SegmentAndCapsuleManifold, true },
-		[b2_polygonShape] = { b2SegmentAndPolygonManifold, true },
-	},
-	[b2_polygonShape] = {
-		[b2_circleShape] = { b2PolygonAndCircleManifold, true },
-		[b2_capsuleShape] = { b2PolygonAndCapsuleManifold, true },
-		[b2_segmentShape] = { b2SegmentAndPolygonManifold, false },
-		[b2_polygonShape] = { b2PolygonManifold, true },
-		[b2_chainSegmentShape] = { b2ChainSegmentAndPolygonManifold, false },
-	},
-	[b2_chainSegmentShape] = {
-		[b2_circleShape] = { b2ChainSegmentAndCircleManifold, true },
-		[b2_capsuleShape] = { b2ChainSegmentAndCapsuleManifold, true },
-		[b2_polygonShape] = { b2ChainSegmentAndPolygonManifold, true },
-	},
+	[b2_circleShape] =
+		{
+			[b2_circleShape] = { .fcn = b2CircleManifold, .primary = true },
+			[b2_capsuleShape] = { .fcn = b2CapsuleAndCircleManifold, .primary = false },
+			[b2_segmentShape] = { .fcn = b2SegmentAndCircleManifold, .primary = false },
+			[b2_polygonShape] = { .fcn = b2PolygonAndCircleManifold, .primary = false },
+			[b2_chainSegmentShape] = { .fcn = b2ChainSegmentAndCircleManifold, .primary = false },
+		},
+	[b2_capsuleShape] =
+		{
+			[b2_circleShape] = { .fcn = b2CapsuleAndCircleManifold, .primary = true },
+			[b2_capsuleShape] = { .fcn = b2CapsuleManifold, .primary = true },
+			[b2_segmentShape] = { .fcn = b2SegmentAndCapsuleManifold, .primary = false },
+			[b2_polygonShape] = { .fcn = b2PolygonAndCapsuleManifold, .primary = false },
+			[b2_chainSegmentShape] = { .fcn = b2ChainSegmentAndCapsuleManifold, .primary = false },
+		},
+	[b2_segmentShape] =
+		{
+			[b2_circleShape] = { .fcn = b2SegmentAndCircleManifold, .primary = true },
+			[b2_capsuleShape] = { .fcn = b2SegmentAndCapsuleManifold, .primary = true },
+			[b2_polygonShape] = { .fcn = b2SegmentAndPolygonManifold, .primary = true },
+		},
+	[b2_polygonShape] =
+		{
+			[b2_circleShape] = { .fcn = b2PolygonAndCircleManifold, .primary = true },
+			[b2_capsuleShape] = { .fcn = b2PolygonAndCapsuleManifold, .primary = true },
+			[b2_segmentShape] = { .fcn = b2SegmentAndPolygonManifold, .primary = false },
+			[b2_polygonShape] = { .fcn = b2PolygonManifold, .primary = true },
+			[b2_chainSegmentShape] = { .fcn = b2ChainSegmentAndPolygonManifold, .primary = false },
+		},
+	[b2_chainSegmentShape] =
+		{
+			[b2_circleShape] = { .fcn = b2ChainSegmentAndCircleManifold, .primary = true },
+			[b2_capsuleShape] = { .fcn = b2ChainSegmentAndCapsuleManifold, .primary = true },
+			[b2_polygonShape] = { .fcn = b2ChainSegmentAndPolygonManifold, .primary = true },
+		},
 };
 
 bool b2CanCollide( b2ShapeType typeA, b2ShapeType typeB )
