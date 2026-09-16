@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "base.h"
-
 /**
  * @defgroup math Math
  * @brief Vector math types and functions

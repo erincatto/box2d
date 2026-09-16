@@ -1041,6 +1041,9 @@ B2_API float b2DistanceJoint_GetSpringHertz( b2JointId jointId );
 /// Get the spring damping ratio
 B2_API float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId );
 
+/// Get the current spring force.
+B2_API float b2DistanceJoint_GetSpringForce( b2JointId jointId );
+
 /// Enable joint limit. The limit only works if the joint spring is enabled. Otherwise the joint is rigid
 /// and the limit has no effect.
 B2_API void b2DistanceJoint_EnableLimit( b2JointId jointId, bool enableLimit );

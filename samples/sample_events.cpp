@@ -1121,7 +1121,7 @@ public:
 		{
 			int index = debrisToAttach[i];
 			b2BodyId debrisId = m_debrisIds[index];
-			if ( B2_IS_NULL( debrisId ) )
+			if ( b2Body_IsValid( debrisId ) == false )
 			{
 				continue;
 			}
