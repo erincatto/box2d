@@ -196,7 +196,7 @@ typedef struct b2StepContext
 	int* bulletBodies;
 	b2AtomicInt bulletBodyCount;
 
-	// Graph color spanes the narrow-phase, including non-touching.
+	// Graph color spans for the narrow-phase, includes non-touching contacts as well.
 	const b2ContactCollideSpan* collideSpans;
 
 	// Flat view of the wide contact constraint array used by prepare and store.
