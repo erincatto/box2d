@@ -195,6 +195,15 @@ static void b2DestroyContactsBetweenBodies( b2World* world, b2Body* bodyA, b2Bod
 	b2ValidateSolverSets( world );
 }
 
+static bool b2IsValidJointDef( const b2JointDef* def )
+{
+	return b2IsValidTransform( def->localFrameA ) && b2IsValidTransform( def->localFrameB ) &&
+		   b2IsValidFloat( def->forceThreshold ) && def->forceThreshold >= 0.0f && b2IsValidFloat( def->torqueThreshold ) &&
+		   def->torqueThreshold >= 0.0f && b2IsValidFloat( def->constraintHertz ) && def->constraintHertz >= 0.0f &&
+		   b2IsValidFloat( def->constraintDampingRatio ) && def->constraintDampingRatio >= 0.0f &&
+		   b2IsValidFloat( def->drawScale );
+}
+
 typedef struct b2JointPair
 {
 	b2Joint* joint;
@@ -393,6 +402,18 @@ static b2JointPair b2CreateJoint( b2World* world, const b2JointDef* def, b2Joint
 b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->length ) && def->length > 0.0f, (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->dampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->minLength ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxLength ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxMotorForce ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->motorSpeed ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->lowerSpringForce ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->upperSpringForce ), (b2JointId){ 0 } );
+	B2_ASSERT( def->lowerSpringForce <= def->upperSpringForce );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );
@@ -401,9 +422,6 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	{
 		return (b2JointId){ 0 };
 	}
-
-	B2_ASSERT( b2IsValidFloat( def->length ) && def->length > 0.0f );
-	B2_ASSERT( def->lowerSpringForce <= def->upperSpringForce );
 
 	b2JointPair pair = b2CreateJoint( world, &def->base, b2_distanceJoint );
 
@@ -438,6 +456,8 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );
@@ -461,6 +481,18 @@ b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef* def )
 b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->linearVelocity ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxVelocityForce ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularVelocity ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxVelocityTorque ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->linearHertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->linearDampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxSpringForce ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularHertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularDampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxSpringTorque ), (b2JointId){ 0 } );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );
@@ -495,6 +527,10 @@ b2JointId b2CreateMotorJoint( b2WorldId worldId, const b2MotorJointDef* def )
 b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MoverJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->linearVelocity ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->maxVelocityForce ), (b2JointId){ 0 } );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );
@@ -521,11 +557,15 @@ b2JointId b2CreateMoverJoint( b2WorldId worldId, const b2MoverJointDef* def )
 b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 {
 	B2_CHECK_DEF( def );
-	B2_ASSERT( b2IsValidFloat( def->restLength ) && def->restLength >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->hertz ) && def->hertz >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->dampingRatio ) && def->dampingRatio >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->maxTensionForce ) && def->maxTensionForce >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->maxCompressionForce ) && def->maxCompressionForce >= 0.0f );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->normal ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->restLength ) && def->restLength >= 0.0f, (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hertz ) && def->hertz >= 0.0f, (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->dampingRatio ) && def->dampingRatio >= 0.0f, (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxTensionForce ) && def->maxTensionForce >= 0.0f, (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxCompressionForce ) && def->maxCompressionForce >= 0.0f, (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->impulse ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->velocity ), (b2JointId){ 0 } );
 
 	b2World* world = b2GetWorldFromId( worldId );
 
@@ -564,6 +604,14 @@ b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def )
 b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->dampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->targetTranslation ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->lowerTranslation ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->upperTranslation ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxMotorForce ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->motorSpeed ), (b2JointId){ 0 } );
 	B2_ASSERT( def->lowerTranslation <= def->upperTranslation );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -605,6 +653,14 @@ b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* 
 b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->targetAngle ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->dampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->lowerAngle ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->upperAngle ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxMotorTorque ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->motorSpeed ), (b2JointId){ 0 } );
 	B2_ASSERT( def->lowerAngle <= def->upperAngle );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -648,6 +704,12 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->linearHertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularHertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->linearDampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularDampingRatio ), (b2JointId){ 0 } );
+
 	b2World* world = b2GetWorldFromId( worldId );
 
 	B2_ASSERT( world->locked == false );
@@ -680,6 +742,13 @@ b2JointId b2CreateWeldJoint( b2WorldId worldId, const b2WeldJointDef* def )
 b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 {
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hertz ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->dampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->lowerTranslation ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->upperTranslation ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxMotorTorque ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->motorSpeed ), (b2JointId){ 0 } );
 	B2_ASSERT( def->lowerTranslation <= def->upperTranslation );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -868,7 +937,7 @@ b2WorldId b2Joint_GetWorld( b2JointId jointId )
 
 void b2Joint_SetLocalFrameA( b2JointId jointId, b2Transform localFrame )
 {
-	B2_ASSERT( b2IsValidTransform( localFrame ) );
+	B2_CHECK_INPUT( b2IsValidTransform( localFrame ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, JointSetLocalFrameA, jointId, localFrame );
@@ -887,7 +956,7 @@ b2Transform b2Joint_GetLocalFrameA( b2JointId jointId )
 
 void b2Joint_SetLocalFrameB( b2JointId jointId, b2Transform localFrame )
 {
-	B2_ASSERT( b2IsValidTransform( localFrame ) );
+	B2_CHECK_INPUT( b2IsValidTransform( localFrame ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, JointSetLocalFrameB, jointId, localFrame );
@@ -1356,8 +1425,8 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 
 void b2Joint_SetConstraintTuning( b2JointId jointId, float hertz, float dampingRatio )
 {
-	B2_ASSERT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) && hertz >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( dampingRatio ) && dampingRatio >= 0.0f );
 
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, JointSetConstraintTuning, jointId, hertz, dampingRatio );
@@ -1378,7 +1447,7 @@ void b2Joint_GetConstraintTuning( b2JointId jointId, float* hertz, float* dampin
 
 void b2Joint_SetForceThreshold( b2JointId jointId, float threshold )
 {
-	B2_ASSERT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
 
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, JointSetForceThreshold, jointId, threshold );
@@ -1397,7 +1466,7 @@ float b2Joint_GetForceThreshold( b2JointId jointId )
 
 void b2Joint_SetTorqueThreshold( b2JointId jointId, float threshold )
 {
-	B2_ASSERT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( threshold ) && threshold >= 0.0f );
 
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, JointSetTorqueThreshold, jointId, threshold );

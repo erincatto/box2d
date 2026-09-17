@@ -157,6 +157,13 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
 	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->gravity ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->restitutionThreshold ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hitEventThreshold ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactHertz ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactDampingRatio ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactSpeed ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maximumLinearSpeed ) && def->maximumLinearSpeed > 0.0f, (b2WorldId){ 0 } );
 
 	if ( b2IsDenormalFlushEnabled() )
 	{
@@ -937,7 +944,7 @@ static void b2Collide( b2StepContext* context )
 
 void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 {
-	B2_ASSERT( b2IsValidFloat( timeStep ) );
+	B2_CHECK_INPUT( b2IsValidFloat( timeStep ) );
 	B2_ASSERT( 0 < subStepCount );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -1881,6 +1888,8 @@ bool b2World_IsContinuousEnabled( b2WorldId worldId )
 
 void b2World_SetRestitutionThreshold( b2WorldId worldId, float value )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( value ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1901,6 +1910,8 @@ float b2World_GetRestitutionThreshold( b2WorldId worldId )
 
 void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( value ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1921,6 +1932,10 @@ float b2World_GetHitEventThreshold( b2WorldId worldId )
 
 void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+	B2_CHECK_INPUT( b2IsValidFloat( dampingRatio ) );
+	B2_CHECK_INPUT( b2IsValidFloat( pushSpeed ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1937,6 +1952,8 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( recycleDistance ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1957,7 +1974,7 @@ float b2World_GetContactRecycleDistance( b2WorldId worldId )
 
 void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
 {
-	B2_ASSERT( b2IsValidFloat( maximumLinearSpeed ) && maximumLinearSpeed > 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( maximumLinearSpeed ) && maximumLinearSpeed > 0.0f );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -3083,6 +3100,8 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn,
 
 void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( gravity ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_REC( world, WorldSetGravity, worldId, gravity );
 	world->gravity = gravity;
@@ -3193,10 +3212,10 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	float falloff = explosionDef->falloff;
 	float impulsePerLength = explosionDef->impulsePerLength;
 
-	B2_ASSERT( b2IsValidPosition( position ) );
-	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( impulsePerLength ) );
+	B2_CHECK_INPUT( b2IsValidPosition( position ) );
+	B2_CHECK_INPUT( b2IsValidFloat( radius ) && radius >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( impulsePerLength ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );

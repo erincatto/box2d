@@ -13,6 +13,8 @@
 
 void b2MotorJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( velocity ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetLinearVelocity, jointId, velocity );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -27,6 +29,8 @@ b2Vec2 b2MotorJoint_GetLinearVelocity( b2JointId jointId )
 
 void b2MotorJoint_SetAngularVelocity( b2JointId jointId, float velocity )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( velocity ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetAngularVelocity, jointId, velocity );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -41,6 +45,8 @@ float b2MotorJoint_GetAngularVelocity( b2JointId jointId )
 
 void b2MotorJoint_SetMaxVelocityTorque( b2JointId jointId, float maxTorque )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( maxTorque ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetMaxVelocityTorque, jointId, maxTorque );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -55,6 +61,8 @@ float b2MotorJoint_GetMaxVelocityTorque( b2JointId jointId )
 
 void b2MotorJoint_SetMaxVelocityForce( b2JointId jointId, float maxForce )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( maxForce ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetMaxVelocityForce, jointId, maxForce );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -69,6 +77,8 @@ float b2MotorJoint_GetMaxVelocityForce( b2JointId jointId )
 
 void b2MotorJoint_SetLinearHertz( b2JointId jointId, float hertz )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetLinearHertz, jointId, hertz );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -83,6 +93,8 @@ float b2MotorJoint_GetLinearHertz( b2JointId jointId )
 
 void b2MotorJoint_SetLinearDampingRatio( b2JointId jointId, float damping )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( damping ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetLinearDampingRatio, jointId, damping );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -97,6 +109,8 @@ float b2MotorJoint_GetLinearDampingRatio( b2JointId jointId )
 
 void b2MotorJoint_SetAngularHertz( b2JointId jointId, float hertz )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetAngularHertz, jointId, hertz );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -111,6 +125,8 @@ float b2MotorJoint_GetAngularHertz( b2JointId jointId )
 
 void b2MotorJoint_SetAngularDampingRatio( b2JointId jointId, float damping )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( damping ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetAngularDampingRatio, jointId, damping );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -125,6 +141,8 @@ float b2MotorJoint_GetAngularDampingRatio( b2JointId jointId )
 
 void b2MotorJoint_SetMaxSpringForce( b2JointId jointId, float maxForce )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( maxForce ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetMaxSpringForce, jointId, maxForce );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );
@@ -139,6 +157,8 @@ float b2MotorJoint_GetMaxSpringForce( b2JointId jointId )
 
 void b2MotorJoint_SetMaxSpringTorque( b2JointId jointId, float maxTorque )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( maxTorque ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MotorJointSetMaxSpringTorque, jointId, maxTorque );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_motorJoint );

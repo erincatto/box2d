@@ -15,6 +15,8 @@ static const b2Vec2 b2_pogoAxis = { 0.0f, 1.0f };
 
 void b2PogoJoint_SetRestLength( b2JointId jointId, float length )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( length ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PogoJointSetRestLength, jointId, length );
 	
@@ -36,6 +38,8 @@ float b2PogoJoint_GetSpringHertz( b2JointId jointId )
 
 void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+
 	 b2World* world = b2GetWorld( jointId.world0 );
 	 B2_REC( world, PogoJointSetSpringHertz, jointId, hertz );
 
@@ -45,6 +49,8 @@ void b2PogoJoint_SetSpringHertz( b2JointId jointId, float hertz )
 
 void b2PogoJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( dampingRatio ) );
+
 	 b2World* world = b2GetWorld( jointId.world0 );
 	 B2_REC( world, PogoJointSetSpringDampingRatio, jointId, dampingRatio );
 

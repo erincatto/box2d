@@ -52,6 +52,8 @@ bool b2RevoluteJoint_IsSpringEnabled( b2JointId jointId )
 
 void b2RevoluteJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, RevoluteJointSetSpringHertz, jointId, hertz );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
@@ -66,6 +68,8 @@ float b2RevoluteJoint_GetSpringHertz( b2JointId jointId )
 
 void b2RevoluteJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( dampingRatio ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, RevoluteJointSetSpringDampingRatio, jointId, dampingRatio );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
@@ -80,6 +84,8 @@ float b2RevoluteJoint_GetSpringDampingRatio( b2JointId jointId )
 
 void b2RevoluteJoint_SetTargetAngle( b2JointId jointId, float angle )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( angle ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, RevoluteJointSetTargetAngle, jointId, angle );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
@@ -136,6 +142,9 @@ float b2RevoluteJoint_GetUpperLimit( b2JointId jointId )
 
 void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( lower ) );
+	B2_CHECK_INPUT( b2IsValidFloat( upper ) );
+
 	B2_ASSERT( lower <= upper );
 
 	b2World* world = b2GetWorld( jointId.world0 );
@@ -168,6 +177,8 @@ bool b2RevoluteJoint_IsMotorEnabled( b2JointId jointId )
 
 void b2RevoluteJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, RevoluteJointSetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
@@ -189,6 +200,8 @@ float b2RevoluteJoint_GetMotorTorque( b2JointId jointId )
 
 void b2RevoluteJoint_SetMaxMotorTorque( b2JointId jointId, float torque )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( torque ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, RevoluteJointSetMaxMotorTorque, jointId, torque );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );

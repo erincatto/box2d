@@ -173,15 +173,15 @@ static void b2DestroyBodyContacts( b2World* world, b2Body* body )
 b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 {
 	B2_CHECK_DEF( def );
-	B2_ASSERT( b2IsValidPosition( def->position ) );
-	B2_ASSERT( b2IsValidRotation( def->rotation ) );
-	B2_ASSERT( b2IsValidVec2( def->linearVelocity ) );
-	B2_ASSERT( b2IsValidFloat( def->angularVelocity ) );
-	B2_ASSERT( b2IsValidFloat( def->linearDamping ) && def->linearDamping >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->angularDamping ) && def->angularDamping >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->sleepThreshold ) && def->sleepThreshold >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->safetyFactor ) && def->safetyFactor >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( def->gravityScale ) );
+	B2_CHECK_INPUT_RETURN( b2IsValidPosition( def->position ), b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidRotation( def->rotation ), b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->linearVelocity ), b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularVelocity ), b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->linearDamping ) && def->linearDamping >= 0.0f, b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularDamping ) && def->angularDamping >= 0.0f, b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->sleepThreshold ) && def->sleepThreshold >= 0.0f, b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->safetyFactor ) && def->safetyFactor >= 0.0f, b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->gravityScale ), b2_nullBodyId );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -729,8 +729,8 @@ b2Vec2 b2Body_GetWorldVector( b2BodyId bodyId, b2Vec2 localVector )
 
 void b2Body_SetTransform( b2BodyId bodyId, b2Pos position, b2Rot rotation )
 {
-	B2_ASSERT( b2IsValidPosition( position ) );
-	B2_ASSERT( b2IsValidRotation( rotation ) );
+	B2_CHECK_INPUT( b2IsValidPosition( position ) );
+	B2_CHECK_INPUT( b2IsValidRotation( rotation ) );
 	B2_ASSERT( b2Body_IsValid( bodyId ) );
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -807,6 +807,8 @@ float b2Body_GetAngularVelocity( b2BodyId bodyId )
 
 void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( linearVelocity ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 
 	B2_REC( world, BodySetLinearVelocity, bodyId, linearVelocity );
@@ -834,6 +836,8 @@ void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity )
 
 void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( angularVelocity ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodySetAngularVelocity, bodyId, angularVelocity );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -859,6 +863,9 @@ void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity )
 
 void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float timeStep, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidWorldTransform( target ) );
+	B2_CHECK_INPUT( b2IsValidFloat( timeStep ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 
 	B2_REC( world, BodySetTargetTransform, bodyId, target, timeStep, wake );
@@ -952,6 +959,9 @@ b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Pos worldPoint )
 
 void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Pos point, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( force ) );
+	B2_CHECK_INPUT( b2IsValidPosition( point ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyForce, bodyId, force, point, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -976,6 +986,8 @@ void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Pos point, bool wake )
 
 void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( force ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyForceToCenter, bodyId, force, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -999,6 +1011,8 @@ void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake )
 
 void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( torque ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyTorque, bodyId, torque, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1032,6 +1046,9 @@ void b2Body_ClearForces( b2BodyId bodyId )
 
 void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Pos point, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( impulse ) );
+	B2_CHECK_INPUT( b2IsValidPosition( point ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyLinearImpulse, bodyId, impulse, point, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1061,6 +1078,8 @@ void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Pos point, bo
 
 void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( impulse ) );
+
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyLinearImpulseToCenter, bodyId, impulse, wake );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1089,6 +1108,7 @@ void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wa
 
 void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( impulse ) );
 	B2_ASSERT( b2Body_IsValid( bodyId ) );
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyAngularImpulse, bodyId, impulse, wake );
@@ -1409,9 +1429,9 @@ b2Pos b2Body_GetWorldCenter( b2BodyId bodyId )
 
 void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData )
 {
-	B2_ASSERT( b2IsValidFloat( massData.mass ) && massData.mass >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( massData.rotationalInertia ) && massData.rotationalInertia >= 0.0f );
-	B2_ASSERT( b2IsValidVec2( massData.center ) );
+	B2_CHECK_INPUT( b2IsValidFloat( massData.mass ) && massData.mass >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( massData.rotationalInertia ) && massData.rotationalInertia >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidVec2( massData.center ) );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1506,7 +1526,7 @@ void b2Body_UpdateMassFromShapes( b2BodyId bodyId )
 
 void b2Body_SetLinearDamping( b2BodyId bodyId, float linearDamping )
 {
-	B2_ASSERT( b2IsValidFloat( linearDamping ) && linearDamping >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( linearDamping ) && linearDamping >= 0.0f );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1531,7 +1551,7 @@ float b2Body_GetLinearDamping( b2BodyId bodyId )
 
 void b2Body_SetAngularDamping( b2BodyId bodyId, float angularDamping )
 {
-	B2_ASSERT( b2IsValidFloat( angularDamping ) && angularDamping >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( angularDamping ) && angularDamping >= 0.0f );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1557,7 +1577,7 @@ float b2Body_GetAngularDamping( b2BodyId bodyId )
 void b2Body_SetGravityScale( b2BodyId bodyId, float gravityScale )
 {
 	B2_ASSERT( b2Body_IsValid( bodyId ) );
-	B2_ASSERT( b2IsValidFloat( gravityScale ) );
+	B2_CHECK_INPUT( b2IsValidFloat( gravityScale ) );
 
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -1669,6 +1689,8 @@ bool b2Body_IsSleepEnabled( b2BodyId bodyId )
 
 void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( sleepThreshold ) && sleepThreshold >= 0.0f );
+
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
 	{
@@ -1689,7 +1711,7 @@ float b2Body_GetSleepThreshold( b2BodyId bodyId )
 
 void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor )
 {
-	B2_ASSERT( b2IsValidFloat( safetyFactor ) && safetyFactor >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( safetyFactor ) && safetyFactor >= 0.0f );
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
 	{

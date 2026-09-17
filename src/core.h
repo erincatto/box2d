@@ -145,6 +145,31 @@
 
 #define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
+// Used to validate API inputs.
+#define B2_CHECK_INPUT( CONDITION )                                                                                              \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( CONDITION ) == false )                                                                                            \
+		{                                                                                                                        \
+			b2Log( "invalid input: %s in %s\n", #CONDITION, __func__ );                                                          \
+			B2_ASSERT( CONDITION );                                                                                              \
+			return;                                                                                                              \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
+
+#define B2_CHECK_INPUT_RETURN( CONDITION, RESULT )                                                                               \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( CONDITION ) == false )                                                                                            \
+		{                                                                                                                        \
+			b2Log( "invalid input: %s in %s\n", #CONDITION, __func__ );                                                          \
+			B2_ASSERT( CONDITION );                                                                                              \
+			return RESULT;                                                                                                       \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
+
 typedef struct b2AtomicInt
 {
 	int value;
