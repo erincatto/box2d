@@ -622,6 +622,7 @@ void b2ApplyRestitution_Overflow( b2StepContext* context )
 
 			if ( armed )
 			{
+				// Poisson kinetic restitution guarantees no energy gain.
 				float allowance = restitution * ( compressionImpulse + approachImpulse ) - cp->restitutionImpulse;
 				impulse = b2MinFloat( impulse, approachImpulse + b2MaxFloat( allowance, 0.0f ) );
 			}
