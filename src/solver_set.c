@@ -572,6 +572,8 @@ b2Body* b2RemoveBodySim( b2World* world, b2SolverSet* set, int localIndex )
 
 void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* sourceSet, b2Body* body )
 {
+	B2_ASSERT( body->headContactKey == B2_NULL_INDEX );
+
 	if ( targetSet == sourceSet )
 	{
 		return;
@@ -590,7 +592,7 @@ void b2TransferBody( b2World* world, b2SolverSet* targetSet, b2SolverSet* source
 
 	// Clear transient body flags
 	body->flags &= ~b2_bodyTransientFlags;
-	targetSim->flags &= ~b2_bodyTransientFlags;
+	targetSim->flags &= ~( b2_isFast | b2_bodyTransientFlags );
 
 	// Remove body sim from solver set that owns it
 	b2Body* movedBody = b2RemoveBodySim( world, sourceSet, sourceIndex );

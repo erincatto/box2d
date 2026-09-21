@@ -548,17 +548,14 @@ typedef struct b2ManifoldPoint
 	/// The friction impulse
 	float tangentImpulse;
 
-	/// Velocity for restitution. From the last time step.
-	float restitutionVelocity;
-
 	/// The total normal impulse applied across sub-stepping and restitution. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
 	/// This includes the warm starting impulse, the sub-step delta impulse, and the restitution
 	/// impulse.
 	float totalNormalImpulse;
 
-	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
-	/// zero then there was no hit. Negative means shapes are approaching.
+	/// Relative normal velocity pre-solve. Negative when approaching. This is only
+	/// computed if hit events are enabled.
 	float normalVelocity;
 
 	/// Cached separation used for contact recycling

@@ -94,7 +94,7 @@ void b2SyncBodyFlags( b2World* world, b2Body* body )
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 
 	// Preserve the fast flag for contact recycling.
-	bodySim->flags = body->flags & ~( b2_isSpeedCapped | b2_hadTimeOfImpact );
+	bodySim->flags = ( bodySim->flags & b2_isFast ) | ( body->flags & ~b2_bodyTransientFlags );
 
 	b2BodyState* bodyState = b2GetBodyState( world, body );
 	if ( bodyState != NULL )

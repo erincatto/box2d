@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Erin Catto
 // SPDX-License-Identifier: MIT
 
+#include "body.h"
+#include "physics_world.h"
 #include "test_macros.h"
 
 #include "box2d/box2d.h"
@@ -8,6 +10,7 @@
 #include "box2d/math_functions.h"
 
 #include <float.h>
+#include <math.h>
 #include <stdio.h>
 
 #define TIME_STEP ( 1.0f / 60.0f )
@@ -379,8 +382,8 @@ static int TwoPointTest( void )
 }
 
 // A flat box carrying spin. Both corners stay in contact and the constraints are linear in the body
-// velocity, so perfect restitution reverses linear and angular velocity. The single relax pass
-// leaves a residual well inside the tolerance.
+// velocity, so perfect restitution reverses linear and angular velocity. Sweeping the normal solve
+// once per manifold point makes it exact to float precision. One sweep left a residual in each.
 static int SpinTest( void )
 {
 	static const float spins[] = { 0.0f, 0.5f, 1.0f, 2.0f };
@@ -470,10 +473,13 @@ static int DropTest( void )
 	return failed;
 }
 
-// Mirrors the SingleRestitution sample: square box, perfectly elastic, dropped flat onto a segment
-// with an aggressive continuous safety factor so it lands square on the surface. Only the first
-// bounce is a gate. The residual spin from that landing tilts the box for the next one, and a corner
-// first landing under the per point impact law sheds energy into rotation, so later apexes fall off.
+// Mirrors the SingleBoxRestitution sample: square box, perfectly elastic, dropped flat onto a
+// segment with an aggressive continuous safety factor so it lands square on the surface. A flat
+// landing solves two coplanar points in sequence, and one sweep over-delivers: the first impulse
+// tilts the box, the second point sees a larger closing speed and the sum overshoots the rigid body
+// answer, leaving spin that tilts the box for the next landing. The normal solve is now swept once
+// per manifold point when a bounce is armed, which converges the coupling. The bounds below reject
+// the single sweep behavior and the deferred scheme, which lost its apex to tumbling.
 static int SingleBoxTest( void )
 {
 	b2WorldId worldId = MakeWorld( -10.0f );
@@ -501,6 +507,7 @@ static int SingleBoxTest( void )
 
 	float firstSpin = 0.0f;
 	float apexes[4] = { 0 };
+	float spins[4] = { 0 };
 	int apexCount = 0;
 	float previousSpeed = 0.0f;
 
@@ -513,12 +520,13 @@ static int SingleBoxTest( void )
 
 		if ( apexCount == 0 && previousSpeed <= 0.0f && speed > 0.0f )
 		{
-			firstSpin = b2Body_GetAngularVelocity( boxId );
+			firstSpin = b2AbsFloat( b2Body_GetAngularVelocity( boxId ) );
 		}
 
 		if ( previousSpeed > 0.0f && speed <= 0.0f )
 		{
 			apexes[apexCount] = (float)b2Body_GetPosition( boxId ).y;
+			spins[apexCount] = b2AbsFloat( b2Body_GetAngularVelocity( boxId ) );
 			apexCount += 1;
 		}
 		previousSpeed = speed;
@@ -526,10 +534,10 @@ static int SingleBoxTest( void )
 
 	b2DestroyWorld( worldId );
 
-	printf( "    single box first bounce spin %+.4f apexes", firstSpin );
+	printf( "    single box first bounce spin %.4f apexes", firstSpin );
 	for ( int i = 0; i < apexCount; ++i )
 	{
-		printf( " %7.3f", apexes[i] );
+		printf( " %7.3f (spin %5.2f)", apexes[i], spins[i] );
 	}
 	printf( "\n" );
 
@@ -537,14 +545,17 @@ static int SingleBoxTest( void )
 
 	int failed = 0;
 
-	if ( apexes[0] < 0.97f * dropHeight || apexes[0] > 1.02f * dropHeight )
+	if ( firstSpin > 0.1f )
 	{
 		failed = 1;
 	}
 
-	if ( b2AbsFloat( firstSpin ) > 0.25f )
+	for ( int i = 0; i < apexCount; ++i )
 	{
-		failed = 1;
+		if ( apexes[i] < 0.95f * dropHeight || apexes[i] > 1.02f * dropHeight )
+		{
+			failed = 1;
+		}
 	}
 
 	return failed;
@@ -646,6 +657,401 @@ static int RestingTest( void )
 	return 0;
 }
 
+// The manifold point normal velocity is published only for contacts that enabled hit events, and it
+// is not a stale value otherwise, it is zero, so a reader can tell "not measured" from "measured
+// zero" by whether the shape enables the events. Restitution no longer reads it at all, so this is
+// the only thing keeping the field alive.
+static float MeasureFirstTouchNormalVelocity( bool enableHitEvents )
+{
+	b2WorldId worldId = MakeWorld( 0.0f );
+	MakeGround( worldId, 0.0f );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position = (b2Pos){ 0.0f, 0.6f };
+	b2BodyId ballId = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.material.friction = 0.0f;
+	shapeDef.material.restitution = 0.0f;
+	shapeDef.enableHitEvents = enableHitEvents;
+	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+	b2CreateCircleShape( ballId, &shapeDef, &circle );
+
+	float normalVelocity = FLT_MAX;
+
+	// Hold the closing speed so the sampled value does not depend on which step the pair is created
+	for ( int i = 0; i < 20; ++i )
+	{
+		b2Body_SetLinearVelocity( ballId, (b2Vec2){ 0.0f, -IMPACT_SPEED } );
+		b2World_Step( worldId, TIME_STEP, SUB_STEP_COUNT );
+
+		b2ContactData contactData;
+		if ( b2Body_GetContactData( ballId, &contactData, 1 ) == 1 && contactData.manifold.pointCount > 0 )
+		{
+			normalVelocity = contactData.manifold.points[0].normalVelocity;
+			break;
+		}
+	}
+
+	b2DestroyWorld( worldId );
+	return normalVelocity;
+}
+
+static int NormalVelocityTest( void )
+{
+	float quiet = MeasureFirstTouchNormalVelocity( false );
+	float published = MeasureFirstTouchNormalVelocity( true );
+
+	printf( "    normal velocity hit events off %.4f on %.4f (closing at %.4f)\n", quiet, published, -IMPACT_SPEED );
+
+	int failed = 0;
+
+	if ( quiet != 0.0f )
+	{
+		failed = 1;
+	}
+
+	if ( published > -0.8f * IMPACT_SPEED )
+	{
+		failed = 1;
+	}
+
+	return failed;
+}
+
+// Total mechanical energy of a body. Perfect restitution and no friction means this may only
+// decrease, which is a stronger statement than any height bound: it also catches a bounce that
+// manufactures spin rather than height.
+static float MeasureEnergy( b2BodyId bodyId, b2WorldId worldId )
+{
+	b2MassData massData = b2Body_GetMassData( bodyId );
+	b2Vec2 v = b2Body_GetLinearVelocity( bodyId );
+	float w = b2Body_GetAngularVelocity( bodyId );
+
+	float kinetic = 0.5f * massData.mass * b2Dot( v, v ) + 0.5f * massData.rotationalInertia * w * w;
+	float potential = -massData.mass * b2Dot( b2World_GetGravity( worldId ), b2ToVec2( b2Body_GetWorldCenter( bodyId ) ) );
+
+	return kinetic + potential;
+}
+
+typedef struct OvershootResult
+{
+	float firstApex;
+	float firstEnergyRatio;
+	float peakEnergyRatio;
+	float speedRatio;
+	int bounceCount;
+} OvershootResult;
+
+// A unit box dropped flat on a floor narrower than itself, perfectly elastic, so the two contact
+// points sit inboard of the box corners. A perfectly elastic bounce cannot come back higher than it
+// was dropped from and cannot gain energy.
+static OvershootResult MeasureOvershoot( bool continuous )
+{
+	b2WorldId worldId = MakeWorld( -10.0f );
+
+	b2BodyDef floorDef = b2DefaultBodyDef();
+	floorDef.position = (b2Pos){ 0.0f, -0.25f };
+	b2BodyId floorId = b2CreateBody( worldId, &floorDef );
+
+	b2ShapeDef floorShape = b2DefaultShapeDef();
+	b2Polygon floor = b2MakeBox( 0.375f, 0.25f );
+	b2CreatePolygonShape( floorId, &floorShape, &floor );
+
+	const float dropHeight = 10.0f;
+
+	b2BodyDef boxDef = b2DefaultBodyDef();
+	boxDef.type = b2_dynamicBody;
+	boxDef.position = (b2Pos){ 0.0f, dropHeight };
+	if ( continuous )
+	{
+		boxDef.safetyFactor = 0.1f;
+	}
+	b2BodyId boxId = b2CreateBody( worldId, &boxDef );
+
+	b2ShapeDef boxShape = b2DefaultShapeDef();
+	boxShape.material.restitution = 1.0f;
+	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+	b2CreatePolygonShape( boxId, &boxShape, &box );
+
+	OvershootResult result = { 0 };
+
+	float startEnergy = MeasureEnergy( boxId, worldId );
+	float impactSpeed = 0.0f;
+	float reboundSpeed = 0.0f;
+	float bounceHeight = 0.0f;
+	float previousSpeed = 0.0f;
+
+	for ( int i = 0; i < 600 && result.bounceCount < 2; ++i )
+	{
+		float before = b2Body_GetLinearVelocity( boxId ).y;
+		float heightBefore = (float)b2Body_GetPosition( boxId ).y;
+		b2World_Step( worldId, TIME_STEP, SUB_STEP_COUNT );
+		float speed = b2Body_GetLinearVelocity( boxId ).y;
+
+		if ( reboundSpeed == 0.0f && before < 0.0f && speed > 0.0f )
+		{
+			impactSpeed = -before;
+			reboundSpeed = speed;
+			bounceHeight = heightBefore;
+		}
+
+		if ( reboundSpeed == 0.0f )
+		{
+			continue;
+		}
+
+		// Every step, not just at the apexes, because the impact step itself is where any gain appears
+		float ratio = MeasureEnergy( boxId, worldId ) / startEnergy;
+		if ( ratio > result.peakEnergyRatio )
+		{
+			result.peakEnergyRatio = ratio;
+		}
+
+		if ( previousSpeed > 0.0f && speed <= 0.0f )
+		{
+			if ( result.bounceCount == 0 )
+			{
+				result.firstApex = (float)b2Body_GetPosition( boxId ).y;
+				result.firstEnergyRatio = ratio;
+			}
+
+			result.bounceCount += 1;
+		}
+
+		previousSpeed = speed;
+	}
+
+	b2DestroyWorld( worldId );
+
+	result.speedRatio = reboundSpeed / impactSpeed;
+
+	printf( "    overshoot continuous %d apex %.4f of %.4f at y %.4f, speed ratio %.4f, energy %.4f then %.4f\n",
+			continuous ? 1 : 0, result.firstApex, dropHeight, bounceHeight, result.speedRatio, result.firstEnergyRatio,
+			result.peakEnergyRatio );
+
+	return result;
+}
+
+// Two runs, because two unrelated effects were tangled together here.
+//
+// The impulse must never return more speed than it received. That is the restitution invariant and it
+// is checked in both runs; the unconverged multi point solve failed it.
+//
+// Everything else depends on whether continuous collision engages. Without it the box moves 0.23 m
+// in the step before contact, just under the 0.25 m trigger, so the first manifold appears with the
+// box already deep. It bounces from down there and climbs back through that depth for free, which is
+// worth a fraction of a metre of apex and a little energy, and none of it is restitution. With
+// continuous collision the box lands on the surface and both the apex and the energy come in under
+// where they started. The safety factor here is the supported answer for a body whose elastic
+// accuracy matters.
+//
+// The discrete run is only gated on its first bounce. Later bounces there are a genuine blow-up, not
+// a tolerance question: the free height tilts the box and the next landing is a deep corner impact.
+// Lowering the safety factor is the fix; the discrete run is kept to pin what happens when it is
+// left alone, and because its speed ratio is what caught the real bug.
+static int OvershootTest( void )
+{
+	const float dropHeight = 10.0f;
+
+	OvershootResult discrete = MeasureOvershoot( false );
+	OvershootResult continuous = MeasureOvershoot( true );
+
+	int failed = 0;
+
+	if ( discrete.speedRatio > 1.0f || continuous.speedRatio > 1.0f )
+	{
+		failed = 1;
+	}
+
+	if ( continuous.firstApex > dropHeight || continuous.peakEnergyRatio > 1.001f )
+	{
+		failed = 1;
+	}
+
+	if ( discrete.firstApex > dropHeight + 0.15f || discrete.firstEnergyRatio > 1.02f )
+	{
+		failed = 1;
+	}
+
+	if ( discrete.bounceCount < 2 || continuous.bounceCount < 2 )
+	{
+		failed = 1;
+	}
+
+	return failed;
+}
+
+typedef struct ImpulseResult
+{
+	float worstError;
+	float approachSpeed;
+	float firstSeparation;
+	float bounceImpulse;
+	int contactSteps;
+	int toiSteps;
+	int toiImpulseSteps;
+} ImpulseResult;
+
+// Ball dropped under gravity with the contact impulse read back every step. Nothing else touches the
+// ball, so once gravity is taken out the change in momentum over a step is the impulse the contact
+// applied, and that is what the total normal impulse must report. A time of impact step is left out
+// of the balance: no contact was solved on it, and the sweep hands back the gravity of the time it
+// cut short.
+static ImpulseResult MeasureDropImpulse( float restitution, float dropHeight )
+{
+	b2WorldId worldId = MakeWorld( -10.0f );
+	MakeGround( worldId, 0.0f );
+
+	b2BodyId ballId = MakeBall( worldId, 0.0f, 0.5f + dropHeight, 0.0f, restitution );
+	b2World* world = b2GetWorldFromId( worldId );
+
+	float mass = b2Body_GetMass( ballId );
+	float gravityY = b2World_GetGravity( worldId ).y;
+
+	ImpulseResult result = { 0 };
+	bool touched = false;
+	bool bouncing = false;
+
+	// Enough for the longest fall and the bounce that follows it
+	for ( int i = 0; i < 240; ++i )
+	{
+		float speedBefore = b2Body_GetLinearVelocity( ballId ).y;
+		b2World_Step( worldId, TIME_STEP, SUB_STEP_COUNT );
+		float speedAfter = b2Body_GetLinearVelocity( ballId ).y;
+
+		float measured = 0.0f;
+		float separation = 0.0f;
+		b2ContactData contactData[4];
+		int contactCount = b2Body_GetContactData( ballId, contactData, ARRAY_COUNT( contactData ) );
+		for ( int c = 0; c < contactCount; ++c )
+		{
+			const b2Manifold* manifold = &contactData[c].manifold;
+			for ( int p = 0; p < manifold->pointCount; ++p )
+			{
+				measured += manifold->points[p].totalNormalImpulse;
+				separation = manifold->points[p].separation;
+			}
+		}
+
+		// Transient body flags are cleared and rewritten every step
+		b2Body* ball = b2GetBodyFullId( world, ballId );
+		if ( ball->flags & b2_hadTimeOfImpact )
+		{
+			result.toiSteps += 1;
+			if ( measured != 0.0f )
+			{
+				result.toiImpulseSteps += 1;
+			}
+			continue;
+		}
+
+		float expected = mass * ( speedAfter - speedBefore ) - mass * gravityY * TIME_STEP;
+		result.worstError = b2MaxFloat( result.worstError, b2AbsFloat( measured - expected ) );
+
+		if ( contactCount > 0 )
+		{
+			if ( touched == false )
+			{
+				touched = true;
+				bouncing = true;
+				result.approachSpeed = -speedBefore;
+				result.firstSeparation = separation;
+			}
+
+			if ( bouncing )
+			{
+				result.bounceImpulse += measured;
+				result.contactSteps += 1;
+			}
+		}
+		else
+		{
+			bouncing = false;
+		}
+	}
+
+	b2DestroyWorld( worldId );
+	return result;
+}
+
+// Heights on both sides of the continuous collision threshold, so the impulse is checked for a ball
+// that lands inside the overlap and for one the sweep sets down on the surface. The threshold is
+// derived from the body so the split survives a change to the default safety factor.
+//
+// The step balance is the real gate. The bounce total is bracketed as well so the restitution sweep
+// means something: the contact has to reverse the approach at the coefficient and may carry the
+// weight for at most as long as it lasted. The bounce retires inside the step once the point
+// separates, so the ball can lose up to a step of gravity below the reversal.
+static int ImpulseTest( void )
+{
+	static const float restitutions[] = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
+	static const float heights[] = { 1.0f, 5.0f, 20.0f, 45.0f };
+
+	float mass;
+	float fastSpeed;
+	{
+		b2WorldId worldId = MakeWorld( -10.0f );
+		b2BodyId ballId = MakeBall( worldId, 0.0f, 0.5f, 0.0f, 0.0f );
+		mass = b2Body_GetMass( ballId );
+		fastSpeed = b2Body_GetSafetyFactor( ballId ) * b2Body_GetMinExtent( ballId ) / TIME_STEP;
+		b2DestroyWorld( worldId );
+	}
+
+	const float weightImpulse = mass * 10.0f * TIME_STEP;
+
+	int failed = 0;
+
+	for ( int j = 0; j < ARRAY_COUNT( heights ); ++j )
+	{
+		float impactSpeed = sqrtf( 20.0f * heights[j] );
+		bool expectToi = impactSpeed > fastSpeed;
+
+		// Float noise in the solver velocities scales with the impact speed, and the ball is heavy
+		float tolerance = 1e-5f * mass * ( 10.0f + impactSpeed );
+
+		for ( int k = 0; k < ARRAY_COUNT( restitutions ); ++k )
+		{
+			ImpulseResult result = MeasureDropImpulse( restitutions[k], heights[j] );
+
+			float reversal = ( 1.0f + restitutions[k] ) * mass * result.approachSpeed;
+			float lower = reversal - weightImpulse;
+			float upper = reversal + weightImpulse * result.contactSteps;
+
+			printf( "    impulse drop %4.1f e %.2f toi %d at %+.4f -> worst step error %.1e, bounce %.1f in [%.1f, %.1f] over %d "
+					"steps\n",
+					heights[j], restitutions[k], result.toiSteps, result.firstSeparation, result.worstError, result.bounceImpulse,
+					lower, upper, result.contactSteps );
+
+			if ( result.worstError > tolerance )
+			{
+				failed = 1;
+			}
+
+			if ( result.contactSteps == 0 || result.toiImpulseSteps > 0 )
+			{
+				failed = 1;
+			}
+
+			float slack = result.contactSteps * tolerance;
+			if ( result.bounceImpulse < lower - slack || result.bounceImpulse > upper + slack )
+			{
+				failed = 1;
+			}
+
+			if ( ( result.toiSteps > 0 ) != expectToi )
+			{
+				printf( "    continuous collision %s at %.1f m/s (threshold %.1f m/s)\n", expectToi ? "expected" : "unexpected",
+						impactSpeed, fastSpeed );
+				failed = 1;
+			}
+		}
+	}
+
+	return failed;
+}
+
 static uint64_t RunWorkerScene( int workerCount )
 {
 	b2WorldDef worldDef = b2DefaultWorldDef();
@@ -699,6 +1105,9 @@ int RestitutionTest( void )
 	RUN_MEASUREMENT( SingleBoxTest );
 	RUN_MEASUREMENT( ThresholdTest );
 	RUN_MEASUREMENT( RestingTest );
+	RUN_MEASUREMENT( NormalVelocityTest );
+	RUN_MEASUREMENT( OvershootTest );
+	RUN_MEASUREMENT( ImpulseTest );
 	RUN_MEASUREMENT( WorkerParityTest );
 
 	return failureCount > 0 ? 1 : 0;

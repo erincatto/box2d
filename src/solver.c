@@ -386,6 +386,7 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
 	b2BodySim* fastBodySim = b2Array_Get( awakeSet->bodySims, bodySimIndex );
+	B2_VALIDATE( fastBodySim->flags & b2_isFast );
 
 	// Re-center the sweep on the fast body so the TOI and the swept query stay in float precision
 	b2Pos base = fastBodySim->center0;
@@ -464,12 +465,14 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		fastBodySim->rotation0 = q;
 		fastBodySim->center0 = fastBodySim->center;
 
-		// Timeloss means there is a lost gravity contribution.
-		// Other forces and torques are ignored for now.
+		// Timeloss means there is a lost gravity contribution. Other forces and torques are ignored for now.
 		b2BodyState* fastBodyState = b2Array_Get( awakeSet->bodyStates, bodySimIndex );
 		b2Vec2 v = fastBodyState->linearVelocity;
 		float timeLoss = ( 1.0f - context.fraction ) * dt;
-		fastBodyState->linearVelocity = b2MulSub( v, timeLoss * fastBodySim->gravityScale, world->gravity );
+		b2Vec2 dv = b2MulSV( -timeLoss * fastBodySim->gravityScale, world->gravity );
+		dv.x = ( fastBodyState->flags & b2_lockLinearX ) ? 0.0f : dv.x;
+		dv.y = ( fastBodyState->flags & b2_lockLinearY ) ? 0.0f : dv.y;
+		fastBodyState->linearVelocity = b2Add( v, dv );
 
 		// Update body move event
 		b2BodyMoveEvent* event = b2Array_Get( world->bodyMoveEvents, bodySimIndex );
@@ -654,7 +657,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		// Clear the transient flags (fast, speed capped, had TOI). These flags are conditionally set
 		// as part of the code below.
 		body->flags &= ~b2_bodyTransientFlags;
-		sim->flags &= ~b2_bodyTransientFlags;
+		sim->flags &= ~( b2_isFast | b2_bodyTransientFlags );
 
 		// The body state flag knows about speed capping (used for debug draw).
 		body->flags |= ( state->flags & b2_isSpeedCapped );
@@ -670,7 +673,6 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 			if ( body->type == b2_dynamicBody && enableContinuous && maxMotion > safetyFactor * sim->minExtent )
 			{
 				// This flag is used for debug draw and contact recycling.
-				body->flags |= b2_isFast;
 				sim->flags |= b2_isFast;
 
 				// Store fast bullets for processing later.
@@ -723,7 +725,7 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 
 		// Update shapes AABBs
 		b2WorldTransform transform = sim->transform;
-		bool isFast = ( body->flags & b2_isFast ) != 0;
+		bool isFast = ( sim->flags & b2_isFast ) != 0;
 		int shapeId = body->headShapeId;
 		while ( shapeId != B2_NULL_INDEX )
 		{
@@ -1068,7 +1070,6 @@ static void b2SolverTask( void* taskContext )
 		b2_stageSolve,
 		b2_stageIntegratePositions,
 		b2_stageRelax,
-		b2_stageRestitution,
 		b2_stageStoreImpulses
 		*/
 
@@ -1137,7 +1138,7 @@ static void b2SolverTask( void* taskContext )
 			{
 				// Overflow constraints have lower priority. Typically these are dynamic-vs-dynamic.
 				b2SolveJoints_Overflow( context, useBias );
-				b2SolveContacts_Overflow( context, useBias );
+				b2PushContacts_Overflow( context );
 
 				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 				{
@@ -1165,7 +1166,7 @@ static void b2SolverTask( void* taskContext )
 			for ( int j = 0; j < RELAX_ITERATIONS; ++j )
 			{
 				b2SolveJoints_Overflow( context, useBias );
-				b2SolveContacts_Overflow( context, useBias );
+				b2SolveContacts_Overflow( context );
 				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
 				{
 					syncBits = ( graphSyncIndex << 16 ) | iterationStageIndex;

@@ -43,7 +43,8 @@ int b2GetWideContactConstraintByteCount( void );
 // Overflow contacts don't fit into the constraint graph coloring
 void b2PrepareContacts_Overflow( b2StepContext* context );
 void b2WarmStartContacts_Overflow( b2StepContext* context );
-void b2SolveContacts_Overflow( b2StepContext* context, bool useBias );
+void b2PushContacts_Overflow( b2StepContext* context );
+void b2SolveContacts_Overflow( b2StepContext* context );
 void b2StoreImpulses_Overflow( b2StepContext* context );
 
 // Contacts that live within the constraint graph coloring

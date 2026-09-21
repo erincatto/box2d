@@ -22,7 +22,7 @@ enum b2BodyFlags
 	// This body has fixed rotation
 	b2_lockAngularZ = 0x00000004,
 
-	// This flag is used for debug draw
+	// This flag is used for debug draw and contact recycling. Only on b2BodySim.
 	b2_isFast = 0x00000008,
 
 	// This dynamic body does a final CCD pass against all body types, but not other bullets
@@ -62,7 +62,7 @@ enum b2BodyFlags
 	b2_fixedRotation = b2_lockAngularZ,
 
 	// These flags are transient per time step. These may be different across b2Body, b2BodySim, and b2BodyState.
-	b2_bodyTransientFlags = b2_isFast | b2_isSpeedCapped | b2_hadTimeOfImpact,
+	b2_bodyTransientFlags = b2_isSpeedCapped | b2_hadTimeOfImpact,
 };
 
 // Body organizational details that are not used in the solver.

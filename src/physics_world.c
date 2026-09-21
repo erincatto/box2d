@@ -478,7 +478,6 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 	b2SolverSet* solverSets = world->solverSets.data;
 	b2BodySim* awakeSims = solverSets[b2_awakeSet].bodySims.data;
 	b2BodySim* staticSims = solverSets[b2_staticSet].bodySims.data;
-	b2BodyState* states = solverSets[b2_awakeSet].bodyStates.data;
 
 	B2_ASSERT( startIndex < endIndex );
 
@@ -586,33 +585,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
-
-						if ( mp->totalNormalImpulse > 0.0f && mp->normalVelocity < -world->restitutionThreshold )
-						{
-							mp->restitutionVelocity = -contactSim->restitution * mp->normalVelocity;
-						}
-						else
-						{
-							mp->restitutionVelocity = 0.0f;
-						}
-
-						int indexA = b2DecodeAwakeIndex( encodedA );
-						b2Vec2 vrA = b2Vec2_zero;
-						if ( indexA != B2_NULL_INDEX )
-						{
-							b2BodyState* stateA = states + indexA;
-							vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
-						}
-
-						int indexB = b2DecodeAwakeIndex( encodedB );
-						b2Vec2 vrB = b2Vec2_zero;
-						if ( indexB != B2_NULL_INDEX )
-						{
-							b2BodyState* stateB = states + indexB;
-							vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
-						}
-
-						mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
+						mp->normalVelocity = 0.0f;
 						mp->persisted = true;
 					}
 
@@ -653,27 +626,9 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			{
 				for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 				{
+					// Cache separation
 					b2ManifoldPoint* mp = contactSim->manifold.points + i;
 					mp->baseSeparation = mp->separation;
-
-					// Save relative velocity for restitution and hit events reporting.
-					int indexA = b2DecodeAwakeIndex( encodedA );
-					b2Vec2 vrA = b2Vec2_zero;
-					if ( indexA != B2_NULL_INDEX )
-					{
-						b2BodyState* stateA = states + indexA;
-						vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
-					}
-
-					int indexB = b2DecodeAwakeIndex( encodedB );
-					b2Vec2 vrB = b2Vec2_zero;
-					if ( indexB != B2_NULL_INDEX )
-					{
-						b2BodyState* stateB = states + indexB;
-						vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
-					}
-
-					mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
 				}
 			}
 
@@ -1220,7 +1175,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorYellow;
 		}
-		else if ( body->flags & b2_isFast )
+		else if ( bodySim->flags & b2_isFast )
 		{
 			color = b2_colorSalmon;
 		}
@@ -3421,9 +3376,8 @@ void b2ValidateSolverSets( b2World* world )
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
 
-					uint32_t syncedFlags = body->flags & ~b2_bodyTransientFlags;
+					uint32_t syncedFlags = body->flags & ~( b2_isFast | b2_bodyTransientFlags );
 					B2_ASSERT( ( bodySim->flags & syncedFlags ) == syncedFlags );
-					B2_ASSERT( ( bodySim->flags & b2_isFast ) == ( body->flags & b2_isFast ) );
 
 					b2BodyState* bodyState = b2GetBodyState( world, body );
 					if ( bodyState != NULL )

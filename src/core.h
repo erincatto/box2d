@@ -186,6 +186,9 @@ typedef struct b2AtomicI64
 	_Alignas( 8 ) int64_t value;
 } b2AtomicI64;
 
+// Use 64 byte alignment for everything. Needed for tree nodes.
+#define B2_ALIGNMENT 64
+
 void* b2Alloc( size_t size );
 void* b2AllocZero( size_t size );
 #define B2_ALLOC_STRUCT( type ) b2Alloc( sizeof( type ) )

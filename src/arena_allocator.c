@@ -29,30 +29,29 @@ void b2DestroyStack( b2Stack* allocator )
 
 void* b2StackAlloc( b2Stack* alloc, int size, const char* name )
 {
-	// ensure allocation is 32 byte aligned to support 256-bit SIMD
-	int size32 = ( ( size - 1 ) | 0x1F ) + 1;
+	int alignedSize = ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1;
 
 	b2StackEntry entry;
-	entry.size = size32;
+	entry.size = alignedSize;
 	entry.name = name;
-	if ( alloc->index + size32 > alloc->capacity )
+	if ( alloc->index + alignedSize > alloc->capacity )
 	{
 		// fall back to the heap (undesirable)
-		entry.data = b2Alloc( size32 );
+		entry.data = b2Alloc( alignedSize );
 		entry.usedMalloc = true;
 
-		B2_ASSERT( ( (uintptr_t)entry.data & 0x1F ) == 0 );
+		B2_ASSERT( ( (uintptr_t)entry.data & ( B2_ALIGNMENT - 1 ) ) == 0 );
 	}
 	else
 	{
 		entry.data = alloc->data + alloc->index;
 		entry.usedMalloc = false;
-		alloc->index += size32;
+		alloc->index += alignedSize;
 
-		B2_ASSERT( ( (uintptr_t)entry.data & 0x1F ) == 0 );
+		B2_ASSERT( ( (uintptr_t)entry.data & ( B2_ALIGNMENT - 1 ) ) == 0 );
 	}
 
-	alloc->allocation += size32;
+	alloc->allocation += alignedSize;
 	if ( alloc->allocation > alloc->maxAllocation )
 	{
 		alloc->maxAllocation = alloc->allocation;
