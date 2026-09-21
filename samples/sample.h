@@ -27,12 +27,14 @@ struct SampleContext
 	float hertz = 60.0f;
 	float recycleDistance = 0.05f;
 	int subStepCount = 4;
+	int restitutionIterations = 2;
 	int workerCount = 1;
 	bool restart = false;
 	bool pause = false;
 	bool singleStep = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
+	bool enableRestitutionPropagation = false;
 	bool enableSleep = true;
 	bool showUI = true;
 

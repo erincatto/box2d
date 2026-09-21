@@ -845,6 +845,17 @@ static void b2RecDispatch_WorldRebuildStaticTree( const b2RecArgs_WorldRebuildSt
 	b2World_RebuildStaticTree( rdr->replayWorldId );
 }
 
+static void b2RecDispatch_WorldSetRestitutionIterations( const b2RecArgs_WorldSetRestitutionIterations* a, b2RecReader* rdr )
+{
+	b2World_SetRestitutionIterations( rdr->replayWorldId, a->iterations );
+}
+
+static void b2RecDispatch_WorldEnableRestitutionPropagation( const b2RecArgs_WorldEnableRestitutionPropagation* a,
+															 b2RecReader* rdr )
+{
+	b2World_EnableRestitutionPropagation( rdr->replayWorldId, a->flag );
+}
+
 // Append a created body to the outliner tracking list. Ordinals are creation order and never reused.
 static void b2RecTrackBodyCreate( b2Replay* player, b2BodyId id )
 {

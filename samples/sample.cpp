@@ -563,6 +563,8 @@ void Sample::Step()
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
+	b2World_SetRestitutionIterations( m_worldId, m_context->restitutionIterations );
+	b2World_EnableRestitutionPropagation( m_worldId, m_context->enableRestitutionPropagation );
 
 	for ( int i = 0; i < 1; ++i )
 	{
@@ -1286,6 +1288,8 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		ResetView( &context->camera );
 		context->sampleIndex = selection;
 		context->subStepCount = 4;
+		context->restitutionIterations = 2;
+		context->enableRestitutionPropagation = false;
 		context->debugDraw.drawJoints = true;
 	}
 
@@ -1741,6 +1745,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 	{
 		ImGui::PushItemWidth( 6.0f * fontSize );
 		ImGui::SliderInt( "Sub-steps##Solver", &context->subStepCount, 1, 32 );
+		ImGui::SliderInt( "Rest Iters##Solver", &context->restitutionIterations, 0, 8 );
 		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
 
 		if ( ImGui::SliderInt( "Workers##Solver", &context->workerCount, 1, B2_MAX_WORKERS ) )
@@ -1760,6 +1765,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 		ImGui::Checkbox( "Sleep##Solver", &context->enableSleep );
 		ImGui::Checkbox( "Warm Starting##Solver", &context->enableWarmStarting );
 		ImGui::Checkbox( "Continuous##Solver", &context->enableContinuous );
+		ImGui::Checkbox( "Rest Prop##Solver", &context->enableRestitutionPropagation );
 	}
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )

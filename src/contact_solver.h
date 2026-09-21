@@ -11,10 +11,11 @@ typedef struct b2ContactConstraintPoint
 {
 	b2Vec2 anchorA, anchorB;
 	float baseSeparation;
-	float restitutionVelocity;
+	float relativeVelocity;
 	float normalImpulse;
 	float tangentImpulse;
 	float totalNormalImpulse;
+	float restitutionImpulse;
 	float normalMass;
 	float tangentMass;
 } b2ContactConstraintPoint;
@@ -29,6 +30,7 @@ typedef struct b2ContactConstraint
 	float invMassA, invMassB;
 	float invIA, invIB;
 	float friction;
+	float restitution;
 	float tangentSpeed;
 	float rollingResistance;
 	float rollingMass;
@@ -45,6 +47,7 @@ void b2PrepareContacts_Overflow( b2StepContext* context );
 void b2WarmStartContacts_Overflow( b2StepContext* context );
 void b2PushContacts_Overflow( b2StepContext* context );
 void b2SolveContacts_Overflow( b2StepContext* context );
+void b2ApplyRestitution_Overflow( b2StepContext* context );
 void b2StoreImpulses_Overflow( b2StepContext* context );
 
 // Contacts that live within the constraint graph coloring
@@ -52,4 +55,5 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context );
 void b2WarmStartContacts_Wide( b2SolverBlock block, b2StepContext* context );
 void b2PushContacts_Wide( b2SolverBlock block, b2StepContext* context );
 void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context );
+void b2ApplyRestitution_Wide( b2SolverBlock block, b2StepContext* context );
 void b2StoreImpulses_Wide( b2SolverBlock block, b2StepContext* context, int workerIndex );

@@ -81,6 +81,7 @@ typedef enum b2SolverStageType
 	b2_stageSolve,
 	b2_stageIntegratePositions,
 	b2_stageRelax,
+	b2_stageRestitution,
 	b2_stageStoreImpulses
 } b2SolverStageType;
 
@@ -195,6 +196,8 @@ typedef struct b2StepContext
 	// Array of bullet bodies that need continuous collision handling
 	int* bulletBodies;
 	b2AtomicInt bulletBodyCount;
+
+	b2AtomicInt anyRestitution;
 
 	// Graph color spans for the narrow-phase, includes non-touching contacts as well.
 	const b2ContactCollideSpan* collideSpans;

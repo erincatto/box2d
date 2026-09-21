@@ -1074,12 +1074,6 @@ public:
 static int sampleIndex = RegisterSample( "Shapes", "Restitution", Restitution::Create );
 
 // A single box with a restitution of 1.
-// The box starts to spin because restitution doesn't get many iterations. Box2D v2.4 had a block solver
-// that would cancel out the rotation in cases like this. The block solver was developed for more stable
-// vertical stacking, not to simulate bouncing boxes. Box2D v3.2 has contact recycling that makes vertical
-// stacks stable, so the need for a block solver is greatly diminished.
-// Perfectly bouncing boxes is a niche use case and it is not worth the code complexity and performance hit
-// to make them bounce perfectly.
 class SingleBoxRestitution : public Sample
 {
 public:
@@ -1115,6 +1109,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 		bodyDef.position = { 0.0f, m_height };
+		// bodyDef.rotation = b2MakeRot( -0.2f );
 		bodyDef.safetyFactor = 0.01f;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 		b2CreatePolygonShape( m_bodyId, &shapeDef, &box );
@@ -1144,7 +1139,7 @@ public:
 		{
 			m_maxY = b2MaxFloat( m_maxY, (float)p.y );
 		}
-		
+
 		DrawScreenTextLine( "maxY = %.2f", m_maxY );
 
 		float linear = 0.0f;
@@ -1266,7 +1261,6 @@ public:
 
 static int sampleSingleCircleRestitution =
 	RegisterSample( "Shapes", "Single Circle Restitution", SingleCircleRestitution::Create );
-
 
 // Similar to MeasureSupportedBounce unit test.
 class CircleStackRestitution : public Sample
@@ -1465,6 +1459,175 @@ public:
 };
 
 static int sampleCircleStackRestitution = RegisterSample( "Shapes", "Circle Stack Restitution", CircleStackRestitution::Create );
+
+// A bouncy ball landing on a resting body. Three balls fall together from the same height onto bare
+// ground, one crate and two crates. Without restitution propagation the restitution stage only
+// visits the ball's own contact, so the rebound is shared with the crate, which is driven into the
+// ground and pushed back the next step. With propagation the ground contact under the crate can react
+// in the restitution sover.
+class RestitutionPropagation : public Sample
+{
+public:
+	static constexpr int m_columnCount = 3;
+	static constexpr float m_dropHeight = 5.0f;
+
+	explicit RestitutionPropagation( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 4.0f };
+			m_context->camera.zoom = 10.0f;
+		}
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.position = { 0.0f, -1.0f };
+		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		shapeDef.material.friction = 0.6f;
+		b2Polygon box = b2MakeBox( 40.0f, 1.0f );
+		b2CreatePolygonShape( groundId, &shapeDef, &box );
+
+		CreateScene();
+	}
+
+	void CreateScene()
+	{
+		for ( int i = 0; i < m_bodyCount; ++i )
+		{
+			b2DestroyBody( m_bodyIds[i] );
+		}
+		m_bodyCount = 0;
+		m_crateCount = 0;
+		m_kick = 0.0f;
+
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+
+		for ( int column = 0; column < m_columnCount; ++column )
+		{
+			float x = 4.0f * ( column - 1 );
+
+			for ( int k = 0; k < column; ++k )
+			{
+				b2BodyDef bodyDef = b2DefaultBodyDef();
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position = { x, 0.5f + 1.0f * k };
+				bodyDef.enableSleep = false;
+				b2BodyId crateId = b2CreateBody( m_worldId, &bodyDef );
+
+				b2ShapeDef shapeDef = b2DefaultShapeDef();
+				b2CreatePolygonShape( crateId, &shapeDef, &box );
+
+				m_bodyIds[m_bodyCount++] = crateId;
+				m_crateIds[m_crateCount++] = crateId;
+			}
+
+			m_restHeight[column] = 0.5f + 1.0f * column;
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_dynamicBody;
+			bodyDef.position = { x, m_restHeight[column] + m_dropHeight };
+			bodyDef.enableSleep = false;
+			b2BodyId ballId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.material.restitution = m_restitution;
+			b2CreateCircleShape( ballId, &shapeDef, &circle );
+
+			m_bodyIds[m_bodyCount++] = ballId;
+			m_ballIds[column] = ballId;
+			m_apex[column] = 0.0f;
+			m_rebounding[column] = false;
+			m_done[column] = false;
+		}
+	}
+
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
+		bool rebuild = ImGui::SliderFloat( "Restitution", &m_restitution, 0.0f, 1.0f, "%.2f" );
+		ImGui::PopItemWidth();
+
+		if ( ImGui::Button( "Reset" ) )
+		{
+			rebuild = true;
+		}
+
+		if ( rebuild )
+		{
+			CreateScene();
+		}
+
+		return true;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		static const char* labels[m_columnCount] = { "ground", "one crate", "two crates" };
+
+		for ( int column = 0; column < m_columnCount; ++column )
+		{
+			b2Vec2 v = b2Body_GetLinearVelocity( m_ballIds[column] );
+			float height = float( b2Body_GetPosition( m_ballIds[column] ).y ) - m_restHeight[column];
+
+			// The first rebound apex: the ball starts at rest and falls, so upward velocity means it bounced
+			if ( m_rebounding[column] == false && v.y > 0.0f )
+			{
+				m_rebounding[column] = true;
+			}
+
+			if ( m_rebounding[column] && m_done[column] == false )
+			{
+				m_apex[column] = b2MaxFloat( m_apex[column], height );
+				if ( v.y < 0.0f )
+				{
+					m_done[column] = true;
+				}
+			}
+
+			float x = 4.0f * ( column - 1 );
+			DrawLine( m_draw, { x - 1.0f, m_restHeight[column] + m_dropHeight }, { x + 1.0f, m_restHeight[column] + m_dropHeight },
+					  b2_colorRed );
+			if ( m_apex[column] > 0.0f )
+			{
+				DrawLine( m_draw, { x - 1.0f, m_restHeight[column] + m_apex[column] },
+						  { x + 1.0f, m_restHeight[column] + m_apex[column] }, b2_colorGreen );
+			}
+
+			DrawScreenTextLine( "%s: apex %.2f m (%.0f%% of drop)", labels[column], m_apex[column], 100.0f * m_apex[column] / m_dropHeight );
+		}
+
+		for ( int i = 0; i < m_crateCount; ++i )
+		{
+			m_kick = b2MaxFloat( m_kick, b2Length( b2Body_GetLinearVelocity( m_crateIds[i] ) ) );
+		}
+
+		DrawScreenTextLine( "peak crate speed %.2f m/s", m_kick );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new RestitutionPropagation( context );
+	}
+
+	b2BodyId m_bodyIds[2 * m_columnCount] = {};
+	b2BodyId m_ballIds[m_columnCount] = {};
+	b2BodyId m_crateIds[m_columnCount] = {};
+	float m_restHeight[m_columnCount] = {};
+	float m_apex[m_columnCount] = {};
+	bool m_rebounding[m_columnCount] = {};
+	bool m_done[m_columnCount] = {};
+	int m_bodyCount = 0;
+	int m_crateCount = 0;
+	float m_restitution = 0.9f;
+	float m_kick = 0.0f;
+};
+
+static int sampleRestitutionPropagation = RegisterSample( "Shapes", "Restitution Propagation", RestitutionPropagation::Create );
 
 // Similar to MeasureFlatBounce and SpinTest unit tests.
 class BoxRestitution : public Sample
@@ -2584,7 +2747,6 @@ public:
 static int sampleSingleBox = RegisterSample( "Shapes", "Recreate Static", RecreateStatic::Create );
 
 // Based on https://github.com/erincatto/box2d/discussions/957
-// Used for testing deferred restitution.
 class TwoBoxRestitution : public Sample
 {
 public:
@@ -2593,8 +2755,8 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.center = { 0.0f, 2.0f };
-			m_context->camera.zoom = 4.0f;
+			m_context->camera.center = { 0.0f, 3.0f };
+			m_context->camera.zoom = 5.0f;
 		}
 
 		{
@@ -2609,24 +2771,53 @@ public:
 		b2Polygon box = b2MakeSquare( 0.5f );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
-		shapeDef.material.restitution = 1.0f;
+		shapeDef.material.restitution = 0.9f;
 
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		bodyDef.type = b2_dynamicBody;
 
 		bodyDef.position.y = 0.5f;
-		b2BodyId bodyId1 = b2CreateBody( m_worldId, &bodyDef );
-		b2CreatePolygonShape( bodyId1, &shapeDef, &box );
+		m_bodyIds[0] = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( m_bodyIds[0], &shapeDef, &box );
 
-		bodyDef.position.y = 4.0f;
-		b2BodyId bodyId2 = b2CreateBody( m_worldId, &bodyDef );
-		b2CreatePolygonShape( bodyId2, &shapeDef, &box );
+		bodyDef.position.x += 0.1f;
+		bodyDef.position.y = 6.0f;
+		m_bodyIds[1] = b2CreateBody( m_worldId, &bodyDef );
+		b2CreatePolygonShape( m_bodyIds[1], &shapeDef, &box );
+
+		float linear = 0.0f;
+		float angular = 0.0f;
+		float potential = 0.0f;
+		ComputeEnergy( m_worldId, m_bodyIds, 2, &linear, &angular, &potential );
+		m_startEnergy = linear + angular + potential;
+		m_peakEnergy = m_startEnergy;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		float linear = 0.0f;
+		float angular = 0.0f;
+		float potential = 0.0f;
+		ComputeEnergy( m_worldId, m_bodyIds, 2, &linear, &angular, &potential );
+		float total = linear + angular + potential;
+		m_peakEnergy = b2MaxFloat( m_peakEnergy, total );
+
+		float scale = m_startEnergy != 0.0f ? 100.0f / m_startEnergy : 0.0f;
+		DrawScreenTextLine( "kinetic   = %.3f J linear + %.3f J angular", linear, angular );
+		DrawScreenTextLine( "potential = %.3f J", potential );
+		DrawScreenTextLine( "total     = %.3f J (%.2f%% of start, peak %.2f%%)", total, scale * total, scale * m_peakEnergy );
 	}
 
 	static Sample* Create( SampleContext* context )
 	{
 		return new TwoBoxRestitution( context );
 	}
+
+	b2BodyId m_bodyIds[2] = {};
+	float m_startEnergy = 0.0f;
+	float m_peakEnergy = 0.0f;
 };
 
 static int sampleTwoBoxRestitution = RegisterSample( "Shapes", "Two Box Restitution", TwoBoxRestitution::Create );

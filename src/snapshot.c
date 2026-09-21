@@ -32,7 +32,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 11u // same step restitution
+#define B2_SNAP_VERSION 12u // post solve restitution
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
@@ -440,6 +440,7 @@ static void b2SerWorldConfig( b2RecBuffer* buf, const b2World* world )
 	b2SnapW_Bytes( buf, &world->gravity, sizeof( b2Vec2 ) );
 	b2SnapW_Bytes( buf, &world->hitEventThreshold, sizeof( float ) );
 	b2SnapW_Bytes( buf, &world->restitutionThreshold, sizeof( float ) );
+	b2SnapW_I32( buf, world->restitutionIterations );
 	b2SnapW_Bytes( buf, &world->maxLinearSpeed, sizeof( float ) );
 	b2SnapW_Bytes( buf, &world->contactSpeed, sizeof( float ) );
 	b2SnapW_Bytes( buf, &world->contactHertz, sizeof( float ) );
@@ -459,6 +460,7 @@ static void b2SerWorldConfig( b2RecBuffer* buf, const b2World* world )
 	flags |= world->enableSleep ? 0x01u : 0u;
 	flags |= world->enableWarmStarting ? 0x02u : 0u;
 	flags |= world->enableContinuous ? 0x08u : 0u;
+	flags |= world->enableRestitutionPropagation ? 0x10u : 0u;
 	b2RecBufAppend( buf, &flags, 1 );
 }
 
@@ -467,6 +469,7 @@ static void b2DesWorldConfig( b2SnapReader* r, b2World* world )
 	b2SnapR_Bytes( r, &world->gravity, sizeof( b2Vec2 ) );
 	b2SnapR_Bytes( r, &world->hitEventThreshold, sizeof( float ) );
 	b2SnapR_Bytes( r, &world->restitutionThreshold, sizeof( float ) );
+	world->restitutionIterations = b2SnapR_I32( r );
 	b2SnapR_Bytes( r, &world->maxLinearSpeed, sizeof( float ) );
 	b2SnapR_Bytes( r, &world->contactSpeed, sizeof( float ) );
 	b2SnapR_Bytes( r, &world->contactHertz, sizeof( float ) );
@@ -483,6 +486,7 @@ static void b2DesWorldConfig( b2SnapReader* r, b2World* world )
 	world->enableSleep = ( flags & 0x01u ) != 0;
 	world->enableWarmStarting = ( flags & 0x02u ) != 0;
 	world->enableContinuous = ( flags & 0x08u ) != 0;
+	world->enableRestitutionPropagation = ( flags & 0x10u ) != 0;
 }
 
 void b2SerializeWorld( b2World* world, b2RecBuffer* buf )

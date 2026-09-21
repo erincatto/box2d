@@ -86,6 +86,7 @@ static int WorldInputTest( void )
 	float hitEventThreshold = b2World_GetHitEventThreshold( worldId );
 	float recycleDistance = b2World_GetContactRecycleDistance( worldId );
 	float maximumLinearSpeed = b2World_GetMaximumLinearSpeed( worldId );
+	int restitutionIterations = b2World_GetRestitutionIterations( worldId );
 
 	BeginRejectCount();
 
@@ -105,6 +106,8 @@ static int WorldInputTest( void )
 		REJECTS( b2World_Step( worldId, bad, 4 ) );
 	}
 
+	REJECTS( b2World_SetRestitutionIterations( worldId, -1 ) );
+
 	ACCEPTS( b2World_Step( worldId, 1.0f / 60.0f, 4 ) );
 
 	EndRejectCount();
@@ -114,6 +117,7 @@ static int WorldInputTest( void )
 	ENSURE( b2World_GetHitEventThreshold( worldId ) == hitEventThreshold );
 	ENSURE( b2World_GetContactRecycleDistance( worldId ) == recycleDistance );
 	ENSURE( b2World_GetMaximumLinearSpeed( worldId ) == maximumLinearSpeed );
+	ENSURE( b2World_GetRestitutionIterations( worldId ) == restitutionIterations );
 
 	b2DestroyWorld( worldId );
 	return 0;

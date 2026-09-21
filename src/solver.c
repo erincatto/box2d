@@ -934,6 +934,13 @@ static void b2ExecuteBlock( b2SolverStage* stage, b2StepContext* context, b2Solv
 			}
 			break;
 
+		case b2_stageRestitution:
+			if ( blockType == b2_graphContactBlock )
+			{
+				b2ApplyRestitution_Wide( block, context );
+			}
+			break;
+
 		case b2_stageStoreImpulses:
 			b2StoreImpulses_Wide( block, context, workerIndex );
 			break;
@@ -1070,6 +1077,7 @@ static void b2SolverTask( void* taskContext )
 		b2_stageSolve,
 		b2_stageIntegratePositions,
 		b2_stageRelax,
+		b2_stageRestitution,
 		b2_stageStoreImpulses
 		*/
 
@@ -1183,6 +1191,29 @@ static void b2SolverTask( void* taskContext )
 		// Advance the stage according to the sub-stepping tasks just completed
 		// integrate velocities / warm start / solve / integrate positions / relax
 		stageIndex += 1 + activeColorCount + ITERATIONS * activeColorCount + 1 + RELAX_ITERATIONS * activeColorCount;
+
+		int restitutionIterations = context->world->restitutionIterations;
+		if ( restitutionIterations > 0 && b2AtomicLoadInt( &context->anyRestitution ) != 0 )
+		{
+			for ( int j = 0; j < restitutionIterations; ++j )
+			{
+				b2ApplyRestitution_Overflow( context );
+
+				int iterationStageIndex = stageIndex;
+				for ( int colorIndex = 0; colorIndex < activeColorCount; ++colorIndex )
+				{
+					syncBits = ( graphSyncIndex << 16 ) | iterationStageIndex;
+					B2_ASSERT( stages[iterationStageIndex].type == b2_stageRestitution );
+					b2ExecuteMainStage( stages + iterationStageIndex, context, syncBits );
+					iterationStageIndex += 1;
+				}
+				graphSyncIndex += 1;
+			}
+
+			profile->relaxImpulses += b2GetMillisecondsAndReset( &ticks );
+		}
+
+		stageIndex += activeColorCount;
 
 		// Store impulses
 		b2StoreImpulses_Overflow( context );
@@ -1464,6 +1495,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stageCount += 1;
 		// b2_stageRelax
 		stageCount += RELAX_ITERATIONS * activeColorCount;
+		// b2_stageRestitution
+		stageCount += activeColorCount;
 		// b2_stageStoreImpulses
 		stageCount += 1;
 
@@ -1533,6 +1566,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 								   activeColorIndices );
 		stage = b2InitStage( stage, b2_stageIntegratePositions, bodyBlocks, bodyDim.count, UINT8_MAX );
 		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
+								   activeColorIndices );
+		stage = b2InitColorStages( stage, b2_stageRestitution, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
 		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactPrepareDim.count, UINT8_MAX );
 

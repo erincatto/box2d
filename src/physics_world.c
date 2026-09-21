@@ -159,6 +159,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	B2_CHECK_DEF( def );
 	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->gravity ), (b2WorldId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->restitutionThreshold ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( def->restitutionIterations >= 0, (b2WorldId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hitEventThreshold ), (b2WorldId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactHertz ), (b2WorldId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactDampingRatio ), (b2WorldId){ 0 } );
@@ -266,6 +267,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->gravity = def->gravity;
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
+	world->restitutionIterations = def->restitutionIterations;
+	world->enableRestitutionPropagation = def->enableRestitutionPropagation;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
 	world->contactSpeed = def->contactSpeed;
 	world->contactHertz = def->contactHertz;
@@ -1861,6 +1864,48 @@ float b2World_GetRestitutionThreshold( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	return world->restitutionThreshold;
+}
+
+void b2World_SetRestitutionIterations( b2WorldId worldId, int iterations )
+{
+	B2_CHECK_INPUT( iterations >= 0 );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	B2_REC( world, WorldSetRestitutionIterations, worldId, iterations );
+
+	world->restitutionIterations = iterations;
+}
+
+int b2World_GetRestitutionIterations( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->restitutionIterations;
+}
+
+void b2World_EnableRestitutionPropagation( b2WorldId worldId, bool flag )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	B2_REC( world, WorldEnableRestitutionPropagation, worldId, flag );
+
+	world->enableRestitutionPropagation = flag;
+}
+
+bool b2World_IsRestitutionPropagationEnabled( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->enableRestitutionPropagation;
 }
 
 void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
