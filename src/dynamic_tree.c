@@ -1791,7 +1791,7 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 
 	if ( tree->swapNodes == NULL )
 	{
-		tree->swapNodes = b2Alloc( tree->nodeCapacity * sizeof( b2TreeNode ) );
+		tree->swapNodes = b2AllocZero( tree->nodeCapacity * sizeof( b2TreeNode ) );
 	}
 
 	if ( proxyCount > tree->rebuildCapacity )
@@ -1799,17 +1799,23 @@ int b2DynamicTree_Rebuild( b2DynamicTree* tree, bool fullBuild )
 		int oldCapacity = tree->rebuildCapacity;
 		int newCapacity = proxyCount + proxyCount / 2;
 
-		tree->leafIndices = B2_GROW( tree->leafIndices, oldCapacity, newCapacity );
-		tree->leafNodes = B2_GROW( tree->leafNodes, oldCapacity, newCapacity );
+		b2Free( tree->leafIndices, oldCapacity * sizeof( int32_t ) );
+		tree->leafIndices = (int32_t*)b2Alloc( newCapacity * sizeof( int32_t ) );
+
+		b2Free( tree->leafNodes, oldCapacity * sizeof( b2TreeNode ) );
+		tree->leafNodes = (b2TreeNode*)b2Alloc( newCapacity * sizeof( b2TreeNode ) );
+
 #if B2_TREE_HEURISTIC == 0
-		tree->leafCenters = B2_GROW( tree->leafCenters, oldCapacity, newCapacity );
+		b2Free( tree->leafCenters, oldCapacity * sizeof( b2Vec2 ) );
+		tree->leafCenters = (b2Vec2*)b2Alloc( newCapacity * sizeof( b2Vec2 ) );
 #else
-		tree->leafBoxes = B2_GROW( tree->leafBoxes, oldCapacity, newCapacity );
-		tree->binIndices = B2_GROW( tree->binIndices, oldCapacity, newCapacity );
+		b2Free( tree->leafBoxes, oldCapacity * sizeof( b2AABB ) );
+		tree->leafBoxes = (b2AABB*)b2Alloc( newCapacity * sizeof( b2AABB ) );
+		b2Free( tree->binIndices, oldCapacity * sizeof( int32_t ) );
+		tree->binIndices = (int32_t*)b2Alloc( newCapacity * sizeof( int32_t ) );
 #endif
 		tree->rebuildCapacity = newCapacity;
 	}
-
 	int* leafIndices = tree->leafIndices;
 	b2TreeNode* leaves = tree->leafNodes;
 #if B2_TREE_HEURISTIC == 0

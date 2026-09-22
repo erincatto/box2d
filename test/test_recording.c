@@ -474,6 +474,8 @@ int RecordingTest( void )
 	b2World_EnableContinuous( worldId, true );
 	b2World_EnableWarmStarting( worldId, true );
 	b2World_SetRestitutionThreshold( worldId, 1.5f );
+	b2World_SetRestitutionIterations( worldId, 2 );
+	b2World_EnableRestitutionPropagation( worldId, true );
 	b2World_SetHitEventThreshold( worldId, 2.0f );
 	b2World_SetContactTuning( worldId, 30.0f, 10.0f, 3.0f );
 	b2World_SetContactRecycleDistance( worldId, 0.05f );

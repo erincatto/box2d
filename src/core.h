@@ -145,6 +145,31 @@
 
 #define B2_CHECK_DEF( DEF ) B2_ASSERT( DEF->internalValue == B2_SECRET_COOKIE )
 
+// Used to validate API inputs.
+#define B2_CHECK_INPUT( CONDITION )                                                                                              \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( CONDITION ) == false )                                                                                            \
+		{                                                                                                                        \
+			b2Log( "invalid input: %s in %s\n", #CONDITION, __func__ );                                                          \
+			B2_ASSERT( CONDITION );                                                                                              \
+			return;                                                                                                              \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
+
+#define B2_CHECK_INPUT_RETURN( CONDITION, RESULT )                                                                               \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( CONDITION ) == false )                                                                                            \
+		{                                                                                                                        \
+			b2Log( "invalid input: %s in %s\n", #CONDITION, __func__ );                                                          \
+			B2_ASSERT( CONDITION );                                                                                              \
+			return RESULT;                                                                                                       \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
+
 typedef struct b2AtomicInt
 {
 	int value;
@@ -160,6 +185,9 @@ typedef struct b2AtomicI64
 	// 64-bit atomic wants 8-byte alignment
 	_Alignas( 8 ) int64_t value;
 } b2AtomicI64;
+
+// Use 64 byte alignment for everything. Needed for tree nodes.
+#define B2_ALIGNMENT 64
 
 void* b2Alloc( size_t size );
 void* b2AllocZero( size_t size );

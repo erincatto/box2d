@@ -13,6 +13,8 @@
 
 void b2MoverJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( velocity ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MoverJointSetLinearVelocity, jointId, velocity );
 
@@ -28,6 +30,8 @@ b2Vec2 b2MoverJoint_GetLinearVelocity( b2JointId jointId )
 
 void b2MoverJoint_SetMaxVelocityForce( b2JointId jointId, b2Vec2 maxForce )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( maxForce ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, MoverJointSetMaxVelocityForce, jointId, maxForce );
 

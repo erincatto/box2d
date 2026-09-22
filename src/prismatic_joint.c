@@ -32,6 +32,8 @@ bool b2PrismaticJoint_IsSpringEnabled( b2JointId jointId )
 
 void b2PrismaticJoint_SetSpringHertz( b2JointId jointId, float hertz )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PrismaticJointSetSpringHertz, jointId, hertz );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
@@ -46,6 +48,8 @@ float b2PrismaticJoint_GetSpringHertz( b2JointId jointId )
 
 void b2PrismaticJoint_SetSpringDampingRatio( b2JointId jointId, float dampingRatio )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( dampingRatio ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PrismaticJointSetSpringDampingRatio, jointId, dampingRatio );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
@@ -60,6 +64,8 @@ float b2PrismaticJoint_GetSpringDampingRatio( b2JointId jointId )
 
 void b2PrismaticJoint_SetTargetTranslation( b2JointId jointId, float translation )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( translation ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PrismaticJointSetTargetTranslation, jointId, translation );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
@@ -105,6 +111,9 @@ float b2PrismaticJoint_GetUpperLimit( b2JointId jointId )
 
 void b2PrismaticJoint_SetLimits( b2JointId jointId, float lower, float upper )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( lower ) );
+	B2_CHECK_INPUT( b2IsValidFloat( upper ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PrismaticJointSetLimits, jointId, lower, upper );
 	B2_ASSERT( lower <= upper );
@@ -134,6 +143,8 @@ bool b2PrismaticJoint_IsMotorEnabled( b2JointId jointId )
 
 void b2PrismaticJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PrismaticJointSetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
@@ -155,6 +166,8 @@ float b2PrismaticJoint_GetMotorForce( b2JointId jointId )
 
 void b2PrismaticJoint_SetMaxMotorForce( b2JointId jointId, float force )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( force ) );
+
 	b2World* world = b2GetWorld( jointId.world0 );
 	B2_REC( world, PrismaticJointSetMaxMotorForce, jointId, force );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );

@@ -37,7 +37,7 @@ static float b2_lengthUnitsPerMeter = 1.0f;
 
 void b2SetLengthUnitsPerMeter( float lengthUnits )
 {
-	B2_ASSERT( b2IsValidFloat( lengthUnits ) && lengthUnits > 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( lengthUnits ) && lengthUnits > 0.0f );
 	b2_lengthUnitsPerMeter = lengthUnits;
 }
 
@@ -127,9 +127,6 @@ void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
 	b2_freeFcn = freeFcn;
 }
 
-// Use 64 byte alignment for everything. Needed for tree nodes.
-#define B2_ALIGNMENT 64
-
 void* b2Alloc( size_t size )
 {
 	if ( size == 0 )
@@ -137,7 +134,6 @@ void* b2Alloc( size_t size )
 		return NULL;
 	}
 
-	// This could cause some sharing issues, however Box2D rarely calls b2Alloc.
 	b2AtomicFetchAddI64( &b2_byteCount, size );
 
 	// Allocation must be a multiple of alignment or risk a seg fault
@@ -194,7 +190,8 @@ void b2Free( void* mem, size_t size )
 
 	if ( b2_freeFcn != NULL )
 	{
-		b2_freeFcn( mem, size );
+		size_t alignedSize = ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1;
+		b2_freeFcn( mem, alignedSize );
 	}
 	else
 	{

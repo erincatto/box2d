@@ -10,6 +10,7 @@
 // Installed for the whole run. A test that swaps in its own handler restores this one, since the
 // library default is not reachable and there is no way to read the current handler back.
 int TestAssertFcn( const char* condition, const char* fileName, int lineNumber );
+void TestLogFcn( const char* message );
 
 #define RUN_TEST( T )                                                                                                            \
 	do                                                                                                                           \

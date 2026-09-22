@@ -34,6 +34,7 @@ extern int DeterminismTest( void );
 extern int DistanceTest( void );
 extern int DynamicTreeTest( void );
 extern int IdTest( void );
+extern int InvalidInputTest( void );
 extern int LargeWorldTest( void );
 extern int MathTest( void );
 extern int MoverTest( void );
@@ -55,6 +56,11 @@ int TestAssertFcn( const char* condition, const char* fileName, int lineNumber )
 	fprintf( stderr, "BOX2D ASSERTION: %s, %s, line %d\n", condition, fileName, lineNumber );
 	fflush( stderr );
 	return 1;
+}
+
+void TestLogFcn( const char* message )
+{
+	printf( "Box2D: %s\n", message );
 }
 
 int main( int argc, char** argv )
@@ -79,6 +85,7 @@ int main( int argc, char** argv )
 #endif
 
 	b2SetAssertFcn( TestAssertFcn );
+	b2SetLogFcn( TestLogFcn );
 
 	const char* filter = NULL;
 	if ( argc > 1 )
@@ -104,6 +111,7 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( DistanceTest );
 	MAYBE_RUN_TEST( DynamicTreeTest );
 	MAYBE_RUN_TEST( IdTest );
+	MAYBE_RUN_TEST( InvalidInputTest );
 	MAYBE_RUN_TEST( LargeWorldTest );
 	MAYBE_RUN_TEST( MathTest );
 	MAYBE_RUN_TEST( MoverTest );

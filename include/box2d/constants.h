@@ -76,3 +76,6 @@
 
 /// The time that a body must be still before it will go to sleep. In seconds.
 #define B2_TIME_TO_SLEEP 0.5f
+
+/// The maximum number of restitution iterations. Needed to avoid a solver overflow.
+#define B2_MAX_RESTITUTION_ITERATIONS 63

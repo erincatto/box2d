@@ -157,6 +157,14 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 {
 	_Static_assert( B2_MAX_WORLDS < UINT16_MAX, "B2_MAX_WORLDS limit exceeded" );
 	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->gravity ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->restitutionThreshold ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( def->restitutionIterations >= 0, (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hitEventThreshold ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactHertz ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactDampingRatio ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->contactSpeed ), (b2WorldId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maximumLinearSpeed ) && def->maximumLinearSpeed > 0.0f, (b2WorldId){ 0 } );
 
 	if ( b2IsDenormalFlushEnabled() )
 	{
@@ -257,12 +265,15 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->activeTaskCount = 0;
 	world->taskCount = 0;
 	world->gravity = def->gravity;
-	world->hitEventThreshold = def->hitEventThreshold;
-	world->restitutionThreshold = def->restitutionThreshold;
+	world->hitEventThreshold = b2ClampFloat( def->hitEventThreshold, 0.0f, FLT_MAX );
+	world->restitutionThreshold = b2ClampFloat( def->restitutionThreshold, 0.0f, FLT_MAX );
+	// Clamp this to avoid overflowing the solver sync flags.
+	world->restitutionIterations = b2ClampInt( def->restitutionIterations, 0, B2_MAX_RESTITUTION_ITERATIONS );
+	world->enableRestitutionPropagation = def->enableRestitutionPropagation;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
-	world->contactSpeed = def->contactSpeed;
-	world->contactHertz = def->contactHertz;
-	world->contactDampingRatio = def->contactDampingRatio;
+	world->contactSpeed = b2ClampFloat( def->contactSpeed, 0.0f, FLT_MAX );
+	world->contactHertz = b2ClampFloat( def->contactHertz, 0.0f, FLT_MAX );
+	world->contactDampingRatio = b2ClampFloat( def->contactDampingRatio, 0.0f, FLT_MAX );
 	world->contactRecycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
 	if ( def->frictionCallback == NULL )
@@ -471,7 +482,6 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 	b2SolverSet* solverSets = world->solverSets.data;
 	b2BodySim* awakeSims = solverSets[b2_awakeSet].bodySims.data;
 	b2BodySim* staticSims = solverSets[b2_staticSet].bodySims.data;
-	b2BodyState* states = solverSets[b2_awakeSet].bodyStates.data;
 
 	B2_ASSERT( startIndex < endIndex );
 
@@ -579,33 +589,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
-
-						if ( mp->totalNormalImpulse > 0.0f && mp->normalVelocity < -world->restitutionThreshold )
-						{
-							mp->restitutionVelocity = -contactSim->restitution * mp->normalVelocity;
-						}
-						else
-						{
-							mp->restitutionVelocity = 0.0f;
-						}
-
-						int indexA = b2DecodeAwakeIndex( encodedA );
-						b2Vec2 vrA = b2Vec2_zero;
-						if ( indexA != B2_NULL_INDEX )
-						{
-							b2BodyState* stateA = states + indexA;
-							vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
-						}
-
-						int indexB = b2DecodeAwakeIndex( encodedB );
-						b2Vec2 vrB = b2Vec2_zero;
-						if ( indexB != B2_NULL_INDEX )
-						{
-							b2BodyState* stateB = states + indexB;
-							vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
-						}
-
-						mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
+						mp->normalVelocity = 0.0f;
 						mp->persisted = true;
 					}
 
@@ -646,27 +630,9 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			{
 				for ( int i = 0; i < contactSim->manifold.pointCount; ++i )
 				{
+					// Cache separation
 					b2ManifoldPoint* mp = contactSim->manifold.points + i;
 					mp->baseSeparation = mp->separation;
-
-					// Save relative velocity for restitution and hit events reporting.
-					int indexA = b2DecodeAwakeIndex( encodedA );
-					b2Vec2 vrA = b2Vec2_zero;
-					if ( indexA != B2_NULL_INDEX )
-					{
-						b2BodyState* stateA = states + indexA;
-						vrA = b2Add( stateA->linearVelocity, b2CrossSV( stateA->angularVelocity, mp->anchorA ) );
-					}
-
-					int indexB = b2DecodeAwakeIndex( encodedB );
-					b2Vec2 vrB = b2Vec2_zero;
-					if ( indexB != B2_NULL_INDEX )
-					{
-						b2BodyState* stateB = states + indexB;
-						vrB = b2Add( stateB->linearVelocity, b2CrossSV( stateB->angularVelocity, mp->anchorB ) );
-					}
-
-					mp->normalVelocity = b2Dot( contactSim->manifold.normal, b2Sub( vrB, vrA ) );
 				}
 			}
 
@@ -937,7 +903,7 @@ static void b2Collide( b2StepContext* context )
 
 void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 {
-	B2_ASSERT( b2IsValidFloat( timeStep ) );
+	B2_CHECK_INPUT( b2IsValidFloat( timeStep ) );
 	B2_ASSERT( 0 < subStepCount );
 
 	b2World* world = b2GetWorldFromId( worldId );
@@ -1213,7 +1179,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorYellow;
 		}
-		else if ( body->flags & b2_isFast )
+		else if ( bodySim->flags & b2_isFast )
 		{
 			color = b2_colorSalmon;
 		}
@@ -1881,6 +1847,8 @@ bool b2World_IsContinuousEnabled( b2WorldId worldId )
 
 void b2World_SetRestitutionThreshold( b2WorldId worldId, float value )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( value ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1899,8 +1867,52 @@ float b2World_GetRestitutionThreshold( b2WorldId worldId )
 	return world->restitutionThreshold;
 }
 
+void b2World_SetRestitutionIterations( b2WorldId worldId, int iterations )
+{
+	B2_CHECK_INPUT( iterations >= 0 );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	B2_REC( world, WorldSetRestitutionIterations, worldId, iterations );
+
+	world->restitutionIterations = b2ClampInt( iterations, 0, B2_MAX_RESTITUTION_ITERATIONS );
+}
+
+int b2World_GetRestitutionIterations( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->restitutionIterations;
+}
+
+void b2World_EnableRestitutionPropagation( b2WorldId worldId, bool flag )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	B2_REC( world, WorldEnableRestitutionPropagation, worldId, flag );
+
+	world->enableRestitutionPropagation = flag;
+}
+
+bool b2World_IsRestitutionPropagationEnabled( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	return world->enableRestitutionPropagation;
+}
+
 void b2World_SetHitEventThreshold( b2WorldId worldId, float value )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( value ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1921,6 +1933,10 @@ float b2World_GetHitEventThreshold( b2WorldId worldId )
 
 void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( hertz ) );
+	B2_CHECK_INPUT( b2IsValidFloat( dampingRatio ) );
+	B2_CHECK_INPUT( b2IsValidFloat( pushSpeed ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1937,6 +1953,8 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 
 void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance )
 {
+	B2_CHECK_INPUT( b2IsValidFloat( recycleDistance ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
@@ -1957,7 +1975,7 @@ float b2World_GetContactRecycleDistance( b2WorldId worldId )
 
 void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
 {
-	B2_ASSERT( b2IsValidFloat( maximumLinearSpeed ) && maximumLinearSpeed > 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( maximumLinearSpeed ) && maximumLinearSpeed > 0.0f );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -3083,6 +3101,8 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn,
 
 void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity )
 {
+	B2_CHECK_INPUT( b2IsValidVec2( gravity ) );
+
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_REC( world, WorldSetGravity, worldId, gravity );
 	world->gravity = gravity;
@@ -3193,10 +3213,10 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	float falloff = explosionDef->falloff;
 	float impulsePerLength = explosionDef->impulsePerLength;
 
-	B2_ASSERT( b2IsValidPosition( position ) );
-	B2_ASSERT( b2IsValidFloat( radius ) && radius >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
-	B2_ASSERT( b2IsValidFloat( impulsePerLength ) );
+	B2_CHECK_INPUT( b2IsValidPosition( position ) );
+	B2_CHECK_INPUT( b2IsValidFloat( radius ) && radius >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
+	B2_CHECK_INPUT( b2IsValidFloat( impulsePerLength ) );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -3402,9 +3422,8 @@ void b2ValidateSolverSets( b2World* world )
 					B2_ASSERT( body->setIndex == setIndex );
 					B2_ASSERT( body->localIndex == i );
 
-					uint32_t syncedFlags = body->flags & ~b2_bodyTransientFlags;
+					uint32_t syncedFlags = body->flags & ~( b2_isFast | b2_bodyTransientFlags );
 					B2_ASSERT( ( bodySim->flags & syncedFlags ) == syncedFlags );
-					B2_ASSERT( ( bodySim->flags & b2_isFast ) == ( body->flags & b2_isFast ) );
 
 					b2BodyState* bodyState = b2GetBodyState( world, body );
 					if ( bodyState != NULL )

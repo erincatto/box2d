@@ -191,6 +191,7 @@ fn buildTests(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, box2d_l
             "test/test_distance.c",
             "test/test_dynamic_tree.c",
             "test/test_id.c",
+            "test/test_invalid_input.c",
             "test/test_large_world.c",
             "test/test_math.c",
             "test/test_mover.c",

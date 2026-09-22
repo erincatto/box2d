@@ -159,6 +159,7 @@ set(BOX2D_SAMPLE_COMMON_FILES
     sample_geometry.cpp
     sample_issues.cpp
     sample_joints.cpp
+    sample_restitution.cpp
     sample_robustness.cpp
     sample_shapes.cpp
     sample_stacking.cpp

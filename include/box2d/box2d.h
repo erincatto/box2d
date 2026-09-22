@@ -133,6 +133,19 @@ B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 /// Get the the restitution speed threshold. Usually in meters per second.
 B2_API float b2World_GetRestitutionThreshold( b2WorldId worldId );
 
+/// Set the number of iterations used by the restitution solver.
+/// @see B2_MAX_RESTITUTION_ITERATIONS
+B2_API void b2World_SetRestitutionIterations( b2WorldId worldId, int iterations );
+
+/// Get the number of iterations used by the restitution solver.
+B2_API int b2World_GetRestitutionIterations( b2WorldId worldId );
+
+/// Enable restitution propagation.
+B2_API void b2World_EnableRestitutionPropagation( b2WorldId worldId, bool flag );
+
+/// Is restitution propagation enabled?
+B2_API bool b2World_IsRestitutionPropagationEnabled( b2WorldId worldId );
+
 /// Adjust the hit event threshold. This controls the collision speed needed to generate a b2ContactHitEvent.
 /// Usually in meters per second.
 /// @see b2WorldDef::hitEventThreshold

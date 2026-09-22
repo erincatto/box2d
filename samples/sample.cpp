@@ -563,6 +563,8 @@ void Sample::Step()
 	b2World_EnableSleeping( m_worldId, m_context->enableSleep );
 	b2World_EnableWarmStarting( m_worldId, m_context->enableWarmStarting );
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
+	b2World_SetRestitutionIterations( m_worldId, m_context->restitutionIterations );
+	b2World_EnableRestitutionPropagation( m_worldId, m_context->enableRestitutionPropagation );
 
 	for ( int i = 0; i < 1; ++i )
 	{
@@ -1286,6 +1288,8 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		ResetView( &context->camera );
 		context->sampleIndex = selection;
 		context->subStepCount = 4;
+		context->restitutionIterations = 2;
+		context->enableRestitutionPropagation = false;
 		context->debugDraw.drawJoints = true;
 	}
 
@@ -1740,14 +1744,22 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Solver", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		ImGui::PushItemWidth( 6.0f * fontSize );
+
 		ImGui::SliderInt( "Sub-steps##Solver", &context->subStepCount, 1, 32 );
+		ImGui::SetItemTooltip( "The solver breaks the full step into several sub-steps.\nMore sub-steps usually lead to more accurate results." );
+
+		ImGui::SliderInt( "Rest Iters##Solver", &context->restitutionIterations, 0, 8 );
+		ImGui::SetItemTooltip( "Iterations for the restitution solver." );
+
 		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
+		ImGui::SetItemTooltip( "The number of world steps per second." );
 
 		if ( ImGui::SliderInt( "Workers##Solver", &context->workerCount, 1, B2_MAX_WORKERS ) )
 		{
 			context->workerCount = b2ClampInt( context->workerCount, 1, B2_MAX_WORKERS );
 			SelectSample( context, context->sampleIndex, true );
 		}
+		ImGui::SetItemTooltip( "The number worker threads used by the world step." );
 
 		float recyclingCentimeters = 100.0f * context->recycleDistance;
 		if ( ImGui::SliderFloat( "Recycle##Solver", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
@@ -1755,11 +1767,21 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			context->recycleDistance = 0.01f * recyclingCentimeters;
 			b2World_SetContactRecycleDistance( context->sample->m_worldId, context->recycleDistance );
 		}
+		ImGui::SetItemTooltip( "The contact recycling distance tolerance.\nSet to zero to disable recycling." );
+
 		ImGui::PopItemWidth();
 
 		ImGui::Checkbox( "Sleep##Solver", &context->enableSleep );
+		ImGui::SetItemTooltip( "Allow bodies to sleep, reducing simulation CPU cost." );
+
 		ImGui::Checkbox( "Warm Starting##Solver", &context->enableWarmStarting );
+		ImGui::SetItemTooltip( "Enable solver warm starting which usually improves stacking stability." );
+
 		ImGui::Checkbox( "Continuous##Solver", &context->enableContinuous );
+		ImGui::SetItemTooltip( "Enable continuous collision detection." );
+
+		ImGui::Checkbox( "Rest Prop##Solver", &context->enableRestitutionPropagation );
+		ImGui::SetItemTooltip( "Enable restitution solver propagation across all touching contacts points" );
 	}
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )
