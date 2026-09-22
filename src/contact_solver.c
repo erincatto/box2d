@@ -863,12 +863,6 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 	return _mm256_blendv_ps( a, b, mask );
 }
 
-// data must be 32-byte aligned
-static inline b2FloatW b2LoadW( const float* data )
-{
-	return _mm256_load_ps( data );
-}
-
 // Unaligned load.
 static inline b2FloatW b2LoadU( const float* data )
 {
@@ -996,11 +990,6 @@ static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 {
 	uint32x4_t mask32 = vreinterpretq_u32_f32( mask );
 	return vbslq_f32( mask32, b, a );
-}
-
-static inline b2FloatW b2LoadW( const float32_t* data )
-{
-	return vld1q_f32( data );
 }
 
 static inline b2FloatW b2LoadU( const float32_t* data )
@@ -1146,11 +1135,6 @@ static inline bool b2AllZeroW( b2FloatW a )
 static inline b2FloatW b2BlendW( b2FloatW a, b2FloatW b, b2FloatW mask )
 {
 	return _mm_or_ps( _mm_and_ps( mask, b ), _mm_andnot_ps( mask, a ) );
-}
-
-static inline b2FloatW b2LoadW( const float* data )
-{
-	return _mm_load_ps( data );
 }
 
 static inline b2FloatW b2LoadU( const float* data )
@@ -1302,11 +1286,6 @@ static inline bool b2AnyTrueW( b2FloatW mask )
 static inline bool b2AllZeroW( b2FloatW a )
 {
 	return a.x == 0.0f && a.y == 0.0f && a.z == 0.0f && a.w == 0.0f;
-}
-
-static inline b2FloatW b2LoadW( const float* data )
-{
-	return (b2FloatW){ data[0], data[1], data[2], data[3] };
 }
 
 static inline b2FloatW b2LoadU( const float* data )
@@ -1598,14 +1577,14 @@ B2_FORCE_INLINE b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT stat
 	int i3 = indices[2] - 1;
 	int i4 = indices[3] - 1;
 
-	b2FloatW b1a = i1 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i1 ) + 0 );
-	b2FloatW b1b = i1 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i1 ) + 4 );
-	b2FloatW b2a = i2 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i2 ) + 0 );
-	b2FloatW b2b = i2 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i2 ) + 4 );
-	b2FloatW b3a = i3 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i3 ) + 0 );
-	b2FloatW b3b = i3 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i3 ) + 4 );
-	b2FloatW b4a = i4 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i4 ) + 0 );
-	b2FloatW b4b = i4 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i4 ) + 4 );
+	b2FloatW b1a = i1 == B2_NULL_INDEX ? identityA : vld1q_f32( (float*)( states + i1 ) + 0 );
+	b2FloatW b1b = i1 == B2_NULL_INDEX ? identityB : vld1q_f32( (float*)( states + i1 ) + 4 );
+	b2FloatW b2a = i2 == B2_NULL_INDEX ? identityA : vld1q_f32( (float*)( states + i2 ) + 0 );
+	b2FloatW b2b = i2 == B2_NULL_INDEX ? identityB : vld1q_f32( (float*)( states + i2 ) + 4 );
+	b2FloatW b3a = i3 == B2_NULL_INDEX ? identityA : vld1q_f32( (float*)( states + i3 ) + 0 );
+	b2FloatW b3b = i3 == B2_NULL_INDEX ? identityB : vld1q_f32( (float*)( states + i3 ) + 4 );
+	b2FloatW b4a = i4 == B2_NULL_INDEX ? identityA : vld1q_f32( (float*)( states + i4 ) + 0 );
+	b2FloatW b4b = i4 == B2_NULL_INDEX ? identityB : vld1q_f32( (float*)( states + i4 ) + 4 );
 
 	// [vx1 vx3 vy1 vy3]
 	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
@@ -1717,14 +1696,14 @@ B2_FORCE_INLINE b2BodyStateW b2GatherBodies( const b2BodyState* B2_RESTRICT stat
 	int i3 = indices[2] - 1;
 	int i4 = indices[3] - 1;
 
-	b2FloatW b1a = i1 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i1 ) + 0 );
-	b2FloatW b1b = i1 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i1 ) + 4 );
-	b2FloatW b2a = i2 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i2 ) + 0 );
-	b2FloatW b2b = i2 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i2 ) + 4 );
-	b2FloatW b3a = i3 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i3 ) + 0 );
-	b2FloatW b3b = i3 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i3 ) + 4 );
-	b2FloatW b4a = i4 == B2_NULL_INDEX ? identityA : b2LoadW( (float*)( states + i4 ) + 0 );
-	b2FloatW b4b = i4 == B2_NULL_INDEX ? identityB : b2LoadW( (float*)( states + i4 ) + 4 );
+	b2FloatW b1a = i1 == B2_NULL_INDEX ? identityA : _mm_load_ps( (float*)( states + i1 ) + 0 );
+	b2FloatW b1b = i1 == B2_NULL_INDEX ? identityB : _mm_load_ps( (float*)( states + i1 ) + 4 );
+	b2FloatW b2a = i2 == B2_NULL_INDEX ? identityA : _mm_load_ps( (float*)( states + i2 ) + 0 );
+	b2FloatW b2b = i2 == B2_NULL_INDEX ? identityB : _mm_load_ps( (float*)( states + i2 ) + 4 );
+	b2FloatW b3a = i3 == B2_NULL_INDEX ? identityA : _mm_load_ps( (float*)( states + i3 ) + 0 );
+	b2FloatW b3b = i3 == B2_NULL_INDEX ? identityB : _mm_load_ps( (float*)( states + i3 ) + 4 );
+	b2FloatW b4a = i4 == B2_NULL_INDEX ? identityA : _mm_load_ps( (float*)( states + i4 ) + 0 );
+	b2FloatW b4b = i4 == B2_NULL_INDEX ? identityB : _mm_load_ps( (float*)( states + i4 ) + 4 );
 
 	// [vx1 vx3 vy1 vy3]
 	b2FloatW t1a = b2UnpackLoW( b1a, b3a );
