@@ -117,6 +117,9 @@ typedef struct b2ContactSim
 	int encodedBodySimA;
 	int encodedBodySimB;
 
+	// b2ContactFlags
+	uint32_t simFlags;
+
 	int shapeIdA;
 	int shapeIdB;
 
@@ -133,9 +136,6 @@ typedef struct b2ContactSim
 	float restitution;
 	float rollingResistance;
 	float tangentSpeed;
-
-	// b2ContactFlags
-	uint32_t simFlags;
 
 	b2SimplexCache cache;
 } b2ContactSim;

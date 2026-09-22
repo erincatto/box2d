@@ -555,7 +555,8 @@ typedef struct b2ManifoldPoint
 	float totalNormalImpulse;
 
 	/// Relative normal velocity pre-solve. Negative when approaching. This is only
-	/// computed if hit events are enabled.
+	/// computed if hit events are enabled. It may be computed otherwise as a side effect
+	/// of SIMD bundling, but that is not guaranteed.
 	float normalVelocity;
 
 	/// Cached separation used for contact recycling
