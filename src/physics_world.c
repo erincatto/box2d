@@ -267,7 +267,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->gravity = def->gravity;
 	world->hitEventThreshold = def->hitEventThreshold;
 	world->restitutionThreshold = def->restitutionThreshold;
-	world->restitutionIterations = def->restitutionIterations;
+	// Clamp this to avoid overflowing the solver sync flags.
+	world->restitutionIterations = b2ClampInt(def->restitutionIterations, 0, 63);
 	world->enableRestitutionPropagation = def->enableRestitutionPropagation;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
 	world->contactSpeed = def->contactSpeed;

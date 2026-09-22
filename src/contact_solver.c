@@ -2218,7 +2218,11 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 
 					for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )
 					{
-						contactLanes[lane]->manifold.points[0].normalVelocity = normalVelocities[lane];
+						// Check the point count to avoid a race writing to b2_zeroContactSim.
+						if ( contactLanes[lane]->manifold.pointCount > 0 )
+						{
+							contactLanes[lane]->manifold.points[0].normalVelocity = normalVelocities[lane];
+						}
 					}
 				}
 
