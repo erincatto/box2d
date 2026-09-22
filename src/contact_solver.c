@@ -1519,6 +1519,10 @@ B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_R
 	b2FloatW tt6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
 	b2FloatW tt7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
 
+	_Static_assert( b2_dynamicFlag == ( 1 << 9 ), "dynamic flag must be bit 9" );
+	int dynamicMask =
+		_mm256_movemask_ps( _mm256_castsi256_ps( _mm256_slli_epi32( _mm256_castps_si256( simdBody->flags ), 31 - 9 ) ) );
+
 	// I don't use any dummy body in the body array because this will lead to multithreaded sharing and the
 	// associated cache flushing.
 
@@ -1532,22 +1536,45 @@ B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_R
 	int i7 = indices[6] - 1;
 	int i8 = indices[7] - 1;
 
-	if ( i1 != B2_NULL_INDEX && ( states[i1].flags & b2_dynamicFlag ) != 0 )
+	if ( dynamicMask & 1 )
+	{
 		_mm256_store_ps( (float*)( states + i1 ), _mm256_permute2f128_ps( tt0, tt4, 0x20 ) );
-	if ( i2 != B2_NULL_INDEX && ( states[i2].flags & b2_dynamicFlag ) != 0 )
+	}
+	
+	if ( dynamicMask & 2 )
+	{
 		_mm256_store_ps( (float*)( states + i2 ), _mm256_permute2f128_ps( tt1, tt5, 0x20 ) );
-	if ( i3 != B2_NULL_INDEX && ( states[i3].flags & b2_dynamicFlag ) != 0 )
+	}
+
+	if ( dynamicMask & 4 )
+	{
 		_mm256_store_ps( (float*)( states + i3 ), _mm256_permute2f128_ps( tt2, tt6, 0x20 ) );
-	if ( i4 != B2_NULL_INDEX && ( states[i4].flags & b2_dynamicFlag ) != 0 )
+	}
+
+	if ( dynamicMask & 8 )
+	{
 		_mm256_store_ps( (float*)( states + i4 ), _mm256_permute2f128_ps( tt3, tt7, 0x20 ) );
-	if ( i5 != B2_NULL_INDEX && ( states[i5].flags & b2_dynamicFlag ) != 0 )
+	}
+
+	if ( dynamicMask & 16 )
+	{
 		_mm256_store_ps( (float*)( states + i5 ), _mm256_permute2f128_ps( tt0, tt4, 0x31 ) );
-	if ( i6 != B2_NULL_INDEX && ( states[i6].flags & b2_dynamicFlag ) != 0 )
+	}
+
+	if ( dynamicMask & 32 )
+	{
 		_mm256_store_ps( (float*)( states + i6 ), _mm256_permute2f128_ps( tt1, tt5, 0x31 ) );
-	if ( i7 != B2_NULL_INDEX && ( states[i7].flags & b2_dynamicFlag ) != 0 )
+	}
+
+	if ( dynamicMask & 64 )
+	{
 		_mm256_store_ps( (float*)( states + i7 ), _mm256_permute2f128_ps( tt2, tt6, 0x31 ) );
-	if ( i8 != B2_NULL_INDEX && ( states[i8].flags & b2_dynamicFlag ) != 0 )
+	}
+
+	if ( dynamicMask & 128 )
+	{
 		_mm256_store_ps( (float*)( states + i8 ), _mm256_permute2f128_ps( tt3, tt7, 0x31 ) );
+	}
 }
 
 #elif defined( B2_SIMD_NEON )
@@ -1747,67 +1774,39 @@ B2_FORCE_INLINE void b2ScatterBodies( b2BodyState* B2_RESTRICT states, int* B2_R
 	// [w3 f3 w4 f4]
 	b2FloatW t4 = b2UnpackHiW( simdBody->w, simdBody->flags );
 
+	_Static_assert( b2_dynamicFlag == ( 1 << 9 ), "dynamic flag must be bit 9" );
+	int dynamicMask = _mm_movemask_ps( _mm_castsi128_ps( _mm_slli_epi32( _mm_castps_si128( simdBody->flags ), 31 - 9 ) ) );
+
 	// zero means null
 	int i1 = indices[0] - 1;
 	int i2 = indices[1] - 1;
 	int i3 = indices[2] - 1;
 	int i4 = indices[3] - 1;
 
-#if 1
 	// I don't use any dummy body in the body array because this will lead to multithreaded cache coherence problems.
-	if ( i1 != B2_NULL_INDEX && ( states[i1].flags & b2_dynamicFlag ) != 0 )
+	if ( dynamicMask & 1 )
 	{
 		// [t1.x t1.y t3.x t3.y]
 		b2StoreW( (float*)( states + i1 ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
 	}
 
-	if ( i2 != B2_NULL_INDEX && ( states[i2].flags & b2_dynamicFlag ) != 0 )
+	if ( dynamicMask & 2 )
 	{
 		// [t1.z t1.w t3.z t3.w]
 		b2StoreW( (float*)( states + i2 ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
 	}
 
-	if ( i3 != B2_NULL_INDEX && ( states[i3].flags & b2_dynamicFlag ) != 0 )
+	if ( dynamicMask & 4 )
 	{
 		// [t2.x t2.y t4.x t4.y]
 		b2StoreW( (float*)( states + i3 ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
 	}
 
-	if ( i4 != B2_NULL_INDEX && ( states[i4].flags & b2_dynamicFlag ) != 0 )
+	if ( dynamicMask & 8 )
 	{
 		// [t2.z t2.w t4.z t4.w]
 		b2StoreW( (float*)( states + i4 ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
 	}
-
-#else
-
-	// todo_testing this is here to test the impact of unsafe writes
-
-	if ( i1 != B2_NULL_INDEX )
-	{
-		// [t1.x t1.y t3.x t3.y]
-		b2StoreW( (float*)( states + i1 ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
-	}
-
-	if ( i2 != B2_NULL_INDEX )
-	{
-		// [t1.z t1.w t3.z t3.w]
-		b2StoreW( (float*)( states + i2 ), _mm_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
-	}
-
-	if ( i3 != B2_NULL_INDEX )
-	{
-		// [t2.x t2.y t4.x t4.y]
-		b2StoreW( (float*)( states + i3 ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 1, 0, 1, 0 ) ) );
-	}
-
-	if ( i4 != B2_NULL_INDEX )
-	{
-		// [t2.z t2.w t4.z t4.w]
-		b2StoreW( (float*)( states + i4 ), _mm_shuffle_ps( t2, t4, _MM_SHUFFLE( 3, 2, 3, 2 ) ) );
-	}
-
-#endif
 }
 
 #else
