@@ -134,6 +134,7 @@ B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 B2_API float b2World_GetRestitutionThreshold( b2WorldId worldId );
 
 /// Set the number of iterations used by the restitution solver.
+/// @see B2_MAX_RESTITUTION_ITERATIONS
 B2_API void b2World_SetRestitutionIterations( b2WorldId worldId, int iterations );
 
 /// Get the number of iterations used by the restitution solver.

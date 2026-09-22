@@ -99,6 +99,7 @@ typedef struct b2WorldDef
 	float restitutionThreshold;
 
 	/// Number of iterations of the restitution solver. More iterations can lead to less box spinning.
+	/// @see B2_MAX_RESTITUTION_ITERATIONS
 	int restitutionIterations;
 
 	/// Enable full contact propagation in the restitution solver. Expensive.
