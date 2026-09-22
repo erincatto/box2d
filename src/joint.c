@@ -437,8 +437,8 @@ b2JointId b2CreateDistanceJoint( b2WorldId worldId, const b2DistanceJointDef* de
 	joint->distanceJoint.maxMotorForce = def->maxMotorForce;
 	joint->distanceJoint.motorSpeed = def->motorSpeed;
 	joint->distanceJoint.enableSpring = def->enableSpring;
-	joint->distanceJoint.lowerSpringForce = def->lowerSpringForce;
-	joint->distanceJoint.upperSpringForce = def->upperSpringForce;
+	joint->distanceJoint.lowerSpringForce = b2MinFloat( def->lowerSpringForce, def->upperSpringForce );
+	joint->distanceJoint.upperSpringForce = b2MaxFloat( def->lowerSpringForce, def->upperSpringForce );
 	joint->distanceJoint.enableLimit = def->enableLimit;
 	joint->distanceJoint.enableMotor = def->enableMotor;
 	joint->distanceJoint.impulse = 0.0f;
@@ -631,8 +631,8 @@ b2JointId b2CreatePrismaticJoint( b2WorldId worldId, const b2PrismaticJointDef* 
 	joint->prismaticJoint.hertz = def->hertz;
 	joint->prismaticJoint.dampingRatio = def->dampingRatio;
 	joint->prismaticJoint.targetTranslation = def->targetTranslation;
-	joint->prismaticJoint.lowerTranslation = def->lowerTranslation;
-	joint->prismaticJoint.upperTranslation = def->upperTranslation;
+	joint->prismaticJoint.lowerTranslation = b2MinFloat( def->lowerTranslation, def->upperTranslation );
+	joint->prismaticJoint.upperTranslation = b2MaxFloat( def->lowerTranslation, def->upperTranslation );
 	joint->prismaticJoint.maxMotorForce = def->maxMotorForce;
 	joint->prismaticJoint.motorSpeed = def->motorSpeed;
 	joint->prismaticJoint.enableSpring = def->enableSpring;
@@ -770,8 +770,8 @@ b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 	joint->wheelJoint.motorImpulse = 0.0f;
 	joint->wheelJoint.lowerImpulse = 0.0f;
 	joint->wheelJoint.upperImpulse = 0.0f;
-	joint->wheelJoint.lowerTranslation = def->lowerTranslation;
-	joint->wheelJoint.upperTranslation = def->upperTranslation;
+	joint->wheelJoint.lowerTranslation = b2MinFloat( def->lowerTranslation, def->upperTranslation );
+	joint->wheelJoint.upperTranslation = b2MaxFloat( def->lowerTranslation, def->upperTranslation );
 	joint->wheelJoint.maxMotorTorque = def->maxMotorTorque;
 	joint->wheelJoint.motorSpeed = def->motorSpeed;
 	joint->wheelJoint.hertz = def->hertz;

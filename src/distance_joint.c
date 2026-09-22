@@ -129,8 +129,8 @@ void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, f
 	B2_REC( world, DistanceJointSetSpringForceRange, jointId, lowerForce, upperForce );
 	B2_ASSERT( lowerForce <= upperForce );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
-	base->distanceJoint.lowerSpringForce = lowerForce;
-	base->distanceJoint.upperSpringForce = upperForce;
+	base->distanceJoint.lowerSpringForce = b2MinFloat( lowerForce, upperForce );
+	base->distanceJoint.upperSpringForce = b2MaxFloat( lowerForce, upperForce );
 }
 
 void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce )

@@ -265,15 +265,15 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->activeTaskCount = 0;
 	world->taskCount = 0;
 	world->gravity = def->gravity;
-	world->hitEventThreshold = def->hitEventThreshold;
-	world->restitutionThreshold = def->restitutionThreshold;
+	world->hitEventThreshold = b2ClampFloat( def->hitEventThreshold, 0.0f, FLT_MAX );
+	world->restitutionThreshold = b2ClampFloat( def->restitutionThreshold, 0.0f, FLT_MAX );
 	// Clamp this to avoid overflowing the solver sync flags.
 	world->restitutionIterations = b2ClampInt( def->restitutionIterations, 0, B2_MAX_RESTITUTION_ITERATIONS );
 	world->enableRestitutionPropagation = def->enableRestitutionPropagation;
 	world->maxLinearSpeed = def->maximumLinearSpeed;
-	world->contactSpeed = def->contactSpeed;
-	world->contactHertz = def->contactHertz;
-	world->contactDampingRatio = def->contactDampingRatio;
+	world->contactSpeed = b2ClampFloat( def->contactSpeed, 0.0f, FLT_MAX );
+	world->contactHertz = b2ClampFloat( def->contactHertz, 0.0f, FLT_MAX );
+	world->contactDampingRatio = b2ClampFloat( def->contactDampingRatio, 0.0f, FLT_MAX );
 	world->contactRecycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
 	if ( def->frictionCallback == NULL )
