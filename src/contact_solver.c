@@ -1398,8 +1398,6 @@ typedef struct b2ContactConstraintWide
 	int indexA[B2_SIMD_WIDTH];
 	int indexB[B2_SIMD_WIDTH];
 
-	int pointCounts[B2_SIMD_WIDTH];
-
 	b2FloatW invMassA, invMassB;
 	b2FloatW invIA, invIB;
 	b2Vec2W normal;
@@ -1983,7 +1981,6 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 					// index base-1
 					cw->indexA[laneIndex] = b2DecodeAwakeIndex( c->encodedBodySimA ) + 1;
 					cw->indexB[laneIndex] = b2DecodeAwakeIndex( c->encodedBodySimB ) + 1;
-					cw->pointCounts[laneIndex] = c->manifold.pointCount;
 					hitEventLanes |= ( c->simFlags & b2_simEnableHitEvent ) != 0 ? 1 << laneIndex : 0;
 
 #if B2_ENABLE_VALIDATION
@@ -2015,16 +2012,17 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 
 			b2Vec2W tangent = b2RightPerpW( cw->normal );
 
-			b2FloatW twoPointMask;
-			{
-				_Alignas( 32 ) float buffer[B2_SIMD_WIDTH];
-				for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )
-				{
-					buffer[lane] = cw->pointCounts[lane] > 1 ? 1.0f : 0.0f;
-				}
-
-				twoPointMask = b2GreaterThanW( b2LoadW( buffer ), zeroW );
-			}
+			b2FloatW pointCounts;
+#if B2_SIMD_WIDTH == 4
+			pointCounts = b2SetW( (float)contactLanes[0]->manifold.pointCount, (float)contactLanes[1]->manifold.pointCount,
+								  (float)contactLanes[2]->manifold.pointCount, (float)contactLanes[3]->manifold.pointCount );
+#elif B2_SIMD_WIDTH == 8
+			pointCounts = b2SetW( (float)contactLanes[0]->manifold.pointCount, (float)contactLanes[1]->manifold.pointCount,
+								  (float)contactLanes[2]->manifold.pointCount, (float)contactLanes[3]->manifold.pointCount,
+								  (float)contactLanes[4]->manifold.pointCount, (float)contactLanes[5]->manifold.pointCount,
+								  (float)contactLanes[6]->manifold.pointCount, (float)contactLanes[7]->manifold.pointCount );
+#endif
+			b2FloatW twoPointMask = b2GreaterThanW( pointCounts, oneW );
 
 			b2FloatW separation1 = zeroW;
 			b2FloatW separation2 = zeroW;
@@ -2285,7 +2283,7 @@ void b2PrepareContacts_Wide( b2SolverBlock block, b2StepContext* context )
 
 						for ( int lane = 0; lane < B2_SIMD_WIDTH; ++lane )
 						{
-							if ( ( hitEventLanes & ( 1 << lane ) ) != 0 && cw->pointCounts[lane] > 1 )
+							if ( ( hitEventLanes & ( 1 << lane ) ) != 0 && contactLanes[lane]->manifold.pointCount > 1 )
 							{
 								contactLanes[lane]->manifold.points[1].normalVelocity = normalVelocities[lane];
 							}
