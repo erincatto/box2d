@@ -759,6 +759,13 @@ B2_API void b2SetLengthUnitsPerMeter( float lengthUnits );
 /// Get the current length units per meter.
 B2_API float b2GetLengthUnitsPerMeter( void );
 
+// This value is exported for efficiency. Don't modify directly.
+#ifdef __cplusplus
+extern "C" BOX2D_EXPORT float b2_lengthUnitsPerMeter;
+#else
+BOX2D_EXPORT extern float b2_lengthUnitsPerMeter;
+#endif
+
 /**@}*/
 
 /**
