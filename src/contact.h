@@ -7,6 +7,7 @@
 #include "core.h"
 
 #include "box2d/collision.h"
+#include "box2d/math_functions.h"
 #include "box2d/types.h"
 
 typedef struct b2Shape b2Shape;
@@ -152,3 +153,13 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 b2DeclareArray( b2Contact );
 b2DeclareArray( b2ContactSim );
+
+static inline float b2MixFriction( float frictionA, float frictionB )
+{
+	return sqrtf( frictionA * frictionB );
+}
+
+static inline float b2MixRestitution( float restitutionA, float restitutionB )
+{
+	return b2MaxFloat( restitutionA, restitutionB );
+}

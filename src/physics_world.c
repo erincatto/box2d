@@ -98,18 +98,6 @@ static void b2DefaultFinishTaskFcn( void* userTask, void* userContext )
 	B2_UNUSED( userTask, userContext );
 }
 
-static float b2DefaultFrictionCallback( float frictionA, uint64_t materialA, float frictionB, uint64_t materialB )
-{
-	B2_UNUSED( materialA, materialB );
-	return sqrtf( frictionA * frictionB );
-}
-
-static float b2DefaultRestitutionCallback( float restitutionA, uint64_t materialA, float restitutionB, uint64_t materialB )
-{
-	B2_UNUSED( materialA, materialB );
-	return b2MaxFloat( restitutionA, restitutionB );
-}
-
 static void b2CreateWorkerContexts( b2World* world )
 {
 	b2Array_Create( world->taskContexts );
@@ -276,20 +264,12 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->contactDampingRatio = b2ClampFloat( def->contactDampingRatio, 0.0f, FLT_MAX );
 	world->contactRecycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
-	if ( def->frictionCallback == NULL )
-	{
-		world->frictionCallback = b2DefaultFrictionCallback;
-	}
-	else
+	if ( def->frictionCallback != NULL )
 	{
 		world->frictionCallback = def->frictionCallback;
 	}
 
-	if ( def->restitutionCallback == NULL )
-	{
-		world->restitutionCallback = b2DefaultRestitutionCallback;
-	}
-	else
+	if ( def->restitutionCallback != NULL )
 	{
 		world->restitutionCallback = def->restitutionCallback;
 	}
@@ -2066,14 +2046,7 @@ void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* callbac
 		return;
 	}
 
-	if ( callback != NULL )
-	{
-		world->frictionCallback = callback;
-	}
-	else
-	{
-		world->frictionCallback = b2DefaultFrictionCallback;
-	}
+	world->frictionCallback = callback;
 }
 
 void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback )
@@ -2084,14 +2057,7 @@ void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* c
 		return;
 	}
 
-	if ( callback != NULL )
-	{
-		world->restitutionCallback = callback;
-	}
-	else
-	{
-		world->restitutionCallback = b2DefaultRestitutionCallback;
-	}
+	world->restitutionCallback = callback;
 }
 
 void b2World_SetWorkerCount( b2WorldId worldId, int count )

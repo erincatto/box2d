@@ -49,6 +49,8 @@ jobs:
             test: ./bin/Debug/test
           - name: windows-arm64
             os: windows-11-arm
+            msvc: true
+            msvc-arch: arm64
             args: -A arm64 -DBOX2D_DISABLE_SIMD=TRUE -DBOX2D_SANITIZE=ON
             test: ./bin/Debug/test
           # Optimized runs. The determinism golden hash is otherwise only checked at -O0,
@@ -78,7 +80,7 @@ jobs:
       if: ${{ matrix.msvc }}
       uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
-        arch: x64
+        arch: ${{ matrix['msvc-arch'] || 'x64' }}
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.config || env.BUILD_TYPE }} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ matrix.args }}

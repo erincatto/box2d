@@ -11,6 +11,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#if defined( B2_SIMD_SSE2 ) || defined( B2_SIMD_AVX2 )
+	#include <emmintrin.h>
+#endif
+
 #define B2_MAKE_ID( A, B ) ( (uint8_t)( A ) << 8 | (uint8_t)( B ) )
 
 static b2Polygon b2MakeCapsule( b2Vec2 p1, b2Vec2 p2, float radius )
@@ -651,6 +655,69 @@ static float b2FindMaxSeparation( int* edgeIndex, const b2Polygon* poly1, const 
 	const b2Vec2* v1s = poly1->vertices;
 	const b2Vec2* v2s = poly2->vertices;
 
+#if defined( B2_SIMD_SSE2 ) || defined( B2_SIMD_AVX2 )
+	if ( count1 <= 4 )
+	{
+		// [n1x n1y n2x n2y]
+		__m128 na = _mm_loadu_ps( &n1s[0].x );
+		// [n3x n3y n4x n4y]
+		__m128 nb = _mm_loadu_ps( &n1s[2].x );
+		// [v1x v1y v2x v2y]
+		__m128 va = _mm_loadu_ps( &v1s[0].x );
+		// [v3x v3y v4x v4y]
+		__m128 vb = _mm_loadu_ps( &v1s[2].x );
+
+		// [n1x n2x n3x n4x]
+		__m128 nx = _mm_shuffle_ps( na, nb, _MM_SHUFFLE( 2, 0, 2, 0 ) );
+		// [n1y n2y n3y n4y]
+		__m128 ny = _mm_shuffle_ps( na, nb, _MM_SHUFFLE( 3, 1, 3, 1 ) );
+		// [v1x v2x v3x v4x]
+		__m128 px = _mm_shuffle_ps( va, vb, _MM_SHUFFLE( 2, 0, 2, 0 ) );
+		// [v1y v2y v3y v4y]
+		__m128 py = _mm_shuffle_ps( va, vb, _MM_SHUFFLE( 3, 1, 3, 1 ) );
+
+		__m128 s = _mm_set1_ps( FLT_MAX );
+		for ( int j = 0; j < count2; ++j )
+		{
+			__m128 qx = _mm_set1_ps( v2s[j].x );
+			__m128 qy = _mm_set1_ps( v2s[j].y );
+
+			// Four separation values at once, four faces of poly1 for one vertex of poly2.
+			// [dot(n1[0], qj - v1[0]) dot(n1[1], qj - v1[1]) dot(n1[2], qj - v1[2]) dot(n1[3]], qj - v1[3])]
+			__m128 sj = _mm_add_ps( _mm_mul_ps( nx, _mm_sub_ps( qx, px ) ), _mm_mul_ps( ny, _mm_sub_ps( qy, py ) ) );
+
+			// [min(s1,sj1) min(s2,sj2) min(s3,sj3) min(s4,sj4)]
+			s = _mm_min_ps( s, sj );
+		}
+
+		// [(0 < count1) (1 < count1) (2 < count1) (3 < count1)]
+		__m128 valid = _mm_castsi128_ps( _mm_cmplt_epi32( _mm_setr_epi32( 0, 1, 2, 3 ), _mm_set1_epi32( count1 ) ) );
+
+		// Invalid lanes become -FLT_MAX
+		s = _mm_or_ps( _mm_and_ps( valid, s ), _mm_andnot_ps( valid, _mm_set1_ps( -FLT_MAX ) ) );
+
+		// [max(s1,s3) max(s2,s4) max(s3,s1) max(s4,s2)]
+		__m128 m = _mm_max_ps( s, _mm_shuffle_ps( s, s, _MM_SHUFFLE( 1, 0, 3, 2 ) ) );
+
+		// Maximum separation splatted
+		m = _mm_max_ps( m, _mm_shuffle_ps( m, m, _MM_SHUFFLE( 2, 3, 0, 1 ) ) );
+
+		// Set the bit in the lane holding the maximum. Can be multiple lanes in a tie.
+		int bits = _mm_movemask_ps( _mm_cmpeq_ps( s, m ) );
+
+		// Get the lane index of the maximum. Lowest index wins a tie.
+		int index = 0;
+		while ( ( bits & 1 ) == 0 )
+		{
+			bits >>= 1;
+			index += 1;
+		}
+
+		*edgeIndex = index;
+		return _mm_cvtss_f32( m );
+	}
+#endif
+
 	int bestIndex = 0;
 	float maxSeparation = -FLT_MAX;
 	for ( int i = 0; i < count1; ++i )
@@ -729,15 +796,18 @@ b2LocalManifold b2CollidePolygons( const b2Polygon* polygonA, const b2Polygon* p
 		localPolyB.normals[i] = b2RotateVector( xfs.q, polygonB->normals[i] );
 	}
 
+	float radius = localPolyA.radius + localPolyB.radius;
+
 	int edgeA = 0;
 	float separationA = b2FindMaxSeparation( &edgeA, &localPolyA, &localPolyB );
+	if ( separationA > speculativeDistance + radius )
+	{
+		return (b2LocalManifold){ 0 };
+	}
 
 	int edgeB = 0;
 	float separationB = b2FindMaxSeparation( &edgeB, &localPolyB, &localPolyA );
-
-	float radius = localPolyA.radius + localPolyB.radius;
-
-	if ( separationA > speculativeDistance + radius || separationB > speculativeDistance + radius )
+	if ( separationB > speculativeDistance + radius )
 	{
 		return (b2LocalManifold){ 0 };
 	}

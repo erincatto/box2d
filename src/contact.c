@@ -356,10 +356,25 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contactSim->manifold = (b2Manifold){ 0 };
 
 	// These get updated in the narrow phase, but these are needed for first touch
-	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
-													shapeB->material.friction, shapeB->material.userMaterialId );
-	contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
-														  shapeB->material.restitution, shapeB->material.userMaterialId );
+	if ( world->frictionCallback == NULL )
+	{
+		contactSim->friction = b2MixFriction( shapeA->material.friction, shapeB->material.friction );
+	}
+	else
+	{
+		contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
+														shapeB->material.friction, shapeB->material.userMaterialId );
+	}
+
+	if ( world->restitutionCallback == NULL )
+	{
+		contactSim->restitution = b2MixRestitution( shapeA->material.restitution, shapeB->material.restitution );
+	}
+	else
+	{
+		contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
+															  shapeB->material.restitution, shapeB->material.userMaterialId );
+	}
 
 	contactSim->tangentSpeed = 0.0f;
 	contactSim->simFlags = contact->flags;
@@ -553,10 +568,25 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	}
 
 	// Keep these updated in case the values on the shapes are modified
-	contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
-													shapeB->material.friction, shapeB->material.userMaterialId );
-	contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
-														  shapeB->material.restitution, shapeB->material.userMaterialId );
+	if ( world->frictionCallback == NULL )
+	{
+		contactSim->friction = b2MixFriction( shapeA->material.friction, shapeB->material.friction );
+	}
+	else
+	{
+		contactSim->friction = world->frictionCallback( shapeA->material.friction, shapeA->material.userMaterialId,
+														shapeB->material.friction, shapeB->material.userMaterialId );
+	}
+
+	if ( world->restitutionCallback == NULL )
+	{
+		contactSim->restitution = b2MixRestitution( shapeA->material.restitution, shapeB->material.restitution );
+	}
+	else
+	{
+		contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
+															  shapeB->material.restitution, shapeB->material.userMaterialId );
+	}
 
 	if ( shapeA->material.rollingResistance > 0.0f || shapeB->material.rollingResistance > 0.0f )
 	{
