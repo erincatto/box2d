@@ -63,8 +63,8 @@ void SampleContext::Save()
 	fprintf( file, "  \"sampleIndex\": %d,\n", sampleIndex );
 	fprintf( file, "  \"newUser\": %d,\n", false );
 	fprintf( file, "  \"drawShapes\": %s,\n", debugDraw.drawShapes ? "true" : "false" );
-	fprintf( file, "  \"drawJoints\": %s,\n", debugDraw.drawJoints ? "true" : "false" );
-	fprintf( file, "  \"showDiagnostics\": %s,\n", showMetrics ? "true" : "false" );
+	fprintf( file, "  \"showMetrics\": %s,\n", showMetrics ? "true" : "false" );
+	fprintf( file, "  \"showProfile\": %s,\n", showProfile ? "true" : "false" );
 	fprintf( file, "  \"replayKeyframeBudgetMB\": %d,\n", replayKeyframeBudgetMB );
 	fprintf( file, "  \"replayKeyframeMinInterval\": %d\n", replayKeyframeMinInterval );
 	fprintf( file, "}\n" );
@@ -163,11 +163,6 @@ void SampleContext::Load()
 
 	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
-	if ( g_replayIndex >= 0 )
-	{
-		sampleIndex = g_replayIndex;
-	}
-
 	char* data = nullptr;
 	int size = 0;
 	bool found = ReadFile( data, size, fileName );
@@ -213,19 +208,7 @@ void SampleContext::Load()
 				debugDraw.drawShapes = false;
 			}
 		}
-		else if ( jsoneq( data, &tokens[i], "drawJoints" ) == 0 )
-		{
-			const char* s = data + tokens[i + 1].start;
-			if ( strncmp( s, "true", 4 ) == 0 )
-			{
-				debugDraw.drawJoints = true;
-			}
-			else if ( strncmp( s, "false", 5 ) == 0 )
-			{
-				debugDraw.drawJoints = false;
-			}
-		}
-		else if ( jsoneq( data, &tokens[i], "showDiagnostics" ) == 0 )
+		else if ( jsoneq( data, &tokens[i], "showMetrics" ) == 0 )
 		{
 			const char* s = data + tokens[i + 1].start;
 			if ( strncmp( s, "true", 4 ) == 0 )
@@ -235,6 +218,18 @@ void SampleContext::Load()
 			else if ( strncmp( s, "false", 5 ) == 0 )
 			{
 				showMetrics = false;
+			}
+		}
+		else if ( jsoneq( data, &tokens[i], "showProfile" ) == 0 )
+		{
+			const char* s = data + tokens[i + 1].start;
+			if ( strncmp( s, "true", 4 ) == 0 )
+			{
+				showProfile = true;
+			}
+			else if ( strncmp( s, "false", 5 ) == 0 )
+			{
+				showProfile = false;
 			}
 		}
 		else if ( jsoneq( data, &tokens[i], "replayKeyframeBudgetMB" ) == 0 )
@@ -302,6 +297,7 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 	m_stepCount = 0;
 	m_didStep = false;
+	m_screenTextX = 5.0f;
 	m_screenTextY = 0.0f;
 
 	m_mouseBodyId = b2_nullBodyId;
@@ -360,7 +356,10 @@ void Sample::FinishRecording()
 	}
 
 	b2World_StopRecording( m_worldId );
-	b2SaveRecordingToFile( m_recording, m_context->recordingFile );
+	if ( b2SaveRecordingToFile( m_recording, m_context->recordingFile ) )
+	{
+		snprintf( m_context->savedRecordingFile, sizeof( m_context->savedRecordingFile ), "%s", m_context->recordingFile );
+	}
 	b2DestroyRecording( m_recording );
 	m_recording = nullptr;
 }
@@ -394,6 +393,12 @@ void Sample::ResetText()
 	else
 	{
 		m_screenTextY = 3.0f * fontSize;
+	}
+
+	m_screenTextX = 5.0f;
+	if ( IsProfileVisible() )
+	{
+		m_screenTextX += GetProfilePanelWidth() + 0.5f * fontSize;
 	}
 }
 
@@ -509,12 +514,25 @@ void Sample::DrawScreenTextLine( const char* text, ... )
 	vsnprintf( buffer, sizeof( buffer ), text, arg );
 	va_end( arg );
 	buffer[sizeof( buffer ) - 1] = 0;
-	DrawScreenString( m_draw, 5.0f, m_screenTextY, b2_colorWhite, "%s", buffer );
+	DrawScreenString( m_draw, m_screenTextX, m_screenTextY, b2_colorWhite, "%s", buffer );
 	m_screenTextY += 1.5f * ImGui::GetFontSize();
+}
+
+float Sample::InfoPanelWidthEm() const
+{
+	return INFO_PANEL_WIDTH;
+}
+
+void Sample::FocusHome()
+{
+	m_context->camera.center = m_context->homeCenter;
+	m_context->camera.zoom = m_context->homeZoom;
 }
 
 void Sample::ResetProfile()
 {
+	// Keeps the elapsed recording length intact across a profile reset
+	m_recordStartStep -= m_stepCount;
 	m_stepCount = 0;
 	memset( m_profiles, 0, sizeof( m_profiles ) );
 	m_currentProfileIndex = 0;
@@ -526,18 +544,11 @@ void Sample::Step()
 {
 	m_didStep = false;
 
-	float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
-
-	if ( m_context->pause )
+	float timeStep = 0.0f;
+	if ( m_context->pause == false || m_context->singleStep > 0 )
 	{
-		if ( m_context->singleStep )
-		{
-			m_context->singleStep = false;
-		}
-		else
-		{
-			timeStep = 0.0f;
-		}
+		timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
+		m_context->singleStep = b2MaxInt( 0, m_context->singleStep - 1 );
 	}
 
 	if ( B2_IS_NON_NULL( m_mouseJointId ) && b2Joint_IsValid( m_mouseJointId ) == false )
@@ -609,6 +620,256 @@ float AddSegment( ImDrawList* dl, float availWidth, float t, float stepNow, ImU3
 	return x;
 }
 
+#define PROFILE_SECTION_WIDTH 8.0f
+#define PROFILE_INDENT_WIDTH 0.75f
+#define PROFILE_VALUE_WIDTH 3.0f
+#define PROFILE_BAR_WIDTH 4.0f
+#define PROFILE_COLUMN_COUNT 5
+
+// Shared by the profile panel and the frame time plot so the two views read alike
+static const ImU32 s_colorStep = IM_COL32( 230, 230, 230, 255 );
+static const ImU32 s_colorPairs = IM_COL32( 102, 153, 255, 255 );
+static const ImU32 s_colorCollide = IM_COL32( 255, 140, 51, 255 );
+static const ImU32 s_colorSolve = IM_COL32( 102, 204, 102, 255 );
+static const ImU32 s_colorSolveChild = IM_COL32( 150, 190, 150, 255 );
+static const ImU32 s_colorConstraintChild = IM_COL32( 110, 200, 190, 255 );
+static const ImU32 s_colorSensors = IM_COL32( 200, 120, 220, 255 );
+static const ImU32 s_colorOther = IM_COL32( 140, 140, 140, 255 );
+
+// Well apart from both row background shades so the track reads the same on every row
+static const ImU32 s_colorTrack = IM_COL32( 70, 70, 74, 255 );
+
+bool Sample::IsProfileVisible() const
+{
+	return m_context->showUI && m_context->showProfile && HasProfile();
+}
+
+float Sample::GetProfilePanelWidth() const
+{
+	if ( IsProfileVisible() == false )
+	{
+		return 0.0f;
+	}
+
+	const ImGuiStyle& style = ImGui::GetStyle();
+	float fontSize = ImGui::GetFontSize();
+	float width = PROFILE_SECTION_WIDTH + 3.0f * PROFILE_VALUE_WIDTH + PROFILE_BAR_WIDTH;
+	return width * fontSize + 2.0f * PROFILE_COLUMN_COUNT * style.CellPadding.x + 2.0f * style.WindowPadding.x;
+}
+
+void Sample::DrawProfile()
+{
+	if ( IsProfileVisible() == false )
+	{
+		return;
+	}
+
+	float fontSize = ImGui::GetFontSize();
+	float menuBarHeight = ImGui::GetFrameHeight();
+	float panelWidth = GetProfilePanelWidth();
+
+	ImGui::SetNextWindowPos( { 0.5f * fontSize, menuBarHeight + 0.5f * fontSize } );
+	ImGui::SetNextWindowSize( { panelWidth, m_camera->height - menuBarHeight - fontSize } );
+
+	ImGui::Begin( "Profile", nullptr,
+				  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+					  ImGuiWindowFlags_NoTitleBar );
+
+	const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
+
+	constexpr int kRowCount = 21;
+	float histories[kRowCount][m_profileCapacity];
+	float totals[kRowCount] = {};
+	for ( int i = 0; i < count; ++i )
+	{
+		int idx = static_cast<int>( ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 ) );
+		const b2Profile& p = m_profiles[idx];
+		histories[0][i] = p.step;
+		histories[1][i] = p.pairs;
+		histories[2][i] = p.collide;
+		histories[3][i] = p.solve;
+		histories[4][i] = p.solverSetup;
+		histories[5][i] = p.constraints;
+		histories[6][i] = p.prepareConstraints;
+		histories[7][i] = p.integrateVelocities;
+		histories[8][i] = p.warmStart;
+		histories[9][i] = p.solveImpulses;
+		histories[10][i] = p.integratePositions;
+		histories[11][i] = p.relaxImpulses;
+		histories[12][i] = p.storeImpulses;
+		histories[13][i] = p.splitIslands;
+		histories[14][i] = p.transforms;
+		histories[15][i] = p.jointEvents;
+		histories[16][i] = p.hitEvents;
+		histories[17][i] = p.refit;
+		histories[18][i] = p.sleepIslands;
+		histories[19][i] = p.bullets;
+		histories[20][i] = p.sensors;
+		for ( int j = 0; j < kRowCount; ++j )
+		{
+			totals[j] += histories[j][i];
+		}
+	}
+
+	// "now" smoothed over the last few frames so bars don't jitter visibly.
+	constexpr int kNowWindow = 10;
+	float now[kRowCount] = {};
+	{
+		int n = count < kNowWindow ? count : kNowWindow;
+		if ( n > 0 )
+		{
+			float inv = 1.0f / n;
+			for ( int r = 0; r < kRowCount; ++r )
+			{
+				float sum = 0.0f;
+				for ( int i = count - n; i < count; ++i )
+				{
+					sum += histories[r][i];
+				}
+				now[r] = sum * inv;
+			}
+		}
+	}
+
+	float avg[kRowCount] = {};
+	if ( count > 0 )
+	{
+		float scale = 1.0f / count;
+		for ( int i = 0; i < kRowCount; ++i )
+		{
+			avg[i] = scale * totals[i];
+		}
+	}
+
+	float rowMax[kRowCount] = {};
+	for ( int r = 0; r < kRowCount; ++r )
+	{
+		for ( int i = 0; i < count; ++i )
+		{
+			if ( histories[r][i] > rowMax[r] )
+			{
+				rowMax[r] = histories[r][i];
+			}
+		}
+	}
+
+	const RowDef rows[kRowCount] = {
+		{ "step", 0, s_colorStep },			 { "pairs", 0, s_colorPairs },
+		{ "collide", 0, s_colorCollide },	 { "solve", 0, s_colorSolve },
+		{ "setup", 1, s_colorSolveChild },	 { "constraints", 1, s_colorSolveChild },
+		{ "prepare", 2, s_colorConstraintChild }, { "velocities", 2, s_colorConstraintChild },
+		{ "warm start", 2, s_colorConstraintChild }, { "bias", 2, s_colorConstraintChild },
+		{ "positions", 2, s_colorConstraintChild }, { "relax", 2, s_colorConstraintChild },
+		{ "store", 2, s_colorConstraintChild },	 { "split", 2, s_colorConstraintChild },
+		{ "transforms", 1, s_colorSolveChild }, { "joint events", 1, s_colorSolveChild },
+		{ "hit events", 1, s_colorSolveChild }, { "refit BVH", 1, s_colorSolveChild },
+		{ "sleep", 1, s_colorSolveChild },	 { "bullets", 1, s_colorSolveChild },
+		{ "sensors", 0, s_colorSensors },
+	};
+
+	float stepNow = b2MaxFloat( now[0], 0.001f );
+
+	if ( ImGui::Button( "Reset" ) )
+	{
+		ResetProfile();
+	}
+	ImGui::SameLine();
+	ImGui::Text( " step %.2f ms", now[0] );
+
+	// Flame strip: step subdivided by top-level children.
+	{
+		float pairsT = now[1];
+		float collideT = now[2];
+		float solveT = now[3];
+		float sensorsT = now[20];
+		float otherT = b2MaxFloat( stepNow - pairsT - collideT - solveT - sensorsT, 0.0f );
+
+		float availWidth = ImGui::GetContentRegionAvail().x;
+		float barHeight = 1.5f * fontSize;
+		ImDrawList* dl = ImGui::GetWindowDrawList();
+		ImVec2 cursor = ImGui::GetCursorScreenPos();
+		float x = cursor.x;
+
+		x = AddSegment( dl, availWidth, pairsT, stepNow, s_colorPairs, x, cursor, barHeight );
+		x = AddSegment( dl, availWidth, collideT, stepNow, s_colorCollide, x, cursor, barHeight );
+		x = AddSegment( dl, availWidth, solveT, stepNow, s_colorSolve, x, cursor, barHeight );
+		x = AddSegment( dl, availWidth, sensorsT, stepNow, s_colorSensors, x, cursor, barHeight );
+		x = AddSegment( dl, availWidth, otherT, stepNow, s_colorOther, x, cursor, barHeight );
+
+		ImGui::Dummy( ImVec2( availWidth, barHeight ) );
+	}
+
+	const ImGuiTableFlags tableFlags =
+		ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit;
+
+	if ( ImGui::BeginTable( "profile", PROFILE_COLUMN_COUNT, tableFlags ) )
+	{
+		ImGui::TableSetupColumn( "section", ImGuiTableColumnFlags_WidthFixed, PROFILE_SECTION_WIDTH * fontSize );
+		ImGui::TableSetupColumn( "now", ImGuiTableColumnFlags_WidthFixed, PROFILE_VALUE_WIDTH * fontSize );
+		ImGui::TableSetupColumn( "avg", ImGuiTableColumnFlags_WidthFixed, PROFILE_VALUE_WIDTH * fontSize );
+		ImGui::TableSetupColumn( "max", ImGuiTableColumnFlags_WidthFixed, PROFILE_VALUE_WIDTH * fontSize );
+		ImGui::TableSetupColumn( "%", ImGuiTableColumnFlags_WidthFixed, PROFILE_BAR_WIDTH * fontSize );
+		ImGui::TableHeadersRow();
+
+		for ( int r = 0; r < kRowCount; ++r )
+		{
+			const RowDef& d = rows[r];
+
+			ImGui::TableNextRow();
+
+			ImGui::TableNextColumn();
+			float indent = d.indent * PROFILE_INDENT_WIDTH * fontSize;
+			ImGui::SetCursorPosX( ImGui::GetCursorPosX() + indent );
+			ImGui::PushStyleColor( ImGuiCol_Text, d.color );
+			ImGui::TextUnformatted( d.name );
+			ImGui::PopStyleColor();
+
+			// Dim rows that would print as zero so the costly sections stand out
+			bool idle = avg[r] < 0.005f;
+			if ( idle )
+			{
+				ImGui::PushStyleColor( ImGuiCol_Text, ImGui::GetStyleColorVec4( ImGuiCol_TextDisabled ) );
+			}
+			ImGui::TableNextColumn();
+			ImGui::Text( "%6.2f", now[r] );
+			ImGui::TableNextColumn();
+			ImGui::Text( "%6.2f", avg[r] );
+			ImGui::TableNextColumn();
+			ImGui::Text( "%6.2f", rowMax[r] );
+			if ( idle )
+			{
+				ImGui::PopStyleColor();
+			}
+
+			ImGui::TableNextColumn();
+
+			// The step itself is measured against the frame budget to show headroom
+			bool isBudget = r == 0 && m_context->hertz > 0.0f;
+			float reference = isBudget ? 1000.0f / m_context->hertz : stepNow;
+			float frac = b2ClampFloat( now[r] / reference, 0.0f, 1.0f );
+			// Text line height instead of a framed progress bar keeps the rows tight
+			float barWidth = ImGui::GetContentRegionAvail().x;
+			float barHeight = ImGui::GetTextLineHeight();
+			ImVec2 p = ImGui::GetCursorScreenPos();
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->AddRectFilled( p, ImVec2( p.x + barWidth, p.y + barHeight ), s_colorTrack );
+			drawList->AddRectFilled( p, ImVec2( p.x + frac * barWidth, p.y + barHeight ), d.color );
+			ImGui::Dummy( ImVec2( barWidth, barHeight ) );
+			if ( isBudget )
+			{
+				ImGui::SetItemTooltip( "%.0f%% of %.1f ms frame", 100.0f * now[r] / reference, reference );
+			}
+			else
+			{
+				ImGui::SetItemTooltip( "%.0f%% of step", 100.0f * now[r] / reference );
+			}
+		}
+		ImGui::EndTable();
+	}
+
+	ImGui::End();
+}
+
 void Sample::DrawMetrics()
 {
 	if ( m_context->showMetrics == false )
@@ -617,11 +878,16 @@ void Sample::DrawMetrics()
 	}
 
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = INFO_PANEL_WIDTH * fontSize;
+	float menuWidth = InfoPanelWidthEm() * fontSize;
 	float drawerHeight = 16.0f * fontSize;
-	float drawerWidth = m_camera->width - menuWidth - 1.5f * fontSize;
+	float drawerX = 0.5f * fontSize;
+	if ( IsProfileVisible() )
+	{
+		drawerX += GetProfilePanelWidth() + 0.5f * fontSize;
+	}
+	float drawerWidth = m_camera->width - menuWidth - fontSize - drawerX;
 
-	ImGui::SetNextWindowPos( { 0.5f * fontSize, m_camera->height - drawerHeight - 0.5f * fontSize } );
+	ImGui::SetNextWindowPos( { drawerX, m_camera->height - drawerHeight - 0.5f * fontSize } );
 	ImGui::SetNextWindowSize( { drawerWidth, drawerHeight } );
 
 	ImGui::Begin( "Metrics", nullptr,
@@ -630,388 +896,152 @@ void Sample::DrawMetrics()
 
 	if ( ImGui::BeginTabBar( "MetricsTabs", ImGuiTabBarFlags_None ) )
 	{
-		if ( ImGui::BeginTabItem( "Profile" ) )
-		{
-			const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
-
-			constexpr int kRowCount = 21;
-			float histories[kRowCount][m_profileCapacity];
-			float totals[kRowCount] = {};
-			for ( int i = 0; i < count; ++i )
-			{
-				int idx = static_cast<int>( ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 ) );
-				const b2Profile& p = m_profiles[idx];
-				histories[0][i] = p.step;
-				histories[1][i] = p.pairs;
-				histories[2][i] = p.collide;
-				histories[3][i] = p.solve;
-				histories[4][i] = p.solverSetup;
-				histories[5][i] = p.constraints;
-				histories[6][i] = p.prepareConstraints;
-				histories[7][i] = p.integrateVelocities;
-				histories[8][i] = p.warmStart;
-				histories[9][i] = p.solveImpulses;
-				histories[10][i] = p.integratePositions;
-				histories[11][i] = p.relaxImpulses;
-				histories[12][i] = p.storeImpulses;
-				histories[13][i] = p.splitIslands;
-				histories[14][i] = p.transforms;
-				histories[15][i] = p.jointEvents;
-				histories[16][i] = p.hitEvents;
-				histories[17][i] = p.refit;
-				histories[18][i] = p.sleepIslands;
-				histories[19][i] = p.bullets;
-				histories[20][i] = p.sensors;
-				for ( int j = 0; j < kRowCount; ++j )
-				{
-					totals[j] += histories[j][i];
-				}
-			}
-
-			// "now" smoothed over the last few frames so bars don't jitter visibly.
-			constexpr int kNowWindow = 10;
-			float now[kRowCount] = {};
-			{
-				int n = count < kNowWindow ? count : kNowWindow;
-				if ( n > 0 )
-				{
-					float inv = 1.0f / n;
-					for ( int r = 0; r < kRowCount; ++r )
-					{
-						float sum = 0.0f;
-						for ( int i = count - n; i < count; ++i )
-						{
-							sum += histories[r][i];
-						}
-						now[r] = sum * inv;
-					}
-				}
-			}
-
-			float avg[kRowCount] = {};
-			if ( count > 0 )
-			{
-				float scale = 1.0f / count;
-				for ( int i = 0; i < kRowCount; ++i )
-				{
-					avg[i] = scale * totals[i];
-				}
-			}
-
-			float rowMax[kRowCount] = {};
-			for ( int r = 0; r < kRowCount; ++r )
-			{
-				for ( int i = 0; i < count; ++i )
-				{
-					if ( histories[r][i] > rowMax[r] )
-					{
-						rowMax[r] = histories[r][i];
-					}
-				}
-			}
-
-			const ImU32 colorStep = IM_COL32( 102, 153, 255, 255 );
-			const ImU32 colorPairs = IM_COL32( 220, 220, 220, 255 );
-			const ImU32 colorCollide = IM_COL32( 255, 140, 51, 255 );
-			const ImU32 colorSolve = IM_COL32( 102, 204, 102, 255 );
-			const ImU32 colorSensors = IM_COL32( 200, 120, 220, 255 );
-			const ImU32 colorOther = IM_COL32( 90, 90, 90, 255 );
-			const ImU32 colorDefault = IM_COL32( 220, 220, 220, 255 );
-
-			const RowDef rows[kRowCount] = {
-				{ "step", 0, colorStep },		   { "pairs", 0, colorPairs },
-				{ "collide", 0, colorCollide },	   { "solve", 0, colorSolve },
-				{ "setup", 1, colorDefault },	   { "constraints", 1, colorDefault },
-				{ "prepare", 2, colorDefault },	   { "velocities", 2, colorDefault },
-				{ "warm start", 2, colorDefault }, { "bias", 2, colorDefault },
-				{ "positions", 2, colorDefault },  { "relax", 2, colorDefault },
-				{ "store", 2, colorDefault },	   { "split islands", 2, colorDefault },
-				{ "transforms", 1, colorDefault }, { "joint events", 1, colorDefault },
-				{ "hit events", 1, colorDefault }, { "refit BVH", 1, colorDefault },
-				{ "sleep", 1, colorDefault },	   { "bullets", 1, colorDefault },
-				{ "sensors", 0, colorSensors },
-			};
-
-			int parents[kRowCount];
-			bool hasChildren[kRowCount] = {};
-			{
-				int stack[8];
-				int stackSize = 0;
-				for ( int i = 0; i < kRowCount; ++i )
-				{
-					while ( stackSize > 0 && rows[stack[stackSize - 1]].indent >= rows[i].indent )
-					{
-						--stackSize;
-					}
-					parents[i] = stackSize > 0 ? stack[stackSize - 1] : -1;
-					stack[stackSize++] = i;
-					if ( parents[i] >= 0 )
-					{
-						hasChildren[parents[i]] = true;
-					}
-				}
-			}
-
-			static bool s_rowOpen[kRowCount];
-			static bool s_showPlots = false;
-
-			float stepNow = b2MaxFloat( now[0], 0.001f );
-
-			if ( ImGui::Button( "Reset" ) )
-			{
-				ResetProfile();
-			}
-			ImGui::SameLine();
-			ImGui::Checkbox( "Show plots", &s_showPlots );
-			ImGui::SameLine();
-			ImGui::Text( "   step %.2f ms", now[0] );
-
-			// Flame strip: step subdivided by top-level children.
-			{
-				float pairsT = now[1];
-				float collideT = now[2];
-				float solveT = now[3];
-				float sensorsT = now[20];
-				float otherT = b2MaxFloat( stepNow - pairsT - collideT - solveT - sensorsT, 0.0f );
-
-				float availWidth = ImGui::GetContentRegionAvail().x;
-				float barHeight = 1.5f * fontSize;
-				ImDrawList* dl = ImGui::GetWindowDrawList();
-				ImVec2 cursor = ImGui::GetCursorScreenPos();
-				float x = cursor.x;
-
-				x = AddSegment( dl, availWidth, pairsT, stepNow, colorPairs, x, cursor, barHeight );
-				x = AddSegment( dl, availWidth, collideT, stepNow, colorCollide, x, cursor, barHeight );
-				x = AddSegment( dl, availWidth, solveT, stepNow, colorSolve, x, cursor, barHeight );
-				x = AddSegment( dl, availWidth, sensorsT, stepNow, colorSensors, x, cursor, barHeight );
-				x = AddSegment( dl, availWidth, otherT, stepNow, colorOther, x, cursor, barHeight );
-
-				ImGui::Dummy( ImVec2( availWidth, barHeight ) );
-			}
-
-			const ImGuiTableFlags tableFlags =
-				ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY;
-
-			const int colCount = s_showPlots ? 6 : 5;
-			ImVec2 tableSize = ImGui::GetContentRegionAvail();
-			if ( ImGui::BeginTable( "profile", colCount, tableFlags, tableSize ) )
-			{
-				ImGui::TableSetupColumn( "section", ImGuiTableColumnFlags_WidthFixed, 8.0f * fontSize );
-				ImGui::TableSetupColumn( "now", ImGuiTableColumnFlags_WidthFixed, 3.0f * fontSize );
-				ImGui::TableSetupColumn( "avg", ImGuiTableColumnFlags_WidthFixed, 3.0f * fontSize );
-				ImGui::TableSetupColumn( "max", ImGuiTableColumnFlags_WidthFixed, 3.0f * fontSize );
-				ImGui::TableSetupColumn( "% step", ImGuiTableColumnFlags_WidthFixed, 8.0f * fontSize );
-				if ( s_showPlots )
-				{
-					ImGui::TableSetupColumn( "history", ImGuiTableColumnFlags_WidthFixed, 16.0f * fontSize );
-				}
-				ImGui::TableHeadersRow();
-
-				const float rowHeight = 1.5f * fontSize;
-
-				for ( int r = 0; r < kRowCount; ++r )
-				{
-					bool visible = true;
-					for ( int p = parents[r]; p >= 0; p = parents[p] )
-					{
-						if ( !s_rowOpen[p] )
-						{
-							visible = false;
-							break;
-						}
-					}
-					if ( !visible )
-					{
-						continue;
-					}
-
-					// Hide leaf rows that are entirely zero; parents stay so structure reads.
-					if ( !hasChildren[r] && now[r] == 0.0f && avg[r] == 0.0f && rowMax[r] == 0.0f )
-					{
-						continue;
-					}
-
-					const RowDef& d = rows[r];
-					const float* hist = histories[r];
-
-					ImGui::TableNextRow();
-
-					ImGui::TableNextColumn();
-					if ( d.indent > 0 )
-					{
-						ImGui::Indent( d.indent * fontSize );
-					}
-					if ( hasChildren[r] )
-					{
-						ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
-												   ImGuiTreeNodeFlags_NoTreePushOnOpen;
-						ImGui::PushStyleColor( ImGuiCol_Text, d.color );
-						s_rowOpen[r] = ImGui::TreeNodeEx( d.name, flags );
-						ImGui::PopStyleColor();
-					}
-					else
-					{
-						float leafIndent = ImGui::GetTreeNodeToLabelSpacing();
-						ImGui::Indent( leafIndent );
-						ImGui::PushStyleColor( ImGuiCol_Text, d.color );
-						ImGui::TextUnformatted( d.name );
-						ImGui::PopStyleColor();
-						ImGui::Unindent( leafIndent );
-					}
-					if ( d.indent > 0 )
-					{
-						ImGui::Unindent( d.indent * fontSize );
-					}
-
-					ImGui::TableNextColumn();
-					ImGui::Text( "%6.2f", now[r] );
-					ImGui::TableNextColumn();
-					ImGui::Text( "%6.2f", avg[r] );
-					ImGui::TableNextColumn();
-					ImGui::Text( "%6.2f", rowMax[r] );
-
-					ImGui::TableNextColumn();
-					float frac = b2ClampFloat( now[r] / stepNow, 0.0f, 1.0f );
-					ImGui::PushStyleColor( ImGuiCol_PlotHistogram, d.color );
-					ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), "" );
-					ImGui::PopStyleColor();
-
-					if ( s_showPlots )
-					{
-						ImGui::TableNextColumn();
-						if ( count > 1 )
-						{
-							char id[16];
-							snprintf( id, sizeof( id ), "##h%d", r );
-							ImGui::PushStyleColor( ImGuiCol_PlotLines, d.color );
-							ImGui::PlotLines( id, hist, count, 0, nullptr, 0.0f, rowMax[r] * 1.05f + 0.001f,
-											  ImVec2( -FLT_MIN, rowHeight ) );
-							ImGui::PopStyleColor();
-						}
-					}
-				}
-				ImGui::EndTable();
-			}
-
-			ImGui::EndTabItem();
-		}
-
-		if ( ImGui::BeginTabItem( "Frame Time" ) )
+		if ( HasProfile() && ImGui::BeginTabItem( "Frame Time" ) )
 		{
 			float maxValue = 0.0f;
 			float times[m_profileCapacity];
 			float stepTimes[m_profileCapacity];
+			float pairsTimes[m_profileCapacity];
 			float collideTimes[m_profileCapacity];
 			float solveTimes[m_profileCapacity];
+			float sensorsTimes[m_profileCapacity];
 			int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
 			for ( int i = 0; i < count; ++i )
 			{
 				int index = ( m_profileReadIndex + i ) & ( m_profileCapacity - 1 );
 				times[i] = i / 60.0f;
 				stepTimes[i] = m_profiles[index].step;
+				pairsTimes[i] = m_profiles[index].pairs;
 				collideTimes[i] = m_profiles[index].collide;
 				solveTimes[i] = m_profiles[index].solve;
+				sensorsTimes[i] = m_profiles[index].sensors;
 				maxValue = b2MaxFloat( stepTimes[i], maxValue );
 			}
+
+			// ImPlot picks a 5 second major interval at this width, leaving one bright line among the half seconds
+			ImPlot::PushStyleVar( ImPlotStyleVar_MinorAlpha, 1.0f );
+			ImPlot::PushStyleColor( ImPlotCol_AxisGrid, IM_COL32( 255, 255, 255, 15 ) );
 
 			ImVec2 plotSize = ImGui::GetContentRegionAvail();
 			if ( ImPlot::BeginPlot( "Profile", plotSize, ImPlotFlags_NoTitle ) )
 			{
-				ImPlot::SetupAxes( "t", "ms" );
+				ImPlot::SetupAxes( nullptr, "ms" );
 				ImPlot::SetupAxesLimits( 0, m_profileCapacity / 60.0, 0.0, maxValue, ImPlotCond_Always );
+				ImPlot::SetNextLineStyle( ImGui::ColorConvertU32ToFloat4( s_colorStep ) );
 				ImPlot::PlotLine( "step", times, stepTimes, count );
+				ImPlot::SetNextLineStyle( ImGui::ColorConvertU32ToFloat4( s_colorPairs ) );
+				ImPlot::PlotLine( "pairs", times, pairsTimes, count );
+				ImPlot::SetNextLineStyle( ImGui::ColorConvertU32ToFloat4( s_colorCollide ) );
 				ImPlot::PlotLine( "collide", times, collideTimes, count );
+				ImPlot::SetNextLineStyle( ImGui::ColorConvertU32ToFloat4( s_colorSolve ) );
 				ImPlot::PlotLine( "solve", times, solveTimes, count );
+				ImPlot::SetNextLineStyle( ImGui::ColorConvertU32ToFloat4( s_colorSensors ) );
+				ImPlot::PlotLine( "sensors", times, sensorsTimes, count );
 				ImPlot::EndPlot();
 			}
+
+			ImPlot::PopStyleColor();
+			ImPlot::PopStyleVar();
 
 			ImGui::EndTabItem();
 		}
 
 		if ( ImGui::BeginTabItem( "Counters" ) )
 		{
-			b2Counters s = b2World_GetCounters( m_worldId );
-			b2Capacity c = b2World_GetMaxCapacity( m_worldId );
-			constexpr int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
-			const int overflowIndex = colorCount - 1;
-
-			if ( ImGui::BeginTable( "counters_layout", 2, ImGuiTableFlags_SizingFixedFit ) )
+			if ( b2World_IsValid( m_worldId ) == false )
 			{
-				ImGui::TableSetupColumn( "left", ImGuiTableColumnFlags_WidthFixed, 22.0f * fontSize );
-				ImGui::TableSetupColumn( "right", ImGuiTableColumnFlags_WidthStretch );
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
+				ImGui::TextDisabled( "No world" );
+			}
+			else
+			{
+				b2Counters s = b2World_GetCounters( m_worldId );
+				b2Capacity c = b2World_GetMaxCapacity( m_worldId );
+				constexpr int colorCount = sizeof( s.colorCounts ) / sizeof( s.colorCounts[0] );
+				const int overflowIndex = colorCount - 1;
 
-				ImGui::Text( "bodies   %d / %d", s.bodyCount, c.staticBodyCount + c.dynamicBodyCount );
-				ImGui::Text( "shapes   %d / %d", s.shapeCount, c.staticShapeCount + c.dynamicShapeCount );
-				ImGui::Text( "contacts %d / %d", s.contactCount, c.contactCount );
-				ImGui::Text( "joints   %d", s.jointCount );
-				ImGui::Text( "islands/tasks %d / %d", s.islandCount, s.taskCount );
-				ImGui::Text( "tree height static/movable %d / %d", s.staticTreeHeight, s.treeHeight );
-				ImGui::Text( "alloc %lld K   stack %d K", (long long)( s.byteCount / 1024 ), s.stackUsed / 1024 );
-
+				if ( ImGui::BeginTable( "counters_layout", 3, ImGuiTableFlags_SizingFixedFit ) )
 				{
-					float frac = s.awakeContactCount > 0
-									 ? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
-									 : 0.0f;
-					char overlay[32];
-					snprintf( overlay, sizeof( overlay ), "%d / %d", s.recycledContactCount, s.awakeContactCount );
-					ImGui::TextUnformatted( "recycled" );
-					ImGui::SameLine();
-					ImGui::ProgressBar( frac, ImVec2( -FLT_MIN, 0.0f ), overlay );
-				}
+					ImGui::TableSetupColumn( "world", ImGuiTableColumnFlags_WidthFixed, 14.0f * fontSize );
+					ImGui::TableSetupColumn( "memory", ImGuiTableColumnFlags_WidthFixed, 11.0f * fontSize );
+					ImGui::TableSetupColumn( "solver", ImGuiTableColumnFlags_WidthStretch );
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
 
-				ImGui::TableNextColumn();
+					ImGui::Text( "bodies   %d / %d", s.bodyCount, c.staticBodyCount + c.dynamicBodyCount );
+					ImGui::Text( "shapes   %d / %d", s.shapeCount, c.staticShapeCount + c.dynamicShapeCount );
+					ImGui::Text( "contacts %d / %d", s.contactCount, c.contactCount );
+					ImGui::Text( "joints   %d", s.jointCount );
+					ImGui::Text( "islands  %d", s.islandCount );
+					ImGui::Text( "tasks    %d", s.taskCount );
 
-				int totalCount = 0;
-				int normalCount = 0;
-				for ( int i = 0; i < colorCount; ++i )
-				{
-					totalCount += s.colorCounts[i];
-					if ( i != overflowIndex )
+					ImGui::TableNextColumn();
+
+					ImGui::Text( "static tree  %d", s.staticTreeHeight );
+					ImGui::Text( "movable tree %d", s.treeHeight );
+					ImGui::Text( "alloc %lld K", (long long)( s.byteCount / 1024 ) );
+					ImGui::Text( "stack %d K", s.stackUsed / 1024 );
+
+					ImGui::TableNextColumn();
+
+					int totalCount = 0;
+					int normalCount = 0;
+					for ( int i = 0; i < colorCount; ++i )
 					{
-						normalCount += s.colorCounts[i];
-					}
-				}
-				int overflowCount = s.colorCounts[overflowIndex];
-
-				ImGui::Text( "%d constraints across %d colors", totalCount, colorCount - 1 );
-
-				float availWidth = ImGui::GetContentRegionAvail().x;
-				float barHeight = 2.0f * fontSize;
-				ImDrawList* dl = ImGui::GetWindowDrawList();
-
-				ImVec2 cursor = ImGui::GetCursorScreenPos();
-				dl->AddRectFilled( cursor, ImVec2( cursor.x + availWidth, cursor.y + barHeight ), IM_COL32( 40, 40, 40, 255 ) );
-				if ( normalCount > 0 )
-				{
-					float x = cursor.x;
-					const float invTotal = 1.0f / (float)normalCount;
-					for ( int i = 0; i < overflowIndex; ++i )
-					{
-						int cnt = s.colorCounts[i];
-						if ( cnt == 0 )
+						totalCount += s.colorCounts[i];
+						if ( i != overflowIndex )
 						{
-							continue;
+							normalCount += s.colorCounts[i];
 						}
-						float segW = availWidth * cnt * invTotal;
-						uint32_t hex = static_cast<uint32_t>( b2GetGraphColor( i ) );
-						ImU32 col = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
-						dl->AddRectFilled( ImVec2( x, cursor.y ), ImVec2( x + segW, cursor.y + barHeight ), col );
-						x += segW;
 					}
+					int overflowCount = s.colorCounts[overflowIndex];
+
+					ImGui::Text( "%d constraints across %d colors", totalCount, colorCount - 1 );
+
+					float availWidth = ImGui::GetContentRegionAvail().x;
+					float barHeight = 2.0f * fontSize;
+					ImDrawList* dl = ImGui::GetWindowDrawList();
+
+					ImVec2 cursor = ImGui::GetCursorScreenPos();
+					dl->AddRectFilled( cursor, ImVec2( cursor.x + availWidth, cursor.y + barHeight ), IM_COL32( 40, 40, 40, 255 ) );
+					if ( normalCount > 0 )
+					{
+						float x = cursor.x;
+						const float invTotal = 1.0f / (float)normalCount;
+						for ( int i = 0; i < overflowIndex; ++i )
+						{
+							int cnt = s.colorCounts[i];
+							if ( cnt == 0 )
+							{
+								continue;
+							}
+							float segW = availWidth * cnt * invTotal;
+							uint32_t hex = static_cast<uint32_t>( b2GetGraphColor( i ) );
+							ImU32 col = IM_COL32( ( hex >> 16 ) & 0xFF, ( hex >> 8 ) & 0xFF, hex & 0xFF, 255 );
+							dl->AddRectFilled( ImVec2( x, cursor.y ), ImVec2( x + segW, cursor.y + barHeight ), col );
+							x += segW;
+						}
+					}
+					ImGui::Dummy( ImVec2( availWidth, barHeight ) );
+
+					ImGui::Spacing();
+					float overflowFrac = totalCount > 0 ? (float)overflowCount / (float)totalCount : 0.0f;
+					char overflowOverlay[32];
+					snprintf( overflowOverlay, sizeof( overflowOverlay ), "overflow %d", overflowCount );
+					ImGui::PushStyleColor( ImGuiCol_PlotHistogram, IM_COL32( 220, 60, 60, 255 ) );
+					ImGui::ProgressBar( overflowFrac, ImVec2( -FLT_MIN, 0.0f ), overflowOverlay );
+					ImGui::PopStyleColor();
+
+					float recycledFrac =
+						s.awakeContactCount > 0
+							? b2ClampFloat( (float)s.recycledContactCount / (float)s.awakeContactCount, 0.0f, 1.0f )
+							: 0.0f;
+					char recycledOverlay[48];
+					snprintf( recycledOverlay, sizeof( recycledOverlay ), "recycled %d / %d", s.recycledContactCount,
+							  s.awakeContactCount );
+					ImGui::ProgressBar( recycledFrac, ImVec2( -FLT_MIN, 0.0f ), recycledOverlay );
+
+					ImGui::EndTable();
 				}
-				ImGui::Dummy( ImVec2( availWidth, barHeight ) );
-
-				ImGui::Spacing();
-				float overflowFrac = totalCount > 0 ? (float)overflowCount / (float)totalCount : 0.0f;
-				char overflowOverlay[32];
-				snprintf( overflowOverlay, sizeof( overflowOverlay ), "overflow %d", overflowCount );
-				ImGui::PushStyleColor( ImGuiCol_PlotHistogram, IM_COL32( 220, 60, 60, 255 ) );
-				ImGui::ProgressBar( overflowFrac, ImVec2( -FLT_MIN, 0.0f ), overflowOverlay );
-				ImGui::PopStyleColor();
-
-				ImGui::EndTable();
 			}
 
 			ImGui::EndTabItem();
@@ -1287,11 +1317,15 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 	{
 		ResetView( &context->camera );
 		context->sampleIndex = selection;
+		context->pause = false;
 		context->subStepCount = 4;
 		context->restitutionIterations = 2;
 		context->enableRestitutionPropagation = false;
 		context->debugDraw.drawJoints = true;
 	}
+
+	// Steps queued in a sample that never consumes them must not play out in the next one
+	context->singleStep = 0;
 
 	delete context->sample;
 	context->sample = nullptr;
@@ -1306,6 +1340,13 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 	context->restart = restart;
 	context->sample = g_sampleEntries[context->sampleIndex].createFcn( context );
 	context->restart = false;
+
+	// A restart keeps the camera where it was, so the original starting view stays home
+	if ( restart == false )
+	{
+		context->homeCenter = context->camera.center;
+		context->homeZoom = context->camera.zoom;
+	}
 }
 
 static void DrawRow( const char* key, const char* desc )
@@ -1326,9 +1367,9 @@ static void DrawMenuBar( SampleContext* context )
 		if ( ImGui::BeginMenu( "Sim" ) )
 		{
 			ImGui::MenuItem( "Pause", "P", &context->pause );
-			if ( ImGui::MenuItem( "Single Step", "O" ) )
+			if ( ImGui::MenuItem( "Single Step", "." ) )
 			{
-				context->singleStep = true;
+				context->singleStep += 1;
 			}
 			if ( ImGui::MenuItem( "Restart", "R" ) )
 			{
@@ -1363,7 +1404,7 @@ static void DrawMenuBar( SampleContext* context )
 				b2World_DumpMemoryStats( context->sample->m_worldId );
 			}
 			ImGui::Separator();
-			if ( ImGui::MenuItem( "Quit", "Esc" ) )
+			if ( ImGui::MenuItem( "Quit", "Ctrl+Q" ) )
 			{
 				glfwSetWindowShouldClose( context->window, GL_TRUE );
 			}
@@ -1378,7 +1419,7 @@ static void DrawMenuBar( SampleContext* context )
 			}
 			if ( ImGui::MenuItem( "Reset Camera", "Home" ) )
 			{
-				ResetView( &context->camera );
+				context->sample->FocusHome();
 			}
 			ImGui::Separator();
 			ImGui::MenuItem( "Shapes", nullptr, &context->debugDraw.drawShapes );
@@ -1409,7 +1450,8 @@ static void DrawMenuBar( SampleContext* context )
 				ImGui::EndMenu();
 			}
 			ImGui::Separator();
-			ImGui::MenuItem( "Diagnostics", "M", &context->showMetrics );
+			ImGui::MenuItem( "Metrics", "M", &context->showMetrics );
+			ImGui::MenuItem( "Profile", "I", &context->showProfile, context->sample->HasProfile() );
 			ImGui::Separator();
 			if ( ImGui::BeginMenu( "Scale" ) )
 			{
@@ -1472,11 +1514,10 @@ static void DrawMenuBar( SampleContext* context )
 			ImGui::EndMenu();
 		}
 
-		static bool showHelp = context->newUser;
 		static bool showAbout = false;
 		if ( ImGui::BeginMenu( "Help" ) )
 		{
-			ImGui::MenuItem( "Controls", nullptr, &showHelp );
+			ImGui::MenuItem( "Controls", "?", &context->showControls );
 			ImGui::MenuItem( "About", nullptr, &showAbout );
 			ImGui::EndMenu();
 		}
@@ -1492,29 +1533,32 @@ static void DrawMenuBar( SampleContext* context )
 													 borderColor, 1.0f );
 		}
 
-		if ( showHelp )
+		if ( context->showControls )
 		{
 			ImGui::SetNextWindowPos( { context->camera.width * 0.5f, context->camera.height * 0.5f }, ImGuiCond_Appearing,
 									 { 0.5f, 0.5f } );
 			ImGui::SetNextWindowSize( { 24.0f * fontSize, 0.0f }, ImGuiCond_Appearing );
 
-			if ( ImGui::Begin( "Controls", &showHelp, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize ) )
+			if ( ImGui::Begin( "Controls", &context->showControls, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize ) )
 			{
 				ImGui::SeparatorText( "Keyboard" );
 				if ( ImGui::BeginTable( "keys", 2, ImGuiTableFlags_SizingFixedFit ) )
 				{
 					DrawRow( "Tab", "Show / hide UI" );
-					DrawRow( "M", "Show / hide diagnostics" );
+					DrawRow( "M", "Show / hide metrics" );
+					DrawRow( "I", "Show / hide profile" );
 					DrawRow( "P", "Pause / resume" );
-					DrawRow( "O", "Single step" );
+					DrawRow( ".", "Single step (Shift: 5)" );
+					DrawRow( ",", "Step back, replay only (Shift: 5)" );
 					DrawRow( "R", "Restart sample" );
 					DrawRow( "[  ]", "Previous / next sample" );
 					DrawRow( "Ctrl+O", "Open sample picker" );
 					DrawRow( "Arrows", "Pan camera" );
-					DrawRow( "Ctrl+Arrows", "Shift origin" );
 					DrawRow( "Z  X", "Zoom out / in" );
 					DrawRow( "Home", "Reset camera" );
-					DrawRow( "Esc", "Quit" );
+					DrawRow( "?", "Show / hide controls" );
+					DrawRow( "Esc", "Cancel / close" );
+					DrawRow( "Ctrl+Q", "Quit" );
 					ImGui::EndTable();
 				}
 
@@ -1696,15 +1740,38 @@ void DrawSamplePicker( SampleContext* context )
 			ImGui::CloseCurrentPopup();
 		}
 
+		// The active search field eats the first Esc, so dismiss here instead of
+		// relying on the popup's default nav close.
+		if ( ImGui::IsKeyPressed( ImGuiKey_Escape, false ) )
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
 		ImGui::EndPopup();
 	}
+}
+
+// A dot after the widget that reveals help on hover. Unlike a tooltip on the widget itself,
+// it never covers the value being edited, and it is quieter than a "(?)" on every row.
+static void HelpMarker( const char* text )
+{
+	ImGui::SameLine( 0.0f, ImGui::GetStyle().ItemInnerSpacing.x );
+	float width = ImGui::GetFontSize();
+	float height = ImGui::GetFrameHeight();
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImGui::Dummy( { width, height } );
+	bool hovered = ImGui::IsItemHovered();
+	ImU32 color = ImGui::GetColorU32( ImGuiCol_CheckMark, hovered ? 1.0f : 0.6f );
+	ImVec2 center = { pos.x + 0.5f * width, pos.y + 0.5f * height };
+	ImGui::GetWindowDrawList()->AddCircleFilled( center, 0.2f * width, color );
+	ImGui::SetItemTooltip( "%s", text );
 }
 
 static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
 	float fontSize = ImGui::GetFontSize();
-	float menuWidth = INFO_PANEL_WIDTH * fontSize;
+	float menuWidth = context->sample->InfoPanelWidthEm() * fontSize;
 	float menuBarHeight = ImGui::GetFrameHeight();
 
 	ImGui::SetNextWindowPos( { context->camera.width - menuWidth - 0.5f * fontSize, menuBarHeight + 0.5f * fontSize } );
@@ -1726,7 +1793,7 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 		ImGui::Separator();
 	}
 
-	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "%.1f ms", 1000.0f * frameTime );
+	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "frame %.1f ms", 1000.0f * frameTime );
 	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "step %d", context->sample->m_stepCount );
 	ImGui::Separator();
 	ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "cam (%.1f, %.1f)", context->camera.center.x, context->camera.center.y );
@@ -1746,20 +1813,20 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 		ImGui::PushItemWidth( 6.0f * fontSize );
 
 		ImGui::SliderInt( "Sub-steps##Solver", &context->subStepCount, 1, 32 );
-		ImGui::SetItemTooltip( "The solver breaks the full step into several sub-steps.\nMore sub-steps usually lead to more accurate results." );
+		HelpMarker( "The solver breaks the full step into several sub-steps.\nMore sub-steps usually lead to more accurate results." );
 
-		ImGui::SliderInt( "Rest Iters##Solver", &context->restitutionIterations, 0, 8 );
-		ImGui::SetItemTooltip( "Iterations for the restitution solver." );
+		ImGui::SliderInt( "Bounce Iters##Solver", &context->restitutionIterations, 0, 8 );
+		HelpMarker( "Iterations for the restitution solver." );
 
-		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f hz" );
-		ImGui::SetItemTooltip( "The number of world steps per second." );
+		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f Hz" );
+		HelpMarker( "The number of world steps per second." );
 
 		if ( ImGui::SliderInt( "Workers##Solver", &context->workerCount, 1, B2_MAX_WORKERS ) )
 		{
 			context->workerCount = b2ClampInt( context->workerCount, 1, B2_MAX_WORKERS );
 			SelectSample( context, context->sampleIndex, true );
 		}
-		ImGui::SetItemTooltip( "The number worker threads used by the world step." );
+		HelpMarker( "The number worker threads used by the world step." );
 
 		float recyclingCentimeters = 100.0f * context->recycleDistance;
 		if ( ImGui::SliderFloat( "Recycle##Solver", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
@@ -1767,21 +1834,21 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			context->recycleDistance = 0.01f * recyclingCentimeters;
 			b2World_SetContactRecycleDistance( context->sample->m_worldId, context->recycleDistance );
 		}
-		ImGui::SetItemTooltip( "The contact recycling distance tolerance.\nSet to zero to disable recycling." );
+		HelpMarker( "The contact recycling distance tolerance.\nSet to zero to disable recycling." );
 
 		ImGui::PopItemWidth();
 
 		ImGui::Checkbox( "Sleep##Solver", &context->enableSleep );
-		ImGui::SetItemTooltip( "Allow bodies to sleep, reducing simulation CPU cost." );
+		HelpMarker( "Allow bodies to sleep, reducing simulation CPU cost." );
 
 		ImGui::Checkbox( "Warm Starting##Solver", &context->enableWarmStarting );
-		ImGui::SetItemTooltip( "Enable solver warm starting which usually improves stacking stability." );
+		HelpMarker( "Enable solver warm starting which usually improves stacking stability." );
 
 		ImGui::Checkbox( "Continuous##Solver", &context->enableContinuous );
-		ImGui::SetItemTooltip( "Enable continuous collision detection." );
+		HelpMarker( "Enable continuous collision detection." );
 
-		ImGui::Checkbox( "Rest Prop##Solver", &context->enableRestitutionPropagation );
-		ImGui::SetItemTooltip( "Enable restitution solver propagation across all touching contacts points" );
+		ImGui::Checkbox( "Bounce Propagation##Solver", &context->enableRestitutionPropagation );
+		HelpMarker( "Enable restitution solver propagation across all touching contacts points" );
 	}
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )
@@ -1804,6 +1871,16 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			{
 				context->sample->StartRecording();
 			}
+
+			if ( g_replayIndex >= 0 && context->savedRecordingFile[0] != 0 )
+			{
+				if ( ImGui::Button( "Play##Recording" ) )
+				{
+					snprintf( context->replayFile, sizeof( context->replayFile ), "%s", context->savedRecordingFile );
+					SelectSample( context, g_replayIndex, false );
+				}
+				ImGui::SetItemTooltip( "Open %s in the replay viewer", context->savedRecordingFile );
+			}
 		}
 		else
 		{
@@ -1811,7 +1888,20 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			{
 				context->sample->FinishRecording();
 			}
-			ImGui::TextColored( MakeColor( b2_colorSeaGreen ), "recording (from step %d)", context->sample->m_recordStartStep );
+		}
+
+		if ( context->sample->m_recording != nullptr )
+		{
+			float kilobytes = b2Recording_GetSize( context->sample->m_recording ) / 1024.0f;
+			int steps = context->sample->m_stepCount - context->sample->m_recordStartStep;
+			if ( kilobytes < 1024.0f )
+			{
+				ImGui::TextColored( MakeColor( b2_colorRed ), "recording %d steps, %.0f KB", steps, kilobytes );
+			}
+			else
+			{
+				ImGui::TextColored( MakeColor( b2_colorRed ), "recording %d steps, %.1f MB", steps, kilobytes / 1024.0f );
+			}
 		}
 	}
 
@@ -1825,5 +1915,6 @@ void DrawUI( SampleContext* context, float frameTime )
 	DrawMenuBar( context );
 	DrawSamplePicker( context );
 	DrawInfoPanel( context, frameTime );
+	context->sample->DrawProfile();
 	context->sample->DrawMetrics();
 }

@@ -136,7 +136,7 @@ public:
 			m_context->camera.zoom = 10.0f;
 		}
 
-		// The timeline scrubber lives in the diagnostics drawer, so open it for the replay
+		// The timeline scrubber lives in the metrics drawer, so open it for the replay
 		m_prevShowMetrics = m_context->showMetrics;
 		m_context->showMetrics = true;
 		m_context->pause = true;
@@ -231,16 +231,7 @@ public:
 
 			if ( m_context->restart == false )
 			{
-				// Frame the whole recorded motion. Older recordings lack stored bounds, so fall
-				// back to the live frame-0 bounds when the recorded extents are empty.
-				b2AABB bounds = m_info.bounds;
-				b2Vec2 extents = b2AABB_Extents( bounds );
-				if ( extents.x <= 0.0f && extents.y <= 0.0f )
-				{
-					bounds = b2World_GetBounds( m_worldId );
-				}
-				FocusOnBounds( &m_context->camera, bounds );
-				m_context->camera.zoom *= 1.5f;
+				FrameRecording();
 			}
 		}
 		else
@@ -357,6 +348,62 @@ public:
 		m_worldId = b2Replay_GetWorldId( m_player );
 	}
 
+	// Frame the whole recorded motion. Older recordings lack stored bounds, so fall back to the
+	// live frame-0 bounds when the recorded extents are empty.
+	void FrameRecording()
+	{
+		b2AABB bounds = m_info.bounds;
+		b2Vec2 extents = b2AABB_Extents( bounds );
+		if ( extents.x <= 0.0f && extents.y <= 0.0f )
+		{
+			bounds = b2World_GetBounds( m_worldId );
+		}
+		FocusOnBounds( &m_context->camera, bounds );
+		m_context->camera.zoom *= 1.5f;
+	}
+
+	// The recording loads after construction, so home is the fit made on load, not the view the
+	// constructor set up
+	void FocusHome() override
+	{
+		if ( m_player != nullptr )
+		{
+			FrameRecording();
+		}
+		else
+		{
+			Sample::FocusHome();
+		}
+	}
+
+	// , steps backward. Forward is the global single step on . so it works in every sample.
+	// Shift moves five frames, matching that key. Esc drops the selection.
+	void Keyboard( int key, int action, int mods ) override
+	{
+		if ( m_generating || m_player == nullptr || action != GLFW_PRESS )
+		{
+			return;
+		}
+
+		if ( ( mods & ( GLFW_MOD_CONTROL | GLFW_MOD_ALT ) ) != 0 )
+		{
+			return;
+		}
+
+		if ( key == GLFW_KEY_ESCAPE )
+		{
+			m_selKind = SelNone;
+		}
+		else if ( key == GLFW_KEY_COMMA )
+		{
+			int back = ( mods & GLFW_MOD_SHIFT ) ? 5 : 1;
+			b2Replay_SeekFrame( m_player, b2MaxInt( 0, b2Replay_GetFrame( m_player ) - back ) );
+			m_worldId = b2Replay_GetWorldId( m_player );
+			m_frameAccumulator = 0.0f;
+			m_context->pause = true;
+		}
+	}
+
 	void Step() override
 	{
 		DrawLoadPopup();
@@ -366,18 +413,22 @@ public:
 		if ( m_generating )
 		{
 			m_stepCount = b2Replay_GetFrame( m_player );
+			m_context->singleStep = 0;
 			return;
 		}
 
 		if ( m_player == nullptr )
 		{
 			DrawScreenTextLine( "%s", m_status );
+			m_context->singleStep = 0;
 			return;
 		}
 
-		if ( m_context->pause && m_context->singleStep )
+		if ( m_context->singleStep > 0 )
 		{
-			m_context->singleStep = false;
+			// Stepping takes over from playback, like the transport buttons
+			m_context->singleStep = b2MaxInt( 0, m_context->singleStep - 1 );
+			m_context->pause = true;
 			if ( b2Replay_IsAtEnd( m_player ) == false )
 			{
 				AdvanceOne();
@@ -426,7 +477,7 @@ public:
 
 		if ( m_context->showUI )
 		{
-			DrawInspectorPanel();
+			DrawOutlinePanel();
 		}
 	}
 
@@ -502,14 +553,30 @@ public:
 		return false;
 	}
 
-	// The inspector lives in the wide left panel. This right-panel control just reopens the
-	// diagnostics drawer and jumps to the timeline if it was closed.
+	bool HasProfile() const override
+	{
+		return false;
+	}
+
+	// Wider than the default so the detail pane, hosted in the info panel, has room for ids and vectors.
+	float InfoPanelWidthEm() const override
+	{
+		return 22.0f;
+	}
+
+	// Right info panel: a compact summary with the selection detail below it. The scene tree lives in
+	// the Outline window and the transport in the Timeline tab.
 	bool DrawControls() override
 	{
 		if ( ImGui::Button( "Show Timeline" ) )
 		{
 			m_context->showMetrics = true;
 			m_selectTimelineTab = true;
+		}
+
+		if ( m_player == nullptr )
+		{
+			return false;
 		}
 
 		if ( b2Replay_HasDiverged( m_player ) )
@@ -519,6 +586,14 @@ public:
 
 		ImGui::TextDisabled( "Frame %d / %d%s", b2Replay_GetFrame( m_player ), m_info.frameCount,
 							 b2Replay_IsAtEnd( m_player ) ? "  (end)" : "" );
+
+		// The child takes the remaining panel height and scrolls a long detail. Return false so the
+		// panel adds no trailing separator below this full height child.
+		ImGui::Separator();
+		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Detail" );
+		ImGui::BeginChild( "detail" );
+		DrawDetail();
+		ImGui::EndChild();
 
 		return false;
 	}
@@ -682,10 +757,9 @@ public:
 		}
 	}
 
-	// Wide left panel: an outliner tree of the scene on top, the selected item's full detail below.
-	// Its own window, so it is not bound by the fixed-width right Info panel. Opened from Step, which
-	// runs inside the imgui frame.
-	void DrawInspectorPanel()
+	// Left Outline window holding the scene tree. The selection detail lives in the right info panel,
+	// so the tree owns the whole column. Opened from Step, which runs inside the imgui frame.
+	void DrawOutlinePanel()
 	{
 		if ( m_player == nullptr )
 		{
@@ -694,7 +768,7 @@ public:
 
 		float fontSize = ImGui::GetFontSize();
 		float menuBarHeight = ImGui::GetFrameHeight();
-		float drawerHeight = 16.0f * fontSize; // matches the diagnostics drawer in sample.cpp
+		float drawerHeight = 16.0f * fontSize; // matches the metrics drawer in sample.cpp
 		float top = menuBarHeight + 0.5f * fontSize;
 		// Stop above the timeline drawer, which this sample keeps open
 		float bottom = m_context->showMetrics ? m_context->camera.height - drawerHeight - fontSize
@@ -702,20 +776,13 @@ public:
 
 		ImGui::SetNextWindowPos( { 0.5f * fontSize, top } );
 		ImGui::SetNextWindowSize( { 22.0f * fontSize, bottom - top } );
-		ImGui::Begin( "Inspector", nullptr,
+		ImGui::Begin( "Outline", nullptr,
 					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
 						  ImGuiWindowFlags_NoTitleBar );
 
 		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Outline" );
-		float avail = ImGui::GetContentRegionAvail().y;
-		ImGui::BeginChild( "tree", ImVec2( 0.0f, 0.55f * avail ) );
+		ImGui::BeginChild( "tree" );
 		DrawOutlineTree();
-		ImGui::EndChild();
-
-		ImGui::Separator();
-		ImGui::TextColored( ImVec4( 0.9f, 0.6f, 0.2f, 1.0f ), "Detail" );
-		ImGui::BeginChild( "detail" );
-		DrawDetail();
 		ImGui::EndChild();
 
 		ImGui::End();
@@ -1058,7 +1125,7 @@ public:
 		}
 	}
 
-	// All replay controls live in the diagnostics drawer tab.
+	// All replay controls live in the metrics drawer tab.
 	void DrawMetricsTab() override
 	{
 		ImGuiTabItemFlags tabFlags = 0;
@@ -1157,6 +1224,11 @@ public:
 		{
 			ImGui::SameLine();
 			ImGui::Text( "   %.0f hz, %d sub-steps", 1.0f / m_info.timeStep, m_info.subStepCount );
+		}
+		if ( m_info.lengthScale > 0.0f )
+		{
+			ImGui::SameLine();
+			ImGui::Text( "   %g units/m", m_info.lengthScale );
 		}
 		if ( B2_IS_NON_NULL( m_worldId ) )
 		{

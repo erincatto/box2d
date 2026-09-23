@@ -88,7 +88,7 @@ public:
 		m_generation += 1;
 	}
 
-	void Keyboard( int key ) override
+	void Keyboard( int key, int, int ) override
 	{
 		switch ( key )
 		{

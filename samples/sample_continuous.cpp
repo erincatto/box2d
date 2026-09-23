@@ -1431,7 +1431,7 @@ public:
 		m_frameCount = 1;
 	}
 
-	void Keyboard( int key ) override
+	void Keyboard( int key, int action, int mods ) override
 	{
 		switch ( key )
 		{
@@ -1461,7 +1461,7 @@ public:
 				break;
 
 			default:
-				Sample::Keyboard( key );
+				Sample::Keyboard( key, action, mods );
 				break;
 		}
 	}
@@ -1756,7 +1756,7 @@ static int sampleWedge = RegisterSample( "Continuous", "Wedge", Wedge::Create );
 // The best way to run this sample is:
 // 1. press pause (P)
 // 2. restart (R) or press the Drop button
-// 3. then single step (O)
+// 3. then single step (.)
 // Then look at the metrics and overlap. The color of the shape gets darker when it is using
 // continuous collision detection.
 class SafetyFactor : public Sample

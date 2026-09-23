@@ -326,7 +326,7 @@ public:
 		}
 	}
 
-	void Keyboard( int key ) override
+	void Keyboard( int key, int action, int mods ) override
 	{
 		bool consumed = false;
 
@@ -343,7 +343,7 @@ public:
 
 		if ( consumed == false )
 		{
-			Sample::Keyboard( key );
+			Sample::Keyboard( key, action, mods );
 		}
 	}
 
