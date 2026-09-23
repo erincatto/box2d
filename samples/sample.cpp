@@ -1317,6 +1317,7 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 	{
 		ResetView( &context->camera );
 		context->sampleIndex = selection;
+		context->pause = false;
 		context->subStepCount = 4;
 		context->restitutionIterations = 2;
 		context->enableRestitutionPropagation = false;
