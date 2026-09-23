@@ -410,14 +410,15 @@ static void UpdateCameraKeys( float frameTime )
 	GLFWwindow* window = s_context.window;
 	Camera* camera = &s_context.camera;
 
-	// A stall such as a sample switch would otherwise jump the camera
+	// A stall such as a sample switch would otherwise jump the camera.
 	float dt = b2MinFloat( frameTime, 0.1f );
 
-	// About 35% per second, the old half percent per frame at 60Hz
+	// About 35% per second.
 	float zoomRate = 0.3f;
 	if ( glfwGetKey( window, GLFW_KEY_Z ) == GLFW_PRESS )
 	{
-		camera->zoom = b2MinFloat( expf( zoomRate * dt ) * camera->zoom, 100.0f );
+		// Samples may start beyond the limit, and zooming out must never pull the view in
+		camera->zoom = b2MinFloat( expf( zoomRate * dt ) * camera->zoom, b2MaxFloat( camera->zoom, 100.0f ) );
 	}
 	else if ( glfwGetKey( window, GLFW_KEY_X ) == GLFW_PRESS )
 	{

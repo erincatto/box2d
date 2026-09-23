@@ -61,6 +61,10 @@ struct SampleContext
 	// file to view never moves where the next recording lands.
 	char replayFile[256] = "";
 
+	// Last recording saved this session, empty until a save succeeds. The default record path
+	// may name a stale file from an earlier run, so Play only trusts this one.
+	char savedRecordingFile[256] = "";
+
 	// These are persisted
 	int sampleIndex = 0;
 	bool newUser = true;

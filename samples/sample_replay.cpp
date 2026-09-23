@@ -413,12 +413,14 @@ public:
 		if ( m_generating )
 		{
 			m_stepCount = b2Replay_GetFrame( m_player );
+			m_context->singleStep = 0;
 			return;
 		}
 
 		if ( m_player == nullptr )
 		{
 			DrawScreenTextLine( "%s", m_status );
+			m_context->singleStep = 0;
 			return;
 		}
 

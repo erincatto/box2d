@@ -163,11 +163,6 @@ void SampleContext::Load()
 
 	recycleDistance = B2_CONTACT_RECYCLE_DISTANCE;
 
-	if ( g_replayIndex >= 0 )
-	{
-		sampleIndex = g_replayIndex;
-	}
-
 	char* data = nullptr;
 	int size = 0;
 	bool found = ReadFile( data, size, fileName );
@@ -361,7 +356,10 @@ void Sample::FinishRecording()
 	}
 
 	b2World_StopRecording( m_worldId );
-	b2SaveRecordingToFile( m_recording, m_context->recordingFile );
+	if ( b2SaveRecordingToFile( m_recording, m_context->recordingFile ) )
+	{
+		snprintf( m_context->savedRecordingFile, sizeof( m_context->savedRecordingFile ), "%s", m_context->recordingFile );
+	}
 	b2DestroyRecording( m_recording );
 	m_recording = nullptr;
 }
@@ -1325,6 +1323,9 @@ void SelectSample( SampleContext* context, int selection, bool restart )
 		context->debugDraw.drawJoints = true;
 	}
 
+	// Steps queued in a sample that never consumes them must not play out in the next one
+	context->singleStep = 0;
+
 	delete context->sample;
 	context->sample = nullptr;
 	if ( g_sampleEntries[context->sampleIndex].capacityFcn != nullptr )
@@ -1869,6 +1870,16 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			{
 				context->sample->StartRecording();
 			}
+
+			if ( g_replayIndex >= 0 && context->savedRecordingFile[0] != 0 )
+			{
+				if ( ImGui::Button( "Play##Recording" ) )
+				{
+					snprintf( context->replayFile, sizeof( context->replayFile ), "%s", context->savedRecordingFile );
+					SelectSample( context, g_replayIndex, false );
+				}
+				ImGui::SetItemTooltip( "Open %s in the replay viewer", context->savedRecordingFile );
+			}
 		}
 		else
 		{
@@ -1876,6 +1887,10 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			{
 				context->sample->FinishRecording();
 			}
+		}
+
+		if ( context->sample->m_recording != nullptr )
+		{
 			float kilobytes = b2Recording_GetSize( context->sample->m_recording ) / 1024.0f;
 			int steps = context->sample->m_stepCount - context->sample->m_recordStartStep;
 			if ( kilobytes < 1024.0f )
