@@ -1749,6 +1749,22 @@ void DrawSamplePicker( SampleContext* context )
 	}
 }
 
+// A dot after the widget that reveals help on hover. Unlike a tooltip on the widget itself,
+// it never covers the value being edited, and it is quieter than a "(?)" on every row.
+static void HelpMarker( const char* text )
+{
+	ImGui::SameLine( 0.0f, ImGui::GetStyle().ItemInnerSpacing.x );
+	float width = ImGui::GetFontSize();
+	float height = ImGui::GetFrameHeight();
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImGui::Dummy( { width, height } );
+	bool hovered = ImGui::IsItemHovered();
+	ImU32 color = ImGui::GetColorU32( ImGuiCol_CheckMark, hovered ? 1.0f : 0.6f );
+	ImVec2 center = { pos.x + 0.5f * width, pos.y + 0.5f * height };
+	ImGui::GetWindowDrawList()->AddCircleFilled( center, 0.2f * width, color );
+	ImGui::SetItemTooltip( "%s", text );
+}
+
 static void DrawInfoPanel( SampleContext* context, float frameTime )
 {
 	const SampleEntry& entry = g_sampleEntries[context->sampleIndex];
@@ -1795,20 +1811,20 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 		ImGui::PushItemWidth( 6.0f * fontSize );
 
 		ImGui::SliderInt( "Sub-steps##Solver", &context->subStepCount, 1, 32 );
-		ImGui::SetItemTooltip( "The solver breaks the full step into several sub-steps.\nMore sub-steps usually lead to more accurate results." );
+		HelpMarker( "The solver breaks the full step into several sub-steps.\nMore sub-steps usually lead to more accurate results." );
 
 		ImGui::SliderInt( "Bounce Iters##Solver", &context->restitutionIterations, 0, 8 );
-		ImGui::SetItemTooltip( "Iterations for the restitution solver." );
+		HelpMarker( "Iterations for the restitution solver." );
 
 		ImGui::SliderFloat( "Hertz##Solver", &context->hertz, 5.0f, 240.0f, "%.0f Hz" );
-		ImGui::SetItemTooltip( "The number of world steps per second." );
+		HelpMarker( "The number of world steps per second." );
 
 		if ( ImGui::SliderInt( "Workers##Solver", &context->workerCount, 1, B2_MAX_WORKERS ) )
 		{
 			context->workerCount = b2ClampInt( context->workerCount, 1, B2_MAX_WORKERS );
 			SelectSample( context, context->sampleIndex, true );
 		}
-		ImGui::SetItemTooltip( "The number worker threads used by the world step." );
+		HelpMarker( "The number worker threads used by the world step." );
 
 		float recyclingCentimeters = 100.0f * context->recycleDistance;
 		if ( ImGui::SliderFloat( "Recycle##Solver", &recyclingCentimeters, 0.0f, 10.0f, "%.1f cm" ) )
@@ -1816,21 +1832,21 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 			context->recycleDistance = 0.01f * recyclingCentimeters;
 			b2World_SetContactRecycleDistance( context->sample->m_worldId, context->recycleDistance );
 		}
-		ImGui::SetItemTooltip( "The contact recycling distance tolerance.\nSet to zero to disable recycling." );
+		HelpMarker( "The contact recycling distance tolerance.\nSet to zero to disable recycling." );
 
 		ImGui::PopItemWidth();
 
 		ImGui::Checkbox( "Sleep##Solver", &context->enableSleep );
-		ImGui::SetItemTooltip( "Allow bodies to sleep, reducing simulation CPU cost." );
+		HelpMarker( "Allow bodies to sleep, reducing simulation CPU cost." );
 
 		ImGui::Checkbox( "Warm Starting##Solver", &context->enableWarmStarting );
-		ImGui::SetItemTooltip( "Enable solver warm starting which usually improves stacking stability." );
+		HelpMarker( "Enable solver warm starting which usually improves stacking stability." );
 
 		ImGui::Checkbox( "Continuous##Solver", &context->enableContinuous );
-		ImGui::SetItemTooltip( "Enable continuous collision detection." );
+		HelpMarker( "Enable continuous collision detection." );
 
 		ImGui::Checkbox( "Bounce Propagation##Solver", &context->enableRestitutionPropagation );
-		ImGui::SetItemTooltip( "Enable restitution solver propagation across all touching contacts points" );
+		HelpMarker( "Enable restitution solver propagation across all touching contacts points" );
 	}
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )
