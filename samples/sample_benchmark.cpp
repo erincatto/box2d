@@ -466,6 +466,11 @@ public:
 
 static int benchmarkTumbler = RegisterSample( "Benchmark", "Tumbler", BenchmarkTumbler::Create );
 
+// This stresses most aspects of simulation:
+// - broad-phase because pairs constantly change
+// - narrow-phase because contact recycling doesn't always apply
+// - constraint solver because there are many contacts
+// - hit events are enabled so there is extra velocity computation and reporting
 class BenchmarkWasher : public Sample
 {
 public:
@@ -886,7 +891,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			StepSleep( m_worldId, m_stepCount );
 		}
@@ -1559,7 +1564,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			StepRain( m_worldId, m_stepCount );
 		}
@@ -1653,7 +1658,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			b2DistanceInput input = {};
 			input.proxyA = b2MakeProxy( m_polygonA.vertices, m_polygonA.count, m_polygonA.radius );
@@ -2051,7 +2056,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			StepJunkyard( m_worldId, m_stepCount );
 		}
@@ -2101,7 +2106,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			b2TreeStats before = GetQueryBenchmarkStats();
 			uint64_t ticks = b2GetTicks();

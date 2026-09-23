@@ -285,30 +285,44 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 		switch ( key )
 		{
 			case GLFW_KEY_ESCAPE:
-				// Quit
-				glfwSetWindowShouldClose( s_context.window, GL_TRUE );
+				// Layered cancel. An open picker is an ImGui popup that already swallowed this. So peel
+				// the controls window, then let the sample drop its selection. Quit lives on Ctrl+Q so a
+				// stray Esc can't close the app.
+				if ( s_context.showControls )
+				{
+					s_context.showControls = false;
+				}
+				else if ( s_context.sample != nullptr )
+				{
+					s_context.sample->Keyboard( key, action, mods );
+				}
+				break;
+
+			case GLFW_KEY_Q:
+				if ( mods == GLFW_MOD_CONTROL )
+				{
+					glfwSetWindowShouldClose( s_context.window, GL_TRUE );
+				}
+				else if ( s_context.sample != nullptr )
+				{
+					s_context.sample->Keyboard( key, action, mods );
+				}
 				break;
 
 			case GLFW_KEY_LEFT:
-				// Pan left
-				s_context.camera.center.x -= 0.5f;
-				break;
-
 			case GLFW_KEY_RIGHT:
-				// Pan right
-				s_context.camera.center.x += 0.5f;
-				break;
-
 			case GLFW_KEY_DOWN:
-				s_context.camera.center.y -= 0.5f;
-				break;
-
 			case GLFW_KEY_UP:
-				s_context.camera.center.y += 0.5f;
+			case GLFW_KEY_Z:
+			case GLFW_KEY_X:
+				// Held camera keys, polled each frame
 				break;
 
 			case GLFW_KEY_HOME:
-				ResetView( &s_context.camera );
+				if ( s_context.sample != nullptr )
+				{
+					s_context.sample->FocusHome();
+				}
 				break;
 
 			case GLFW_KEY_R:
@@ -321,13 +335,19 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 					s_context.showUI = true;
 					s_context.openSamplePicker = true;
 				}
-				else
+				else if ( s_context.sample != nullptr )
 				{
-					s_context.singleStep = true;
+					s_context.sample->Keyboard( key, action, mods );
 				}
 				break;
 
+			// Step forward. Backward is , and only a sample that can rewind handles it.
+			case GLFW_KEY_PERIOD:
+				s_context.singleStep += ( mods & GLFW_MOD_SHIFT ) ? 5 : 1;
+				break;
+
 			case GLFW_KEY_P:
+			case GLFW_KEY_PAUSE:
 				s_context.pause = !s_context.pause;
 				break;
 
@@ -363,18 +383,82 @@ static void KeyCallback( GLFWwindow* window, int key, int scancode, int action, 
 				s_context.showMetrics = !s_context.showMetrics;
 				break;
 
+			case GLFW_KEY_I:
+				s_context.showProfile = !s_context.showProfile;
+				break;
+
 			default:
 				if ( s_context.sample != nullptr )
 				{
-					s_context.sample->Keyboard( key );
+					s_context.sample->Keyboard( key, action, mods );
 				}
 		}
 	}
 }
 
+// Held keys move the camera. Rates are per second so a slow frame doesn't slow the camera, and
+// the pan scales with zoom so it covers the same share of the view at any zoom.
+static void UpdateCameraKeys( float frameTime )
+{
+	// ImGui has priority, so typing in a text field or arrowing through the sample picker leaves
+	// the camera alone
+	if ( ImGui::GetIO().WantCaptureKeyboard )
+	{
+		return;
+	}
+
+	GLFWwindow* window = s_context.window;
+	Camera* camera = &s_context.camera;
+
+	// A stall such as a sample switch would otherwise jump the camera
+	float dt = b2MinFloat( frameTime, 0.1f );
+
+	// About 35% per second, the old half percent per frame at 60Hz
+	float zoomRate = 0.3f;
+	if ( glfwGetKey( window, GLFW_KEY_Z ) == GLFW_PRESS )
+	{
+		camera->zoom = b2MinFloat( expf( zoomRate * dt ) * camera->zoom, 100.0f );
+	}
+	else if ( glfwGetKey( window, GLFW_KEY_X ) == GLFW_PRESS )
+	{
+		camera->zoom = b2MaxFloat( expf( -zoomRate * dt ) * camera->zoom, 0.5f );
+	}
+
+	// One view half height per second
+	float panStep = camera->zoom * dt;
+	b2Vec2 pan = b2Vec2_zero;
+	if ( glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS )
+	{
+		pan.x -= panStep;
+	}
+	if ( glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS )
+	{
+		pan.x += panStep;
+	}
+	if ( glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS )
+	{
+		pan.y -= panStep;
+	}
+	if ( glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS )
+	{
+		pan.y += panStep;
+	}
+	camera->center = b2OffsetPos( camera->center, pan );
+}
+
 static void CharCallback( GLFWwindow* window, unsigned int c )
 {
 	ImGui_ImplGlfw_CharCallback( window, c );
+	if ( ImGui::GetIO().WantCaptureKeyboard )
+	{
+		return;
+	}
+
+	// Read the typed character so ? works on any keyboard layout
+	if ( c == '?' )
+	{
+		s_context.showControls = !s_context.showControls;
+	}
 }
 
 static void MouseButtonCallback( GLFWwindow* window, int button, int action, int modifiers )
@@ -487,7 +571,14 @@ int main( int argc, char** argv )
 
 	char buffer[128];
 
+	// Sort first so every sample index read below, including the replay index, is a sorted index
+	SortSamples();
+
 	s_context.Load();
+
+	// First run with no settings opens with the controls window up
+	s_context.showControls = s_context.newUser;
+
 	s_context.workerCount = b2MinInt( 8, GetNumberOfCores() / 2 );
 
 	// A recording path on the command line opens straight into the replay viewer.
@@ -497,8 +588,6 @@ int main( int argc, char** argv )
 		snprintf( s_context.replayFile, sizeof( s_context.replayFile ), "%s", argv[1] );
 		s_context.sampleIndex = g_replayIndex;
 	}
-
-	SortSamples();
 
 	glfwSetErrorCallback( glfwErrorCallback );
 
@@ -585,6 +674,7 @@ int main( int argc, char** argv )
 	s_context.draw = CreateDraw();
 
 	s_context.sampleIndex = b2ClampInt( s_context.sampleIndex, 0, g_sampleCount - 1 );
+	SelectSample( &s_context, s_context.sampleIndex, false );
 
 	glClearColor( 0.2f, 0.2f, 0.2f, 1.0f );
 
@@ -594,16 +684,7 @@ int main( int argc, char** argv )
 	{
 		double time1 = glfwGetTime();
 
-		if ( glfwGetKey( s_context.window, GLFW_KEY_Z ) == GLFW_PRESS )
-		{
-			// Zoom out
-			s_context.camera.zoom = b2MinFloat( 1.005f * s_context.camera.zoom, 100.0f );
-		}
-		else if ( glfwGetKey( s_context.window, GLFW_KEY_X ) == GLFW_PRESS )
-		{
-			// Zoom in
-			s_context.camera.zoom = b2MaxFloat( 0.995f * s_context.camera.zoom, 0.5f );
-		}
+		UpdateCameraKeys( frameTime );
 
 		int width, height;
 		glfwGetWindowSize( s_context.window, &width, &height );
@@ -635,20 +716,6 @@ int main( int argc, char** argv )
 		}
 
 		ImGui::NewFrame();
-
-		if ( s_context.sample == nullptr )
-		{
-			// delayed creation because imgui doesn't create fonts until NewFrame() is called
-			if ( g_sampleEntries[s_context.sampleIndex].capacityFcn != nullptr )
-			{
-				s_context.capacity = g_sampleEntries[s_context.sampleIndex].capacityFcn();
-			}
-			else
-			{
-				s_context.capacity = b2DefaultWorldDef().capacity;
-			}
-			s_context.sample = g_sampleEntries[s_context.sampleIndex].createFcn( &s_context );
-		}
 
 		s_context.sample->ResetText();
 

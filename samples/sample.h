@@ -31,15 +31,25 @@ struct SampleContext
 	int workerCount = 1;
 	bool restart = false;
 	bool pause = false;
-	bool singleStep = false;
+	int singleStep = 0;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
 	bool enableRestitutionPropagation = false;
 	bool enableSleep = true;
 	bool showUI = true;
 
-	// Diagnostics drawer visibility. D toggles.
+	// Metrics drawer visibility. M toggles.
 	bool showMetrics = false;
+
+	// Profile panel visibility. I toggles.
+	bool showProfile = false;
+
+	// Controls help window visibility. ? toggles, Esc closes.
+	bool showControls = false;
+
+	// Camera the sample set up on creation. Home returns to it.
+	b2Pos homeCenter = { 0.0f, 20.0f };
+	float homeZoom = 1.0f;
 
 	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
 	bool openSamplePicker = false;
@@ -90,18 +100,34 @@ public:
 		return true;
 	}
 
+	// Allow a sample without a world step to hide the profile panel.
+	virtual bool HasProfile() const
+	{
+		return true;
+	}
+
+	// Width of the right info panel in font units. A sample with a wide control area can widen it.
+	virtual float InfoPanelWidthEm() const;
+
 	// Allow a sample to add extra tabs to the metrics window.
 	virtual void DrawMetricsTab()
 	{
 	}
 
-	virtual void Keyboard( int )
+	virtual void Keyboard( int, int, int )
 	{
 	}
+
+	// Home. Defaults to the camera the sample set up on creation.
+	virtual void FocusHome();
+
 	virtual void MouseDown( b2Pos p, int button, int mod );
 	virtual void MouseUp( b2Pos p, int button );
 	virtual void MouseMove( b2Pos p );
 
+	bool IsProfileVisible() const;
+	float GetProfilePanelWidth() const;
+	void DrawProfile();
 	void DrawMetrics();
 	void DrawHud( float frameTime );
 	void DrawScreenTextLine( const char* text, ... );
@@ -136,6 +162,7 @@ public:
 	b2Pos m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
+	float m_screenTextX;
 	float m_screenTextY;
 
 	b2Profile m_profiles[m_profileCapacity];

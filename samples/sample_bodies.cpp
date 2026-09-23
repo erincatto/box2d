@@ -838,7 +838,7 @@ public:
 	void Step() override
 	{
 		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
-		if ( m_context->pause && m_context->singleStep == false )
+		if ( m_context->pause && m_context->singleStep == 0 )
 		{
 			timeStep = 0.0f;
 		}

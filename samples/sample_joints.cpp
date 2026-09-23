@@ -364,7 +364,7 @@ public:
 
 		if ( m_context->pause )
 		{
-			if ( m_context->singleStep == false )
+			if ( m_context->singleStep == 0 )
 			{
 				timeStep = 0.0f;
 			}
@@ -3683,7 +3683,7 @@ public:
 		Sample::Step();
 	}
 
-	void Keyboard( int key ) override
+	void Keyboard( int key, int, int ) override
 	{
 		switch ( key )
 		{

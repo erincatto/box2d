@@ -276,7 +276,7 @@ public:
 		bool pause = false;
 		if ( m_context->pause )
 		{
-			pause = m_context->singleStep != true;
+			pause = m_context->singleStep == 0;
 		}
 
 		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
@@ -692,7 +692,7 @@ public:
 		bool pause = false;
 		if ( m_context->pause )
 		{
-			pause = m_context->singleStep != true;
+			pause = m_context->singleStep == 0;
 		}
 
 		float timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;

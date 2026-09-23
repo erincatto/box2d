@@ -1025,7 +1025,7 @@ public:
 		}
 	}
 
-	void Keyboard( int key ) override
+	void Keyboard( int key, int action, int mods ) override
 	{
 		switch ( key )
 		{
@@ -1048,7 +1048,7 @@ public:
 				break;
 
 			default:
-				Sample::Keyboard( key );
+				Sample::Keyboard( key, action, mods );
 				break;
 		}
 	}
@@ -1779,7 +1779,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			m_referenceAngle += m_context->hertz > 0.0f ? 60.0f * B2_PI / 180.0f / m_context->hertz : 0.0f;
 			m_referenceAngle = b2UnwindAngle( m_referenceAngle );
@@ -1994,7 +1994,7 @@ public:
 
 	void Step() override
 	{
-		if ( m_context->pause == false || m_context->singleStep == true )
+		if ( m_context->pause == false || m_context->singleStep > 0 )
 		{
 			float speed;
 			b2Vec2 direction = b2GetLengthAndNormalize( &speed, m_wind );
