@@ -548,6 +548,7 @@ typedef struct b2Profile
 	float solveImpulses;	   ///< profile
 	float integratePositions;  ///< profile
 	float relaxImpulses;	   ///< profile
+	float restitution;		   ///< profile
 	float storeImpulses;	   ///< profile
 	float splitIslands;		   ///< profile
 	float transforms;		   ///< profile
