@@ -677,7 +677,7 @@ void Sample::DrawProfile()
 
 	const int count = static_cast<int>( m_profileWriteIndex - m_profileReadIndex );
 
-	constexpr int kRowCount = 21;
+	constexpr int kRowCount = 22;
 	float histories[kRowCount][m_profileCapacity];
 	float totals[kRowCount] = {};
 	for ( int i = 0; i < count; ++i )
@@ -696,15 +696,16 @@ void Sample::DrawProfile()
 		histories[9][i] = p.solveImpulses;
 		histories[10][i] = p.integratePositions;
 		histories[11][i] = p.relaxImpulses;
-		histories[12][i] = p.storeImpulses;
-		histories[13][i] = p.splitIslands;
-		histories[14][i] = p.transforms;
-		histories[15][i] = p.jointEvents;
-		histories[16][i] = p.hitEvents;
-		histories[17][i] = p.refit;
-		histories[18][i] = p.sleepIslands;
-		histories[19][i] = p.bullets;
-		histories[20][i] = p.sensors;
+		histories[12][i] = p.restitution;
+		histories[13][i] = p.storeImpulses;
+		histories[14][i] = p.splitIslands;
+		histories[15][i] = p.transforms;
+		histories[16][i] = p.jointEvents;
+		histories[17][i] = p.hitEvents;
+		histories[18][i] = p.refit;
+		histories[19][i] = p.sleepIslands;
+		histories[20][i] = p.bullets;
+		histories[21][i] = p.sensors;
 		for ( int j = 0; j < kRowCount; ++j )
 		{
 			totals[j] += histories[j][i];
@@ -760,7 +761,8 @@ void Sample::DrawProfile()
 		{ "prepare", 2, s_colorConstraintChild }, { "velocities", 2, s_colorConstraintChild },
 		{ "warm start", 2, s_colorConstraintChild }, { "bias", 2, s_colorConstraintChild },
 		{ "positions", 2, s_colorConstraintChild }, { "relax", 2, s_colorConstraintChild },
-		{ "store", 2, s_colorConstraintChild },	 { "split", 2, s_colorConstraintChild },
+		{ "restitution", 2, s_colorConstraintChild }, { "store", 2, s_colorConstraintChild },
+		{ "split", 2, s_colorConstraintChild },
 		{ "transforms", 1, s_colorSolveChild }, { "joint events", 1, s_colorSolveChild },
 		{ "hit events", 1, s_colorSolveChild }, { "refit BVH", 1, s_colorSolveChild },
 		{ "sleep", 1, s_colorSolveChild },	 { "bullets", 1, s_colorSolveChild },
@@ -781,7 +783,7 @@ void Sample::DrawProfile()
 		float pairsT = now[1];
 		float collideT = now[2];
 		float solveT = now[3];
-		float sensorsT = now[20];
+		float sensorsT = now[21];
 		float otherT = b2MaxFloat( stepNow - pairsT - collideT - solveT - sensorsT, 0.0f );
 
 		float availWidth = ImGui::GetContentRegionAvail().x;

@@ -1210,7 +1210,7 @@ static void b2SolverTask( void* taskContext )
 				graphSyncIndex += 1;
 			}
 
-			profile->relaxImpulses += b2GetMillisecondsAndReset( &ticks );
+			profile->restitution += b2GetMillisecondsAndReset( &ticks );
 		}
 
 		stageIndex += activeColorCount;
