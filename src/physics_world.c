@@ -1147,7 +1147,7 @@ static bool DrawQueryCallback( int proxyId, uint64_t userData, void* context )
 		{
 			color = b2_colorWheat;
 		}
-		else if ( body->flags & b2_hadTimeOfImpact )
+		else if ( bodySim->flags & b2_hadTimeOfImpact )
 		{
 			color = b2_colorLime;
 		}

@@ -4,7 +4,9 @@
 #include "test_macros.h"
 #include "benchmarks.h"
 #include "dynamic_tree.h"
+#include "joint.h"
 #include "physics_world.h"
+#include "solver_set.h"
 
 #include "box2d/box2d.h"
 #include "box2d/collision.h"
@@ -1639,6 +1641,68 @@ static int BroadPhasePairsTest( void )
 	return 0;
 }
 
+// A joint with no dynamic body lives in the static set even when one body is an awake kinematic.
+// Disabling and enabling that body has to respect this, whether the joint was created that way or
+// got there through body type changes. Box3D issue #164.
+static int NonDynamicJointDisableTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2_zero;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	b2BodyId bodyIdA = b2CreateBody( worldId, &bodyDef );
+	bodyDef.position = (b2Pos){ 2.0f, 0.0f };
+	b2BodyId bodyIdB = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+	b2CreatePolygonShape( bodyIdA, &shapeDef, &box );
+	b2CreatePolygonShape( bodyIdB, &shapeDef, &box );
+
+	b2WeldJointDef jointDef = b2DefaultWeldJointDef();
+	jointDef.base.bodyIdA = bodyIdA;
+	jointDef.base.bodyIdB = bodyIdB;
+	b2JointId weldId = b2CreateWeldJoint( worldId, &jointDef );
+
+	b2Body_SetType( bodyIdA, b2_staticBody );
+	b2Body_SetType( bodyIdB, b2_kinematicBody );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2Body_Disable( bodyIdB );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	b2Body_Enable( bodyIdB );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	ENSURE( b2Joint_IsValid( weldId ) );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	ENSURE( b2GetJointFullId( world, weldId )->setIndex == b2_staticSet );
+
+	b2Body_SetType( bodyIdB, b2_dynamicBody );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	ENSURE( b2GetJointFullId( world, weldId )->setIndex == b2_awakeSet );
+
+	// Created directly between a static and a kinematic body
+	bodyDef.type = b2_kinematicBody;
+	bodyDef.position = (b2Pos){ 4.0f, 0.0f };
+	b2BodyId bodyIdC = b2CreateBody( worldId, &bodyDef );
+	b2CreatePolygonShape( bodyIdC, &shapeDef, &box );
+
+	b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+	revoluteDef.base.bodyIdA = bodyIdA;
+	revoluteDef.base.bodyIdB = bodyIdC;
+	b2JointId revoluteId = b2CreateRevoluteJoint( worldId, &revoluteDef );
+
+	b2Body_Disable( bodyIdC );
+	b2Body_Enable( bodyIdC );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	ENSURE( b2GetJointFullId( world, revoluteId )->setIndex == b2_staticSet );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -1657,6 +1721,7 @@ int WorldTest( void )
 	RUN_SUBTEST( EnlargedProxyDestroyedTest );
 	RUN_SUBTEST( BroadPhasePairsTest );
 	RUN_SUBTEST( BodySimLocatorTest );
+	RUN_SUBTEST( NonDynamicJointDisableTest );
 
 	return 0;
 }

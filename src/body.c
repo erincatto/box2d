@@ -1801,7 +1801,7 @@ void b2Body_Disable( b2BodyId bodyId )
 			continue;
 		}
 
-		B2_ASSERT( joint->setIndex == set->setIndex || set->setIndex == b2_staticSet );
+		B2_ASSERT( joint->setIndex == set->setIndex || set->setIndex == b2_staticSet || joint->setIndex == b2_staticSet );
 
 		// Remove joint from island
 		b2UnlinkJoint( world, joint );
@@ -1896,7 +1896,7 @@ void b2Body_Enable( b2BodyId bodyId )
 
 		// Transfer joint first
 		int jointSetId;
-		if ( bodyA->setIndex == b2_staticSet && bodyB->setIndex == b2_staticSet )
+		if ( bodyA->type != b2_dynamicBody && bodyB->type != b2_dynamicBody )
 		{
 			jointSetId = b2_staticSet;
 		}
