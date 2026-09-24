@@ -971,7 +971,8 @@ static ImpulseResult MeasureDropImpulse( float restitution, float dropHeight )
 
 		// Transient body flags are cleared and rewritten every step
 		b2Body* ball = b2GetBodyFullId( world, ballId );
-		if ( ball->flags & b2_hadTimeOfImpact )
+		b2BodySim* ballSim = b2GetBodySim( world, ball );
+		if ( ballSim->flags & b2_hadTimeOfImpact )
 		{
 			result.toiSteps += 1;
 			if ( measured != 0.0f )

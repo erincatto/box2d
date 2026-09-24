@@ -93,8 +93,8 @@ void b2SyncBodyFlags( b2World* world, b2Body* body )
 {
 	b2BodySim* bodySim = b2GetBodySim( world, body );
 
-	// Preserve the fast flag for contact recycling.
-	bodySim->flags = ( bodySim->flags & b2_isFast ) | ( body->flags & ~b2_bodyTransientFlags );
+	// Preserve the sim only flags: fast for contact recycling, time of impact for debug draw.
+	bodySim->flags = ( bodySim->flags & ( b2_isFast | b2_hadTimeOfImpact ) ) | ( body->flags & ~b2_bodyTransientFlags );
 
 	b2BodyState* bodyState = b2GetBodyState( world, body );
 	if ( bodyState != NULL )
@@ -1801,7 +1801,7 @@ void b2Body_Disable( b2BodyId bodyId )
 			continue;
 		}
 
-		B2_ASSERT( joint->setIndex == set->setIndex || set->setIndex == b2_staticSet );
+		B2_ASSERT( joint->setIndex == set->setIndex || set->setIndex == b2_staticSet || joint->setIndex == b2_staticSet );
 
 		// Remove joint from island
 		b2UnlinkJoint( world, joint );
@@ -1896,7 +1896,7 @@ void b2Body_Enable( b2BodyId bodyId )
 
 		// Transfer joint first
 		int jointSetId;
-		if ( bodyA->setIndex == b2_staticSet && bodyB->setIndex == b2_staticSet )
+		if ( bodyA->type != b2_dynamicBody && bodyB->type != b2_dynamicBody )
 		{
 			jointSetId = b2_staticSet;
 		}
