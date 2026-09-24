@@ -226,6 +226,8 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	B2_ASSERT( body->type == b2_staticBody || ( fastBodySim->flags & b2_isBullet ) );
 
 	// Skip bullets
+	// Warning: it is only safe to read flags from other bodies, not body sims because there are
+	// body sim flag writes in the continuous solver.
 	if ( body->flags & b2_isBullet )
 	{
 		return true;
@@ -464,6 +466,8 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		fastBodySim->center = b2OffsetPos( base, c );
 		fastBodySim->rotation0 = q;
 		fastBodySim->center0 = fastBodySim->center;
+
+		// Warning: writing to the body sim flags means we should not read from other body sim flags in this function.
 		fastBodySim->flags |= b2_hadTimeOfImpact;
 
 		// Timeloss means there is a lost gravity contribution. Other forces and torques are ignored for now.
