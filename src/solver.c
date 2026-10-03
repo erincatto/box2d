@@ -1311,6 +1311,8 @@ static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, voi
 // Solve with graph coloring
 void b2Solve( b2World* world, b2StepContext* stepContext )
 {
+	int simdShift = world->simdWidth == 8 ? 3 : 2;
+
 	// Only count steps that advance the simulation
 	world->stepIndex += 1;
 
@@ -1388,7 +1390,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			activeColorIndices[c] = i;
 
 			// Ceiling for wide constraint count
-			int colorContactCountW = colorContactCount > 0 ? ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1 : 0;
+			int colorContactCountW = colorContactCount > 0 ? ( ( colorContactCount - 1 ) >> simdShift ) + 1 : 0;
 			wideContactCount += colorContactCountW;
 			colorContactCounts[c] = colorContactCountW;
 
@@ -1410,8 +1412,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2BlockDim contactPrepareDim = b2ComputeBlockCount( wideContactCount, minContactsPerBlock, maxBlockCount );
 		b2BlockDim jointPrepareDim = b2ComputeBlockCount( jointCount, minJointsPerBlock, maxBlockCount );
 
-		int wideContactConstraintByteCount = b2GetWideContactConstraintByteCount();
-		struct b2ContactConstraintWide* wideContactConstraints =
+		int wideContactConstraintByteCount = b2GetWideContactConstraintByteCount( world->simdWidth );
+		void* wideContactConstraints =
 			b2StackAlloc( &world->stack, wideContactCount * wideContactConstraintByteCount, "contact constraint" );
 
 		b2GraphColor* overflow = colors + B2_OVERFLOW_INDEX;
@@ -1447,15 +1449,14 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				}
 				else
 				{
-					color->wideConstraints = (struct b2ContactConstraintWide*)( (uint8_t*)wideContactConstraints +
-																				wideBase * wideContactConstraintByteCount );
+					color->wideConstraints = (uint8_t*)wideContactConstraints + wideBase * wideContactConstraintByteCount;
 
-					int colorContactCountW = ( ( colorContactCount - 1 ) >> B2_SIMD_SHIFT ) + 1;
+					int colorContactCountW = ( ( colorContactCount - 1 ) >> simdShift ) + 1;
 					color->wideConstraintCount = colorContactCountW;
 
 					// Zero remainder lanes in the tail wide slot so prepare workers don't need to
 					// initialize them.
-					if ( ( colorContactCount & ( B2_SIMD_WIDTH - 1 ) ) != 0 )
+					if ( ( colorContactCount & ( world->simdWidth - 1 ) ) != 0 )
 					{
 						memset( (uint8_t*)color->wideConstraints + ( colorContactCountW - 1 ) * wideContactConstraintByteCount, 0,
 								wideContactConstraintByteCount );

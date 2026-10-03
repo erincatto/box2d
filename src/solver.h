@@ -55,18 +55,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if B2_SIMD_WIDTH == 8
-#define B2_SIMD_SHIFT 3
-#elif B2_SIMD_WIDTH == 4
-#define B2_SIMD_SHIFT 2
-#else
-#define B2_SIMD_SHIFT 0
-#endif
-
 typedef struct b2BodySim b2BodySim;
 typedef struct b2BodyState b2BodyState;
 typedef struct b2ContactSim b2ContactSim;
-typedef struct b2ContactConstraintWide b2ContactConstraintWide;
 typedef struct b2JointSim b2JointSim;
 typedef struct b2World b2World;
 
@@ -206,7 +197,7 @@ typedef struct b2StepContext
 	// prepareSpans has activeColorCount + 1 entries, the last being a sentinel
 	// at wideContactCount. wideContactConstraints is the contiguous base
 	// pointer; per-color slices live at colors[i].wideConstraints.
-	b2ContactConstraintWide* wideContactConstraints;
+	void* wideContactConstraints;
 	b2ContactPrepareSpan* contactPrepareSpans;
 	int wideContactCount;
 

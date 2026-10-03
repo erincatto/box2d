@@ -43,6 +43,7 @@ extern int RecordingOutlinerTest( void );
 extern int RecordingKeyframeTest( void );
 extern int RecordingScrubTest( void );
 extern int RecordingQueryScrubTest( void );
+extern int RecordingSIMDWidthTest( void );
 extern int ReStepRaceTest( void );
 extern int RestitutionTest( void );
 extern int ShapeTest( void );
@@ -119,6 +120,7 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( RecordingOutlinerTest );
 	MAYBE_RUN_TEST( RecordingQueryScrubTest );
 	MAYBE_RUN_TEST( RecordingScrubTest );
+	MAYBE_RUN_TEST( RecordingSIMDWidthTest );
 	MAYBE_RUN_TEST( RecordingTest );
 	MAYBE_RUN_TEST( ReStepRaceTest );
 	MAYBE_RUN_TEST( RestitutionTest );

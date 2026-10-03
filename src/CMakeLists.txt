@@ -16,6 +16,9 @@ set(BOX2D_SOURCE_FILES
 	constraint_graph.h
 	contact_solver.c
 	contact_solver.h
+	contact_solver_w4.c
+	contact_solver_w8.c
+	contact_solver_wide.inl
 	contact.c
 	contact.h
 	container.h
@@ -58,6 +61,7 @@ set(BOX2D_SOURCE_FILES
 	sensor.h
 	shape.c
 	shape.h
+	simd.c
 	simd.h
 	snapshot.c
 	snapshot.h
@@ -178,6 +182,10 @@ if (MSVC)
 		# 4711 - function inlined without being marked for inline
 		# 4710 - inline functions that are not inlined
 		target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
+	endif()
+
+	if (BOX2D_AVX2 AND NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_ARCHITECTURE_ID MATCHES "^(x64|X86)$")
+		set_source_files_properties(contact_solver_w8.c PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
 	endif()
 
 elseif (MINGW)

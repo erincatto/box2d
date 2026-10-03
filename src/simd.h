@@ -191,3 +191,6 @@ B2_FORCE_INLINE void b2StoreAABBV( b2AABB* aabb, b2AABBV value, bool condition )
 }
 
 #endif
+
+int b2GetSIMDWidth( void );
+void b2SetSIMDWidth( int width );

@@ -194,6 +194,7 @@ typedef struct b2World
 	void* customFilterContext;
 
 	int workerCount;
+	int simdWidth;
 	b2EnqueueTaskCallback* enqueueTaskFcn;
 	b2FinishTaskCallback* finishTaskFcn;
 	void* userTaskContext;

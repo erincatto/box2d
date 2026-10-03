@@ -42,7 +42,7 @@ typedef struct b2GraphColor
 	// transient
 	union
 	{
-		struct b2ContactConstraintWide* wideConstraints;
+		void* wideConstraints;
 		struct b2ContactConstraint* overflowConstraints;
 	};
 
