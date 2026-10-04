@@ -27,11 +27,13 @@ jobs:
             os: ubuntu-latest
             args: '-DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"'
             test: ./bin/test
+          # Runner speed varies about 3x by region and MSan at -O0 can exceed the timeout on the slow ones.
+          # -O1 is the level MSan recommends and Debug keeps asserts. Line buffering shows per test timing.
           - name: ubuntu-clang-msan
             os: ubuntu-latest
             timeout: 10
-            args: '-DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory"'
-            test: ./bin/test
+            args: '-DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-O1 -fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-O1 -fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory"'
+            test: lscpu | grep 'Model name'; nproc; stdbuf -oL ./bin/test
             msan-options: abort_on_error=1:halt_on_error=1
           - name: macos
             os: macos-latest
@@ -86,7 +88,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.config || env.BUILD_TYPE }} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON ${{ matrix.args }}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.config || env.BUILD_TYPE }}
+      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.config || env.BUILD_TYPE }} --parallel
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -124,7 +126,7 @@ jobs:
       run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
 
     - name: Build
-      run: cmake --build build --config RelWithDebInfo
+      run: cmake --build build --config RelWithDebInfo --parallel
 
     - name: Test
       working-directory: build
@@ -148,13 +150,13 @@ jobs:
       run: emcmake cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON
 
     - name: Build
-      run: cmake --build build --config ${{env.BUILD_TYPE}}
+      run: cmake --build build --config ${{env.BUILD_TYPE}} --parallel
 
     - name: Configure CMake (SIMD disabled)
       run: emcmake cmake -B build-nosimd -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DBOX2D_DISABLE_SIMD=ON
 
     - name: Build (SIMD disabled)
-      run: cmake --build build-nosimd --config ${{env.BUILD_TYPE}}
+      run: cmake --build build-nosimd --config ${{env.BUILD_TYPE}} --parallel
 
   # Cross compile to catch NEON breaks, the SIMD code paths only compile on ARM.
   # Build-only: the x64 runner cannot execute aarch64 binaries.
@@ -173,7 +175,7 @@ jobs:
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
 
     - name: Build
-      run: cmake --build build --config Release
+      run: cmake --build build --config Release --parallel
 
   # 32 bit ARM takes the scalar path. ARMv7 NEON always flushes denormals regardless of
   # FPSCR, so it cannot match the IEEE math everywhere else. This is the one 32 bit
@@ -194,7 +196,7 @@ jobs:
       run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
 
     - name: Build
-      run: cmake --build build --config RelWithDebInfo
+      run: cmake --build build --config RelWithDebInfo --parallel
 
     - name: Test
       working-directory: build
@@ -248,7 +250,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBOX2D_SAMPLES=ON -DBOX2D_UNIT_TESTS=OFF ${{ matrix.args }}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release
+      run: cmake --build ${{github.workspace}}/build --config Release --parallel
 
   # zig cc is a third codegen path (clang, zig bundled libc). Release keeps the
   # determinism golden hash checked at -O2 for this toolchain.
@@ -321,7 +323,7 @@ jobs:
     - name: Build and install
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DBOX2D_SAMPLES=OFF -DBOX2D_UNIT_TESTS=OFF ${{ matrix.args }}
-        cmake --build build --config ${{ matrix.config }}
+        cmake --build build --config ${{ matrix.config }} --parallel
         cmake --install build --config ${{ matrix.config }} --prefix "$PWD/stage"
 
     - name: Consume through pkg-config
