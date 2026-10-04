@@ -101,6 +101,7 @@ typedef struct b2SyncBlock
 {
 	b2SolverBlock block;
 	b2AtomicInt syncIndex;
+	char padding[64 - sizeof( b2SolverBlock ) - sizeof( b2AtomicInt )];
 } b2SyncBlock;
 
 // Each stage must be completed before going to the next stage.
@@ -112,7 +113,9 @@ typedef struct b2SolverStage
 	b2SolverStageType type;
 	int blockCount;
 	uint8_t colorIndex;
+	char padding1[64];
 	b2AtomicInt completionCount;
+	char padding2[64];
 } b2SolverStage;
 
 // Constraint softness

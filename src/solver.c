@@ -982,7 +982,9 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 	int blockIndex = startIndex;
 	for ( int i = 0; i < blockCount; ++i )
 	{
-		if ( b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, previousSyncIndex, syncIndex ) )
+		// Read before attempting the CAS.
+		if ( b2AtomicLoadInt( &blocks[blockIndex].syncIndex ) == previousSyncIndex &&
+			 b2AtomicCompareExchangeInt( &blocks[blockIndex].syncIndex, previousSyncIndex, syncIndex ) )
 		{
 			B2_ASSERT( stage->type != b2_stagePrepareContacts || syncIndex < 2 );
 			B2_ASSERT( completedCount < blockCount );
