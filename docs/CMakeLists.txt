@@ -55,8 +55,7 @@ doxygen_add_docs(doc
                 "character.md"
                 "reading.md"
                 "questions.md"
-                "migration.md"
-                "release_notes_v310.md"
+                "release_notes_v320.md"
                 ALL
                 COMMENT "Generate HTML documentation")
                 
