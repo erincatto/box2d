@@ -202,6 +202,10 @@ B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 /// Is constraint warm starting enabled?
 B2_API bool b2World_IsWarmStartingEnabled( b2WorldId worldId );
 
+/// Enable the SSE2 fallback even when AVX2 is present. This is for testing.
+/// Normally you should use the CMake build settings to disable AVX2.
+B2_API void b2World_EnableSSE2Fallback( b2WorldId worldId, bool flag );
+
 /// Get the number of awake bodies.
 B2_API int b2World_GetAwakeBodyCount( b2WorldId worldId );
 

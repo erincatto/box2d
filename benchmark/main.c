@@ -216,6 +216,7 @@ int main( int argc, char** argv )
 	bool recordStepTimes = false;
 	bool fullSteps = false;
 	bool rebuildStatic = false;
+	bool sse2Fallback = false;
 
 	for ( int i = 1; i < argc; ++i )
 	{
@@ -272,6 +273,24 @@ int main( int argc, char** argv )
 			rebuildStatic = true;
 			printf( "Static tree rebuilt after create\n" );
 		}
+		else if ( ( value = MatchValue( arg, "-simd=", "--simd-width=" ) ) != NULL )
+		{
+			int simdWidth = atoi( value );
+			if ( simdWidth == 4 )
+			{
+				sse2Fallback = true;
+			}
+			else if ( simdWidth != 8 )
+			{
+				printf( "The SIMD width must be 4 or 8\n" );
+				exit( 1 );
+			}
+			else if ( b2IsAVX2Available() == false )
+			{
+				printf( "This CPU does not support AVX2\n" );
+				exit( 1 );
+			}
+		}
 		else if ( strcmp( arg, "-l" ) == 0 || strcmp( arg, "--list" ) == 0 )
 		{
 			PrintBenchmarks( benchmarks, benchmarkCount );
@@ -288,6 +307,7 @@ int main( int argc, char** argv )
 					"-s, --record-steps: record step times\n"
 					"-f, --full: run the full step count in a debug build\n"
 					"-rs, --rebuild-static: rebuild the static tree after create and print the time\n"
+					"-simd, --simd-width=<4|8>: force the SSE2 path with 4, the default is 8 when the CPU has AVX2\n"
 					"-l, --list: list the registered benchmarks\n"
 					"-h, --help: print this help\n" );
 			exit( 0 );
@@ -304,6 +324,7 @@ int main( int argc, char** argv )
 	}
 
 	printf( "Starting Box2D benchmarks\n" );
+	printf( "SIMD width: %d\n", b2IsAVX2Available() && sse2Fallback == false ? 8 : 4 );
 	printf( "======================================\n" );
 
 	for ( int benchmarkIndex = 0; benchmarkIndex < benchmarkCount; ++benchmarkIndex )
@@ -344,6 +365,7 @@ int main( int argc, char** argv )
 				worldDef.enableContinuous = enableContinuous;
 				worldDef.workerCount = threadCount;
 				b2WorldId worldId = b2CreateWorld( &worldDef );
+				b2World_EnableSSE2Fallback( worldId, sse2Fallback );
 
 				benchmark->createFcn( worldId );
 

@@ -282,19 +282,21 @@ static void b2CollideProxyAndSubtree( const b2TreeNode* proxy, const b2TreeNode*
 	while ( stackCount > 0 )
 	{
 		pair = stack[--stackCount];
-		for ( int i = 0; i < 2; ++i )
+		const b2TreeNode* children = nodes + pair;
+
+		int movedMask = 3;
+		if ( proxyMark == 0 )
 		{
-			const b2TreeNode* node = nodes + pair + i;
-			if ( ( ( node->flagIndex | proxyMark ) & B2_MOVED_NODE ) == 0 )
-			{
-				continue;
-			}
+			movedMask = ( b2IsNodeMoved( children + 0 ) ? 1 : 0 ) | ( b2IsNodeMoved( children + 1 ) ? 2 : 0 );
+		}
 
-			if ( b2OverlapNode( boxv, node ) == false )
-			{
-				continue;
-			}
+		int mask = b2OverlapNodePairMask( boxv, children ) & movedMask;
+		while ( mask != 0 )
+		{
+			int i = (int)b2CTZ32( (uint32_t)mask );
+			mask &= mask - 1;
 
+			const b2TreeNode* node = children + i;
 			if ( b2IsLeaf( node ) )
 			{
 				b2AddCandidatePair( shapeId, node->shapeIndex, context );
@@ -314,15 +316,9 @@ static void b2CollideProxyAndSubtree( const b2TreeNode* proxy, const b2TreeNode*
 	}
 }
 
-// Helper for b2CollideCrossPairs to avoid code duplication.
-B2_FORCE_INLINE void b2VisitPair( const b2TreeNode* arrayA, const b2TreeNode* arrayB, const b2TreeNode* nodeA,
-								  const b2TreeNode* nodeB, b2IndexPair* stack, int* stackCount, b2PairContext* context )
+B2_FORCE_INLINE void b2ExpandPair( const b2TreeNode* arrayA, const b2TreeNode* arrayB, const b2TreeNode* nodeA,
+								   const b2TreeNode* nodeB, b2IndexPair* stack, int* stackCount, b2PairContext* context )
 {
-	if ( b2TestPair( nodeA, nodeB ) == false )
-	{
-		return;
-	}
-
 	bool leafA = b2IsLeaf( nodeA );
 	bool leafB = b2IsLeaf( nodeB );
 	if ( leafA && leafB )
@@ -370,17 +366,26 @@ static void b2CollideCrossPairs( const b2TreeNode* arrayA, const b2TreeNode* arr
 	int stackCount = 0;
 
 	// Seed the stack.
-	b2VisitPair( arrayA, arrayB, subtreeA, subtreeB, stack, &stackCount, context );
+	if ( b2TestPair( subtreeA, subtreeB ) )
+	{
+		b2ExpandPair( arrayA, arrayB, subtreeA, subtreeB, stack, &stackCount, context );
+	}
 
 	while ( stackCount > 0 )
 	{
 		b2IndexPair pair = stack[--stackCount];
-		for ( int i = 0; i < 2; ++i )
+		const b2TreeNode* pairA = arrayA + pair.a;
+		const b2TreeNode* pairB = arrayB + pair.b;
+
+		int movedA = ( b2IsNodeMoved( pairA + 0 ) ? 0x3 : 0 ) | ( b2IsNodeMoved( pairA + 1 ) ? 0xC : 0 );
+		int movedB = ( b2IsNodeMoved( pairB + 0 ) ? 0x5 : 0 ) | ( b2IsNodeMoved( pairB + 1 ) ? 0xA : 0 );
+
+		int mask = b2OverlapPairMask( pairA, pairB ) & ( movedA | movedB );
+		while ( mask != 0 )
 		{
-			for ( int j = 0; j < 2; ++j )
-			{
-				b2VisitPair( arrayA, arrayB, arrayA + pair.a + i, arrayB + pair.b + j, stack, &stackCount, context );
-			}
+			int lane = (int)b2CTZ32( (uint32_t)mask );
+			mask &= mask - 1;
+			b2ExpandPair( arrayA, arrayB, pairA + ( lane >> 1 ), pairB + ( lane & 1 ), stack, &stackCount, context );
 		}
 	}
 }

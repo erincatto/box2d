@@ -278,6 +278,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->locked = false;
 	world->enableWarmStarting = true;
 	world->enableContinuous = def->enableContinuous;
+	world->simdWidth = b2GetSIMDWidth();
 	world->userTreeTask = NULL;
 	world->userData = def->userData;
 
@@ -1796,6 +1797,18 @@ bool b2World_IsWarmStartingEnabled( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	return world->enableWarmStarting;
+}
+
+void b2World_EnableSSE2Fallback( b2WorldId worldId, bool flag )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return;
+	}
+
+	world->simdWidth = flag ? 4 : b2GetSIMDWidth();
 }
 
 int b2World_GetAwakeBodyCount( b2WorldId worldId )

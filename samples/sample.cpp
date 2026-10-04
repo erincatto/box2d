@@ -576,6 +576,7 @@ void Sample::Step()
 	b2World_EnableContinuous( m_worldId, m_context->enableContinuous );
 	b2World_SetRestitutionIterations( m_worldId, m_context->restitutionIterations );
 	b2World_EnableRestitutionPropagation( m_worldId, m_context->enableRestitutionPropagation );
+	b2World_EnableSSE2Fallback( m_worldId, m_context->enableSSE2Fallback );
 
 	for ( int i = 0; i < 1; ++i )
 	{
@@ -1851,6 +1852,13 @@ static void DrawInfoPanel( SampleContext* context, float frameTime )
 
 		ImGui::Checkbox( "Bounce Propagation##Solver", &context->enableRestitutionPropagation );
 		HelpMarker( "Enable restitution solver propagation across all touching contacts points" );
+
+		static bool avx2Available = b2IsAVX2Available();
+		if ( avx2Available )
+		{
+			ImGui::Checkbox( "SSE2 Fallback##Solver", &context->enableSSE2Fallback );
+			HelpMarker( "Use the 4 wide SSE2 path instead of the 8 wide AVX2 path.\nThe simulation is bitwise identical either way." );
+		}
 	}
 
 	if ( context->sample->HasSolverControls() && ImGui::CollapsingHeader( "Recording", ImGuiTreeNodeFlags_DefaultOpen ) )

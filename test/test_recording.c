@@ -7,6 +7,7 @@
 
 #include "benchmarks.h"
 #include "physics_world.h"
+#include "simd.h"
 #include "snapshot.h"
 #include "test_macros.h"
 
@@ -1121,5 +1122,58 @@ static int RestepRaceStress( void ( *build )( b2WorldId ), const char* name, int
 int ReStepRaceTest( void )
 {
 	ENSURE( RestepRaceStress( CreateJunkyard, "junkyard", 2, 150, 50, 16 ) == 0 );
+	return 0;
+}
+
+static int ValidateReplayAtWidth( const b2Recording* rec, int width )
+{
+	b2SetSIMDWidth( width );
+	bool valid = b2ValidateReplay( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 1 );
+	b2SetSIMDWidth( 0 );
+	return valid ? 0 : 1;
+}
+
+// A recording made at the native SIMD width must replay at width 4 and vice versa.
+int RecordingSIMDWidthTest( void )
+{
+	b2SetSIMDWidth( 0 );
+	int nativeWidth = b2GetSIMDWidth();
+	if ( nativeWidth == 4 )
+	{
+		printf( "  test skipped: RecordingSIMDWidthTest, native SIMD width is 4\n" );
+		return 0;
+	}
+
+	int recordWidths[] = { 4, nativeWidth };
+	for ( int i = 0; i < 2; ++i )
+	{
+		b2Recording* rec = b2CreateRecording( 0 );
+
+		b2SetSIMDWidth( recordWidths[i] );
+
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		b2WorldId worldId = b2CreateWorld( &worldDef );
+		b2World_StartRecording( worldId, rec );
+
+		BuildScrubPyramid( worldId, 16 );
+
+		for ( int step = 0; step < 120; ++step )
+		{
+			b2World_Step( worldId, 1.0f / 60.0f, 4 );
+		}
+
+		b2World_StopRecording( worldId );
+		b2DestroyWorld( worldId );
+		b2SetSIMDWidth( 0 );
+
+		int narrowStatus = ValidateReplayAtWidth( rec, 4 );
+		int nativeStatus = ValidateReplayAtWidth( rec, nativeWidth );
+
+		b2DestroyRecording( rec );
+
+		ENSURE( narrowStatus == 0 );
+		ENSURE( nativeStatus == 0 );
+	}
+
 	return 0;
 }

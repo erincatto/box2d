@@ -50,16 +50,14 @@
 // Define SIMD
 #if defined( BOX2D_DISABLE_SIMD )
 	#define B2_SIMD_NONE
-	// note: I tried width of 1 and got no performance change
-	#define B2_SIMD_WIDTH 4
 #else
 	#if defined( B2_CPU_X86_X64 )
-		#if defined( BOX2D_AVX2 )
-			#define B2_SIMD_AVX2
-			#define B2_SIMD_WIDTH 8
-		#else
-			#define B2_SIMD_SSE2
-			#define B2_SIMD_WIDTH 4
+		#define B2_SIMD_SSE2
+		#if !defined( BOX2D_DISABLE_AVX2 )
+			#define B2_SIMD_HAS_WIDTH_8
+			#if defined( __AVX2__ ) || ( defined( B2_SIMD_WIDTH ) && B2_SIMD_WIDTH == 8 )
+				#define B2_SIMD_AVX2
+			#endif
 		#endif
 	#elif defined( B2_CPU_ARM )
 		#if defined( __aarch64__ ) || defined( _M_ARM64 )
@@ -69,15 +67,23 @@
 			// and unverifiable performance.
 			#define B2_SIMD_NONE
 		#endif
-		#define B2_SIMD_WIDTH 4
 	#elif defined( B2_CPU_WASM )
 		#define B2_CPU_WASM
 		#define B2_SIMD_SSE2
-		#define B2_SIMD_WIDTH 4
 	#else
 		#define B2_SIMD_NONE
-		#define B2_SIMD_WIDTH 4
 	#endif
+#endif
+
+#if defined( B2_SIMD_AVX2 ) && defined( __clang__ )
+	#define B2_AVX2_BEGIN _Pragma( "clang attribute push( __attribute__( ( target( \"avx2\" ) ) ), apply_to = function )" )
+	#define B2_AVX2_END _Pragma( "clang attribute pop" )
+#elif defined( B2_SIMD_AVX2 ) && defined( __GNUC__ )
+	#define B2_AVX2_BEGIN _Pragma( "GCC push_options" ) _Pragma( "GCC target( \"avx2\" )" )
+	#define B2_AVX2_END _Pragma( "GCC pop_options" )
+#else
+	#define B2_AVX2_BEGIN
+	#define B2_AVX2_END
 #endif
 
 // Define compiler

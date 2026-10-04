@@ -144,6 +144,9 @@ B2_API b2Version b2GetVersion( void );
 /// @return true if the library was built with BOX2D_DOUBLE_PRECISION (large world mode)
 B2_API bool b2IsDoublePrecision( void );
 
+/// @return true if the current CPU has the AVX2 instruction set.
+B2_API bool b2IsAVX2Available( void );
+
 /**@}*/
 
 //! @cond

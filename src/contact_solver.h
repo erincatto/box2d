@@ -40,7 +40,7 @@ typedef struct b2ContactConstraint
 } b2ContactConstraint;
 
 // This function allows hiding SIMD intrinsics in the source file to improve compilation performance.
-int b2GetWideContactConstraintByteCount( void );
+int b2GetWideContactConstraintByteCount( int simdWidth );
 
 // Overflow contacts don't fit into the constraint graph coloring
 void b2PrepareContacts_Overflow( b2StepContext* context );
@@ -57,3 +57,19 @@ void b2PushContacts_Wide( b2SolverBlock block, b2StepContext* context );
 void b2SolveContacts_Wide( b2SolverBlock block, b2StepContext* context );
 void b2ApplyRestitution_Wide( b2SolverBlock block, b2StepContext* context );
 void b2StoreImpulses_Wide( b2SolverBlock block, b2StepContext* context, int workerIndex );
+
+void b2PrepareContacts_WideW4( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartContacts_WideW4( b2SolverBlock block, b2StepContext* context );
+void b2PushContacts_WideW4( b2SolverBlock block, b2StepContext* context );
+void b2SolveContacts_WideW4( b2SolverBlock block, b2StepContext* context );
+void b2ApplyRestitution_WideW4( b2SolverBlock block, b2StepContext* context );
+void b2StoreImpulses_WideW4( b2SolverBlock block, b2StepContext* context, int workerIndex );
+int b2GetWideContactConstraintByteCountW4( void );
+
+void b2PrepareContacts_WideW8( b2SolverBlock block, b2StepContext* context );
+void b2WarmStartContacts_WideW8( b2SolverBlock block, b2StepContext* context );
+void b2PushContacts_WideW8( b2SolverBlock block, b2StepContext* context );
+void b2SolveContacts_WideW8( b2SolverBlock block, b2StepContext* context );
+void b2ApplyRestitution_WideW8( b2SolverBlock block, b2StepContext* context );
+void b2StoreImpulses_WideW8( b2SolverBlock block, b2StepContext* context, int workerIndex );
+int b2GetWideContactConstraintByteCountW8( void );
