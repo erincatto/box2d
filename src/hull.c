@@ -104,7 +104,7 @@ b2Hull b2ComputeHull( const b2Vec2* points, int count )
 	b2Vec2 ps[B2_MAX_POLYGON_VERTICES];
 	int n = 0;
 	const float linearSlop = B2_LINEAR_SLOP;
-	const float tolSqr = 16.0f * linearSlop * linearSlop;
+	const float tolSqr = 0.25f * linearSlop * linearSlop;
 	for ( int i = 0; i < count; ++i )
 	{
 		aabb.lowerBound = b2Min( aabb.lowerBound, points[i] );
@@ -113,9 +113,9 @@ b2Hull b2ComputeHull( const b2Vec2* points, int count )
 		b2Vec2 vi = points[i];
 
 		bool unique = true;
-		for ( int j = 0; j < i; ++j )
+		for ( int j = 0; j < n; ++j )
 		{
-			b2Vec2 vj = points[j];
+			b2Vec2 vj = ps[j];
 
 			float distSqr = b2DistanceSquared( vi, vj );
 			if ( distSqr < tolSqr )
