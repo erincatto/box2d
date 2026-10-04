@@ -30,6 +30,32 @@
 #define b2Prefetch( addr ) ( (void)( addr ) )
 #endif
 
+#if ( defined( __GNUC__ ) || defined( __clang__ ) ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
+static inline void b2Pause( void )
+{
+	__asm__ __volatile__( "pause\n" );
+}
+#elif ( defined( __arm__ ) && defined( __ARM_ARCH ) && __ARM_ARCH >= 7 ) || defined( __aarch64__ )
+static inline void b2Pause( void )
+{
+	__asm__ __volatile__( "yield" ::: "memory" );
+}
+#elif defined( _MSC_VER ) && ( defined( _M_IX86 ) || defined( _M_X64 ) )
+static inline void b2Pause( void )
+{
+	_mm_pause();
+}
+#elif defined( _MSC_VER ) && ( defined( _M_ARM ) || defined( _M_ARM64 ) )
+static inline void b2Pause( void )
+{
+	__yield();
+}
+#else
+static inline void b2Pause( void )
+{
+}
+#endif
+
 
 static inline void b2AtomicStoreInt( b2AtomicInt* a, int value )
 {
