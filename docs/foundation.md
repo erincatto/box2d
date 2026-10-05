@@ -1,10 +1,11 @@
 # Foundations
-Box2D provides minimal base functionality for allocation hooks and vector math. The C interface
-allows most runtime data and types to be defined internally in the `src` folder.
+
+Box2D provides minimal base functionality for hooks and vector math. The C interface allows most of the runtime data and types to be defined internally in the `src` folder.
 
 ## Assertions
+
 Box2D will assert on bad input. This includes things like sending in NaN or infinity for values. It will assert if
-you use negative values for things that should only be positive, such as density.
+you use negative values for things that should only be positive, such as density. When asserts are disabled, bad input will be rejected and a message will be logged.
 
 Box2D will also assert if an internal bug is detected. For this reason, it is advisable to build Box2D from source.
 The Box2D library compiles in about a second on my computer.

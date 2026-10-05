@@ -110,7 +110,7 @@ worldDef.finishTask = myFinishTaskFunction;
 worldDef.userTaskContext = &myTaskSystem;
 ```
 
-Multithreading is not required but it can improve performance substantially. Read more [here](#multi).
+Multithreading is not required but it can improve performance substantially. Read more [here](@ref multi).
 
 ### World Lifetime
 
@@ -153,7 +153,7 @@ order of things. For example, you must create bodies before the time
 step if you want to get collision results for the new bodies in that
 frame.
 
-As I discussed in the [HelloWorld tutorial](#hello), you should use a fixed
+As I discussed in the [HelloWorld tutorial](@ref hello), you should use a fixed
 time step. By using a larger time step you can improve performance in
 low frame rate scenarios. But generally you should use a time steps 1/30 seconds (30Hz) or smaller.
 A time step of 1/60 seconds (60Hz) will usually deliver a high quality simulation.
@@ -164,7 +164,7 @@ This allows joints and contacts to respond with finer detail. The recommended
 sub-step count is 4. However, increasing the sub-step count may improve 
 accuracy. For example, long joint chains will stretch less with more sub-steps.
 
-The scissor lift sample shown [here](#samples) works better with more sub-steps
+The scissor lift sample shown [here](@ref samples) works better with more sub-steps
 and is configured to use 8 sub-steps. With a primary time step of 1/60 seconds,
 the scissor lift is taking sub-steps at 480Hz!
 
@@ -559,7 +559,7 @@ float angleInRadians = b2Rot_GetAngle(rotation);
 
 World positions use `b2Pos` and world transforms use `b2WorldTransform`. In the default
 build these are aliases for `b2Vec2` and `b2Transform`. They become double precision types in
-[large world mode](#large-worlds).
+[large world mode](@ref large-worlds).
 
 You can access the center of mass position in local and world
 coordinates. Much of the internal simulation in Box2D uses the center of
@@ -1296,7 +1296,7 @@ may want to create a door that only certain characters can pass through.
 This is called contact filtering, because some interactions are filtered
 out.
 
-Contact filtering is setup on shapes and is covered [here](#filtering).
+Contact filtering is setup on shapes and is covered [here](@ref filtering).
 
 ### Advanced Contact Handling
 
@@ -1763,7 +1763,7 @@ overlap tests:
 #### Query Filtering
 
 A basic understanding of query filtering is needed before considering the specific queries.
-Shape versus shape filtering was discussed [here](#filtering). A similar setup is used
+Shape versus shape filtering was discussed [here](@ref filtering). A similar setup is used
 for queries. This lets your queries only consider certain categories of shapes, it also
 lets your shapes ignore certain queries.
 
@@ -1825,7 +1825,7 @@ b2World_OverlapAABB(myWorldId, b2Pos_zero, aabb, filter, MyOverlapCallback, &myG
 
 The query geometry is relative to the `b2Pos` origin. Near the world origin pass
 `b2Pos_zero` and world coordinates, as here. The origin matters for
-[large worlds](#large-worlds), where it keeps distant queries precise.
+[large worlds](@ref large-worlds), where it keeps distant queries precise.
 
 Do not make any assumptions about the order of the callback. The order shapes
 are returned to your callback may seem arbitrary.

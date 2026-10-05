@@ -67,7 +67,7 @@ Yes. See the CMake option `BUILD_SHARED_LIBS`.
 
 ### Is Box2D thread-safe?
 
-No. Box2D will likely never be thread-safe. Box2D has a large API and trying to make such an API thread-safe would have a large performance and complexity impact. However, you can call read only functions from multiple threads. For example, all the [spatial query](#spatial) functions are read only.
+No. Box2D will likely never be thread-safe. Box2D has a large API and trying to make such an API thread-safe would have a large performance and complexity impact. However, you can call read only functions from multiple threads. For example, all the [spatial query](@ref spatial) functions are read only.
 
 ## Build Issues
 

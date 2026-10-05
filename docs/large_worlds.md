@@ -109,6 +109,6 @@ or snapshot will not load into a float build, and the reverse, because the posit
 irreconcilably; the loader rejects a precision mismatch with a clear message rather than replaying
 wrong. The format version covers the query origin arguments, so recordings made before origins
 existed are refused at load. Within one precision mode they behave exactly as documented in
-[Recording and Replay](#recording). A recording made far from the origin reproduces the run
+[Recording and Replay](@ref recording). A recording made far from the origin reproduces the run
 exactly, because the recorded positions ride the same double-precision wire format the live
 simulation uses.
