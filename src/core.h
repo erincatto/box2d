@@ -53,11 +53,9 @@
 #else
 	#if defined( B2_CPU_X86_X64 )
 		#define B2_SIMD_SSE2
-		#if !defined( BOX2D_DISABLE_AVX2 )
-			#define B2_SIMD_HAS_WIDTH_8
-			#if defined( __AVX2__ ) || ( defined( B2_SIMD_WIDTH ) && B2_SIMD_WIDTH == 8 )
-				#define B2_SIMD_AVX2
-			#endif
+		#define B2_SIMD_HAS_WIDTH_8
+		#if defined( __AVX2__ ) || ( defined( B2_SIMD_WIDTH ) && B2_SIMD_WIDTH == 8 )
+			#define B2_SIMD_AVX2
 		#endif
 	#elif defined( B2_CPU_ARM )
 		#if defined( __aarch64__ ) || defined( _M_ARM64 )

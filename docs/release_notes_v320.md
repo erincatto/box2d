@@ -44,3 +44,4 @@
 - Chain shapes creation changed a lot.
 - Contact recycling is on by default. This will skip updates on friction and pre-solve until the shapes move more than 5cm from each other. You can disable contactd recycling on the world or per body.
 - Adjusted tolerance in `b2Normalize`.
+- Contact point normal velocity is only computed if needed for hit events or restitution.
