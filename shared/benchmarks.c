@@ -17,6 +17,19 @@
 #define BENCHMARK_DEBUG 1
 #endif
 
+b2Capacity GetJointGridCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 7,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 440 : 11000,
+		.staticBodyCount = 7,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 440 : 11000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 34 : 120 ) * 1024,
+	};
+
+	return c;
+}
+
 void CreateJointGrid( b2WorldId worldId )
 {
 	b2World_EnableSleeping( worldId, false );
@@ -84,6 +97,20 @@ void CreateJointGrid( b2WorldId worldId )
 	}
 
 	free( bodies );
+}
+
+b2Capacity GetLargePyramidCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 1,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 240 : 5600,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 240 : 5600,
+		.contactCount = BENCHMARK_DEBUG ? 740 : 19000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 130 : 2800 ) * 1024,
+	};
+
+	return c;
 }
 
 void CreateLargePyramid( b2WorldId worldId )
@@ -154,6 +181,20 @@ static void CreateSmallPyramid( b2WorldId worldId, int baseCount, float extent, 
 	}
 }
 
+b2Capacity GetManyPyramidsCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = BENCHMARK_DEBUG ? 5 : 22,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 1600 : 25000,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 1600 : 25000,
+		.contactCount = BENCHMARK_DEBUG ? 4600 : 73000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 700 : 11000 ) * 1024,
+	};
+
+	return c;
+}
+
 void CreateManyPyramids( b2WorldId worldId )
 {
 	b2World_EnableSleeping( worldId, false );
@@ -194,19 +235,6 @@ void CreateManyPyramids( b2WorldId worldId )
 	}
 }
 
-b2Capacity GetManyPyramidsCapacity( void )
-{
-	b2Capacity c = {
-		.staticShapeCount = 20,
-		.staticBodyCount = 1,
-		.dynamicShapeCount = 22000,
-		.dynamicBodyCount = 22000,
-		.contactCount = 58000,
-	};
-
-	return c;
-}
-
 #ifdef NDEBUG
 enum RainConstants
 {
@@ -238,6 +266,20 @@ typedef struct RainData
 } RainData;
 
 RainData g_rainData;
+
+b2Capacity GetRainCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = BENCHMARK_DEBUG ? 670 : 2800,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 860 : 15000,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 730 : 13000,
+		.contactCount = BENCHMARK_DEBUG ? 1600 : 29000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 150 : 1900 ) * 1024,
+	};
+
+	return c;
+}
 
 void CreateRain( b2WorldId worldId )
 {
@@ -354,6 +396,20 @@ typedef struct
 
 SpinnerData g_spinnerData;
 
+b2Capacity GetSpinnerCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 400,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 550 : 6700,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 550 : 6700,
+		.contactCount = BENCHMARK_DEBUG ? 2700 : 41000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 360 : 4600 ) * 1024,
+	};
+
+	return c;
+}
+
 void CreateSpinner( b2WorldId worldId )
 {
 	b2BodyId groundId;
@@ -462,6 +518,18 @@ float StepSpinner( b2WorldId worldId, int stepCount )
 	return b2RevoluteJoint_GetAngle( g_spinnerData.spinnerId );
 }
 
+b2Capacity GetSmashCapacity( void )
+{
+	b2Capacity c = {
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 230 : 11000,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 230 : 11000,
+		.contactCount = BENCHMARK_DEBUG ? 2300 : 55000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 280 : 4900 ) * 1024,
+	};
+
+	return c;
+}
+
 void CreateSmash( b2WorldId worldId )
 {
 	b2World_SetGravity( worldId, b2Vec2_zero );
@@ -502,6 +570,19 @@ void CreateSmash( b2WorldId worldId )
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 		}
 	}
+}
+
+b2Capacity GetTumblerCapacity( void )
+{
+	b2Capacity c = {
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 450 : 2300,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 450 : 2300,
+		.contactCount = BENCHMARK_DEBUG ? 2400 : 13000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 220 : 1100 ) * 1024,
+	};
+
+	return c;
 }
 
 void CreateTumbler( b2WorldId worldId )
@@ -569,6 +650,19 @@ void CreateTumbler( b2WorldId worldId )
 
 		y += 0.4f;
 	}
+}
+
+b2Capacity GetWasherCapacity( void )
+{
+	b2Capacity c = {
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 440 : 9000,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 450 : 9000,
+		.contactCount = BENCHMARK_DEBUG ? 2300 : 52000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 300 : 6000 ) * 1024,
+	};
+
+	return c;
 }
 
 void CreateWasher( b2WorldId worldId )
@@ -704,6 +798,20 @@ typedef struct
 } JunkyardData;
 
 static JunkyardData g_junkyardData;
+
+b2Capacity GetJunkyardCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 290,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 440 : 8800,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 450 : 8900,
+		.contactCount = BENCHMARK_DEBUG ? 1500 : 38000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 170 : 3700 ) * 1024,
+	};
+
+	return c;
+}
 
 void CreateJunkyard( b2WorldId worldId )
 {
@@ -853,6 +961,20 @@ static void CreateSleepPyramid( b2WorldId worldId, int baseCount, float extent, 
 }
 
 // Stress tests waking and sleeping.
+b2Capacity GetSleepCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 1,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 400 : 21000,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 400 : 21000,
+		.contactCount = BENCHMARK_DEBUG ? 1200 : 68000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 190 : 10000 ) * 1024,
+	};
+
+	return c;
+}
+
 void CreateSleep( b2WorldId worldId )
 {
 	g_sleepData = (SleepData){ 0 };
@@ -906,6 +1028,20 @@ float StepSleep( b2WorldId worldId, int stepCount )
 
 // Lifted from samples/sample_benchmark.cpp BenchmarkBarrel (e_compoundShape branch).
 // Each dynamic body is a compound of two triangular polygon shapes.
+b2Capacity GetCompoundsCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = 310,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 880 : 6600,
+		.staticBodyCount = 1,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 440 : 3300,
+		.contactCount = BENCHMARK_DEBUG ? 4400 : 37000,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 370 : 2900 ) * 1024,
+	};
+
+	return c;
+}
+
 void CreateCompounds( b2WorldId worldId )
 {
 	{
@@ -1019,6 +1155,20 @@ static float QueryRandom( float lower, float upper )
 	g_queryRandomState = 1664525u * g_queryRandomState + 1013904223u;
 	float unit = (float)( g_queryRandomState >> 8 ) * ( 1.0f / 16777216.0f );
 	return lower + ( upper - lower ) * unit;
+}
+
+b2Capacity GetQueriesCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = BENCHMARK_DEBUG ? 670 : 28000,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 550 : 2200,
+		.staticBodyCount = BENCHMARK_DEBUG ? 670 : 28000,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 560 : 2300,
+		.contactCount = BENCHMARK_DEBUG ? 2400 : 9800,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 270 : 930 ) * 1024,
+	};
+
+	return c;
 }
 
 void CreateQueries( b2WorldId worldId )
@@ -1627,6 +1777,20 @@ void DestroyTileWorld( void )
 	b2TreeStats stats = data->stats;
 	memset( data, 0, sizeof( TileWorldBenchmark ) );
 	data->stats = stats;
+}
+
+b2Capacity GetTileWorldCapacity( void )
+{
+	b2Capacity c = {
+		.staticShapeCount = BENCHMARK_DEBUG ? 5300 : 320000,
+		.dynamicShapeCount = BENCHMARK_DEBUG ? 55 : 2200,
+		.staticBodyCount = BENCHMARK_DEBUG ? 44 : 2700,
+		.dynamicBodyCount = BENCHMARK_DEBUG ? 55 : 2200,
+		.contactCount = BENCHMARK_DEBUG ? 200 : 8800,
+		.arenaByteCount = ( BENCHMARK_DEBUG ? 14 : 1300 ) * 1024,
+	};
+
+	return c;
 }
 
 void CreateTileWorld( b2WorldId worldId )

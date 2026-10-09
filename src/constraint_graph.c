@@ -26,6 +26,13 @@
 // Don't expect the same result for overflow and graph colored. They have a different solve order.
 #define B2_FORCE_OVERFLOW 0
 
+static int b2GetLinearShare( int total, int rampCount, int rampIndex )
+{
+	int64_t weight = rampCount - rampIndex;
+	int64_t weightSum = (int64_t)rampCount * ( rampCount + 1 ) / 2;
+	return (int)( total * weight / weightSum );
+}
+
 void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )
 {
 	_Static_assert( B2_GRAPH_COLOR_COUNT >= 2, "must have at least two constraint graph colors" );
@@ -36,6 +43,11 @@ void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )
 
 	int bodyCapacity = b2MaxInt( capacity->staticBodyCount + capacity->dynamicBodyCount, 16 );
 
+	int staticContactCount = capacity->contactCount / 8;
+	int dynamicContactCount = capacity->contactCount - staticContactCount;
+	int dynamicRampCount = B2_DYNAMIC_COLOR_COUNT / 2;
+	int staticRampCount = B2_GRAPH_COLOR_COUNT - B2_DYNAMIC_COLOR_COUNT;
+
 	// Initialize graph color bit set.
 	// No bitset for overflow color.
 	for ( int i = 0; i < B2_OVERFLOW_INDEX; ++i )
@@ -43,7 +55,20 @@ void b2CreateGraph( b2ConstraintGraph* graph, const b2Capacity* capacity )
 		b2GraphColor* color = graph->colors + i;
 		color->bodySet = b2CreateBitSet( bodyCapacity );
 		b2SetBitCountAndClear( &color->bodySet, bodyCapacity );
-		b2Array_Reserve( color->contactSims, 16 );
+
+		int contactCapacity = 0;
+		if ( i < dynamicRampCount )
+		{
+			contactCapacity += b2GetLinearShare( dynamicContactCount, dynamicRampCount, i );
+		}
+
+		int staticRampIndex = B2_OVERFLOW_INDEX - 1 - i;
+		if ( staticRampIndex < staticRampCount )
+		{
+			contactCapacity += b2GetLinearShare( staticContactCount, staticRampCount, staticRampIndex );
+		}
+
+		b2Array_Reserve( color->contactSims, b2MaxInt( 16, contactCapacity ) );
 	}
 }
 

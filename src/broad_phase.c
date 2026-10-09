@@ -16,7 +16,6 @@
 #include "parallel_for.h"
 #include "physics_world.h"
 #include "platform.h"
-#include "qsort.h"
 #include "shape.h"
 #include "simd.h"
 
@@ -510,6 +509,56 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 	b2TracyCZoneEnd( cross_pairs );
 }
 
+static void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count )
+{
+	int digitCounts[8][256] = { 0 };
+	for ( int i = 0; i < count; ++i )
+	{
+		uint64_t key = keys[i];
+		for ( int digit = 0; digit < 8; ++digit )
+		{
+			digitCounts[digit][( key >> ( 8 * digit ) ) & 0xFF] += 1;
+		}
+	}
+
+	uint64_t* source = keys;
+	uint64_t* target = tempKeys;
+
+	for ( int digit = 0; digit < 8; ++digit )
+	{
+		int shift = 8 * digit;
+		int* offsets = digitCounts[digit];
+
+		if ( offsets[( source[0] >> shift ) & 0xFF] == count )
+		{
+			continue;
+		}
+
+		int sum = 0;
+		for ( int i = 0; i < 256; ++i )
+		{
+			int digitCount = offsets[i];
+			offsets[i] = sum;
+			sum += digitCount;
+		}
+
+		for ( int i = 0; i < count; ++i )
+		{
+			uint64_t key = source[i];
+			target[offsets[( key >> shift ) & 0xFF]++] = key;
+		}
+
+		uint64_t* swap = source;
+		source = target;
+		target = swap;
+	}
+
+	if ( source != keys )
+	{
+		memcpy( keys, source, count * sizeof( uint64_t ) );
+	}
+}
+
 static void b2UpdateTreesTask( void* context )
 {
 	b2TracyCZoneNC( tree_task, "Rebuild BVH", b2_colorFireBrick, true );
@@ -620,21 +669,11 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	B2_ASSERT( keyCount == pairCount );
 
+	if ( pairCount > 1 )
 	{
-#define LESS( i, j ) ( pairKeys[(int)( i )] < pairKeys[(int)( j )] )
-#define SWAP( i, j )                                                                                                             \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		uint64_t tmp_ = pairKeys[(int)( i )];                                                                                    \
-		pairKeys[(int)( i )] = pairKeys[(int)( j )];                                                                             \
-		pairKeys[(int)( j )] = tmp_;                                                                                             \
-	}                                                                                                                            \
-	while ( 0 )
-
-		QSORT( pairCount, LESS, SWAP );
-
-#undef LESS
-#undef SWAP
+		uint64_t* tempKeys = b2StackAlloc( alloc, pairCount * sizeof( uint64_t ), "temp keys" );
+		b2RadixSortKeys( pairKeys, tempKeys, pairCount );
+		b2StackFree( alloc, tempKeys );
 	}
 
 	for ( int i = 0; i < keyCount; ++i )

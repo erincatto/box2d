@@ -84,6 +84,9 @@ typedef struct b2Capacity
 
 	/// Number of expected contacts.
 	int contactCount;
+
+	/// Reserve arena allocator space, used for temporary allocations.
+	int arenaByteCount;
 } b2Capacity;
 
 /// World definition used to create a simulation world.

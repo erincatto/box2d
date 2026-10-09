@@ -183,7 +183,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->generation = generation;
 	world->inUse = true;
 
-	world->stack = b2CreateStack( 2048 );
+	world->stack = b2CreateStack( b2MaxInt( 2048, def->capacity.arenaByteCount ) );
 	b2CreateBroadPhase( &world->broadPhase, &def->capacity );
 	b2CreateGraph( &world->constraintGraph, &def->capacity );
 
@@ -1012,6 +1012,8 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->profile.step = b2GetMilliseconds( stepTicks );
 
 	B2_ASSERT( b2GetStackAllocation( &world->stack ) == 0 );
+
+	world->maxCapacity.arenaByteCount = b2MaxInt( world->maxCapacity.arenaByteCount, b2GetMaxStackAllocation( &world->stack ) );
 
 	// Ensure stack is large enough
 	b2GrowStack( &world->stack );
