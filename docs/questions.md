@@ -38,7 +38,7 @@ If you grab the latest code from the git main branch you will likely find featur
 
 You should have a working knowledge of C before you use Box2D. You should understand functions, structures, and pointers. There are plenty of resources on the web for learning C. You should also understand your development environment: compilation, linking, and debugging.
 
-### Math and Physics
+### Math and physics
 
 You should have a basic knowledge of rigid bodies, force, torque, and impulses. If you come across a math or physics concept you don't understand, please read about it on Wikipedia. Visit this [page](http://box2d.org/publications/) if you want a deeper knowledge of the algorithms used in Box2D.
 
@@ -69,7 +69,7 @@ Yes. See the CMake option `BUILD_SHARED_LIBS`.
 
 No. Box2D will likely never be thread-safe. Box2D has a large API and trying to make such an API thread-safe would have a large performance and complexity impact. However, you can call read only functions from multiple threads. For example, all the [spatial query](@ref spatial) functions are read only.
 
-## Build Issues
+## Build issues
 
 ### Why doesn't my code compile and/or link?
 
@@ -106,17 +106,17 @@ Box2D uses [Gauss-Seidel](https://en.wikipedia.org/wiki/Gauss%E2%80%93Seidel_met
 Box2D also uses [Semi-implicit Euler](https://en.wikipedia.org/wiki/Semi-implicit_Euler_method) to approximately solve the differential equations.
 Box2D also does not have exact collision. There is no continuous collision between dynamic shapes. Slow moving shapes may have small overlap for a few time steps. In extreme stacking scenarios, shapes may have sustained overlap.
 
-## Making Games
+## Making games
 
-### Worms Clones
+### Worms clones
 
 Making a worms clone requires arbitrarily destructible terrain. This is beyond the scope of Box2D, so you will have to figure out how to do this on your own.
 
-### Tile Based Environment
+### Tile based environment
 
 Using many boxes for your terrain may not work well because box-like characters can get snagged on internal corners. Box2D provides chain shapes for smooth collision, see `b2ChainDef`. In general you should avoid using a rectangular character because collision tolerances will still lead to undesirable snagging. Box2D provides capsules and rounded polygons that may work better for characters.
 
-### Asteroid Type Coordinate Systems
+### Asteroid type coordinate systems
 
 Box2D does not have any support for coordinate frame wrapping. You would likely need to customize Box2D for this purpose. You may need to use a different broad-phase for this to work.
 

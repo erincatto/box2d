@@ -1,6 +1,6 @@
 # v3.2 Release Notes
 
-## API Changes
+## API changes
 - Joint definitions share a common `b2JointDef base` and use local frames instead of anchors, axes and reference angles.
 - Mouse joint removed, the motor joint now has spring and velocity targets.
 - Motion locks replace fixed rotation.
@@ -9,7 +9,7 @@
 - Pre-solve callback redesigned, plus a separate continuous pre-solve callback.
 - Native task system. Box2D runs its own threads when no task callbacks are hooked up.
 
-## New Features
+## New features
 - Large worlds with optional double precision (`BOX2D_DOUBLE_PRECISION`).
 - Recording, replay and world snapshots.
 - Contact recycling for better stability and performance.

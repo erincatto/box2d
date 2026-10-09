@@ -3,7 +3,7 @@
 > **Caution**:
 > This guide only covers the transition from 2.4 to 3.0. Please see the release notes for future version changes.
 
-## Version 2.4 to Version 3.0
+## Version 2.4 to version 3.0
 
 Box2D version 3.0 is a full rewrite. You can read some background information [here](https://box2d.org/posts/2023/01/starting-box2d-3.0/).
 
@@ -24,7 +24,7 @@ I'm not going to cover all the details of v3.0 in this guide. That is the job of
 
 The surface area of the Box2D is smaller in v3.0 because C++ is not good at hiding details. So hopefully you find the new API easier to work with.
 
-### Should I upgrade to Version 3?
+### Should i upgrade to version 3?
 Since the behavior changed from version 2 to version 3, I recommend to only use version 3 for new projects. Version 2 no longer receives updates, but it is already battle tested. Version 3 is good for projects that need high performance.
 
 ### Creating a world

@@ -1,6 +1,6 @@
 # Loose Ends
 
-## User Data
+## User data
 Bodies, shapes, and joints allow you to attach user data
 as a `void*`. This is handy when you are examining Box2D data
 structures and you want to determine how they relate to the objects in
@@ -30,7 +30,7 @@ bodies. Don't store a `GameEntity` pointer on one body, and a `ParticleSystem`
 pointer on another body. Casting a `GameEntity` to a `ParticleSystem` pointer
 may lead to a crash.
 
-## Pixels and Coordinate Systems
+## Pixels and coordinate systems
 I recommend using MKS (meters, kilograms, and seconds) units and
 radians for angles. You may have trouble working with meters because
 your game is expressed in terms of pixels. To deal with this in the
@@ -80,7 +80,7 @@ If this conversion is not possible, you can set the length units used
 by Box2D using `b2SetLengthUnitsPerMeter()`. This is experimental and not
 well tested.
 
-## Debug Drawing
+## Debug drawing
 You can implement the function pointers in `b2DebugDraw` struct to get detailed
 drawing of the Box2D world. Debug draw provides:
 - shapes

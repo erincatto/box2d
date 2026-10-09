@@ -53,11 +53,14 @@ The version is also available at compile time from these macros:
 
 ## Compile time configuration
 
-If you vendor Box2D it can be tedious to define all the preprocessor directives. Instead you can edit your vendored `box2d/config.h` to define compile time options. For example, you can enable double precision body positions with this macro:
+Box2D can be configured in CMake and all the settings are shown using cmake-gui. 
+If you vendor Box2D you can edit `box2d/config.h` to define compile time options. For example, you can enable double precision body positions with this macro:
 
 ```c
 #define BOX2D_DOUBLE_PRECISION
 ```
+
+Alternatively, you can define the C preprocessor value `BOX2D_USER_CONFIG` to provide your own configuration file. This is a convenient way to override values in `box2d/constants.h`.
 
 ## Vector math
 
@@ -138,3 +141,7 @@ There are a few caveats:
 - If you will simulate multiple Box2D worlds simultaneously, then they should probably not use a task system. Otherwise you're likely to get oversubscription.
 - Any callbacks you hook up to Box2D must be thread-safe, such as memory allocators.
 - All of the limitations for single world simulation still apply.
+
+## SIMD
+
+Box2D uses [SIMD](https://en.wikipedia.org/wiki/Single_instruction%2C_multiple_data) instructions to improve performance. On x64 CPUs it will use AVX2 if possible and otherwise fallback to SSE2. This decision is made at runtime using the [CPUID](https://en.wikipedia.org/wiki/CPUID). On ARM64 and Apple Silicon Box2D will use Neon instructions. You can completely disable SIMD using the preprocessor argument `BOX2D_DISABLE_SIMD`.

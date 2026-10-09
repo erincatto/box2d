@@ -46,7 +46,7 @@ Box2D may be out of sync with this manual.
 > This manual applies to the associated release and not necessarily the
 > latest version on the main branch.
 
-## Feedback and Bugs
+## Feedback and bugs
 
 Please file bugs and feature requests here:
 [Box2D Issues](https://github.com/erincatto/box2d/issues)
@@ -59,7 +59,7 @@ There is also a [Discord server](https://discord.gg/NKYgCBP) and a
 [subreddit](https://reddit.com/r/box2d) for Box2D. You may also use
 [GitHub Discussions](https://github.com/erincatto/box2d/discussions).
 
-## Core Concepts
+## Core concepts
 
 Box2D works with several fundamental concepts and objects. I briefly
 define these objects here and more details are given later in this
@@ -255,7 +255,7 @@ this call before creating any Box2D world:
 b2SetLengthUnitsPerMeter(100.0f);
 ```
 
-## Ids and Definitions
+## Ids and definitions
 
 Fast memory management plays a central role in the design of the Box2D
 interface. When you create a world, body, shape or joint, you will receive

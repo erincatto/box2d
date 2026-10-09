@@ -7,7 +7,7 @@ the box's position over time.
 
 This is a good example of how to get up and running with Box2D.
 
-## Creating a World
+## Creating a world
 
 Every Box2D program begins with the creation of a world object.
 The world is the physics hub that manages memory, objects, and simulation.
@@ -39,7 +39,7 @@ definition is no longer needed.
 
 So now we have our physics world, let's start adding some stuff to it.
 
-## Creating a Ground Box
+## Creating a ground box
 
 Bodies are built using the following steps:
 
@@ -112,7 +112,7 @@ morphing shapes is not a rigid body, but Box2D is a rigid body engine.
 Many of the algorithms in Box2D are based on the rigid body model and optimized with
 that in mind. If this is violated you may get unexpected behavior.
 
-## Creating a Dynamic Body
+## Creating a dynamic body
 
 I can use the same technique to create a
 dynamic body. The main difference, besides dimensions, is that I must
@@ -167,7 +167,7 @@ b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
 
 That's it for initialization. We are now ready to begin simulating.
 
-## Simulating the World
+## Simulating the world
 
 I have initialized the ground box and a dynamic box. Now we are
 ready to set Newton loose to do his thing. I just have a couple more
