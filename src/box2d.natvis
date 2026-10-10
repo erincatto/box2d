@@ -34,13 +34,6 @@
     </Expand>
   </Type>
 
-  <Type Name="b2BodyId">
-    <DisplayString>
-      {b2_worlds[world0].bodies.data[index1-1].name,na},
-      {b2_worlds[world0].bodies.data[index1-1].type}
-    </DisplayString>
-  </Type>
-
   <Type Name="b2AtomicInt">
     <DisplayString>{value}</DisplayString>
   </Type>
@@ -70,6 +63,13 @@
 
   <Type Name="b2Body">
     <DisplayString>{type} set={setIndex}</DisplayString>
+  </Type>
+
+  <Type Name="b2BodyId">
+    <DisplayString>
+      {b2_worlds[world0].bodies.data[index1-1].name,na},
+      {b2_worlds[world0].bodies.data[index1-1].type}
+    </DisplayString>
   </Type>
 
   <Type Name="b2DynamicArray_int">
@@ -118,6 +118,15 @@
       <Item Name="aabb">aabb</Item>
       <Item Name="filter">filter</Item>
       <Item Name="userData">userData</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="b2ShapeId">
+    <DisplayString>
+      {b2_worlds[world0].shapes.data[index1-1].type}
+    </DisplayString>
+    <Expand>
+      <Item Name="shape">b2_worlds[world0].shapes.data[index1-1]</Item>
     </Expand>
   </Type>
 

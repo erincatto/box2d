@@ -1,3 +1,6 @@
+# https://www.doxygen.nl/manual/markdown.html#markdown_extra
+# https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+
 find_package(Doxygen REQUIRED dot)
 
 set(DOXYGEN_PROJECT_NAME "Box2D")

@@ -189,11 +189,11 @@ forces or collisions.
 
 #b2_dynamicBody:
 A dynamic body is fully simulated and moves according to forces and torques.
-A dynamic body can collide with all body types. A dynamic body always has
+A dynamic body can collide with all body types. A dynamic body should always have
 finite, non-zero mass.
 
-> **Caution**:
-> Generally you should not set the transform on bodies after creation.
+> [!IMPORTANT]
+> Avoid setting the transform on bodies after creation.
 > Box2D treats this as a teleport and may result in undesirable behavior and/or performance problems.
 
 Bodies carry shapes and moves them around in the world. Bodies are always
@@ -247,7 +247,7 @@ bodyDef.type = b2_dynamicBody;
 You can initialize the body position and angle in the body definition. This has far
 better performance than creating the body at the world origin and then moving the body.
 
-> **Caution**:
+> [!WARNING]
 > Do not create a body at the origin and then move it. If you create
 > several bodies at the origin, then performance will suffer.
 
@@ -358,8 +358,7 @@ The `isAwake` flag is ignored if `enableSleep` is false.
 ### Motion locks
 
 You may want a rigid body, such as a character, to have a fixed
-rotation Such a body does not rotate, even under load. You can use
-the fixed rotation setting to achieve this:
+rotation Such a body does not rotate, even under load. You can make the body have fixed rotation by locking z-axis rotation:
 
 ```c
 bodyDef.motionLocks.angularZ = true;
@@ -368,7 +367,9 @@ bodyDef.motionLocks.angularZ = true;
 The `angularZ` flag causes the rotational inertia and its inverse to
 be set to zero.
 
-You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For techinical reasons these only restrict translation but the linear velocity may momentarily violated the restriction. I'm not a fan of restricting translation this way. I tried using an inverse mass of zero along an axis and that causes the solver to blow up because it ends up dividing by very small numbers. So I might remove this feature.
+You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For techinical reasons these only restrict translation but the linear velocity may momentarily violate the restriction. I'm not a fan of restricting translation this way. I tried using an inverse mass of zero along an axis and that causes the solver to blow up because it ends up dividing by very small numbers.
+
+It is best to think of the motion locks as constraints that are not fully satisfied, like all other constraints in Box2D.
 
 ### Bullets {#bullets}
 
@@ -1038,10 +1039,8 @@ are processed the next time step. Such operations include:
 - setting a body transform
 - disabling or enabling sensor events on a shape
 
-Sensors do not detect objects that pass through the sensor shape within 
-one time step. So sensors do not have continuous collision detection.
-If you have fast moving object and/or small sensors then you should use a
-ray or shape cast to detect these events.
+Fast shapes passing through a static sensor can be detected by sensors. This is only reliable for non-moving sensors.
+If you need reliable events for fast moving shapes versus fast moving sensors, I recommend to use a ray or shape cast.
 
 You can access the current sensor overlaps from the previous world step. Be careful because some
 shape ids may be invalid due to a shape being destroyed. Use `b2Shape_IsValid` to ensure an
@@ -1110,7 +1109,7 @@ help you avoid processing stale data.
 
 Sensor events are only enabled for shapes and sensors if b2ShapeDef::enableSensorEvents is set to true.
 
-> **Note**:
+> [!NOTE]
 > A shape cannot start or stop being a sensor. Such a feature would break
 > sensor events, potentially causing bugs in game logic.
 
@@ -1230,6 +1229,20 @@ for (int i = 0; i < bodyContactCount; ++i)
 Getting contact data off shapes and bodies is not the most efficient
 way to handle contact data. Instead you should use contact events.
 
+Contact data also contains a `b2ContactId` you can use to track a contact over time.
+
+```c
+// Store a contact id.
+b2ContactId myContactId = contactData[0].contactId;
+
+// At some later time step.
+if (b2Contact_IsValid( myContactId ))
+{
+    b2ContactData data = b2Contact_GetData( myContactId );
+    // do stuff with data
+}
+```
+
 ### Contact events
 
 Contact events are available after each world step. Like sensor events these should be
@@ -1253,8 +1266,8 @@ There are three kinds of contact events:
 
 #### Contact touch event
 
-`b2ContactBeginTouchEvent` is recorded when two shapes begin touching. These only
-contain the two shape ids.
+`b2ContactBeginTouchEvent` is recorded when two shapes begin touching. These 
+contain the two shape ids and the contact id.
 
 ```c
 for (int i = 0; i < contactEvents.beginCount; ++i)
@@ -1264,10 +1277,9 @@ for (int i = 0; i < contactEvents.beginCount; ++i)
 }
 ```
 
-`b2ContactEndTouchEvent` is recorded when two shapes stop touching. These only
-contain the two shape ids.
-
-
+`b2ContactEndTouchEvent` is recorded when two shapes stop touching. These contain the two shape ids
+and the contact id. The contact has likely been destroyed, so make sure the contact id is valid before
+using it to get contact data.
 
 ```c
 for (int i = 0; i < contactEvents.endCount; ++i)
@@ -1288,6 +1300,7 @@ such as destroying a body or shape. These events are included with simulation ev
 Shapes only generate begin and end touch events if `b2ShapeDef::enableContactEvents` is true.
 
 #### Hit events
+
 Typically in games you are mainly concerned about getting contact events for when
 two shapes collide at a significant speed so you can play a sound and/or particle effect. Hit
 events are the answer for this.
@@ -1334,40 +1347,60 @@ bool MyCustomFilter(b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context)
 
 // Elsewhere
 b2World_SetCustomFilterCallback(myWorldId, MyCustomFilter, myGame);
+
+// At shape creation
+myShapeDef.enableCustomFiltering = true;
 ```
 
-This function must be [thread-safe](https://en.wikipedia.org/wiki/Thread_safety) and must not read from or write to the Box2D world. Otherwise you will get a [race condition](https://en.wikipedia.org/wiki/Race_condition). 
+This function must be [thread-safe](https://en.wikipedia.org/wiki/Thread_safety) and must not read from or write to the Box2D world. Otherwise you will get a [race condition](https://en.wikipedia.org/wiki/Race_condition). See the `CustomFilter` sample for details.
 
 #### Pre-solve callback
 
 This is called after collision detection, but before collision
-resolution. This gives you a chance to disable the contact based on the contact geometry. For example, you can implement a one-sided platform using this callback.
-
-The contact will be re-enabled each time through collision processing,
-so you will need to disable the contact every time-step. This function must be thread-safe
-and must not read from or write to the Box2D world.
+resolution. This gives you a chance to disable or modify the contact manifold. For example, you can implement a one-sided platform using this callback.
 
 ```c
-bool MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context)
+bool MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context)
 {
-    MyGame* myGame = context;
+    MyGame* myGame = (MyGame*)context;
 
-    if (myGame->IsHittingBelowPlatform(shapeIdA, shapeIdB, point, normal))
+    if (myGame->IsHittingBelowPlatform(shapeIdA, shapeIdB, manifold))
     {
         return false;
     }
 
     return true;
 }
-
-// Elsewhere
-b2World_SetPreSolveCallback(myWorldId, MyPreSolve, myGame);
 ```
 
-Note this currently does not work with high speed collisions, so you may see a
-pause in those situations.
+You can also implement a pre-solve callback to disable continuous collision. Box2D doesn't use contact manifolds for continuous collision, so this callback just provides the shapes, a point, and normal.
 
-See the `Platformer` sample for more details.
+``` c
+bool MyPreSolveContinuous(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context)
+{
+    MyGame* myGame = (MyGame*)context;
+
+    if (myGame->AllowContinous(shapeIdA, shapeIdB, point, normal) == false)
+    {
+        return false;
+    }
+
+    return true;  
+}
+```
+
+Register these callbacks before simulation. Either can be null.
+
+
+```c
+// Elsewhere
+b2World_SetPreSolveCallback(myWorldId, MyPreSolve, MyPreSolveContinuous, myGame);
+```
+
+The contact will be re-enabled each time through collision processing,
+so you will need to disable the contact every time-step. This function must be thread-safe and must not read from or write to the Box2D world. It is safe to read data on the shapes and bodies involved, but don't modify them.
+
+See `GhostCulling` sample for more details.
 
 ## Joints
 
@@ -1755,7 +1788,7 @@ for details.
 The wheel joint is designed specifically for vehicles. It provides a translation
 and rotation. The translation has a spring and damper to simulate the vehicle
 suspension. The rotation allows the wheel to rotate. You can specify an rotational
-motor to drive the wheel and to apply braking. See `b2WheelJointDef` and the `Drive`
+motor to drive the wheel and to apply braking. See `b2WheelJointDef` and the `Driving`
 sample for details.
 
 You may also use the wheel joint where you want free rotation and translation along
@@ -1834,7 +1867,6 @@ bool MyOverlapCallback(b2ShapeId shapeId, void* context)
 }
 
 // Elsewhere ...
-MyOverlapCallback callback;
 b2AABB aabb;
 aabb.lowerBound = (b2Vec2){-1.0f, -1.0f};
 aabb.upperBound = (b2Vec2){1.0f, 1.0f};
@@ -1897,13 +1929,13 @@ Here is an example:
 
 ```c
 // This struct captures the closest hit shape
-struct MyRayCastContext
+typedef struct MyRayCastContext
 {
     b2ShapeId shapeId;
     b2Pos point;
     b2Vec2 normal;
     float fraction;
-};
+} MyRayCastContext;
 
 float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
@@ -2011,8 +2043,7 @@ are known. This is necessary for obtaining good simulation results efficiently. 
 of the time step then new contact points would not be known to the constraint solver and shapes would sink into each
 other.
 
-The `b2PreSolveFcn` is called within the parallel-for so it should be efficient and thread-safe. This is only called for
-shapes that have `enablePreSolveEvents == true`.
+The `b2PreSolveFcn` is called within the parallel-for so it should be efficient and thread-safe. This is only called for shapes that have `enablePreSolveEvents == true`.
 
 ### merge islands
 
@@ -2046,7 +2077,7 @@ This stage does several tasks:
 - performs continuous collision between dynamic and static bodies
 This stage is parallel-for.
 
-Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreSolveFcn` callback.
+Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreContinuousFcn` callback.
 
 ### hit events
 

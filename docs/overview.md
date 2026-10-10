@@ -28,7 +28,7 @@ Since Box2D is written in C, you are expected to be experienced in C
 programming. Box2D should not be your first C programming project. You
 should be comfortable with compiling, linking, and debugging.
 
-> **Caution**:
+> [!IMPORTANT]
 > Box2D should not be your first C project. Please learn C
 > programming, compiling, linking, and debugging before working with
 > Box2D. There are many resources for this online.
@@ -42,7 +42,7 @@ application included with Box2D to learn more.
 This manual is only updated with new releases. The latest version of
 Box2D may be out of sync with this manual.
 
-> **Caution**:
+> [!NOTE]
 > This manual applies to the associated release and not necessarily the
 > latest version on the main branch.
 
@@ -206,7 +206,7 @@ Unfortunately this will lead to a poor simulation and possibly weird
 behavior. An object of length 200 pixels would be seen by Box2D as the
 size of a 45 story building.
 
-> **Caution**: 
+> [!IMPORTANT] 
 > Box2D is tuned for MKS units. Keep the size of moving objects larger than 1cm.
 > You'll need to use some scaling system when
 > you render your environment and actors. The Box2D samples application
@@ -223,7 +223,7 @@ Another limitation to consider is overall world size. If your world units
 become larger than 16 kilometers or so, then the lost precision can affect
 stability.
 
-> **Caution**: 
+> [!IMPORTANT]
 > Box2D works best with world sizes less than 16 kilometers. If you are
 > careful with your simulation tuning, this can be pushed up to around 24
 > kilometers, which is much larger than most game worlds.
@@ -234,7 +234,7 @@ This is configured using `BOX2D_DOUBLE_PRECISION`.
 Box2D uses radians for angles. The body rotation is stored a complex number,
 so when you access the angle of a body, it will be between \f$-\pi\f$ and \f$\pi\f$ radians.
 
-> **Caution**:
+> [!IMPORTANT]
 > Box2D uses radians, not degrees.
 
 ## Changing the length units
