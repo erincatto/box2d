@@ -48,7 +48,6 @@ set(BOX2D_SOURCE_FILES
 	platform.h
 	pogo_joint.c
 	prismatic_joint.c
-	qsort.h
 	recording_ops.inl
 	recording.c
 	recording.h

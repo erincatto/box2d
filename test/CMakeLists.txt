@@ -19,6 +19,7 @@ set(BOX2D_TEST_FILES
     test_restitution.c
     test_shape.c
     test_snapshot.c
+    test_sort.c
     test_table.c
     test_thread.c
     test_world.c

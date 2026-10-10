@@ -44,6 +44,8 @@ void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb );
 
 void b2UpdateBroadPhasePairs( b2World* world );
 
+void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count );
+
 void b2ValidateBroadphase( const b2BroadPhase* bp );
 void b2ValidateNoEnlarged( const b2BroadPhase* bp );
 

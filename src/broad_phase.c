@@ -509,7 +509,9 @@ static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, voi
 	b2TracyCZoneEnd( cross_pairs );
 }
 
-static void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count )
+// LSD radix sort. Faster than qsort when count is large and fast enough otherwise.
+// https://en.wikipedia.org/wiki/Radix_sort
+void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count )
 {
 	int digitCounts[8][256] = { 0 };
 	for ( int i = 0; i < count; ++i )
@@ -531,6 +533,7 @@ static void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count )
 
 		if ( offsets[( source[0] >> shift ) & 0xFF] == count )
 		{
+			// All keys have the same value for this digit. Common for shape pair keys.
 			continue;
 		}
 
@@ -548,6 +551,7 @@ static void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count )
 			target[offsets[( key >> shift ) & 0xFF]++] = key;
 		}
 
+		// Swap for the next pass
 		uint64_t* swap = source;
 		source = target;
 		target = swap;
