@@ -441,7 +441,8 @@ public:
 	}
 };
 
-static int benchmarkCompounds = RegisterSample( "Benchmark", "Compounds", BenchmarkCompounds::Create );
+static int benchmarkCompounds =
+	RegisterSampleWithCapacity( "Benchmark", "Compounds", BenchmarkCompounds::Create, GetCompoundsCapacity );
 
 class BenchmarkTumbler : public Sample
 {
@@ -464,7 +465,7 @@ public:
 	}
 };
 
-static int benchmarkTumbler = RegisterSample( "Benchmark", "Tumbler", BenchmarkTumbler::Create );
+static int benchmarkTumbler = RegisterSampleWithCapacity( "Benchmark", "Tumbler", BenchmarkTumbler::Create, GetTumblerCapacity );
 
 // This stresses most aspects of simulation:
 // - broad-phase because pairs constantly change
@@ -500,7 +501,7 @@ public:
 	}
 };
 
-static int benchmarkWasher = RegisterSample( "Benchmark", "Washer", BenchmarkWasher::Create );
+static int benchmarkWasher = RegisterSampleWithCapacity( "Benchmark", "Washer", BenchmarkWasher::Create, GetWasherCapacity );
 
 // todo try removing kinematics from graph coloring
 class BenchmarkManyTumblers : public Sample
@@ -711,7 +712,8 @@ public:
 	}
 };
 
-static int benchmarkLargePyramid = RegisterSample( "Benchmark", "Large Pyramid", BenchmarkLargePyramid::Create );
+static int benchmarkLargePyramid =
+	RegisterSampleWithCapacity( "Benchmark", "Large Pyramid", BenchmarkLargePyramid::Create, GetLargePyramidCapacity );
 
 class BenchmarkManyPyramids : public Sample
 {
@@ -729,11 +731,6 @@ public:
 		CreateManyPyramids( m_worldId );
 	}
 
-	static b2Capacity GetCapacity()
-	{
-		return GetManyPyramidsCapacity();
-	}
-
 	static Sample* Create( SampleContext* context )
 	{
 		return new BenchmarkManyPyramids( context );
@@ -741,7 +738,7 @@ public:
 };
 
 static int benchmarkManyPyramids =
-	RegisterSampleWithCapacity( "Benchmark", "Many Pyramids", BenchmarkManyPyramids::Create, BenchmarkManyPyramids::GetCapacity );
+	RegisterSampleWithCapacity( "Benchmark", "Many Pyramids", BenchmarkManyPyramids::Create, GetManyPyramidsCapacity );
 
 class BenchmarkCreateDestroy : public Sample
 {
@@ -905,7 +902,7 @@ public:
 	}
 };
 
-static int benchmarkSleep = RegisterSample( "Benchmark", "Sleep", BenchmarkSleep::Create );
+static int benchmarkSleep = RegisterSampleWithCapacity( "Benchmark", "Sleep", BenchmarkSleep::Create, GetSleepCapacity );
 
 class BenchmarkJointGrid : public Sample
 {
@@ -929,7 +926,8 @@ public:
 	}
 };
 
-static int benchmarkJointGridIndex = RegisterSample( "Benchmark", "Joint Grid", BenchmarkJointGrid::Create );
+static int benchmarkJointGridIndex =
+	RegisterSampleWithCapacity( "Benchmark", "Joint Grid", BenchmarkJointGrid::Create, GetJointGridCapacity );
 
 class BenchmarkSmash : public Sample
 {
@@ -952,7 +950,7 @@ public:
 	}
 };
 
-static int sampleSmash = RegisterSample( "Benchmark", "Smash", BenchmarkSmash::Create );
+static int sampleSmash = RegisterSampleWithCapacity( "Benchmark", "Smash", BenchmarkSmash::Create, GetSmashCapacity );
 
 class BenchmarkLargeCompounds : public Sample
 {
@@ -1542,7 +1540,7 @@ public:
 	}
 };
 
-static int sampleSpinner = RegisterSample( "Benchmark", "Spinner", BenchmarkSpinner::Create );
+static int sampleSpinner = RegisterSampleWithCapacity( "Benchmark", "Spinner", BenchmarkSpinner::Create, GetSpinnerCapacity );
 
 class BenchmarkRain : public Sample
 {
@@ -1583,7 +1581,7 @@ public:
 	}
 };
 
-static int benchmarkRain = RegisterSample( "Benchmark", "Rain", BenchmarkRain::Create );
+static int benchmarkRain = RegisterSampleWithCapacity( "Benchmark", "Rain", BenchmarkRain::Create, GetRainCapacity );
 
 class BenchmarkShapeDistance : public Sample
 {
@@ -2070,7 +2068,8 @@ public:
 	}
 };
 
-static int benchmarkJunkyard = RegisterSample( "Benchmark", "Junkyard", BenchmarkJunkyard::Create );
+static int benchmarkJunkyard =
+	RegisterSampleWithCapacity( "Benchmark", "Junkyard", BenchmarkJunkyard::Create, GetJunkyardCapacity );
 
 // The queries benchmark scene with one of its queries drawn and the cost of the whole set
 class BenchmarkQueries : public Sample
@@ -2153,4 +2152,4 @@ public:
 	int m_leafVisits;
 };
 
-static int benchmarkQueries = RegisterSample( "Benchmark", "Queries", BenchmarkQueries::Create );
+static int benchmarkQueries = RegisterSampleWithCapacity( "Benchmark", "Queries", BenchmarkQueries::Create, GetQueriesCapacity );

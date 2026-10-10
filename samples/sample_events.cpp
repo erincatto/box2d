@@ -1830,6 +1830,8 @@ public:
 
 static int sampleJointEvent = RegisterSample( "Events", "Joint", JointEvent::Create );
 
+// This sample shows how to track a contact across time steps. This can be used
+// for things like rolling or sliding sounds.
 class PersistentContact : public Sample
 {
 public:
@@ -1901,6 +1903,8 @@ public:
 			}
 		}
 
+		// Contacts are created and destroyed by Box2D, so it is important to make
+		// sure a contact id is valid before accessing contact data.
 		if ( B2_IS_NON_NULL( m_contactId ) && b2Contact_IsValid( m_contactId ) )
 		{
 			b2ContactData data = b2Contact_GetData( m_contactId );

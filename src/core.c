@@ -190,7 +190,7 @@ void b2Free( void* mem, size_t size )
 
 	if ( b2_freeFcn != NULL )
 	{
-		size_t alignedSize = ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1;
+		size_t alignedSize = size > 0 ? ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1 : 0;
 		b2_freeFcn( mem, alignedSize );
 	}
 	else

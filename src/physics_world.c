@@ -183,7 +183,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->generation = generation;
 	world->inUse = true;
 
-	world->stack = b2CreateStack( 2048 );
+	world->stack = b2CreateStack( b2MaxInt( 2048, def->capacity.arenaByteCount ) );
 	b2CreateBroadPhase( &world->broadPhase, &def->capacity );
 	b2CreateGraph( &world->constraintGraph, &def->capacity );
 
@@ -525,12 +525,16 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			bool isFast = ( ( bodySimA->flags | bodySimB->flags ) & b2_isFast ) != 0;
+			// This is restrictive and I'm not sure this limitation is needed for Box2D.
+			// I would expect the worse case would be spinner, but it doesn't tunnel.
+			//bool isFast = ( ( bodySimA->flags | bodySimB->flags ) & b2_isFast ) != 0;
 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			if ( isFast == false && recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+			//if ( isFast == false && recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+			//	 ( contactSim->simFlags & b2_contactRecycleFlag ) )
+			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
 				b2Rot cachedQA = contactSim->cachedRotationA;
@@ -1008,6 +1012,8 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	world->profile.step = b2GetMilliseconds( stepTicks );
 
 	B2_ASSERT( b2GetStackAllocation( &world->stack ) == 0 );
+
+	world->maxCapacity.arenaByteCount = b2MaxInt( world->maxCapacity.arenaByteCount, b2GetMaxStackAllocation( &world->stack ) );
 
 	// Ensure stack is large enough
 	b2GrowStack( &world->stack );

@@ -1,12 +1,14 @@
 # Hello Box2D {#hello}
-In the distribution of Box2D is a Hello World unit test written in C. The test
+
+Box2D comes with a unit test a Hello World in `test_world.c`. The test
 creates a large ground box and a small dynamic box. This code does not
 contain any graphics. All you will see is text output in the console of
 the box's position over time.
 
 This is a good example of how to get up and running with Box2D.
 
-## Creating a World
+## Creating a world
+
 Every Box2D program begins with the creation of a world object.
 The world is the physics hub that manages memory, objects, and simulation.
 The world is represented by an opaque handle called `b2WorldId`.
@@ -37,8 +39,10 @@ definition is no longer needed.
 
 So now we have our physics world, let's start adding some stuff to it.
 
-## Creating a Ground Box
+## Creating a ground box
+
 Bodies are built using the following steps:
+
 1. Define a body with position, damping, etc.
 2. Use the world id to create the body.
 3. Define shapes with friction, density, etc.
@@ -46,11 +50,12 @@ Bodies are built using the following steps:
 
 For step 1 I create the ground body. For this I need a body
 definition. With the body definition I specify the initial position of
-the ground body.
+the ground body. `b2Pos` is doubles when double precision is enabled,
+otherwise it aliases to `b2Vec2`.
 
 ```c
 b2BodyDef groundBodyDef = b2DefaultBodyDef();
-groundBodyDef.position = (b2Vec2){0.0f, -10.0f};
+groundBodyDef.position = (b2Pos){0.0f, -10.0f};
 ```
 
 For step 2 the body definition and the world id are used to create
@@ -94,11 +99,11 @@ Box2D does not keep a reference to the shape data. It copies the data into the i
 data structures.
 
 Note that every shape must have a parent body, even shapes that are
-static. You may attach multiple shapes to a single parent body.
+static. You may attach multiple shapes to a single parent body. This is often
+called a _compound shape_.
 
-When you attach a shape, the shape's
-coordinates become local to the body. So when the body moves, so does
-the shape. A shape's world transform is inherited from the parent
+When you attach a shape, the shape's coordinates become local to the body. So when
+the body moves, so does the shape. A shape's world transform is inherited from the parent
 body. A shape does not have a transform independent of the body. So we
 don't move a shape around on the body. Moving or modifying a shape that
 is on a body is possible with certain functions, but it should not be part
@@ -107,7 +112,8 @@ morphing shapes is not a rigid body, but Box2D is a rigid body engine.
 Many of the algorithms in Box2D are based on the rigid body model and optimized with
 that in mind. If this is violated you may get unexpected behavior.
 
-## Creating a Dynamic Body
+## Creating a dynamic body
+
 I can use the same technique to create a
 dynamic body. The main difference, besides dimensions, is that I must
 establish the dynamic body's mass properties.
@@ -122,7 +128,7 @@ the origin.
 ```c
 b2BodyDef bodyDef = b2DefaultBodyDef();
 bodyDef.type = b2_dynamicBody;
-bodyDef.position = (b2Vec2){0.0f, 4.0f};
+bodyDef.position = (b2Pos){0.0f, 4.0f};
 b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
 ```
 
@@ -161,7 +167,8 @@ b2CreatePolygonShape(bodyId, &shapeDef, &dynamicBox);
 
 That's it for initialization. We are now ready to begin simulating.
 
-## Simulating the World
+## Simulating the world
+
 I have initialized the ground box and a dynamic box. Now we are
 ready to set Newton loose to do his thing. I just have a couple more
 issues to consider.
@@ -225,15 +232,13 @@ for a total of 1.5 seconds of simulated time.
 for (int i = 0; i < 90; ++i)
 {
 	b2World_Step(worldId, timeStep, subStepCount);
-    b2Vec2 position = b2Body_GetPosition(bodyId);
+    b2Pos position = b2Body_GetPosition(bodyId);
     b2Rot rotation = b2Body_GetRotation(bodyId);
     printf("%4.2f %4.2f %4.2f\n", position.x, position.y, b2Rot_GetAngle(rotation));
 }
 ```
 
-Notice that the rotation of the body is returned in a `b2Rot` struct (short for rotation). This
-struct holds the rotation in a format that is fast for simulation. You may use `b2Rot_GetAngle`
-to get the rotation in radians.
+Notice that the rotation of the body is returned in a `b2Rot` struct (short for rotation). This struct holds the rotation in a format that is fast for simulation. You may use `b2Rot_GetAngle` to get the rotation in radians.
 
 The output shows the box falling and landing on the ground box. Your
 output should look like this:
@@ -249,6 +254,7 @@ output should look like this:
 ```
 
 ## Cleanup
+
 When you are done with the simulation, you should destroy the world.
 
 ```c

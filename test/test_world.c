@@ -50,7 +50,6 @@ int HelloWorld( void )
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.position = (b2Pos){ 0.0f, 4.0f };
-
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
 	// Define another box shape for our dynamic body.

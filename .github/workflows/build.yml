@@ -44,10 +44,10 @@ jobs:
             msvc: true
             args: -DBOX2D_SANITIZE=ON
             test: ./bin/Debug/test
-          - name: windows-clang-cl-avx2
+          - name: windows-clang-cl
             os: windows-latest
             msvc: true
-            args: -T ClangCL -DBOX2D_AVX2=ON
+            args: -T ClangCL
             test: ./bin/Debug/test
           - name: windows-arm64
             os: windows-11-arm

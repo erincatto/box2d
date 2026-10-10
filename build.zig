@@ -17,31 +17,18 @@ pub const Options = struct {
     shared: bool,
     unit_tests: bool,
     disable_simd: bool,
-    avx2: bool,
 
     const defaults = Options{
         .shared = false,
         .unit_tests = false,
         .disable_simd = false,
-        .avx2 = true,
     };
 
-    pub fn getOptions(b: *Build, target: ResolvedTarget) Options {
-        const disable_simd = b.option(bool, "disable_simd", "Disable SIMD math (slower)") orelse defaults.disable_simd;
-
-        const avx2 = avx2_option_blk: {
-            if (target.result.cpu.arch.isX86() and !disable_simd) {
-                break :avx2_option_blk b.option(bool, "avx2", "Compile AVX2 kernels, selected at runtime on x86 CPUs that support them") orelse defaults.avx2;
-            }
-
-            break :avx2_option_blk false;
-        };
-
+    pub fn getOptions(b: *Build) Options {
         return .{
             .shared = b.option(bool, "shared", "Compile as shared library") orelse defaults.shared,
             .unit_tests = b.option(bool, "unit_tests", "Compile unit tests") orelse defaults.unit_tests,
-            .disable_simd = disable_simd,
-            .avx2 = avx2,
+            .disable_simd = b.option(bool, "disable_simd", "Disable SIMD math (slower)") orelse defaults.disable_simd,
         };
     }
 };
@@ -49,7 +36,7 @@ pub const Options = struct {
 pub fn build(b: *Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const options = Options.getOptions(b, target);
+    const options = Options.getOptions(b);
     const lib = try compileBox2d(b, target, optimize, options);
 
     // Translate the box2d headers and export them as a module
@@ -102,10 +89,6 @@ fn compileBox2d(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, optio
             "-msimd128",
             "-msse2",
         });
-    }
-
-    if (!options.avx2) {
-        module.addCMacro("BOX2D_DISABLE_AVX2", "");
     }
 
     const linkage: std.builtin.LinkMode = if (options.shared) .dynamic else .static;

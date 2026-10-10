@@ -1,6 +1,6 @@
 # v3.1 Release Notes
 
-## API Changes
+## API changes
 - 64-bit filter categories and masks
 - 64-bit dynamic tree user data
 - Renamed `b2SmoothSegment` to `b2ChainSegment`
@@ -11,7 +11,7 @@
 - Replaced `b2Timer` with `uint64_t`
 - Shape material properties now use `b2SurfaceMaterial`
 
-## New Features
+## New features
 - New character mover features and sample
 - Revised sensor system is now independent of body type and sleep
 - Rolling resistance and tangent speed
@@ -34,7 +34,7 @@
 - Reduced overhead of restitution when not used
 - Implemented atomic platform wrappers eliminating the `experimental:c11atomics` flag
 
-## Bugs Fixes
+## Bug fixes
 - Many bug fixes based on user testing
 - Fixed missing hit events
 - Capsule and polygon manifold fixes
