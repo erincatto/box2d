@@ -146,6 +146,8 @@ restores and continues with any worker count.
 
 The samples app has a **Replay** category with a recording viewer:
 
+[//]: # (TODO32 Unverified: the viewer is Replay > Viewer, opened from Replay > Open)
+
 - **Replay File** loads a `.b2rec` into a buffer and plays it back using a `b2Replay`. It
   supports play, pause, single-step, restart, and camera control. A `DIVERGED` overlay appears
   if a recorded state hash fails to reproduce, which is a real determinism break, not a viewer
@@ -158,6 +160,8 @@ samples path/to/session.b2rec
 ```
 
 On Windows you can also drag a `.b2rec` file onto `samples.exe`. Otherwise open a recording from the **Replay** menu.
+
+[//]: # (TODO32 Unverified: there are two buttons, Record restart and Record Now)
 
 You can also record any sample: open the **Recording** controls in the diagnostics drawer, set a
 file name, and press **Record**. The sample restarts with recording on, and **Stop** saves the

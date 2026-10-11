@@ -1,5 +1,9 @@
 # Character Mover
 
+[//]: # (TODO32 Missing: the dynamic mover. What it is, when to choose it over the geometric mover, and the mover and pogo joints it uses. Also the ghost collision pre-solve technique from Brian Semrau and the Ghost Collision sample)
+
+[//]: # (TODO32 Still says new in 3.1)
+
 > [!CAUTION]
 > The character mover feature is new to version 3.1 and should be considered experimental.
 
@@ -37,6 +41,8 @@ that attempts to find the optimal new position given the current position.
 These collision planes support *soft collision* using a `pushLimit`. This push limit is a distance value. A rigid surface will have a push limit of `FLT_MAX`. However, you may want some surfaces to have a limited effect on the character. For example, you may want the mover to push through other players or enemies yet still resolve the collision so they are not overlapped. Another example is a door or elevator that could otherwise push the mover through the floor.
 
 Finally after calling `b2SolvePlanes()` you can call `b2ClipVector()` to clip your velocity vector so the mover will not keep trying to push into a wall, which could lead to a huge velocity accumulation otherwise.
+
+[//]: # (TODO32 There is no Mover sample. They are Geometric Mover and Dynamic Mover)
 
 The `Mover` sample shows all these functions being used together. It also includes other common character features such as acceleration and friction, jumping, and a pogo stick.
 

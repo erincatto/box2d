@@ -105,7 +105,7 @@ typedef struct b2WorldDef
 	/// @see B2_MAX_RESTITUTION_ITERATIONS
 	int restitutionIterations;
 
-	/// Enable full contact propagation in the restitution solver. Expensive.
+	/// Enable full contact propagation in the restitution solver. Expensive. (Experimental)
 	bool enableRestitutionPropagation;
 
 	/// Threshold speed for hit events. Usually meters per second.

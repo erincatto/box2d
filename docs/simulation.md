@@ -357,8 +357,8 @@ The `isAwake` flag is ignored if `enableSleep` is false.
 
 ### Motion locks
 
-You may want a rigid body, such as a character, to have a fixed
-rotation Such a body does not rotate, even under load. You can make the body have fixed rotation by locking z-axis rotation:
+You may want a rigid body, such as a character, to have a fixed rotation. Such a body does not rotate,
+even under load. You can make the body have fixed rotation by locking z-axis rotation:
 
 ```c
 bodyDef.motionLocks.angularZ = true;
@@ -367,7 +367,10 @@ bodyDef.motionLocks.angularZ = true;
 The `angularZ` flag causes the rotational inertia and its inverse to
 be set to zero.
 
-You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For techinical reasons these only restrict translation but the linear velocity may momentarily violate the restriction. I'm not a fan of restricting translation this way. I tried using an inverse mass of zero along an axis and that causes the solver to blow up because it ends up dividing by very small numbers.
+You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For techinical reasons
+these only restrict translation but the linear velocity may momentarily violate the restriction. I'm not
+a fan of restricting translation this way. I tried using an inverse mass of zero along an axis and that
+causes the solver to blow up because it ends up dividing by very small numbers.
 
 It is best to think of the motion locks as constraints that are not fully satisfied, like all other constraints in Box2D.
 
@@ -401,8 +404,22 @@ should be treated as a bullet, use the following setting.
 ```c
 bodyDef.isBullet = true;
 ```
-
 The bullet flag only affects dynamic bodies. I recommend using bullets sparingly.
+
+### Safey factor
+
+Box2D speeds up continuous collision detection (CCD) by skipping expensive work when
+shapes are moving slowly and have no risk of tunneling. In some cases you may wish a body
+to use CCD even moving slowly. Or perhaps you want a body to never use CCD. You can achieve
+both of these using the non-dimensional safety factor:
+
+```c
+// Engage CCD when movement is a hundred times slower than the tunneling speed.
+bodyDef.safetyFactor = 0.01f;
+
+// Effectively disable CCD using a large safety factor.
+bodyDef.safetyFactor = 1000.0f;
+```
 
 ### Disabling
 
@@ -703,21 +720,21 @@ optimize your application.
 
 ## Shapes
 
-A body may have zero or more shapes. A body with multiple shapes is sometimes
-called a *compound body.*
+A body may have zero or more shapes. A body with multiple shapes is sometimes called a _compound body_ or
+_aggregate_.
 
 Shapes hold the following:
 
-- a shape primitive
-- density, friction, and restitution
+- geometry
+- density, friction, restitution, rolling resistance
+- user material id
+- tangent speed
 - collision filtering flags
 - parent body id
 - user data
 - sensor flag
 
-These are described in the following sections.
-
-### Shape lifetime
+### Shape creation and geometry
 
 Shapes are created by initializing a shape definition and a shape primitive.
 These are passed to a creation function specific to each shape type.
@@ -759,6 +776,7 @@ similar densities for all your shapes. This will improve stacking
 stability.
 
 Usually you should set the density in the shape definition.
+
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
 shapeDef.density = 33.0f;
@@ -815,6 +833,59 @@ approximately. This is because Box2D uses a sequential solver. Box2D
 also uses inelastic collisions when the collision velocity is small.
 This is done to prevent jitter. See `b2WorldDef::restitutionThreshold`.
 
+Restitution is solved after the main solver pass using the pre-solve
+approach velocity. It uses an iterative loop across all awake bodies. You can
+control the number of iterations in the world definition.
+
+```c
+// Number of restitution iterations. A higher number can improve accuracy.
+worldDef.restitutionIterations = 2;
+```
+
+### Rolling resistance
+
+Normally in a physics engine a circle or sphere will seem to roll forever on a flat plane. There can be friction, but
+without slipping this doesn't remove energy, so the circle keeps rolling.
+
+Realistic rolling involves some flattening of the contact patch. This leads to rolling resistance that makes round shapes
+slow down. The slow down is proportional to the relative size of the contact patch, which in turn is proportional
+to the vertical force.
+
+Box2D simulates rolling resistance using a non-dimensional parameter. The maximum torque is computing using that parameter,
+the shape radius, and the contact normal forces.
+
+```c
+max_torque = rolling_resistance * radius * normal_force
+```
+
+Then rolling resistance applies a constraint to drive the relative angular velocity to zero, but the effort is
+capped by the maximum torque computed above.
+
+This means a circle can stop rolling, even when on an inclined surface.
+
+### User material id
+
+Shapes hold a user material id. This number can be used for whatever you like. Typically it is used
+to identify surface type, such as rock, sand, or wood. Then collision queries and events can be used
+to play the appropriate sounds.
+
+The material is set during shape creation:
+
+```c
+shapeDef.material.userMaterialId = 24;
+```
+
+Later you can retrieve that material id. For example you can get the value from a ray cast:
+
+```c
+b2RayResult result = b2World_CastRayClosest( myWorldId, origin, translation, b2DefaultQueryFilter() );
+if (result.hit == true)
+{
+    uint64_t surfaceType = b2Shape_GetUserMaterial(result.shapeId);
+    MyPlaySound(result.point, surfaceType);
+}
+```
+
 ### Friction and restitution callbacks
 
 Advanced users can override friction and restitution mixing using b2FrictionCallback
@@ -835,6 +906,17 @@ float MyFrictionCallback(float frictionA, uint64_t userMaterialIdA, float fricti
 b2WorldDef worldDef = b2DefaultWorldDef();
 worldDef.frictionCallback = MyFrictionCallback;
 ```
+
+### Tangent speed
+
+You can assign a tangent speed to a shape. This allows you to use a shape as a conveyor belt. This effect is basically
+free in the solver and can be useful in some cases.
+
+```c
+conveyorBeltShapeDef.material.tangentSpeed = 10.0f;
+```
+
+See the `ConveyorBelt` sample for details.
 
 ### Filtering {#filtering}
 
@@ -1186,6 +1268,36 @@ contact right away if the shapes are not touching, or we can just wait
 until the AABBs stop overlapping. Box2D takes the latter approach
 because it lets the system cache information to improve performance.
 
+### Contact recycling
+
+Performance is improved by recycling contact data across time steps. This is
+called _contact recycling_. It has a large impact on performance and also
+improves stacking stability.
+
+Contact recycling considers the relative movement between shapes and adjusts the contact
+point separation to account for the movement. If the relative movement is larger
+than the _contact recycling distance_ then contact points are computed from scratch.
+
+Sometimes stacks of objects can become too stable. You can adjust the recycling distance to
+tune stability:
+
+```c
+// Set the recycling distance to 1 centimeter.
+b2World_SetContactRecycleDistance(myWorldId, 0.01f);
+```
+
+The default is 5 centimeters. This value makes a good trade-off between performance
+and realistic simulation.
+
+You can completely disable contact recycling by setting this it to zero. I don't recommend this.
+Performance and stability will drop significantly. A better option is to disable recycling on specific
+bodies as needed.
+
+```c
+// Disable contact recycling for a single body.
+bodyDef.enableContactRecycling = false;
+```
+
 ### Contact data
 
 As mentioned before, the contact is created and destroyed by
@@ -1360,20 +1472,20 @@ This is called after collision detection, but before collision
 resolution. This gives you a chance to disable or modify the contact manifold. For example, you can implement a one-sided platform using this callback.
 
 ```c
-bool MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context)
+void MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context)
 {
     MyGame* myGame = (MyGame*)context;
 
     if (myGame->IsHittingBelowPlatform(shapeIdA, shapeIdB, manifold))
     {
-        return false;
+        // Disable collision by setting the point count to zero.
+        manifold->pointCount = 0;
     }
-
-    return true;
 }
 ```
 
-You can also implement a pre-solve callback to disable continuous collision. Box2D doesn't use contact manifolds for continuous collision, so this callback just provides the shapes, a point, and normal.
+You can also implement a pre-solve callback to disable continuous collision. Box2D doesn't use contact manifolds for 
+continuous collision, so this callback just provides the shapes, a point, and normal.
 
 ``` c
 bool MyPreSolveContinuous(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context)
@@ -1397,8 +1509,10 @@ Register these callbacks before simulation. Either can be null.
 b2World_SetPreSolveCallback(myWorldId, MyPreSolve, MyPreSolveContinuous, myGame);
 ```
 
-The contact will be re-enabled each time through collision processing,
-so you will need to disable the contact every time-step. This function must be thread-safe and must not read from or write to the Box2D world. It is safe to read data on the shapes and bodies involved, but don't modify them.
+The contact will be re-enabled each time through collision processing (unless recycled),
+so you will need to disable the contact every time-step. This function must be thread-safe
+and must not read from or write to the Box2D world. It is safe to read data on the shapes and
+bodies involved, but don't modify them.
 
 See `GhostCulling` sample for more details.
 
@@ -1423,10 +1537,9 @@ too strong.
 
 ### Joint definition
 
-Each joint type has an associated joint definition. All
-joints are connected between two different bodies. One body may be static.
-Joints between static and/or kinematic bodies are allowed, but have no
-effect and use some processing time.
+Each joint type has an associated joint definition. All  joints are connected between
+two different bodies. One body may be static. Joints between static and/or kinematic bodies
+are allowed, but have no effect.
 
 If a joint is connected to a disabled body, that joint is effectively disabled.
 When the both bodies on a joint become enabled, the joint will automatically
@@ -1446,8 +1559,7 @@ angle. Box2D requires these frames to be specified in local coordinates.
 This way the joint can be specified even when the current body
 transforms violate the joint constraint.
 
-The rest of the joint definition data depends on the joint type. I
-cover these below.
+The rest of the joint definition data depends on the joint type. I cover these below.
 
 ### Joint lifetime
 
@@ -1478,7 +1590,7 @@ So when a body is destroyed, all joints attached to that body are automatically 
 This means you need to be careful to avoid using joint ids when the attached body was
 destroyed. Box2D will assert if you use a dangling joint id.
 
-> **Caution**:
+> [!IMPORTANT]
 > Joints are destroyed when an attached body is destroyed.
 
 Fortunately you can check if your joint id is valid.
@@ -1525,6 +1637,33 @@ float torque = b2Joint_GetConstraintTorque(myJointId);
 ```
 
 See the sample `BreakableJoint` for more details.
+
+### Joint events
+
+You can use joint force and torque thresholds to get joint events when those thresholds are
+exceeded. This can be more convenient than polling.
+
+```c
+jointDef.base.forceThreshold = forceThreshold;
+jointDef.base.torqueThreshold = torqueThreshold;
+```
+
+Then after calling `b2World_Step` you can process the joint events. For example,
+you can destroy the joints that exceeded the threshold.
+
+```c
+b2JointEvents events = b2World_GetJointEvents( myWorldId );
+for ( int i = 0; i < events.count; ++i )
+{
+    const b2JointEvent* event = events.jointEvents + i;
+    if ( b2Joint_IsValid( event->jointId ) )
+    {
+        b2DestroyJoint( event->jointId );
+    }
+}
+```
+
+See the `JointEvent` sample for more details.
 
 ### Distance joint
 
@@ -1750,7 +1889,7 @@ There is no dedicated mouse joint. The samples drag bodies by creating a
 kinematic body at the cursor and attaching a motor joint with a linear spring
 between the kinematic body and the picked body. Each frame the kinematic body
 is driven to the cursor with `b2Body_SetTargetTransform()` and the motor
-spring pulls the picked body along. The maximum motor force limits violent
+spring pulls the picked body along. The maximum spring force limits violent
 reactions when multiple dynamic bodies interact. See `Sample::MouseDown()` in
 the samples for the details.
 
@@ -1770,12 +1909,22 @@ without using the weld joint.
 
 ### Motor joint
 
-A motor joint lets you control the motion of a body by specifying target
-position and rotation offsets. You can set the maximum motor force and
-torque that will be applied to reach the target position and rotation.
-If the body is blocked, it will stop and the contact forces will be
-proportional the maximum motor force and torque. See `b2MotorJointDef` and
-the `MotorJoint` sample for details.
+A motor joint lets you control the motion of a body using a linear and angular spring.
+You can set the maximum spring force and torque that will be applied to reach the
+target position and rotation. If the body is blocked, it will stop and the contact
+forces will be proportional the maximum motor force and torque.
+
+My preferred way of achieve movement control is to connect a dynamic body to
+a kinematic body using a motor joint. Then drive the kinematic body using
+`b2Body_SetTargetTransform`. This way no transforms or joint frames are set directly,
+which lets the simulation smooth out the forces.
+
+You can also use the motor joint to control the velocity of a body. This is useful in
+cases where you don't care about the precise position or rotation. For example, when the player is
+applying input to move a body you can use a motor joint with a specified velocity and maximum
+force to move the body according to the player's goals while still respecting collision.
+
+See `b2MotorJointDef` and the `MotorJoint` sample for details.
 
 ### Wheel joint
 
@@ -2087,7 +2236,9 @@ So you may get hit events for contact points that have a positive separation. Th
 
 ### refit BVH
 
-This updates the BVH for shapes that have moved significantly. This is done by enlarging the shapes bounding box and all ancestor bounding boxes in the BVH. This is a single-threaded operation.
+This updates the BVH for shapes that have moved significantly. This is done by enlarging the shapes bounding box and all
+ancestor bounding boxes in the BVH. This is a single-threaded operation. However, it is done very efficiently by keeping
+the tree in depth first order, so it is a linear backwards node walk.
 
 This can result in an inefficient BVH. This is the reason for the `rebuild BVH` stage. Refitting is faster than rebuilding the
 BVH but is necessary to ensure the BVH is valid for subsequent queries, such as ray casts.
@@ -2122,6 +2273,6 @@ to disable determinism.
 
 I maintain a unit test for determinism that is run for every pull request. Determinism is easy to break, so it is important to have regular validation.
 
-> **Caution**:
+> [!NOTE]
 > Box2D determinism does not mean your application will be deterministic. Consider using similar strategies to make your
 > application deterministic as I have used for Box2D.

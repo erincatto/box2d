@@ -108,6 +108,8 @@ b2Polygon roundedBox = b2MakeRoundedBox(0.5f, 1.0f, radius);
 
 If you want a box that is not centered on the body origin, you can use an offset box.
 
+[//]: # (TODO32 b2_pi should be B2_PI)
+
 ```c
 b2Vec2 center = {1.0f, 0.0f};
 float angle = b2_pi / 4.0f;
@@ -144,6 +146,8 @@ shapes can collide with circles, capsules, and polygons but not with other line 
 The collision algorithms used by Box2D require that at least
 one of two colliding shapes has sufficiently positive area. Segment shapes have no area, so
 segment-segment collision is not possible.
+
+[//]: # (TODO32 Sets segment2 before it is declared, should be segment1.point2)
 
 ```c
 b2Segment segment1;
@@ -204,6 +208,8 @@ You can perform a geometric queries on a single shape.
 
 ### Shape point test
 
+[//]: # (TODO32 Point tests take no transform, the point is in the shape local space)
+
 You can test a point for overlap with a shape. You provide a transform
 for the shape and a world point.
 
@@ -217,6 +223,8 @@ See also `b2PointInCircle()` and `b2PointInPolygon()`.
 ### Ray cast
 
 You can cast a ray at a shape to get the point of first intersection and normal vector.
+
+[//]: # (TODO32 True for world queries, but the local ray cast functions in this example return a hit at fraction zero)
 
 > **Caution**:
 > No hit will register if the ray starts inside a convex shape like a circle or polygon. This is
@@ -238,6 +246,8 @@ if (output.hit == true)
 ### Shape cast
 
 You can also cast a shape at another shape. This uses an abstract way of describing the moving shape. It is represented as a point cloud with a radius. This implies a convex shape even if the input data is not convex. The internal algorithm (GJK) will essentially only use the convex portion.
+
+[//]: # (TODO32 input.radius does not exist, it is input.proxy.radius)
 
 ```c
 b2ShapeCastInput input = {0};

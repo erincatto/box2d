@@ -26,7 +26,7 @@ You can provide a custom allocator using `b2SetAllocator()` and you can get the 
 
 ## Logging
 
-You can get logging from Box2D using `b2SetLogFcn()`. Logging in Box2D basic. It is just a substitute for `printf`. Logging is mainly used to report bad input data.
+You can get logging from Box2D using `b2SetLogFcn()`. Logging in Box2D basic. It is just a substitute for `printf`. Logging is mainly used to report invalid input data.
 
 ## Version
 
@@ -60,7 +60,7 @@ If you vendor Box2D you can edit `box2d/config.h` to define compile time options
 #define BOX2D_DOUBLE_PRECISION
 ```
 
-Alternatively, you can define the C preprocessor value `BOX2D_USER_CONFIG` to provide your own configuration file. This is a convenient way to override values in `box2d/constants.h`.
+Alternatively, you can define the C preprocessor value `BOX2D_USER_CONFIG` to provide your own configuration file. This is a convenient way to override some values in `box2d/constants.h`. Not all values can or should be overriden.
 
 ## Vector math
 
@@ -84,7 +84,7 @@ You can use the built in scheduler simply by setting the worker count.
 ```c
 b2WorldDef def = b2DefaultWorldDef();
 
-// Use 5 workers. Box2D will create 4 additional threads. Worker 1 is
+// Use 5 workers. Box2D will create 4 additional threads. Worker 0 is
 // the thread that calls b2World_Step.
 def.workerCount = 5;
 ```
@@ -123,10 +123,10 @@ So when you design your game loop, you should let Box2D *go wide* and use multip
 
 In a multithreaded environment you must be careful to avoid [race conditions](https://en.wikipedia.org/wiki/Race_condition). Modifying the world while it is simulating will lead to unpredictable behavior and this is never safe. It is also not safe to read data from a Box2D world while it is simulating. Box2D may move data structures to improve cache performance. So it is very likely that you will read garbage data.
 
-> **Caution**:
+> [!WARNING]
 > Do not perform read or write operations on a Box2D world during `b2World_Step()`
 
-> **Caution**:
+> [!WARNING]
 > Do not write to the Box2D world from multiple threads
 
 It *is safe* to do ray-casts, shape-casts, and overlap tests from multiple threads outside of `b2World_Step()`. Generally, any read-only operation is safe to do multithreaded outside of `b2World_Step()`. This can be very useful if you have multithreaded game logic.

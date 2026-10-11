@@ -18,6 +18,6 @@ framework itself. I encourage you to explore and tinker with the samples
 as you learn Box2D.
 
 > [!NOTE]
-> The sample application is written using [GLFW](https://www.glfw.> org) and [imgui](https://github.com/ocornut/imgui).
+> The sample application is written using [GLFW](https://www.glfw.org) and [imgui](https://github.com/ocornut/imgui).
 > The samples app is not part of the Box2D library. The Box2D library is agnostic about rendering.
 > As shown by the HelloWorld example, you don't need a renderer to use Box2D.

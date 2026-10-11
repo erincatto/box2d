@@ -14,6 +14,8 @@ Box2D is written in portable C17. Most of the types defined in the
 engine begin with the b2 prefix. Hopefully this is sufficient to avoid
 name clashing with your application.
 
+[//]: # (This is a comment.)
+
 ## Prerequisites
 
 In this manual I'll assume you are familiar with basic physics
@@ -330,7 +332,7 @@ It is important to check contact ids before using them because Box2D will destro
 with no notification.
 
 ```c
-if (b2Contact_IsValid(myContactdId))
+if (b2Contact_IsValid(myContactId))
 {
     // do stuff with myContactId
 }

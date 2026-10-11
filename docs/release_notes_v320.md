@@ -36,6 +36,8 @@
 - CMake presets.
 - Revised samples UI and many new samples.
 
+[//]: # (TODO32 Typo contactd)
+
 ## Breaking changes
 - `b2RelativeAngle` changed order.
 - Wheel joint axis convention changed.
