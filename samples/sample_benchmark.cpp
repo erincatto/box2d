@@ -704,6 +704,8 @@ public:
 		}
 
 		CreateLargePyramid( m_worldId );
+
+		m_stepWhilePaused = false;
 	}
 
 	static Sample* Create( SampleContext* context )

@@ -573,7 +573,10 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rA = b2RotateVector( dqA, mp->anchorA );
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
+						
+						//B2_UNUSED(dp, normal);
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
+
 						mp->normalVelocity = 0.0f;
 						mp->persisted = true;
 					}

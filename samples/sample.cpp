@@ -297,6 +297,7 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 	m_stepCount = 0;
 	m_didStep = false;
+	m_stepWhilePaused = true;
 	m_screenTextX = 5.0f;
 	m_screenTextY = 0.0f;
 
@@ -578,7 +579,7 @@ void Sample::Step()
 	b2World_EnableRestitutionPropagation( m_worldId, m_context->enableRestitutionPropagation );
 	b2World_EnableSSE2Fallback( m_worldId, m_context->enableSSE2Fallback );
 
-	for ( int i = 0; i < 1; ++i )
+	if ( timeStep > 0.0f || m_stepWhilePaused )
 	{
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 	}
