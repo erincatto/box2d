@@ -308,6 +308,13 @@ void b2PushContacts_Overflow( b2StepContext* context )
 		b2Softness softness = constraint->softness;
 		int pointCount = constraint->pointCount;
 
+		float dn = b2Dot( b2Sub( vB, vA ), normal );
+		float rnA[2], rnB[2];
+		float impulses[2] = { 0.0f, 0.0f };
+		float normalImpulse = 0.0f;
+		float angularA = 0.0f;
+		float angularB = 0.0f;
+
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
@@ -339,28 +346,32 @@ void b2PushContacts_Overflow( b2StepContext* context )
 				impulseScale = softness.impulseScale;
 			}
 
+			rnA[j] = b2Cross( rA, normal );
+			rnB[j] = b2Cross( rB, normal );
+
 			// relative normal velocity at contact
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			float vn = b2Dot( b2Sub( vrB, vrA ), normal );
+			float vn = dn + wB * rnB[j] - wA * rnA[j];
+			for ( int k = 0; k < j; ++k )
+			{
+				vn += ( mA + mB + iA * rnA[k] * rnA[j] + iB * rnB[k] * rnB[j] ) * impulses[k];
+			}
 
-			// incremental normal impulse
-			float impulse = -cp->normalMass * ( massScale * vn + velocityBias ) - impulseScale * cp->normalImpulse;
-
-			// clamp the accumulated impulse
-			float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
-			impulse = newImpulse - cp->normalImpulse;
-			cp->normalImpulse = newImpulse;
+			float impulse = b2MaxFloat( -cp->normalMass * ( massScale * vn + velocityBias ) - impulseScale * cp->normalImpulse,
+										-cp->normalImpulse );
+			cp->normalImpulse += impulse;
 			cp->totalNormalImpulse += impulse;
 
-			// apply normal impulse
-			b2Vec2 P = b2MulSV( impulse, normal );
-			vA = b2MulSub( vA, mA, P );
-			wA -= iA * b2Cross( rA, P );
-
-			vB = b2MulAdd( vB, mB, P );
-			wB += iB * b2Cross( rB, P );
+			impulses[j] = impulse;
+			normalImpulse += impulse;
+			angularA += impulse * rnA[j];
+			angularB += impulse * rnB[j];
 		}
+
+		b2Vec2 P = b2MulSV( normalImpulse, normal );
+		vA = b2MulSub( vA, mA, P );
+		wA -= iA * angularA;
+		vB = b2MulAdd( vB, mB, P );
+		wB += iB * angularB;
 
 		if ( stateA->flags & b2_dynamicFlag )
 		{
@@ -426,6 +437,25 @@ void b2SolveContacts_Overflow( b2StepContext* context )
 		int pointCount = constraint->pointCount;
 		float totalNormalImpulse = 0.0f;
 
+		b2Vec2 dv = b2Sub( vB, vA );
+		float dn = b2Dot( dv, normal );
+
+		// vt = dot(vrB - sB * tangent - (vrA + sA * tangent), tangent)
+		//    = dot(vrB - vrA, tangent) - (sA + sB)
+		float dt = b2Dot( dv, tangent ) - constraint->tangentSpeed;
+
+		float rnA[2], rnB[2], rtA[2], rtB[2];
+		float normalImpulses[2] = { 0.0f, 0.0f };
+		float tangentImpulses[2] = { 0.0f, 0.0f };
+		for ( int j = 0; j < pointCount; ++j )
+		{
+			b2ContactConstraintPoint* cp = constraint->points + j;
+			rnA[j] = b2Cross( cp->anchorA, normal );
+			rnB[j] = b2Cross( cp->anchorB, normal );
+			rtA[j] = b2Cross( cp->anchorA, tangent );
+			rtB[j] = b2Cross( cp->anchorB, tangent );
+		}
+
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
@@ -443,41 +473,34 @@ void b2SolveContacts_Overflow( b2StepContext* context )
 			float velocityBias = s > 0.0f ? s * inv_h : 0.0f;
 
 			// relative normal velocity at contact
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			float vn = b2Dot( b2Sub( vrB, vrA ), normal );
+			float vn = dn + wB * rnB[j] - wA * rnA[j];
+			for ( int k = 0; k < j; ++k )
+			{
+				vn += ( mA + mB + iA * rnA[k] * rnA[j] + iB * rnB[k] * rnB[j] ) * normalImpulses[k];
+			}
 
-			// incremental normal impulse
-			float impulse = -cp->normalMass * ( vn + velocityBias );
-
-			// clamp the accumulated impulse
-			float newImpulse = b2MaxFloat( cp->normalImpulse + impulse, 0.0f );
-			impulse = newImpulse - cp->normalImpulse;
-			cp->normalImpulse = newImpulse;
+			float impulse = b2MaxFloat( -cp->normalMass * ( vn + velocityBias ), -cp->normalImpulse );
+			cp->normalImpulse += impulse;
 			cp->totalNormalImpulse += impulse;
+			normalImpulses[j] = impulse;
 
 			// This is used for rolling resistance
-			totalNormalImpulse += newImpulse;
-
-			// apply normal impulse
-			b2Vec2 P = b2MulSV( impulse, normal );
-			vA = b2MulSub( vA, mA, P );
-			wA -= iA * b2Cross( rA, P );
-
-			vB = b2MulAdd( vB, mB, P );
-			wB += iB * b2Cross( rB, P );
+			totalNormalImpulse += cp->normalImpulse;
 		}
 
 		// Rolling resistance
+		float rollingImpulse;
 		{
-			float deltaLambda = -constraint->rollingMass * ( wB - wA );
+			float Cdot = wB - wA;
+			for ( int j = 0; j < pointCount; ++j )
+			{
+				Cdot += ( iA * rnA[j] + iB * rnB[j] ) * normalImpulses[j];
+			}
+
 			float lambda = constraint->rollingImpulse;
 			float maxLambda = constraint->rollingResistance * totalNormalImpulse;
-			constraint->rollingImpulse = b2ClampFloat( lambda + deltaLambda, -maxLambda, maxLambda );
-			deltaLambda = constraint->rollingImpulse - lambda;
-
-			wA -= iA * deltaLambda;
-			wB += iB * deltaLambda;
+			constraint->rollingImpulse = b2ClampFloat( lambda - constraint->rollingMass * Cdot, -maxLambda, maxLambda );
+			rollingImpulse = constraint->rollingImpulse - lambda;
 		}
 
 		// Friction
@@ -485,35 +508,42 @@ void b2SolveContacts_Overflow( b2StepContext* context )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
 
-			// fixed anchor points
-			b2Vec2 rA = cp->anchorA;
-			b2Vec2 rB = cp->anchorB;
-
 			// relative tangent velocity at contact
-			b2Vec2 vrB = b2Add( vB, b2CrossSV( wB, rB ) );
-			b2Vec2 vrA = b2Add( vA, b2CrossSV( wA, rA ) );
+			float vt = dt + wB * rtB[j] - wA * rtA[j] + ( iA * rtA[j] + iB * rtB[j] ) * rollingImpulse;
+			for ( int k = 0; k < pointCount; ++k )
+			{
+				vt += ( iA * rtA[j] * rnA[k] + iB * rtB[j] * rnB[k] ) * normalImpulses[k];
+			}
 
-			// vt = dot(vrB - sB * tangent - (vrA + sA * tangent), tangent)
-			//    = dot(vrB - vrA, tangent) - (sA + sB)
-
-			float vt = b2Dot( b2Sub( vrB, vrA ), tangent ) - constraint->tangentSpeed;
-
-			// incremental tangent impulse
-			float impulse = cp->tangentMass * ( -vt );
+			for ( int k = 0; k < j; ++k )
+			{
+				vt += ( mA + mB + iA * rtA[k] * rtA[j] + iB * rtB[k] * rtB[j] ) * tangentImpulses[k];
+			}
 
 			// clamp the accumulated force
 			float maxFriction = friction * cp->normalImpulse;
-			float newImpulse = b2ClampFloat( cp->tangentImpulse + impulse, -maxFriction, maxFriction );
-			impulse = newImpulse - cp->tangentImpulse;
-			cp->tangentImpulse = newImpulse;
-
-			// apply tangent impulse
-			b2Vec2 P = b2MulSV( impulse, tangent );
-			vA = b2MulSub( vA, mA, P );
-			wA -= iA * b2Cross( rA, P );
-			vB = b2MulAdd( vB, mB, P );
-			wB += iB * b2Cross( rB, P );
+			float impulse = b2ClampFloat( -cp->tangentMass * vt, -maxFriction - cp->tangentImpulse, maxFriction - cp->tangentImpulse );
+			cp->tangentImpulse += impulse;
+			tangentImpulses[j] = impulse;
 		}
+
+		float normalImpulse = 0.0f;
+		float tangentImpulse = 0.0f;
+		float angularA = rollingImpulse;
+		float angularB = rollingImpulse;
+		for ( int j = 0; j < pointCount; ++j )
+		{
+			normalImpulse += normalImpulses[j];
+			tangentImpulse += tangentImpulses[j];
+			angularA += normalImpulses[j] * rnA[j] + tangentImpulses[j] * rtA[j];
+			angularB += normalImpulses[j] * rnB[j] + tangentImpulses[j] * rtB[j];
+		}
+
+		b2Vec2 P = b2Add( b2MulSV( normalImpulse, normal ), b2MulSV( tangentImpulse, tangent ) );
+		vA = b2MulSub( vA, mA, P );
+		wA -= iA * angularA;
+		vB = b2MulAdd( vB, mB, P );
+		wB += iB * angularB;
 
 		if ( stateA->flags & b2_dynamicFlag )
 		{

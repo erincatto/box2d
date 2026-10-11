@@ -353,7 +353,16 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 	b2Rot qB = b2MulRot( stateB->deltaRotation, joint->frameB.q );
 	b2Rot relQ = b2InvMulRot( qA, qB );
 
-	bool fixedRotation = ( iA + iB == 0.0f );
+	// current anchors
+	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
+	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
+
+	b2Vec2 linearCdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
+	float angularCdot = wB - wA;
+	float axialImpulse = 0.0f;
+
+	float k = iA + iB;
+	bool fixedRotation = ( k == 0.0f );
 
 	// Solve spring.
 	if ( joint->enableSpring && fixedRotation == false )
@@ -366,26 +375,25 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		float massScale = joint->springSoftness.massScale;
 		float impulseScale = joint->springSoftness.impulseScale;
 
-		float Cdot = wB - wA;
+		float Cdot = angularCdot;
 		float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->springImpulse;
 		joint->springImpulse += impulse;
 
-		wA -= iA * impulse;
-		wB += iB * impulse;
+		angularCdot += k * impulse;
+		axialImpulse += impulse;
 	}
 
 	// Solve motor constraint.
 	if ( joint->enableMotor && fixedRotation == false )
 	{
-		float Cdot = wB - wA - joint->motorSpeed;
-		float impulse = -joint->axialMass * Cdot;
+		float Cdot = angularCdot - joint->motorSpeed;
 		float oldImpulse = joint->motorImpulse;
 		float maxImpulse = context->h * joint->maxMotorTorque;
-		joint->motorImpulse = b2ClampFloat( joint->motorImpulse + impulse, -maxImpulse, maxImpulse );
-		impulse = joint->motorImpulse - oldImpulse;
+		float impulse = b2ClampFloat( -joint->axialMass * Cdot, -maxImpulse - oldImpulse, maxImpulse - oldImpulse );
+		joint->motorImpulse = oldImpulse + impulse;
 
-		wA -= iA * impulse;
-		wB += iB * impulse;
+		angularCdot += k * impulse;
+		axialImpulse += impulse;
 	}
 
 	if ( joint->enableLimit && fixedRotation == false )
@@ -410,14 +418,13 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 				impulseScale = base->constraintSoftness.impulseScale;
 			}
 
-			float Cdot = wB - wA;
+			float Cdot = angularCdot;
 			float oldImpulse = joint->lowerImpulse;
-			float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse;
-			joint->lowerImpulse = b2MaxFloat( oldImpulse + impulse, 0.0f );
-			impulse = joint->lowerImpulse - oldImpulse;
+			float impulse = b2MaxFloat( -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse, -oldImpulse );
+			joint->lowerImpulse = oldImpulse + impulse;
 
-			wA -= iA * impulse;
-			wB += iB * impulse;
+			angularCdot += k * impulse;
+			axialImpulse += impulse;
 		}
 
 		// Upper limit
@@ -441,15 +448,13 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 			}
 
 			// sign flipped on Cdot
-			float Cdot = wA - wB;
+			float Cdot = -angularCdot;
 			float oldImpulse = joint->upperImpulse;
-			float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse;
-			joint->upperImpulse = b2MaxFloat( oldImpulse + impulse, 0.0f );
-			impulse = joint->upperImpulse - oldImpulse;
+			float impulse = b2MaxFloat( -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse, -oldImpulse );
+			joint->upperImpulse = oldImpulse + impulse;
 
 			// sign flipped on applied impulse
-			wA += iA * impulse;
-			wB -= iB * impulse;
+			axialImpulse -= impulse;
 		}
 	}
 
@@ -460,11 +465,7 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		// K = [ mA+r1y^2*iA+mB+r2y^2*iB,  -r1y*iA*r1x-r2y*iB*r2x]
 		//     [  -r1y*iA*r1x-r2y*iB*r2x, mA+r1x^2*iA+mB+r2x^2*iB]
 
-		// current anchors
-		b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
-		b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
-
-		b2Vec2 Cdot = b2Sub( b2Add( vB, b2CrossSV( wB, rB ) ), b2Add( vA, b2CrossSV( wA, rA ) ) );
+		b2Vec2 Cdot = b2MulAdd( linearCdot, axialImpulse, b2Add( b2CrossSV( iA, rA ), b2CrossSV( iB, rB ) ) );
 
 		b2Vec2 bias = b2Vec2_zero;
 		float massScale = 1.0f;
@@ -494,9 +495,9 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		joint->linearImpulse.y += impulse.y;
 
 		vA = b2MulSub( vA, mA, impulse );
-		wA -= iA * b2Cross( rA, impulse );
+		wA -= iA * ( b2Cross( rA, impulse ) + axialImpulse );
 		vB = b2MulAdd( vB, mB, impulse );
-		wB += iB * b2Cross( rB, impulse );
+		wB += iB * ( b2Cross( rB, impulse ) + axialImpulse );
 	}
 
 	if ( stateA->flags & b2_dynamicFlag )
