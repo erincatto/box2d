@@ -191,7 +191,7 @@ static b2Vec2 RunRayCast( b2Pos baseVec )
 	// Ray from 5 m left of the box, traveling 10 m right. Hits the left face at base + {-0.5, 0}.
 	b2Pos origin = (b2Pos){ baseVec.x - 5.0f, baseVec.y };
 	b2Vec2 translation = { 10.0f, 0.0f };
-	b2RayResult result = b2World_CastRayClosest( worldId, origin, translation, b2DefaultQueryFilter() );
+	b2RayResult result = b2World_RayCastClosest( worldId, origin, translation, b2DefaultQueryFilter() );
 
 	// A miss leaves the point at the origin, which the caller's position check rejects
 	b2Vec2 rel = b2SubPos( result.point, baseVec );
@@ -283,15 +283,15 @@ static OriginQueryData RunOriginQueries( b2Pos base )
 	// Cast a small circle at the left face. Center stops at -0.6, hit point on the face at -0.5.
 	b2Vec2 start = { -5.0f, 0.0f };
 	b2ShapeProxy castProxy = b2MakeProxy( &start, 1, 0.1f );
-	b2World_CastShape( worldId, base, &castProxy, (b2Vec2){ 10.0f, 0.0f }, filter, OriginCastFcn, &data );
+	b2World_ShapeCast( worldId, base, &castProxy, (b2Vec2){ 10.0f, 0.0f }, filter, OriginCastFcn, &data );
 
 	// Mover cast at the box
 	b2Capsule mover = { { -5.0f, -0.2f }, { -5.0f, 0.2f }, 0.3f };
-	data.moverFraction = b2World_CastMover( worldId, base, &mover, (b2Vec2){ 10.0f, 0.0f }, filter );
+	data.moverFraction = b2World_MoverCast( worldId, base, &mover, (b2Vec2){ 10.0f, 0.0f }, filter );
 
 	// Mover overlapping the box gathers planes
 	b2Capsule touching = { { -0.9f, -0.2f }, { -0.9f, 0.2f }, 0.5f };
-	b2World_CollideMover( worldId, base, &touching, filter, OriginPlaneFcn, &data );
+	b2World_MoverCollide( worldId, base, &touching, filter, OriginPlaneFcn, &data );
 
 	// Shape level queries at the base
 	data.insidePoint = b2Shape_TestPoint( shapeId, base );

@@ -234,7 +234,7 @@ void GeometricMover::Update( float timeStep, float throttle )
 	b2Pos origin = m_position + m_capsule.center1;
 
 	CastResult castResult = {};
-	b2World_CastRay( m_worldId, origin, translation, m_filter, CastCallback, &castResult );
+	b2World_RayCast( m_worldId, origin, translation, m_filter, CastCallback, &castResult );
 
 	m_pogoOrigin = origin;
 	m_pogoTranslation = translation;
@@ -285,12 +285,12 @@ void GeometricMover::Update( float timeStep, float throttle )
 	{
 		m_planeCount = 0;
 
-		b2World_CollideMover( m_worldId, m_position, &m_capsule, m_filter, PlaneResultFcn, this );
+		b2World_MoverCollide( m_worldId, m_position, &m_capsule, m_filter, PlaneResultFcn, this );
 		b2PlaneSolverResult result = b2SolvePlanes( target - m_position, m_planes, m_planeCount );
 
 		m_totalIterations += result.iterationCount;
 
-		float fraction = b2World_CastMover( m_worldId, m_position, &m_capsule, result.delta, castFilter );
+		float fraction = b2World_MoverCast( m_worldId, m_position, &m_capsule, result.delta, castFilter );
 
 		b2Vec2 delta = fraction * result.delta;
 		m_position = m_position + delta;

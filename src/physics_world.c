@@ -2608,7 +2608,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+b2TreeStats b2World_RayCast( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
 							 void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2687,7 +2687,7 @@ static float b2RayCastClosestFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal,
 	return fraction;
 }
 
-b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter )
+b2RayResult b2World_RayCastClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter )
 {
 	b2RayResult result = { 0 };
 
@@ -2792,7 +2792,7 @@ static float ShapeCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
+b2TreeStats b2World_ShapeCast( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
 							   b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2907,7 +2907,7 @@ static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 	return output.fraction;
 }
 
-float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
+float b2World_MoverCast( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
 {
 	B2_ASSERT( b2IsValidPosition( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
@@ -3009,7 +3009,7 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 // It is tempting to use a shape proxy for the mover, but this makes handling deep overlap difficult and the generality may
 // not be worth it.
-void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn,
+void b2World_MoverCollide( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn,
 						   void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );

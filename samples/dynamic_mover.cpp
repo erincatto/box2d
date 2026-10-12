@@ -217,7 +217,7 @@ void DynamicMover::Update( float timeStep, float throttle )
 	};
 
 	m_castResult = {};
-	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &m_castResult );
+	b2World_RayCast( m_worldId, origin, translation, queryFilter, CastCallback, &m_castResult );
 
 	m_pogoOrigin = origin;
 	m_pogoTranslation = translation;

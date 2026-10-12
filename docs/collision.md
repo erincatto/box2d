@@ -108,11 +108,9 @@ b2Polygon roundedBox = b2MakeRoundedBox(0.5f, 1.0f, radius);
 
 If you want a box that is not centered on the body origin, you can use an offset box.
 
-[//]: # (TODO32 b2_pi should be B2_PI)
-
 ```c
 b2Vec2 center = {1.0f, 0.0f};
-float angle = b2_pi / 4.0f;
+float angle = B2_PI / 4.0f;
 b2Rot rotation = b2MakeRot(angle);
 b2Polygon offsetBox = b2MakeOffsetBox(0.5f, 1.0f, center, rotation);
 ```
@@ -147,12 +145,10 @@ The collision algorithms used by Box2D require that at least
 one of two colliding shapes has sufficiently positive area. Segment shapes have no area, so
 segment-segment collision is not possible.
 
-[//]: # (TODO32 Sets segment2 before it is declared, should be segment1.point2)
-
 ```c
 b2Segment segment1;
 segment1.point1 = (b2Vec2){0.0f, 0.0f};
-segment2.point2 = (b2Vec2){1.0f, 0.0f};
+segment1.point2 = (b2Vec2){1.0f, 0.0f};
 
 // equivalent
 b2Segment segment2 = {{0.0f, 0.0f}, {1.0f, 0.0f}};
@@ -208,10 +204,8 @@ You can perform a geometric queries on a single shape.
 
 ### Shape point test
 
-[//]: # (TODO32 Point tests take no transform, the point is in the shape local space)
-
-You can test a point for overlap with a shape. You provide a transform
-for the shape and a world point.
+You can test a point for overlap with a shape. The point must be in the same coordinate space
+as the shape.
 
 ```c
 b2Vec2 point = {5.0f, 2.0f};
@@ -223,12 +217,6 @@ See also `b2PointInCircle()` and `b2PointInPolygon()`.
 ### Ray cast
 
 You can cast a ray at a shape to get the point of first intersection and normal vector.
-
-[//]: # (TODO32 True for world queries, but the local ray cast functions in this example return a hit at fraction zero)
-
-> **Caution**:
-> No hit will register if the ray starts inside a convex shape like a circle or polygon. This is
-> consistent with Box2D treating convex shapes as solid. 
 
 ```c
 b2RayCastInput input = {0};
@@ -243,18 +231,19 @@ if (output.hit == true)
 }
 ```
 
+> [!NOTE]
+> Shape specific ray casts return a hit with fraction 0 if the origin is inside the shape.
+
 ### Shape cast
 
 You can also cast a shape at another shape. This uses an abstract way of describing the moving shape. It is represented as a point cloud with a radius. This implies a convex shape even if the input data is not convex. The internal algorithm (GJK) will essentially only use the convex portion.
-
-[//]: # (TODO32 input.radius does not exist, it is input.proxy.radius)
 
 ```c
 b2ShapeCastInput input = {0};
 input.proxy.points[0] = (b2Vec2){1.0f, 0.0f};
 input.proxy.points[1] = (b2Vec2){2.0f, -3.0f};
+input.proxy.radius = 0.2f;
 input.proxy.count = 2;
-input.radius = 0.2f;
 input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
 

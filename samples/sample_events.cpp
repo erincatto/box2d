@@ -1575,7 +1575,7 @@ public:
 
 		b2Pos origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
-		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
+		b2RayResult result = b2World_RayCastClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
 		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )

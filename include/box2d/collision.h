@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-FileCopyrightText: 2026 Erin Catto
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -906,7 +906,7 @@ B2_API void b2DynamicTree_Validate( const b2DynamicTree* tree );
  * @{
  */
 
-/// These are the collision planes returned from b2World_CollideMover.
+/// These are the collision planes returned from b2World_MoverCollide.
 /// The plane and point are relative to the query origin, matching the mover capsule.
 typedef struct b2PlaneResult
 {

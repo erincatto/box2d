@@ -42,7 +42,7 @@ typedef float b2FrictionCallback( float frictionA, uint64_t userMaterialIdA, flo
 /// @ingroup world
 typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialIdA, float restitutionB, uint64_t userMaterialIdB );
 
-/// Result from b2World_CastRayClosest
+/// Result from b2World_RayCastClosest
 /// If there is initial overlap the fraction and normal will be zero while the point is an arbitrary point in the overlap region.
 /// @ingroup world
 typedef struct b2RayResult
@@ -303,7 +303,7 @@ typedef struct b2BodyDef
 B2_API b2BodyDef b2DefaultBodyDef( void );
 
 /// This is used to filter collision on shapes. It affects shape-vs-shape collision
-/// and shape-versus-query collision (such as b2World_CastRay).
+/// and shape-versus-query collision (such as b2World_RayCast).
 /// @ingroup shape
 typedef struct b2Filter
 {
@@ -1314,7 +1314,7 @@ typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
 /// @param fraction the fraction along the ray at the point of intersection, zero for a shape cast with initial overlap
 /// @param context the user context
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
-/// @see b2World_CastRay
+/// @see b2World_RayCast
 /// @ingroup world
 typedef float b2CastResultFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context );
 

@@ -1359,7 +1359,7 @@ public:
 				b2Pos origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
 
-				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
+				b2RayResult result = b2World_RayCastClosest( m_worldId, origin, translation, filter );
 
 				if ( i == m_drawIndex )
 				{
@@ -1398,7 +1398,7 @@ public:
 
 				CastResult result;
 				b2TreeStats traversalResult =
-					b2World_CastShape( m_worldId, m_origins[i], &proxy, translation, filter, CastCallback, &result );
+					b2World_ShapeCast( m_worldId, m_origins[i], &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{

@@ -22,9 +22,7 @@ Erin Catto is the creator and sole contributor of the C version of Box2D, with v
 
 ## How do I get help?
 
-[//]: # (TODO32 Unverified: this Discord invite differs from the one in overview.md and README.md)
-
-You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/aM4mRKxW) to ask any remaining questions.
+You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/NKYgCBP) to ask any remaining questions.
 
 Please to not message or email Erin Catto directly for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
 

@@ -111,22 +111,22 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	// CastRay (all hits)
 	b2Pos rayOrigin = { 0.0f, 10.0f };
 	b2Vec2 rayDir = { 0.0f, -20.0f };
-	b2World_CastRay( worldId, rayOrigin, rayDir, filter, s_allHitsCastFcn, NULL );
+	b2World_RayCast( worldId, rayOrigin, rayDir, filter, s_allHitsCastFcn, NULL );
 
 	// CastRayClosest
-	b2World_CastRayClosest( worldId, rayOrigin, rayDir, filter );
+	b2World_RayCastClosest( worldId, rayOrigin, rayDir, filter );
 
 	// CastShape (circle proxy), cast from the nonzero base
 	b2ShapeProxy circProxy = b2MakeProxy( (b2Vec2[]){ { -baseOffset.x, -baseOffset.y } }, 1, 0.3f );
-	b2World_CastShape( worldId, base, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
+	b2World_ShapeCast( worldId, base, &circProxy, rayDir, filter, s_closestCastFcn, NULL );
 
 	// CollideMover (capsule with radius > 2*B2_LINEAR_SLOP), mover relative to the base
 	b2Capsule moverCap = { { -0.3f - baseOffset.x, -baseOffset.y }, { 0.3f - baseOffset.x, -baseOffset.y }, 0.5f };
-	b2World_CollideMover( worldId, base, &moverCap, filter, s_planeFcn, NULL );
+	b2World_MoverCollide( worldId, base, &moverCap, filter, s_planeFcn, NULL );
 
 	// CastMover
 	b2Vec2 moverTranslation = { 0.0f, -5.0f };
-	b2World_CastMover( worldId, base, &moverCap, moverTranslation, filter );
+	b2World_MoverCast( worldId, base, &moverCap, moverTranslation, filter );
 
 	// Shape_TestPoint: test inside (0,0 local, well inside the r=10 ground circle at y=-10)
 	// and outside
@@ -905,8 +905,8 @@ static void IssuePileQueries( b2WorldId worldId )
 	b2AABB aabb = { { -12.0f, -2.0f }, { 12.0f, 22.0f } };
 	b2World_OverlapAABB( worldId, b2Pos_zero, aabb, filter, s_overlapFcn, NULL );
 
-	b2World_CastRay( worldId, (b2Pos){ -12.0f, 10.0f }, (b2Vec2){ 24.0f, 0.0f }, filter, s_keepAllCastFcn, NULL );
-	b2World_CastRay( worldId, (b2Pos){ 0.0f, 22.0f }, (b2Vec2){ 0.0f, -24.0f }, filter, s_keepAllCastFcn, NULL );
+	b2World_RayCast( worldId, (b2Pos){ -12.0f, 10.0f }, (b2Vec2){ 24.0f, 0.0f }, filter, s_keepAllCastFcn, NULL );
+	b2World_RayCast( worldId, (b2Pos){ 0.0f, 22.0f }, (b2Vec2){ 0.0f, -24.0f }, filter, s_keepAllCastFcn, NULL );
 }
 
 // Record stepCount frames of a freshly built scene at the given worker count. When withQueries is set,

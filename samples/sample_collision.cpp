@@ -1603,7 +1603,7 @@ public:
 			DrawScreenTextLine( "Simple closest point ray cast" );
 
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
-			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
+			b2RayResult result = b2World_RayCastClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
 
 			if ( result.hit == true && result.fraction > 0.0f )
 			{
@@ -1667,7 +1667,7 @@ public:
 
 			if ( m_castType == e_rayCast )
 			{
-				b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_RayCast( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 			else
 			{
@@ -1684,7 +1684,7 @@ public:
 					proxy = b2MakeProxy( box.vertices, box.count, box.radius );
 				}
 
-				b2World_CastShape( m_worldId, m_rayStart, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_ShapeCast( m_worldId, m_rayStart, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 
 			if ( context.count > 0 )

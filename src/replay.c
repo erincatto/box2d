@@ -1819,7 +1819,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_RayCast( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1851,7 +1851,7 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CastShape( rdr->replayWorldId, a->origin, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_ShapeCast( rdr->replayWorldId, a->origin, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1903,7 +1903,7 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_CollideMover( rdr->replayWorldId, a->origin, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
+	b2World_MoverCollide( rdr->replayWorldId, a->origin, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1922,7 +1922,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 	b2RayResult rec = b2RecR_RAYRESULT( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
+	b2RayResult got = b2World_RayCastClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
 						b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
@@ -1952,7 +1952,7 @@ static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2R
 	float rec = b2RecR_F32( rdr );
 	if ( !rdr->ok )
 		return;
-	float got = b2World_CastMover( rdr->replayWorldId, a->origin, &a->mover, a->translation, a->filter );
+	float got = b2World_MoverCast( rdr->replayWorldId, a->origin, &a->mover, a->translation, a->filter );
 	if ( b2RecF32Differs( got, rec ) )
 		rdr->diverged = true;
 	if ( rdr->owner )

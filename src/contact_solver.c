@@ -308,7 +308,8 @@ void b2PushContacts_Overflow( b2StepContext* context )
 		b2Softness softness = constraint->softness;
 		int pointCount = constraint->pointCount;
 
-		float dn = b2Dot( b2Sub( vB, vA ), normal );
+		float vnc = b2Dot( b2Sub( vB, vA ), normal );
+
 		float rnA[2], rnB[2];
 		float impulses[2] = { 0.0f, 0.0f };
 		float normalImpulse = 0.0f;
@@ -349,10 +350,11 @@ void b2PushContacts_Overflow( b2StepContext* context )
 			rnA[j] = b2Cross( rA, normal );
 			rnB[j] = b2Cross( rB, normal );
 
-			// relative normal velocity at contact
-			float vn = dn + wB * rnB[j] - wA * rnA[j];
+			// Relative normal velocity at contact.
+			float vn = vnc + wB * rnB[j] - wA * rnA[j];
 			for ( int k = 0; k < j; ++k )
 			{
+				// Point 2 only depends on the impulse from point 1.
 				vn += ( mA + mB + iA * rnA[k] * rnA[j] + iB * rnB[k] * rnB[j] ) * impulses[k];
 			}
 
@@ -362,6 +364,8 @@ void b2PushContacts_Overflow( b2StepContext* context )
 			cp->totalNormalImpulse += impulse;
 
 			impulses[j] = impulse;
+
+			// These accumulators are not used until the loop is done.
 			normalImpulse += impulse;
 			angularA += impulse * rnA[j];
 			angularB += impulse * rnB[j];
@@ -438,15 +442,17 @@ void b2SolveContacts_Overflow( b2StepContext* context )
 		float totalNormalImpulse = 0.0f;
 
 		b2Vec2 dv = b2Sub( vB, vA );
-		float dn = b2Dot( dv, normal );
+		float vnc = b2Dot( dv, normal );
 
 		// vt = dot(vrB - sB * tangent - (vrA + sA * tangent), tangent)
 		//    = dot(vrB - vrA, tangent) - (sA + sB)
-		float dt = b2Dot( dv, tangent ) - constraint->tangentSpeed;
+		float vtc = b2Dot( dv, tangent ) - constraint->tangentSpeed;
 
-		float rnA[2], rnB[2], rtA[2], rtB[2];
 		float normalImpulses[2] = { 0.0f, 0.0f };
 		float tangentImpulses[2] = { 0.0f, 0.0f };
+
+		// Cache cross products
+		float rnA[2], rnB[2], rtA[2], rtB[2];
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
@@ -460,22 +466,23 @@ void b2SolveContacts_Overflow( b2StepContext* context )
 		{
 			b2ContactConstraintPoint* cp = constraint->points + j;
 
-			// fixed anchor points
+			// Fixed anchor points.
 			b2Vec2 rA = cp->anchorA;
 			b2Vec2 rB = cp->anchorB;
 
-			// compute current separation
-			// this is subject to round-off error if the anchor is far from the body center of mass
+			// Compute current separation.
+			// This is subject to round-off error if the anchor is far from the body center of mass.
 			b2Vec2 ds = b2Add( dp, b2Sub( b2RotateVector( dqB, rB ), b2RotateVector( dqA, rA ) ) );
 			float s = cp->baseSeparation + b2Dot( ds, normal );
 
-			// speculative bias, zero when overlapped
+			// Speculative bias, zero when overlapped.
 			float velocityBias = s > 0.0f ? s * inv_h : 0.0f;
 
-			// relative normal velocity at contact
-			float vn = dn + wB * rnB[j] - wA * rnA[j];
+			// Relative normal velocity at contact.
+			float vn = vnc + wB * rnB[j] - wA * rnA[j];
 			for ( int k = 0; k < j; ++k )
 			{
+				// This allows getting point 2 normal velocity with only one dependency.
 				vn += ( mA + mB + iA * rnA[k] * rnA[j] + iB * rnB[k] * rnB[j] ) * normalImpulses[k];
 			}
 
@@ -509,7 +516,7 @@ void b2SolveContacts_Overflow( b2StepContext* context )
 			b2ContactConstraintPoint* cp = constraint->points + j;
 
 			// relative tangent velocity at contact
-			float vt = dt + wB * rtB[j] - wA * rtA[j] + ( iA * rtA[j] + iB * rtB[j] ) * rollingImpulse;
+			float vt = vtc + wB * rtB[j] - wA * rtA[j] + ( iA * rtA[j] + iB * rtB[j] ) * rollingImpulse;
 			for ( int k = 0; k < pointCount; ++k )
 			{
 				vt += ( iA * rtA[j] * rnA[k] + iB * rtB[j] * rnB[k] ) * normalImpulses[k];

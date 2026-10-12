@@ -85,27 +85,27 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const 
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
 ///	@return traversal performance counters
-B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter,
+B2_API b2TreeStats b2World_RayCast( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter,
 									b2CastResultFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores initial overlap.
-/// This is less general than b2World_CastRay() and does not allow for custom filtering.
-B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter );
+/// This is less general than b2World_RayCast() and does not allow for custom filtering.
+B2_API b2RayResult b2World_RayCastClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter );
 
 /// Cast a shape through the world. Similar to a cast ray except that a shape is cast instead of a point.
 /// The proxy points are relative to the origin. Callback points are world positions.
-///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
+///	@see b2World_RayCast
+B2_API b2TreeStats b2World_ShapeCast( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
 									  b2QueryFilter filter, b2CastResultFcn* fcn, void* context );
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
 /// clipping. The mover capsule is relative to the origin. Near the origin pass b2Pos_zero and a world capsule.
-B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation,
+B2_API float b2World_MoverCast( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation,
 								b2QueryFilter filter );
 
 /// Collide a capsule mover with the world, gathering collision planes that can be fed to b2SolvePlanes. Useful for
 /// kinematic character movement. The mover capsule and the resulting planes are relative to the origin.
-B2_API void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
+B2_API void b2World_MoverCollide( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
 								  b2PlaneResultFcn* fcn, void* context );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance

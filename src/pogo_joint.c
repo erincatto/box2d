@@ -235,14 +235,13 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-
 	float bias = 0.0f;
 	if ( useBias )
 	{
 		// This is a custom pogo position correction designed to avoid feeding velocity into
 		// the mover body. Otherwise the mover can make huge jumps going up stairs. This still
 		// works with continuous collision.
-		// However, this position delta is not observer contact forces and can lead to tunnelling.
+
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 d = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );
