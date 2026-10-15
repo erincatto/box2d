@@ -384,7 +384,7 @@ B2_API b2BodyType b2Body_GetType( b2BodyId bodyId );
 /// properties regardless of the automatic mass setting.
 B2_API void b2Body_SetType( b2BodyId bodyId, b2BodyType type );
 
-/// Set the body name. Up to 31 characters excluding 0 termination.
+/// Set the body name. See B2_NAME_LENGTH.
 B2_API void b2Body_SetName( b2BodyId bodyId, const char* name );
 
 /// Get the body name.
@@ -1214,10 +1214,10 @@ B2_API void b2MoverJoint_SetLinearVelocity( b2JointId jointId, b2Vec2 velocity )
 /// Get the desired relative linear velocity in meters per second
 B2_API b2Vec2 b2MoverJoint_GetLinearVelocity( b2JointId jointId );
 
-/// Set the motor joint maximum force, usually in newtons
+/// Set the joint maximum force, usually in newtons
 B2_API void b2MoverJoint_SetMaxVelocityForce( b2JointId jointId, b2Vec2 maxForce );
 
-/// Get the motor joint maximum force, usually in newtons
+/// Get the joint maximum force, usually in newtons
 B2_API b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId );
 
 /**@}*/
@@ -1228,7 +1228,7 @@ B2_API b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId );
  * @{
  */
 
-/// Create a pog joint
+/// Create a pogo joint
 /// @see b2PogoJointDef for details
 B2_API b2JointId b2CreatePogoJoint( b2WorldId worldId, const b2PogoJointDef* def );
 
@@ -1383,7 +1383,6 @@ B2_API void b2RevoluteJoint_SetTargetAngle( b2JointId jointId, float angle );
 B2_API float b2RevoluteJoint_GetTargetAngle( b2JointId jointId );
 
 /// Get the revolute joint current angle in radians relative to the reference angle
-/// @see b2RevoluteJointDef::referenceAngle
 B2_API float b2RevoluteJoint_GetAngle( b2JointId jointId );
 
 /// Enable/disable the revolute joint limit

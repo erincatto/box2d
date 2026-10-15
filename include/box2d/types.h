@@ -438,7 +438,7 @@ typedef struct b2ShapeDef
 	bool enableCustomFiltering;
 
 	/// A sensor shape generates overlap events but never generates a collision response.
-	/// Sensors do not have continuous collision. Instead, use a ray or shape cast for those scenarios.
+	/// Fast moving sensors may miss overlaps. Instead, use a ray or shape cast for those scenarios.
 	/// Sensors still contribute to the body mass if they have non-zero density.
 	/// @note Sensor events are disabled by default.
 	/// @see enableSensorEvents
@@ -663,13 +663,13 @@ typedef struct b2DistanceJointDef
 	/// then the distance joint will be rigid, overriding the limit and motor.
 	bool enableSpring;
 
-	/// The lower spring force controls how much tension it can sustain
+	/// The lower spring force controls how much tension it can sustain.
 	float lowerSpringForce;
 
-	/// The upper spring force controls how much compression it an sustain
+	/// The upper spring force controls how much compression it can sustain.
 	float upperSpringForce;
 
-	/// The spring linear stiffness Hertz, cycles per second
+	/// The spring linear stiffness Hertz, cycles per second.
 	float hertz;
 
 	/// The spring linear damping ratio, non-dimensional
@@ -1095,7 +1095,7 @@ typedef struct b2ContactBeginTouchEvent
 	b2ShapeId shapeIdB;
 
 	/// The transient contact id. This contact maybe destroyed automatically when the world is modified or simulated.
-	/// Used b2Contact_IsValid before using this id.
+	/// Use b2Contact_IsValid before using this id.
 	b2ContactId contactId;
 } b2ContactBeginTouchEvent;
 

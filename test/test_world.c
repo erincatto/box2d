@@ -13,6 +13,7 @@
 #include "box2d/constants.h"
 #include "box2d/math_functions.h"
 
+#include <float.h>
 #include <stdio.h>
 
 // This is a simple example of building and running a simulation
@@ -606,6 +607,65 @@ static int EnableContactRecyclingTest( void )
 	b2World_Step( worldId, 1.0f / 60.0f, 4 );
 
 	b2DestroyWorld( worldId );
+	return 0;
+}
+
+static void PreSolveReject( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
+{
+	(void)shapeIdA;
+	(void)shapeIdB;
+	bool* reject = context;
+	if ( *reject )
+	{
+		manifold->pointCount = 0;
+	}
+}
+
+// A rejected pre-solve empties the manifold while the shapes may already touch. The next step must
+// rebuild the contact and ask again instead of recycling the empty pair. Box3D discussion #175.
+static int PreSolveRejectRecycleTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.enableSleep = false;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	bool reject = true;
+	b2World_SetPreSolveCallback( worldId, PreSolveReject, NULL, &reject );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.position = (b2Pos){ 0.0f, -0.5f };
+	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon groundBox = b2MakeBox( 10.0f, 0.5f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
+
+	float radius = 0.25f;
+	bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position = (b2Pos){ 0.0f, radius };
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	shapeDef.enablePreSolveEvents = true;
+	b2Circle circle = { { 0.0f, 0.0f }, radius };
+	b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	reject = false;
+
+	float minSeparation = FLT_MAX;
+	for ( int i = 0; i < 30; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+		b2Pos p = b2Body_GetPosition( bodyId );
+		minSeparation = b2MinFloat( minSeparation, (float)p.y - radius );
+	}
+
+	b2DestroyWorld( worldId );
+
+	ENSURE( minSeparation > -B2_LINEAR_SLOP );
+
 	return 0;
 }
 
@@ -1717,6 +1777,7 @@ int WorldTest( void )
 	RUN_SUBTEST( DeferredMassFlagSyncTest );
 	RUN_SUBTEST( EnableSleepFlagSyncTest );
 	RUN_SUBTEST( EnableContactRecyclingTest );
+	RUN_SUBTEST( PreSolveRejectRecycleTest );
 	RUN_SUBTEST( EnlargedProxyDestroyedTest );
 	RUN_SUBTEST( BroadPhasePairsTest );
 	RUN_SUBTEST( BodySimLocatorTest );

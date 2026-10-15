@@ -179,7 +179,7 @@ B2_ID_INLINE b2JointId b2LoadJointId( uint64_t x )
 	return id;
 }
 
-/// Store a contact id into 16 bytes
+/// Store a contact id.
 B2_ID_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
 {
 	values[0] = (uint32_t)id.index1;
@@ -187,7 +187,7 @@ B2_ID_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
 	values[2] = (uint32_t)id.generation;
 }
 
-/// Load a two uint64_t into a contact id.
+/// Load a contact id.
 B2_ID_INLINE b2ContactId b2LoadContactId( uint32_t values[3] )
 {
 	b2ContactId id;
