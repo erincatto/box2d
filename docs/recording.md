@@ -41,7 +41,7 @@ current world as the seed, so it works whether you call it before any bodies exi
 a running simulation. It has no effect if the world is already recording.
 
 > [!important]
-> Recording doesn't work pre-solve and custom filtering callbacks. If those are installed
+> Recording doesn't work with pre-solve and custom filtering callbacks. If those are installed
 > no recording is generated.
 
 When you are done, save the buffer and free it. File I/O is yours to do. The convenience helper
@@ -91,12 +91,12 @@ b2WorldId loaded = b2CreateWorldFromSnapshot( image, size, /*workerCount*/ 0 );
 
 `b2World_RestoreFromSnapshot` keeps the world's slot and generation, so the `b2WorldId` and every
 `b2BodyId` / `b2ShapeId` / `b2JointId` / `b2ChainId` you held at the snapshot instant resolve
-again. Ids created after the snapshot will validation after a restore rather than aliasing a
+again. Ids created after the snapshot will fail validation after a restore rather than aliasing a
 different object (thanks to a generation number). `b2CreateWorldFromSnapshot` allocates a new world,
 so use it only when there is no existing world to restore into.
 
-You can validate your snapshot workflow using `b2World_GetStateHash()`. This is expensive, so don't
-ship it.
+You can validate your snapshot workflow using `b2World_GetStateHash()`. This function also might
+be useful for determining if rollback is needed in client prediction scenarios.
 
 Like recording, snapshots are worker-count independent: a world snapshotted single-threaded
 restores and continues with any worker count.
@@ -120,7 +120,7 @@ with the file pre-loaded:
 samples path/to/my_recording.b2rec
 ```
 
-There is a public replay API, but that is there to be used by the samples app. Advanced users can look the
+There is a public replay API, but that is there to be used by the samples app. Advanced users can look at the
 replay viewer for details.
 
 ## Determinism
@@ -134,7 +134,7 @@ will be completely rejected in some cases:
   layout hash that is validated before loading continues. A mismatch stops the load.
 - **Floating-point environment** must match. Box2D builds with `-ffp-contract=off` so fused
   multiply-add does not change results. Building with `-ffast-math` is unsupported. The writer and reader
-  builds must use the same [floating point precision](#large-worlds).
+  builds must use the same [floating point precision](@ref large-worlds).
 
 ## Spatial queries
 
@@ -155,6 +155,6 @@ different hits is flagged like any other divergence. This is visualized in the r
   their inputs, so their results are not recorded. To replay a session that used a custom mixer,
   install the same mixer on the replay host. The defaults need nothing.
 - **preSolve and customFilter callbacks are not supported while recording.** They carry user
-  context and can change the simulation. These using these will lead to divergence. However,
+  context and can change the simulation. Using these will lead to divergence. However,
   these should work in a snapshot setup that uses identical callbacks.
 

@@ -46,7 +46,7 @@ gluOrtho2D(lowerX, upperX, lowerY, upperY);
 ```
 
 If your game must work in pixel units then you could convert your
-length units from pixels to meters when passing values from Box2D.
+length units from pixels to meters when passing values to Box2D.
 Likewise you should convert the values received from Box2D from meters
 to pixels. This will improve the stability of the physics simulation.
 
@@ -82,6 +82,7 @@ by Box2D using `b2SetLengthUnitsPerMeter()`. This is experimental and not
 well tested.
 
 ## Debug drawing
+
 You can implement the function pointers in `b2DebugDraw` struct to get detailed
 drawing of the Box2D world. Debug draw provides:
 - shapes
@@ -97,10 +98,12 @@ necessary data is internal and subject to change.
 The samples application draws the Box2D world using the `b2DebugDraw`.
 
 ## Limitations
+
 Box2D uses several approximations to simulate rigid body physics
 efficiently. This brings some limitations.
 
 Here are the current limitations:
+
 1. Extreme mass ratios may cause joint stretching and collision overlap.
 2. Box2D uses soft constraints to improve robustness. This can lead to joint and contact flexing.
 3. Continuous collision does not handle all situations. For example, general dynamic versus dynamic continuous collision is not handled. [Bullets](@ref bullets) handle this in a limited way. This is done for performance reasons.

@@ -45,7 +45,7 @@
 These compile but behave differently:
 
 - `b2RelativeAngle(a, b)` swapped its arguments and still returns b minus a, so existing calls silently change sign.
-- The wheel joint axis is the x-axis of `localFrameA`. The old default axis was vertical, so vertical suspension now needs `localFrameA.q = b2MakeRot(0.5f * B2_PI)`.
+- The wheel joint axis is the x-axis of `localFrameA`. The old default axis was vertical, so vertical suspension now needs `base.localFrameA.q = b2MakeRot(0.5f * B2_PI)`.
 - Motor joint defaults are now all zero, so a default motor joint does nothing.
 - `b2JointType` values changed, so stored joint type integers are invalid.
 - Custom filtering is opt-in per shape. The custom filter callback only runs for pairs where one of the shapes sets `b2ShapeDef::enableCustomFiltering`.
@@ -54,6 +54,7 @@ These compile but behave differently:
 - Debug draw always applies `drawingBounds`, so a zeroed `b2DebugDraw` draws nothing. Start from `b2DefaultDebugDraw()`.
 - Body names are truncated to `B2_NAME_LENGTH` characters, which is 10. It was 31.
 - Contact point normal velocity is only computed if needed for hit events or restitution.
+- `b2CreateSegmentShape` and `b2CreateCapsuleShape` return `b2_nullShapeId` for a degenerate segment or capsule.
 
 Renamed and changed functions:
 
@@ -72,6 +73,8 @@ Renamed and changed functions:
 - Dynamic tree: `b2CreateDynamicTree`, `b2DestroyDynamicTree`, `b2CreateTreeProxy` and `b2DestroyTreeProxy` replace the `b2DynamicTree_` versions. `b2DynamicTree_RayCast` is now `b2DynamicTree_CastRay`, and `b2DynamicTree_ShapeCast` is now `b2DynamicTree_CastBox`, which sweeps an AABB. `EnlargeProxy` and `Rebuild` are removed. `b2DynamicTree_Query` is now `b2DynamicTree_OverlapAABB` and `b2DynamicTree_GetAABB` is now `b2DynamicTree_GetProxyBounds`.
 - Distance joint: `b2DistanceJoint_SetLength` and `GetLength` are now `SetRestLength` and `GetRestLength`. `SetLengthRange`, `GetMinLength` and `GetMaxLength` are now `SetLimits`, `GetLowerLimit` and `GetUpperLimit`, matching the other joints.
 - Current joint values say so: `b2RevoluteJoint_GetAngle` is now `b2RevoluteJoint_GetCurrentAngle`, and `b2PrismaticJoint_GetTranslation` and `b2PrismaticJoint_GetSpeed` are now `b2PrismaticJoint_GetCurrentTranslation` and `b2PrismaticJoint_GetCurrentSpeed`.
+- Motor joint: `b2MotorJoint_SetMaxForce`/`GetMaxForce` to `SetMaxVelocityForce`/`GetMaxVelocityForce` and `SetMaxTorque`/`GetMaxTorque` to `SetMaxVelocityTorque`/`GetMaxVelocityTorque`. The linear and angular offset and correction factor functions are removed.
+- Character mover: `b2PlaneSolverResult::translation` is now `delta`.
 - Math: `b2IsValidRotation` is now `b2IsValidRot`.
 - Debug draw: callbacks take `b2Pos` and `b2WorldTransform`, `DrawPolygonFcn` takes a transform, and `DrawSolidCircleFcn` takes a local center. `DrawSegmentFcn` is now `DrawLineFcn`, `drawContactImpulses` is now `drawContactForces` and `drawFrictionImpulses` is now `drawFrictionForces`.
 - CMake: `BOX2D_AVX2` is removed, AVX2 is selected at runtime.

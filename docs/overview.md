@@ -44,7 +44,7 @@ application included with Box2D to learn more.
 This manual is only updated with new releases. The latest version of
 Box2D may be out of sync with this manual.
 
-> [!NOTE]
+> [!note]
 > This manual applies to the associated release and not necessarily the
 > latest version on the main branch.
 
@@ -54,8 +54,8 @@ Please file bugs and feature requests here:
 [Box2D Issues](https://github.com/erincatto/box2d/issues)
 
 You can help to ensure your issue gets fixed if you provide sufficient
-detail. A testbed example that reproduces the problem is ideal. You can
-read about the testbed later in this document.
+detail. A [sample](#samples_app) that reproduces the problem is ideal.
+A [recording](#recording) is even better in some cases.
 
 There is also a [Discord server](https://discord.gg/NKYgCBP) and a
 [subreddit](https://reddit.com/r/box2d) for Box2D. You may also use
@@ -111,7 +111,7 @@ constraints; they are created automatically by Box2D.
 
 ### joint constraint
 
-This is a constraint used to hold two or more bodies together. Box2D
+This is a constraint used to hold two bodies together. Box2D
 supports several joint types: revolute, prismatic, distance, and more.
 Joints may have limits, motors, and/or springs.
 
@@ -136,7 +136,7 @@ achieve the desired speed.
 ### joint spring
 
 A joint spring has a stiffness and damping. In Box2D spring stiffness is
-expressed in terms or Hertz or cycles per second. This lets you configure how
+expressed in terms of Hertz or cycles per second. This lets you configure how
 quickly a spring reacts regardless of the body masses. Joint springs also
 have a damping ratio to let you specify how quickly the spring will come to
 rest.
@@ -184,7 +184,7 @@ Box2D's primary purpose is to provide rigid body simulation. However,
 there are math and collision features that may be useful apart from the
 rigid body simulation. These are provided in the `include` directory. Anything
 in the `include` directory is considered public, while everything in the `src`
-directory is consider internal.
+directory is considered internal.
 
 Public features are supported and you can get help with these on the Discord
 server. Using internal code directly is not supported. However, feel free to
@@ -233,7 +233,7 @@ stability.
 Box2D has a double precision option you can use to support very large worlds.
 This is configured using `BOX2D_DOUBLE_PRECISION`.
 
-Box2D uses radians for angles. The body rotation is stored a complex number,
+Box2D uses radians for angles. The body rotation is stored as a complex number,
 so when you access the angle of a body, it will be between \f$-\pi\f$ and \f$\pi\f$ radians.
 
 > [!IMPORTANT]

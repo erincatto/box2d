@@ -5,7 +5,7 @@
 Box2D is a feature rich 2D rigid body physics engine, written in C17 by Erin Catto. It has been used in many games and in many
 game engines.
 
-Box2D uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License) license and can be used free of charge. Credit
+Box2D uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License) and can be used free of charge. Credit
 should be included if possible. Support is [appreciated](https://github.com/sponsors/erincatto). You may use the
 Box2D [logo](https://box2d.org/images/logo.svg).
 
@@ -24,7 +24,7 @@ Erin Catto is the creator and sole contributor of the C version of Box2D, with v
 
 You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/NKYgCBP) to ask any remaining questions.
 
-Please to not message or email Erin Catto directly for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
+Please do not message or email Erin Catto directly for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
 
 ## Documentation
 
@@ -46,7 +46,7 @@ You should have a basic knowledge of rigid bodies, force, torque, and impulses. 
 
 ### What units does Box2D use?
 
-Box2D is tuned for meters-kilograms-seconds (MKS). This is recommend as the units for your game. However, you may use
+Box2D is tuned for meters-kilograms-seconds (MKS). This is recommended as the units for your game. However, you may use
 different units if you are careful.
 
 ### How do I convert pixels to meters?
@@ -129,9 +129,9 @@ For the same input Box2D will reproduce any simulation. Box2D does not use any r
 
 Box2D is also deterministic under multithreading. A simulation using two threads will give the same result as eight threads.
 
-Box2D has cross-platform determinism as of version 3.1. This is heavily tested and a first class feature of Box2D. This assumes precision is not mixed (single verus double precision).
+Box2D has cross-platform determinism as of version 3.1. This is heavily tested and a first class feature of Box2D. This assumes precision is not mixed (single versus double precision).
 
-Some developers want rollback determinism. You can achieve this using the [snapshot](#snapshot) system.
+Some developers want rollback determinism. You can achieve this using the [snapshot](@ref snapshot) system.
 
 ## What are the common mistakes made by new users?
 

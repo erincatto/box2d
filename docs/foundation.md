@@ -26,7 +26,7 @@ You can provide a custom allocator using `b2SetAllocator()` and you can get the 
 
 ## Logging
 
-You can get logging from Box2D using `b2SetLogCallback()`. Logging in Box2D basic. It is just a substitute for `printf`. Logging is mainly used to report invalid input data.
+You can get logging from Box2D using `b2SetLogCallback()`. Logging in Box2D is basic. It is just a substitute for `printf`. Logging is mainly used to report invalid input data.
 
 ## Version
 
@@ -60,7 +60,7 @@ If you vendor Box2D you can edit `box2d/config.h` to define compile time options
 #define BOX2D_DOUBLE_PRECISION
 ```
 
-Alternatively, you can define the C preprocessor value `BOX2D_USER_CONFIG` to provide your own configuration file. This is a convenient way to override some values in `box2d/constants.h`. Not all values can or should be overriden.
+Alternatively, you can define the C preprocessor value `BOX2D_USER_CONFIG` to provide your own configuration file. This is a convenient way to override some values in `box2d/constants.h`. Not all values can or should be overridden.
 
 ## Vector math
 
@@ -125,10 +125,10 @@ So when you design your game loop, you should let Box2D *go wide* and use multip
 
 In a multithreaded environment you must be careful to avoid [race conditions](https://en.wikipedia.org/wiki/Race_condition). Modifying the world while it is simulating will lead to unpredictable behavior and this is never safe. It is also not safe to read data from a Box2D world while it is simulating. Box2D may move data structures to improve cache performance. So it is very likely that you will read garbage data.
 
-> [!WARNING]
+> [!warning]
 > Do not perform read or write operations on a Box2D world during `b2World_Step()`
 
-> [!WARNING]
+> [!warning]
 > Do not write to the Box2D world from multiple threads
 
 It *is safe* to do ray-casts, shape-casts, and overlap tests from multiple threads outside of `b2World_Step()`. Generally, any read-only operation is safe to do multithreaded outside of `b2World_Step()`. This can be very useful if you have multithreaded game logic.
@@ -146,4 +146,4 @@ There are a few caveats:
 
 ## SIMD
 
-Box2D uses [SIMD](https://en.wikipedia.org/wiki/Single_instruction%2C_multiple_data) instructions to improve performance. On x64 CPUs it will use AVX2 if possible and otherwise fallback to SSE2. This decision is made at runtime using the [CPUID](https://en.wikipedia.org/wiki/CPUID). On ARM64 and Apple Silicon Box2D will use Neon instructions. You can completely disable SIMD using the preprocessor argument `BOX2D_DISABLE_SIMD`.
+Box2D uses [SIMD](https://en.wikipedia.org/wiki/Single_instruction%2C_multiple_data) instructions to improve performance. On x64 CPUs it will use AVX2 if possible and otherwise fall back to SSE2. This decision is made at runtime using the [CPUID](https://en.wikipedia.org/wiki/CPUID). On ARM64 and Apple Silicon Box2D will use Neon instructions. You can completely disable SIMD using the preprocessor argument `BOX2D_DISABLE_SIMD`.

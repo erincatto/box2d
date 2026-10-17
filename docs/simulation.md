@@ -81,7 +81,7 @@ world object, using `b2WorldId`.
 
 ### World definition
 
-Worlds are created using a *definition* structure. This is temporary structure that
+Worlds are created using a *definition* structure. This is a temporary structure that
 you can use to configure options for world creation. You **must** initialize the world definition
 using `b2DefaultWorldDef()`.
 
@@ -152,7 +152,7 @@ frame.
 
 As I discussed in the [HelloWorld tutorial](@ref hello), you should use a fixed
 time step. By using a larger time step you can improve performance in
-low frame rate scenarios. But generally you should use a time steps 1/30 seconds (30Hz) or smaller.
+low frame rate scenarios. But generally you should use a time step of 1/30 seconds (30Hz) or smaller.
 A time step of 1/60 seconds (60Hz) will usually deliver a high quality simulation.
 
 The sub-step count is used to increase accuracy. By sub-stepping the solver
@@ -196,7 +196,7 @@ finite, non-zero mass.
 > Avoid setting the transform on bodies after creation.
 > Box2D treats this as a teleport and may result in undesirable behavior and/or performance problems.
 
-Bodies carry shapes and moves them around in the world. Bodies are always
+Bodies carry shapes and move them around in the world. Bodies are always
 rigid bodies in Box2D. That means that two shapes attached to the same rigid body never move
 relative to each other and shapes attached to the same body don't collide.
 
@@ -285,7 +285,7 @@ different than friction because friction only occurs with contact.
 Damping is not a replacement for friction and the two effects are
 used together.
 
-Damping parameter are non-negative. Normally you will use a
+Damping parameters are non-negative. Normally you will use a
 damping value between 0 and 1. I generally do not use linear damping
 because it makes bodies look like they are floating.
 
@@ -367,7 +367,7 @@ bodyDef.motionLocks.angularZ = true;
 The `angularZ` flag causes the rotational inertia and its inverse to
 be set to zero.
 
-You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For techinical reasons
+You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For technical reasons
 these only restrict translation but the linear velocity may momentarily violate the restriction. I'm not
 a fan of restricting translation this way. I tried using an inverse mass of zero along an axis and that
 causes the solver to blow up because it ends up dividing by very small numbers.
@@ -460,7 +460,7 @@ bodyDef.userData = &myGameObject;
 
 This is useful when you receive results from a query such as a ray-cast
 or event and you want to get back to your game object. You can acquire the
-use data from a body using `b2Body_GetUserData()`.
+user data from a body using `b2Body_GetUserData()`.
 
 ### Body lifetime
 
@@ -546,7 +546,7 @@ for (int i = 0; i < 100; ++i)
 b2Body_UpdateMassFromShapes(myBodyId);
 ```
 
-There turns an O(N^2) computation into an O(N) computation.
+This turns an O(N^2) computation into an O(N) computation.
 
 ### State information
 
@@ -804,7 +804,7 @@ Surface properties are combined in a `b2SurfaceMaterial` structure. This is main
 environments tend to bundle material properties.
 
 ```c
-b2SurfaceMaterial myMaterial = b2DefaultSurfaceMaterial()`
+b2SurfaceMaterial myMaterial = b2DefaultSurfaceMaterial();
 myMaterial.restitution = 0.4f;
 ```
 
@@ -1068,15 +1068,15 @@ b2Vec2 points[18];
 float x = 9.0f;
 for ( int i = 0; i < 18; ++i )
 {
-    points[i] = { x, 0.0f };
+    points[i] = (b2Vec2){ x, 0.0f };
     x -= 1.0f;
 }
 
 b2ChainDef chainDef = b2DefaultChainDef();
 chainDef.points = points;
 chainDef.pointCount = 18;
-chainDef.ghost1 = { 10.0f, 0.0f };
-chainDef.ghost2 = { -9.0f, 0.0f };
+chainDef.ghost1 = (b2Vec2){ 10.0f, 0.0f };
+chainDef.ghost2 = (b2Vec2){ -9.0f, 0.0f };
 chainDef.isLoop = false;
 
 b2CreateChain( groundId, &chainDef );
@@ -1090,7 +1090,7 @@ reducing surface.
 Self-intersection of chain shapes is not supported. It might work, it
 might not. The code that prevents ghost collisions assumes there are no
 self-intersections of the chain. Also, very close vertices can cause
-problems. Make sure all your points are more than than about a centimeter apart.
+problems. Make sure all your points are more than about a centimeter apart.
 
 ![Self Intersection is Bad](images/self_intersect.svg)
 
@@ -1147,7 +1147,7 @@ performance cost to generate sensor events, so they are disabled by default.
 shapeDef.enableSensorEvents = true;
 ```
 
-Both shape involved must have this flag set to true. This allows a game to disable a
+Both shapes involved must have this flag set to true. This allows a game to disable a
 specific sensor using `b2Shape_EnableSensorEvents`.
 
 Sensors are processed at the end of the world step and generate begin and end
@@ -1297,7 +1297,7 @@ separation.
 
 Contacts are created when two shape's AABBs (bounding boxes) begin to overlap. Sometimes
 collision filtering will prevent the creation of contacts. Contacts are
-destroyed with the AABBs cease to overlap.
+destroyed when the AABBs cease to overlap.
 
 So you might gather that there may be contacts created for shapes that
 are not touching (just their AABBs). Well, this is correct. It's a
@@ -1328,7 +1328,7 @@ b2World_SetContactRecycleDistance(myWorldId, 0.01f);
 The default is 5 centimeters. This value makes a good trade-off between performance
 and realistic simulation.
 
-You can completely disable contact recycling by setting this it to zero. I don't recommend this.
+You can completely disable contact recycling by setting it to zero. I don't recommend this.
 Performance and stability will drop significantly. A better option is to disable recycling on specific
 bodies as needed.
 
@@ -1534,7 +1534,7 @@ bool MyPreSolveContinuous(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b
 {
     MyGame* myGame = (MyGame*)context;
 
-    if (myGame->AllowContinous(shapeIdA, shapeIdB, point, normal) == false)
+    if (myGame->AllowContinuous(shapeIdA, shapeIdB, point, normal) == false)
     {
         return false;
     }
@@ -1855,10 +1855,10 @@ float speed = b2RevoluteJoint_GetCurrentSpeed(myJointId);
 float currentTorque = b2RevoluteJoint_GetCurrentMotorTorque(myJointId);
 ```
 
-You also update the motor parameters each step.
+You can also update the motor parameters each step.
 
 ```c
-b2RevoluteJoint_SetMotorSpeed(myJointId, 20.0f);
+b2RevoluteJoint_SetTargetMotorSpeed(myJointId, 20.0f);
 b2RevoluteJoint_SetMaxMotorTorque(myJointId, 100.0f);
 ```
 
@@ -1869,7 +1869,7 @@ a sine-wave or according to whatever function you want.
 ```c
 // ... Game Loop Begin ...
 
-b2RevoluteJoint_SetMotorSpeed(myJointId, cosf(0.5f * time));
+b2RevoluteJoint_SetTargetMotorSpeed(myJointId, cosf(0.5f * time));
 
 // ... Game Loop End ...
 ```
@@ -1881,7 +1881,7 @@ You can also use joint motors to track a desired joint angle. For example:
 
 float angleError = b2RevoluteJoint_GetCurrentAngle(myJointId) - angleTarget;
 float gain = 0.1f;
-b2RevoluteJoint_SetMotorSpeed(myJointId, -gain * angleError);
+b2RevoluteJoint_SetTargetMotorSpeed(myJointId, -gain * angleError);
 
 // ... Game Loop End ...
 ```
@@ -1934,7 +1934,7 @@ the relevant functions:
 ```c
 float b2PrismaticJoint_GetCurrentTranslation(b2JointId jointId);
 float b2PrismaticJoint_GetCurrentSpeed(b2JointId jointId);
-float b2PrismaticJoint_GetMotorForce(b2JointId jointId);
+float b2PrismaticJoint_GetCurrentMotorForce(b2JointId jointId);
 void b2PrismaticJoint_SetMotorSpeed(b2JointId jointId, float motorSpeed);
 void b2PrismaticJoint_SetMaxMotorForce(b2JointId jointId, float force);
 ```
@@ -1968,9 +1968,9 @@ without using the weld joint.
 A motor joint lets you control the motion of a body using a linear and angular spring.
 You can set the maximum spring force and torque that will be applied to reach the
 target position and rotation. If the body is blocked, it will stop and the contact
-forces will be proportional the maximum motor force and torque.
+forces will be proportional to the maximum motor force and torque.
 
-My preferred way of achieve movement control is to connect a dynamic body to
+My preferred way of achieving movement control is to connect a dynamic body to
 a kinematic body using a motor joint. Then drive the kinematic body using
 `b2Body_SetTargetTransform`. This way no transforms or joint frames are set directly,
 which lets the simulation smooth out the forces.
@@ -1992,7 +1992,7 @@ for details.
 
 The wheel joint is designed specifically for vehicles. It provides a translation
 and rotation. The translation has a spring and damper to simulate the vehicle
-suspension. The rotation allows the wheel to rotate. You can specify an rotational
+suspension. The rotation allows the wheel to rotate. You can specify a rotational
 motor to drive the wheel and to apply braking. See `b2WheelJointDef` and the `Driving`
 sample for details.
 
@@ -2014,7 +2014,7 @@ Sometimes you want to determine all the shapes in a region. The world has a fast
 log(N) method for this using the broad-phase data structure. Box2D provides these
 overlap tests:
 
-- axis-aligned bound box (AABB) overlap
+- axis-aligned bounding box (AABB) overlap
 - shape proxy overlap
 
 #### Query filtering
@@ -2050,7 +2050,7 @@ viewFilter.categoryBits = CAMERA;
 viewFilter.maskBits = STATIC | PLAYER | MONSTER;
 ```
 
-If you want to query everything you can use `b2DefaultQueryFilter()`;
+If you want to query everything you can use `b2DefaultQueryFilter()`.
 
 #### AABB overlap
 
@@ -2127,7 +2127,7 @@ the ray will be clipped to the current intersection point. So you can
 ray-cast any shape, ray-cast all shapes, or ray-cast the closest shape
 by returning the appropriate fraction.
 
-You may also return of fraction of -1 to filter the shape. Then the
+You may also return a fraction of -1 to filter the shape. Then the
 ray-cast will proceed as if the shape does not exist.
 
 Here is an example:
@@ -2176,7 +2176,7 @@ typedef struct MyRayCastContext
     b2Pos point;
     b2Vec2 normal;
     float fraction;
-} typedef;
+} MyRayCastContext;
 
 float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
@@ -2220,8 +2220,8 @@ The game starts the simulation by calling `b2World_Step` supplying the time step
 
 ### find pairs
 
-Box2D maintains a record of every shape that has moved. For each of these shapes the broad-phase
-(BVH) is queried for overlaps. New overlaps are recorded for processing in the next step. I avoid reporting
+Box2D flags a portion of the broad-phase collision tree for every shape that has moved. Each step these portions of the tree
+are collided to detect new overlaps. New overlaps are recorded for processing in the next stage. I avoid recording
 existing overlaps by using a hash table that records all existing shape pairs. This operation is a parallel-for.
 
 ### create contacts
@@ -2234,7 +2234,7 @@ manifolds. This operation is single-threaded but most of the work is done in `fi
 
 After the new shape pairs are known the BVH is not considered until later in the time step. Therefore the BVH
 for dynamic and kinematic shapes may be optimized. This involves identifying the part of the collision tree that
-is stale from refitting and then performing a rebuild of that sub-tree. This is a single-single threaded operation
+is stale from refitting and then performing a rebuild of that sub-tree. This is a single threaded operation
 that is done concurrently with other work.
 
 ### narrow phase
@@ -2261,13 +2261,14 @@ A split island task may be generated if:
 
 - there is an island that has shapes that stopped touching
 - this island has a body that is moving slow enough to sleep
+
 Splitting an island may result in several new islands being created.
 Only a single island will be split per time step because it is expensive. Delaying the split may delay some
-bodies from sleeping. This is a single-single threaded operation that is done concurrently with other work.
+bodies from sleeping. This is a single threaded operation that is done concurrently with other work.
 
 ### solve constraints
 
-This solves contact and joint constraints and applies restitution. This a parallel-for with multiple internal stages.
+This solves contact and joint constraints and applies restitution. This is a parallel-for with multiple internal stages.
 
 ### update transforms
 
@@ -2280,6 +2281,7 @@ This stage does several tasks:
 - resets forces and torques
 - updates shape bounding boxes
 - performs continuous collision between dynamic and static bodies
+
 This stage is parallel-for.
 
 Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreContinuousCallbackFcn` callback.
@@ -2306,7 +2308,7 @@ generate events until the next time step.
 
 ### island sleep
 
-When an island goes to sleep the simulation data associated with that island is moved to separate stored. This keeps the active simulation data contiguous and cache friendly.
+When an island goes to sleep the simulation data associated with that island is moved to separate storage. This keeps the active simulation data contiguous and cache friendly.
 
 ### sensors
 

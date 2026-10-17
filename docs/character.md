@@ -66,7 +66,8 @@ The `GeometryMoverSample` sample shows all these functions being used together. 
 ## Dynamic mover
 
 The dynamic mover uses a regular rigid body and moves it around using specialized joint constraints.
-By using a rigid body, collisions with other dynamic bodies in the world becomes more natural and
+
+By using a rigid body, collisions with other dynamic bodies in the world become more natural and
 interactive than the geometric mover.
 
 The dynamic mover can use any shape you like, but I recommend sticking with a capsule. However, feel

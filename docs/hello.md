@@ -1,6 +1,6 @@
 # Hello Box2D {#hello}
 
-Box2D comes with a unit test a Hello World in `test_world.c`. The test
+Box2D comes with a unit test called HelloWorld in `test_world.c`. The test
 creates a large ground box and a small dynamic box. This code does not
 contain any graphics. All you will see is text output in the console of
 the box's position over time.
@@ -118,7 +118,7 @@ I can use the same technique to create a
 dynamic body. The main difference, besides dimensions, is that I must
 establish the dynamic body's mass properties.
 
-First I create the body using CreateBody. By default bodies are static,
+First I create the body using `b2CreateBody`. By default bodies are static,
 so I should set the `b2BodyType` at creation time to make the body
 dynamic. I should also use the body definition to put the body at the
 intended position for simulation. Creating a body then moving it afterwards is

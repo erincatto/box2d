@@ -71,7 +71,7 @@ have 3 or more vertices.
 
 ![Convex and Concave Polygons](images/convex_concave.svg)
 
-Polygons vertices are stored with a counter clockwise winding (CCW). We
+Polygon vertices are stored with a counter clockwise winding (CCW). We
 must be careful because the notion of CCW is with respect to a
 right-handed coordinate system with the z-axis pointing out of the
 plane. This might turn out to be clockwise on your screen, depending on
@@ -200,7 +200,7 @@ multiple line segments in one operation. See `b2ChainDef` and `b2CreateChain()`.
 
 ## Geometric queries
 
-You can perform a geometric queries on a single shape.
+You can perform geometric queries on a single shape.
 
 ### Shape point test
 
@@ -258,7 +258,7 @@ Even more generic, you can use `b2CastShape()` to linearly cast one point cloud 
 
 ### Distance
 
-`b2ComputeShapeDistance()` function can be used to compute the distance between two
+The `b2ComputeShapeDistance()` function can be used to compute the distance between two
 shapes. The distance function needs both shapes to be converted into a
 `b2ShapeProxy` (which are point clouds with radii). There is also some caching used to warm start the
 distance function for repeated calls. This can improve performance when the shapes move by small amounts.

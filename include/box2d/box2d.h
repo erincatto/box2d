@@ -244,11 +244,7 @@ B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 
-/// Compute a deterministic hash of the simulation state: body transforms and velocities, contact and
-/// joint impulses, and the index bookkeeping that drives the solve. Reproduces exactly across worker
-/// counts and ignores struct padding and free slots, so two worlds that simulate identically always
-/// agree. Use this to detect desyncs (for example rollback resimulation) instead of comparing
-/// serialized world bytes, which carry non-canonical padding.
+/// Compute a hash of the simulation state. Use this to detect desyncs for example rollback resimulation.
 B2_API uint64_t b2World_GetStateHash( b2WorldId worldId );
 
 /** @} */
@@ -1422,7 +1418,7 @@ B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
 B2_API float b2RevoluteJoint_GetCurrentAngle( b2JointId jointId );
 
 /// Get the current revolute joint motor speed in radians per second
-B2_API float b2RevoluteJoint_GetCurrentMotorSpeed( b2JointId jointId );
+B2_API float b2RevoluteJoint_GetCurrentSpeed( b2JointId jointId );
 
 /// Get the revolute joint current motor torque, usually in newton-meters
 B2_API float b2RevoluteJoint_GetCurrentMotorTorque( b2JointId jointId );
