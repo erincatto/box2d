@@ -300,21 +300,15 @@ B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
 /**
  * @defgroup snapshot Snapshot
  * Save and restore the full simulation state of a world as a byte image. Unlike a
- * recording, which is a stream of steps, a snapshot is a single instant. Useful for
+ * recording, which is a stream of API events, a snapshot is a single instant. Useful for
  * rollback, undo, and deterministic save games. Call between world steps.
  *
- * A snapshot carries only simulation state. Host wiring (task callbacks, worker
- * count, world and per-object user data, pre-solve, custom filter, friction and
- * restitution callbacks) is not stored, so body, shape and joint user data read back
- * as NULL after a restore even though the ids stay valid. Restoring in place with
- * b2World_RestoreFromSnapshot keeps the live world's wiring. Loading with b2CreateWorldFromSnapshot
- * resets it to defaults.
+ * A snapshot carries only simulation state. Application hooks are not included. So callbacks
+ * and user data are not preserved. However, if you apply a snapshot to an existing world
+ * then the callbacks stay.
  *
- * Ids: every b2BodyId / b2ShapeId / b2JointId / b2ChainId carries the world slot it
- * was created in. b2World_RestoreFromSnapshot reuses the same world, so ids you held at the
- * snapshot instant keep working. b2CreateWorldFromSnapshot allocates a new world,
- * so ids from the original world will not match it. Ids created after the snapshot
- * fail validation after a restore rather than aliasing a different object.
+ * All the ids remain valid when a world is restored in place: b2BodyId, b2ShapeId, b2JointId,
+ * b2ChainId, and b2ContactId.
  * @{
  */
 
@@ -1555,7 +1549,8 @@ B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 /**
  * @defgroup replay Replay
  * These functions allow you to replay a recorded simulation. This functionality is built
- * to serve the replay viewer in the sample app.
+ * to serve the replay viewer in the sample app. It is unlikey that any game or application
+ * would use these features, so consider them internal.
  * @{
  */
 
@@ -1565,20 +1560,6 @@ B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 /// @param workerCount Worker count to use for replay. 0 uses the serial single-worker fallback.
 /// @return true if replay completed without divergence, false on any mismatch
 B2_API bool b2ValidateRecording( const void* data, int size, int workerCount );
-
-/// Opaque handle for incremental playback of a recording.
-typedef struct b2Replay b2Replay;
-
-/// Static metadata describing a recording, resolved once when the player opens the file.
-typedef struct b2ReplayInfo
-{
-	int frameCount;	   // total recorded steps
-	int workerCount;   // worker count used for the replay world
-	float timeStep;	   // dt of the recorded steps
-	int subStepCount;  // recorded sub-steps
-	float lengthScale; // length units per meter in effect when recorded
-	b2AABB bounds;	   // accumulated world bounds over the recording, zero-extent if unavailable
-} b2ReplayInfo;
 
 /// Open a recording for incremental playback and replay up to the first step. The player copies
 /// the bytes, so you may free or destroy the source buffer immediately after this call.
@@ -1625,8 +1606,6 @@ B2_API int b2Replay_GetDivergeFrame( const b2Replay* player );
 /// @param player the recording player
 /// @param budgetBytes Memory cap for the kept snapshots. The spacing widens to stay under it.
 /// @param minIntervalFrames Finest spacing between keyframes, in frames.
-/// A zero budget or a non-positive interval keeps that value. Clears the existing ring, so call
-/// Restart afterward to repopulate it under the new policy.
 B2_API void b2Replay_SetKeyframePolicy( b2Replay* player, size_t budgetBytes, int minIntervalFrames );
 
 /// Get the keyframe memory budget in bytes.
@@ -1648,41 +1627,6 @@ B2_API size_t b2Replay_GetKeyframeBytes( const b2Replay* player );
 /// @param draw Debug draw callbacks. NULL draw function pointers are skipped.
 /// @param queryIndex Index into the frame's queries to draw, or -1 to draw all of them.
 B2_API void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int queryIndex );
-
-/// The kind of a recorded spatial query, matching the public query and cast functions.
-typedef enum b2ReplayQueryType
-{
-	b2_replayQueryOverlapAABB,
-	b2_replayQueryOverlapShape,
-	b2_replayQueryCastRay,
-	b2_replayQueryCastShape,
-	b2_replayQueryCollideMover,
-	b2_replayQueryCastRayClosest,
-	b2_replayQueryCastMover,
-	b2_replayQueryShapeTestPoint,
-	b2_replayQueryShapeCastRay,
-} b2ReplayQueryType;
-
-/// A spatial query recorded during a replayed frame, exposed for inspection.
-typedef struct b2ReplayQueryInfo
-{
-	b2ReplayQueryType type;
-	b2QueryFilter filter; // zeroed for the shape local query types
-	b2AABB aabb;		  // overlap AABB, relative to origin
-	b2Pos origin;		  // query origin
-	b2Vec2 translation;	  // ray and cast translation
-	b2ShapeId shape;	  // target shape for the shape local query types
-	int hitCount;		  // number of recorded results
-} b2ReplayQueryInfo;
-
-/// One result of a recorded spatial query.
-typedef struct b2ReplayQueryHit
-{
-	b2ShapeId shape;
-	b2Pos point;
-	b2Vec2 normal;
-	float fraction;
-} b2ReplayQueryHit;
 
 /// Get the number of spatial queries recorded for the most recently replayed frame.
 B2_API int b2Replay_GetFrameQueryCount( const b2Replay* player );

@@ -1320,12 +1320,14 @@ typedef float b2CastResultCallbackFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 no
 
 // Used to collect collision planes for character movers.
 // Return true to continue gathering planes.
+/// @ingroup world
 typedef bool b2PlaneResultCallbackFcn( b2ShapeId shapeId, const b2PlaneResult* plane, void* context );
 
 /// These colors are used for debug draw and mostly match the named SVG colors.
 /// See https://www.rapidtables.com/web/color/index.html
 /// https://johndecember.com/html/spec/colorsvg.html
 /// https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg
+/// @ingroup world
 typedef enum b2HexColor
 {
 	b2_colorAliceBlue = 0xF0F8FF,
@@ -1478,6 +1480,7 @@ typedef enum b2HexColor
 
 /// Get the visualization color assigned to a constraint graph color slot. The last index
 /// (B2_GRAPH_COLOR_COUNT - 1) is the overflow color.
+/// @ingroup world
 B2_API b2HexColor b2GetGraphColor( int index );
 
 /// This struct holds callbacks you can implement to draw a Box2D world.
@@ -1580,4 +1583,59 @@ typedef struct b2DebugDraw
 
 /// Use this to initialize your drawing interface. This allows you to implement a sub-set
 /// of the drawing functions.
+/// @ingroup world
 B2_API b2DebugDraw b2DefaultDebugDraw( void );
+
+/// Opaque handle for incremental playback of a recording.
+/// @ingroup replay
+typedef struct b2Replay b2Replay;
+
+/// Static metadata describing a recording, resolved once when the player opens the file.
+/// @ingroup replay
+typedef struct b2ReplayInfo
+{
+	int frameCount;	   // total recorded steps
+	int workerCount;   // worker count used for the replay world
+	float timeStep;	   // dt of the recorded steps
+	int subStepCount;  // recorded sub-steps
+	float lengthScale; // length units per meter in effect when recorded
+	b2AABB bounds;	   // accumulated world bounds over the recording, zero-extent if unavailable
+} b2ReplayInfo;
+
+/// The kind of a recorded spatial query, matching the public query and cast functions.
+/// @ingroup replay
+typedef enum b2ReplayQueryType
+{
+	b2_replayQueryOverlapAABB,
+	b2_replayQueryOverlapShape,
+	b2_replayQueryCastRay,
+	b2_replayQueryCastShape,
+	b2_replayQueryCollideMover,
+	b2_replayQueryCastRayClosest,
+	b2_replayQueryCastMover,
+	b2_replayQueryShapeTestPoint,
+	b2_replayQueryShapeCastRay,
+} b2ReplayQueryType;
+
+/// A spatial query recorded during a replayed frame, exposed for inspection.
+/// @ingroup replay
+typedef struct b2ReplayQueryInfo
+{
+	b2ReplayQueryType type;
+	b2QueryFilter filter; // zeroed for the shape local query types
+	b2AABB aabb;		  // overlap AABB, relative to origin
+	b2Pos origin;		  // query origin
+	b2Vec2 translation;	  // ray and cast translation
+	b2ShapeId shape;	  // target shape for the shape local query types
+	int hitCount;		  // number of recorded results
+} b2ReplayQueryInfo;
+
+/// One result of a recorded spatial query.
+/// @ingroup replay
+typedef struct b2ReplayQueryHit
+{
+	b2ShapeId shape;
+	b2Pos point;
+	b2Vec2 normal;
+	float fraction;
+} b2ReplayQueryHit;
