@@ -1,4 +1,5 @@
 # Collision
+
 Box2D provides geometric types and functions. These include:
 - primitives: circles, capsules, segments, and convex polygons
 - convex hull and related helper functions
@@ -17,7 +18,8 @@ However, the main purpose of Box2D is to be a rigid body physics
 engine. So the collision interface only contains features that are also useful in
 the physics simulation.
 
-## Shape Primitives
+## Shape primitives
+
 Shape primitives describe collision geometry and may be used independently of
 physics simulation. At a minimum, you should understand how to create
 primitives that can be later attached to rigid bodies.
@@ -29,6 +31,7 @@ Box2D shape primitives support several operations:
 - Compute the mass properties of the primitive
 
 ### Circles
+
 Circles have a center and radius. Circles are solid.
 
 ![Circle](images/circle.svg)
@@ -46,6 +49,7 @@ b2Circle circle = {{2.0f, 3.0f}, 0.5f};
 ```
 
 ### Capsules
+
 Capsules have two center points and a radius. The center points are the centers of two
 semicircles that are connected by a rectangle.
 
@@ -59,6 +63,7 @@ capsule.radius = 0.25f;
 ```
 
 ### Polygons
+
 Box2D polygons are solid convex polygons. A polygon is convex when all
 line segments connecting two points in the interior do not cross any
 edge of the polygon. Polygons are solid and never hollow. A polygon must
@@ -66,7 +71,7 @@ have 3 or more vertices.
 
 ![Convex and Concave Polygons](images/convex_concave.svg)
 
-Polygons vertices are stored with a counter clockwise winding (CCW). We
+Polygon vertices are stored with a counter clockwise winding (CCW). We
 must be careful because the notion of CCW is with respect to a
 right-handed coordinate system with the z-axis pointing out of the
 plane. This might turn out to be clockwise on your screen, depending on
@@ -105,7 +110,7 @@ If you want a box that is not centered on the body origin, you can use an offset
 
 ```c
 b2Vec2 center = {1.0f, 0.0f};
-float angle = b2_pi / 4.0f;
+float angle = B2_PI / 4.0f;
 b2Rot rotation = b2MakeRot(angle);
 b2Polygon offsetBox = b2MakeOffsetBox(0.5f, 1.0f, center, rotation);
 ```
@@ -133,6 +138,7 @@ if (questionableHull.count == 0)
 Degenerate points may be coincident and/or collinear. For the hull to be viable, the enclosed area must be sufficiently positive.
 
 ### Segments
+
 Segments are line segments. Segment
 shapes can collide with circles, capsules, and polygons but not with other line segments.
 The collision algorithms used by Box2D require that at least
@@ -142,13 +148,14 @@ segment-segment collision is not possible.
 ```c
 b2Segment segment1;
 segment1.point1 = (b2Vec2){0.0f, 0.0f};
-segment2.point2 = (b2Vec2){1.0f, 0.0f};
+segment1.point2 = (b2Vec2){1.0f, 0.0f};
 
 // equivalent
 b2Segment segment2 = {{0.0f, 0.0f}, {1.0f, 0.0f}};
 ```
 
-### Ghost Collisions
+### Ghost collisions
+
 In many cases a game environment is constructed by connecting several
 segment shapes end-to-end. This can give rise to an unexpected artifact
 when a polygon slides along the chain of segments. In the figure below there is
@@ -174,6 +181,7 @@ vertex towards the second vertex. This matches the counter-clockwise winding ord
 used by polygons.
 
 ### Chain segment
+
 Chain segments use a concept called *ghost vertices* that Box2D can use to eliminate ghost
 collisions.
 
@@ -187,29 +195,28 @@ chainSegment.ghost2 = (b2Vec2){-1.7f, 0.4f};
 These ghost vertices must align with vertices of neighboring chain segments, making them
 tedious and error-prone to setup.
 
-Chain segments are not created directly. Instead, you can create chains of line
-segments. See `b2ChainDef` and `b2CreateChain()`.
+Chain segments can be created using `b2CreateChainSegmentShape()`. Alternatively you can create chains of
+multiple line segments in one operation. See `b2ChainDef` and `b2CreateChain()`.
 
-## Geometric Queries
-You can perform a geometric queries on a single shape.
+## Geometric queries
 
-### Shape Point Test
-You can test a point for overlap with a shape. You provide a transform
-for the shape and a world point.
+You can perform geometric queries on a single shape.
+
+### Shape point test
+
+You can test a point for overlap with a shape. The point must be in the same coordinate space
+as the shape.
 
 ```c
 b2Vec2 point = {5.0f, 2.0f};
-bool hit = b2PointInCapsule(point, &myCapsule);
+bool hit = b2PointInCapsule(&myCapsule, point);
 ```
 
 See also `b2PointInCircle()` and `b2PointInPolygon()`.
 
-### Ray Cast
-You can cast a ray at a shape to get the point of first intersection and normal vector.
+### Ray cast
 
-> **Caution**:
-> No hit will register if the ray starts inside a convex shape like a circle or polygon. This is
-> consistent with Box2D treating convex shapes as solid. 
+You can cast a ray at a shape to get the point of first intersection and normal vector.
 
 ```c
 b2RayCastInput input = {0};
@@ -217,53 +224,60 @@ input.origin = (b2Vec2){0.0f, 0.0f};
 input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
 
-b2CastOutput output = b2RayCastPolygon(&input, &myPolygon);
+b2CastOutput output = b2CastRayPolygon(&myPolygon, &input);
 if (output.hit == true)
 {
     // do something
 }
 ```
 
-### Shape Cast
+> [!NOTE]
+> Shape specific ray casts return a hit with fraction 0 if the origin is inside the shape.
+
+### Shape cast
+
 You can also cast a shape at another shape. This uses an abstract way of describing the moving shape. It is represented as a point cloud with a radius. This implies a convex shape even if the input data is not convex. The internal algorithm (GJK) will essentially only use the convex portion.
 
 ```c
 b2ShapeCastInput input = {0};
-input.points[0] = (b2Vec2){1.0f, 0.0f};
-input.points[1] = (b2Vec2){2.0f, -3.0f};
-input.radius = 0.2f;
+input.proxy.points[0] = (b2Vec2){1.0f, 0.0f};
+input.proxy.points[1] = (b2Vec2){2.0f, -3.0f};
+input.proxy.radius = 0.2f;
+input.proxy.count = 2;
 input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
 
-b2CastOutput output = b2ShapeCastPolygon(&input, &myPolygon);
+b2CastOutput output = b2CastShapePolygon(&myPolygon, &input);
 if (output.hit == true)
 {
     // do something
 }
 ```
 
-Even more generic, you can use `b2ShapeCast()` to linearly cast one point cloud at another point cloud. All shape cast functions use this internally.
+Even more generic, you can use `b2CastShape()` to linearly cast one point cloud at another point cloud. All shape cast functions use this internally.
 
 ### Distance
-`b2ShapeDistance()` function can be used to compute the distance between two
+
+The `b2ComputeShapeDistance()` function can be used to compute the distance between two
 shapes. The distance function needs both shapes to be converted into a
 `b2ShapeProxy` (which are point clouds with radii). There is also some caching used to warm start the
 distance function for repeated calls. This can improve performance when the shapes move by small amounts.
 
 ![Distance Function](images/distance.svg)
 
-### Time of Impact
+### Time of impact
+
 If two shapes are moving fast, they may *tunnel* through each other in a
 single time step.
 
 ![Tunneling](images/tunneling2.svg){html: width=30%}
 
-The `b2TimeOfImpact()` function is used to determine the time when two moving shapes collide.
-This is called the *time of impact* (TOI). The main purpose of `b2TimeOfImpact()` is for
+The `b2ComputeTimeOfImpact()` function is used to determine the time when two moving shapes collide.
+This is called the *time of impact* (TOI). The main purpose of `b2ComputeTimeOfImpact()` is for
 tunnel prevention. Box2D uses this internally to prevent moving objects from tunneling through
 static shapes.
 
-The `b2TimeOfImpact()` identifies an initial separating axis and
+The `b2ComputeTimeOfImpact()` identifies an initial separating axis and
 ensures the shapes do not cross on that axis. This process is repeated
 as shapes are moved closer together, until they touch or pass by each other.
 
@@ -286,7 +300,8 @@ transforms of the shapes.
 You can use fixed rotations to perform a *shape cast*. In this case, the
 time of impact function will not miss any collisions.
 
-### Contact Manifolds
+### Contact manifolds
+
 Box2D has functions to compute contact points for overlapping shapes. If
 we consider circle-circle or circle-polygon, we can only get one contact
 point and normal. In the case of polygon-polygon we can get two points.
@@ -303,7 +318,8 @@ The `b2Manifold` structure holds a normal vector and up to two contact
 points. The contact points store the normal and tangential (friction) impulses
 computed in the rigid body simulation.
 
-## Dynamic Tree
+## Dynamic tree
+
 `b2DynamicTree` is used by Box2D to organize large numbers of
 shapes efficiently. The object does not know directly about shapes. Instead it
 operates on axis-aligned bounding boxes (`b2AABB`) with user data integers.
@@ -325,9 +341,12 @@ A region query uses the tree to find all leaf AABBs that overlap a query
 AABB. This is faster than a brute force approach because many shapes can
 be skipped.
 
-![Ray-cast](images/raycast.svg){html: width=30%}
+![Ray cast](images/raycast.svg){html: width=30%}
 
 ![Overlap Test](images/overlap_test.svg){html: width=30%}
+
+The tree also supports a box cast which can be used for shape casts where the
+shape is fully contained in the box.
 
 Normally you will not use the dynamic tree directly. Rather you will go
 through the `b2World` functions for ray casts and region queries. If you plan

@@ -157,7 +157,7 @@ float b2PrismaticJoint_GetMotorSpeed( b2JointId jointId )
 	return joint->prismaticJoint.motorSpeed;
 }
 
-float b2PrismaticJoint_GetMotorForce( b2JointId jointId )
+float b2PrismaticJoint_GetCurrentMotorForce( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
@@ -180,7 +180,7 @@ float b2PrismaticJoint_GetMaxMotorForce( b2JointId jointId )
 	return joint->prismaticJoint.maxMotorForce;
 }
 
-float b2PrismaticJoint_GetTranslation( b2JointId jointId )
+float b2PrismaticJoint_GetCurrentTranslation( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
@@ -198,7 +198,7 @@ float b2PrismaticJoint_GetTranslation( b2JointId jointId )
 	return translation;
 }
 
-float b2PrismaticJoint_GetSpeed( b2JointId jointId )
+float b2PrismaticJoint_GetCurrentSpeed( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2Joint* joint = b2GetJointFullId( world, jointId );

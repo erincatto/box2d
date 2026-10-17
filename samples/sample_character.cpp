@@ -787,10 +787,10 @@ static int sampleDynamicMover = RegisterSample( "Character", "Dynamic Mover", Dy
 
 // This shows how to mitigate ghost collisions using the presolve callback.
 // Based on: https://briansemrau.github.io/dealing-with-ghost-collisions/
-class GhostCollisionSample : public Sample
+class GhostCulling : public Sample
 {
 public:
-	explicit GhostCollisionSample( SampleContext* context )
+	explicit GhostCulling( SampleContext* context )
 		: Sample( context )
 	{
 		if ( context->restart == false )
@@ -812,7 +812,12 @@ public:
 
 				b2ShapeDef shapeDef = b2DefaultShapeDef();
 				shapeDef.material.friction = 0.0f;
+
+				// Flag the horizontal tiles with a special material.
+				shapeDef.material.userMaterialId = m_floorMaterial;
+
 				shapeDef.material.customColor = i % 2 == 0 ? b2_colorGray : b2_colorDarkGray;
+
 				b2CreatePolygonShape( groundId, &shapeDef, &tile );
 			}
 
@@ -823,12 +828,12 @@ public:
 			b2CreatePolygonShape( groundId, &shapeDef, &wall );
 		}
 
-		m_speed = 10.0f;
+		m_speed = 20.0f;
 		m_playerIds[0] = b2_nullBodyId;
 		m_playerIds[1] = b2_nullBodyId;
 		m_rejectedCount.store( 0, std::memory_order_relaxed );
 
-		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, nullptr, this );
+		b2World_SetPreSolveCallback( m_worldId, PreSolveStatic, PreContinuousStatic, this );
 		Launch();
 	}
 
@@ -837,7 +842,6 @@ public:
 		m_rejectedCount.store( 0, std::memory_order_relaxed );
 
 		const float surfaceHeights[2] = { 3.0f, 0.0f };
-		const b2HexColor colors[2] = { b2_colorBox2DRed, b2_colorBox2DGreen };
 		for ( int i = 0; i < 2; ++i )
 		{
 			if ( B2_IS_NON_NULL( m_playerIds[i] ) )
@@ -852,13 +856,13 @@ public:
 			bodyDef.motionLocks.angularZ = true;
 
 			// Pre-solve must see a fresh manifold at every tile boundary.
-			bodyDef.enableContactRecycling = false;
+			bodyDef.enableContactRecycling = true;
+
 			m_playerIds[i] = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.density = 1.0f;
 			shapeDef.material.friction = 0.0f;
-			shapeDef.material.customColor = colors[i];
 			shapeDef.enablePreSolveEvents = i == 1;
 
 			b2Polygon player = b2MakeBox( 0.5f, 0.5f );
@@ -905,14 +909,68 @@ public:
 
 	static void PreSolveStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context )
 	{
-		GhostCollisionSample* sample = static_cast<GhostCollisionSample*>( context );
+		GhostCulling* sample = static_cast<GhostCulling*>( context );
 		sample->PreSolve( shapeIdA, shapeIdB, manifold );
+	}
+
+	// I want to disable horizontal continuous collision between the player and the floor tiles.
+	// Continuous collision in Box2D doesn't affect velocity, but it does cause time loss, which
+	// may be perceived as stuttering or non-smooth movement.
+	// 
+	// CCD doesn't get the full manifold so the contactArea cannot be used. Instead I disable
+	// the CCD event if the normal is horizontal and the other shape is a horizontal tile,
+	// identified by material id.
+	bool PreContinuous( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Vec2 normal )
+	{
+		// Only filter horizontal hits.
+		if ( b2AbsFloat( normal.y ) > 0.1f )
+		{
+			return true;
+		}
+
+		b2BodyId idA = b2Shape_GetBody( shapeIdA );
+
+		// Determine if this is player[1] and determine the other shape.
+		b2ShapeId floorShapeId = {};
+		if ( B2_ID_EQUALS( idA, m_playerIds[1] ) )
+		{
+			floorShapeId = shapeIdB;
+		}
+		else
+		{
+			b2BodyId idB = b2Shape_GetBody( shapeIdB );
+			if ( B2_ID_EQUALS( idB, m_playerIds[1] ) )
+			{
+				floorShapeId = shapeIdA;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
+		uint64_t material = b2Shape_GetUserMaterial( floorShapeId );
+		if ( material == m_floorMaterial )
+		{
+			// This is a floor tile.
+			return false;
+		}
+
+		// Not a floor time, allow CCD.
+		return true;
+	}
+
+	static bool PreContinuousStatic( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context )
+	{
+		(void)point;
+		GhostCulling* sample = (GhostCulling*)context;
+		return sample->PreContinuous( shapeIdA, shapeIdB, normal );
 	}
 
 	bool DrawControls() override
 	{
 		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
-		ImGui::SliderFloat( "Speed", &m_speed, 1.0f, 20.0f, "%.1f" );
+		ImGui::SliderFloat( "Speed", &m_speed, 1.0f, 100.0f, "%.1f" );
 		ImGui::PopItemWidth();
 
 		if ( ImGui::Button( "Launch" ) )
@@ -930,16 +988,24 @@ public:
 		DrawString( m_draw, m_camera, { -9.8f, 4.2f }, b2_colorWhite, "unfiltered" );
 		DrawString( m_draw, m_camera, { -9.8f, 1.2f }, b2_colorWhite, "shallow contacts rejected" );
 		DrawScreenTextLine( "Rejected contacts: %d", m_rejectedCount.load( std::memory_order_relaxed ) );
+
+		for ( int i = 0; i < 2; ++i )
+		{
+			b2Vec2 v = b2Body_GetLinearVelocity( m_playerIds[i] );
+			DrawScreenTextLine( "player %d velocity.x = %.3f", i, v.x );
+		}
 	}
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new GhostCollisionSample( context );
+		return new GhostCulling( context );
 	}
+
+	static constexpr uint64_t m_floorMaterial = 42;
 
 	b2BodyId m_playerIds[2];
 	std::atomic<int> m_rejectedCount;
 	float m_speed;
 };
 
-static int sampleGhostCollision = RegisterSample( "Character", "Ghost Collision", GhostCollisionSample::Create );
+static int sampleGhostCulling = RegisterSample( "Character", "Ghost Culling", GhostCulling::Create );

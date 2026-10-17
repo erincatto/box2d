@@ -255,8 +255,6 @@ void RenderBackground( Background* background, Camera* camera )
 	glUniform1f( background->timeUniform, time );
 	glUniform2f( background->resolutionUniform, (float)camera->width, (float)camera->height );
 
-	// struct RGBA8 c8 = MakeRGBA8( b2_colorGray2, 1.0f );
-	// glUniform3f(baseColorUniform, c8.r/255.0f, c8.g/255.0f, c8.b/255.0f);
 	glUniform3f( background->baseColorUniform, 0.2f, 0.2f, 0.2f );
 
 	glBindVertexArray( background->vaoId );

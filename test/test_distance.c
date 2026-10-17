@@ -16,7 +16,7 @@ static int SegmentDistanceTest( void )
 	b2Vec2 p2 = { 2.0f, 0.0f };
 	b2Vec2 q2 = { 1.0f, 0.0f };
 
-	b2SegmentDistanceResult result = b2SegmentDistance( p1, q1, p2, q2 );
+	b2SegmentDistanceResult result = b2ComputeSegmentDistance( p1, q1, p2, q2 );
 
 	ENSURE_SMALL( result.fraction1 - 0.5f, FLT_EPSILON );
 	ENSURE_SMALL( result.fraction2 - 1.0f, FLT_EPSILON );
@@ -45,7 +45,7 @@ static int ShapeDistanceTest( void )
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance(&input,  &cache, NULL, 0 );
+	b2DistanceOutput output = b2ComputeShapeDistance(&input,  &cache, NULL, 0 );
 
 	ENSURE_SMALL( output.distance - 1.0f, FLT_EPSILON );
 
@@ -69,7 +69,7 @@ static int ShapeCastTest( void )
 	input.maxFraction = 1.0f;
 	input.canEncroach = false;
 
-	b2CastOutput output = b2ShapeCast( &input );
+	b2CastOutput output = b2CastShape( &input );
 
 	ENSURE( output.hit );
 	ENSURE_SMALL( output.fraction - 0.5f, 0.005f );
@@ -107,7 +107,7 @@ static int ShapeDistanceShortEdgeTest( void )
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
+	b2DistanceOutput output = b2ComputeShapeDistance( &input, &cache, NULL, 0 );
 
 	ENSURE( output.distance > 0.0f );
 	ENSURE( b2IsNormalized( output.normal ) );
@@ -116,14 +116,14 @@ static int ShapeDistanceShortEdgeTest( void )
 	return 0;
 }
 
-// The same false overlap seen through b2ShapeCast, which is how it was reported.
+// The same false overlap seen through b2CastShape, which is how it was reported.
 //
 // Conservative advancement stops the cores a target apart and target is at least a linear slop, so
 // the query can never legitimately answer overlap after the first iteration. Here iteration 1 does,
-// and b2ShapeCast has no fallback: it trips
+// and b2CastShape has no fallback: it trips
 // B2_ASSERT( distanceOutput.distance > 0.0f && b2IsNormalized( distanceOutput.normal ) ).
 //
-// Enable once b2ShapeDistance stops reporting the false overlap. The assert aborts the run, so
+// Enable once b2ComputeShapeDistance stops reporting the false overlap. The assert aborts the run, so
 // leaving it on would take the rest of the suite with it.
 #define B2_SHORT_EDGE_CAST_REPRO 0
 #if B2_SHORT_EDGE_CAST_REPRO
@@ -149,7 +149,7 @@ static int ShapeCastShortEdgeTest( void )
 	input.maxFraction = 1.0f;
 	input.canEncroach = false;
 
-	b2CastOutput output = b2ShapeCast( &input );
+	b2CastOutput output = b2CastShape( &input );
 
 	ENSURE( output.hit == false || b2IsNormalized( output.normal ) );
 
@@ -173,7 +173,7 @@ static int TimeOfImpactTest( void )
 	input.sweepB = ( b2Sweep ){ b2Vec2_zero, b2Vec2_zero, ( b2Vec2 ){ -2.0f, 0.0f }, b2Rot_identity, b2Rot_identity };
 	input.maxFraction = 1.0f;
 
-	b2TOIOutput output = b2TimeOfImpact( &input );
+	b2TOIOutput output = b2ComputeTimeOfImpact( &input );
 
 	ENSURE( output.state == b2_toiStateHit );
 	ENSURE_SMALL( output.fraction - 0.5f, 0.005f );

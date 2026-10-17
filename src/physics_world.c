@@ -86,7 +86,7 @@ b2World* b2GetWorldLocked( int index )
 	return world;
 }
 
-static void* b2DefaultAddTaskFcn( b2TaskCallback* task, void* taskContext, void* userContext )
+static void* b2DefaultAddTaskFcn( b2TaskCallbackFcn* task, void* taskContext, void* userContext )
 {
 	B2_UNUSED( userContext );
 	task( taskContext );
@@ -183,7 +183,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->generation = generation;
 	world->inUse = true;
 
-	world->stack = b2CreateStack( 2048 );
+	world->stack = b2CreateStack( b2MaxInt( 2048, def->capacity.arenaByteCount ) );
 	b2CreateBroadPhase( &world->broadPhase, &def->capacity );
 	b2CreateGraph( &world->constraintGraph, &def->capacity );
 
@@ -525,12 +525,16 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			bool isFast = ( ( bodySimA->flags | bodySimB->flags ) & b2_isFast ) != 0;
+			// This is restrictive and I'm not sure this limitation is needed for Box2D.
+			// I would expect the worse case would be spinner, but it doesn't tunnel.
+			//bool isFast = ( ( bodySimA->flags | bodySimB->flags ) & b2_isFast ) != 0;
 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			if ( isFast == false && recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+			//if ( isFast == false && recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
+			//	 ( contactSim->simFlags & b2_contactRecycleFlag ) )
+			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
 				b2Rot cachedQA = contactSim->cachedRotationA;
@@ -569,7 +573,10 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rA = b2RotateVector( dqA, mp->anchorA );
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
+						
+						//B2_UNUSED(dp, normal);
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
+
 						mp->normalVelocity = 0.0f;
 						mp->persisted = true;
 					}
@@ -1009,6 +1016,8 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	B2_ASSERT( b2GetStackAllocation( &world->stack ) == 0 );
 
+	world->maxCapacity.arenaByteCount = b2MaxInt( world->maxCapacity.arenaByteCount, b2GetMaxStackAllocation( &world->stack ) );
+
 	// Ensure stack is large enough
 	b2GrowStack( &world->stack );
 
@@ -1090,7 +1099,7 @@ static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2WorldTransform tra
 
 			if ( drawChainNormals )
 			{
-				b2Pos c = b2LerpPosition( p1, p2, 0.5f );
+				b2Pos c = b2LerpPos( p1, p2, 0.5f );
 				b2Vec2 e = b2Normalize( b2SubPos( p2, p1 ) );
 				b2Vec2 n = b2RightPerp( e );
 				float L = 0.2f * b2GetLengthUnitsPerMeter();
@@ -1229,7 +1238,7 @@ void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw )
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_QueryAll( world->broadPhase.trees + i, draw->drawingBounds, DrawQueryCallback, &drawContext );
+		b2DynamicTree_OverlapAABBAll( world->broadPhase.trees + i, draw->drawingBounds, DrawQueryCallback, &drawContext );
 	}
 
 	uint32_t wordCount = world->debugBodySet.blockCount;
@@ -1944,6 +1953,14 @@ void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRati
 	world->contactSpeed = b2ClampFloat( pushSpeed, 0.0f, FLT_MAX );
 }
 
+void b2World_GetContactTuning( b2WorldId worldId, float* hertz, float* dampingRatio, float* pushSpeed )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	*hertz = world->contactHertz;
+	*dampingRatio = world->contactDampingRatio;
+	*pushSpeed = world->contactSpeed;
+}
+
 void b2World_SetContactRecycleDistance( b2WorldId worldId, float recycleDistance )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( recycleDistance ) );
@@ -1966,7 +1983,7 @@ float b2World_GetContactRecycleDistance( b2WorldId worldId )
 	return world->contactRecycleDistance;
 }
 
-void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
+void b2World_SetMaxLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( maximumLinearSpeed ) && maximumLinearSpeed > 0.0f );
 
@@ -1982,7 +1999,7 @@ void b2World_SetMaximumLinearSpeed( b2WorldId worldId, float maximumLinearSpeed 
 	world->maxLinearSpeed = maximumLinearSpeed;
 }
 
-float b2World_GetMaximumLinearSpeed( b2WorldId worldId )
+float b2World_GetMaxLinearSpeed( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	return world->maxLinearSpeed;
@@ -2051,7 +2068,7 @@ void* b2World_GetUserData( b2WorldId worldId )
 	return world->userData;
 }
 
-void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* callback )
+void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallbackFcn* callback )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	if ( world->locked )
@@ -2062,7 +2079,7 @@ void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallback* callbac
 	world->frictionCallback = callback;
 }
 
-void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallback* callback )
+void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallbackFcn* callback )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	if ( world->locked )
@@ -2112,9 +2129,9 @@ void b2World_StartRecording( b2WorldId worldId, b2Recording* recording )
 		return;
 	}
 
-	if ( world->preSolveFcn != NULL || world->preContinuousFcn != NULL )
+	if ( world->preSolveFcn != NULL || world->preContinuousFcn != NULL || world->customFilterFcn != NULL )
 	{
-		printf( "b2World_StartRecording: preSolve not supported when recording\n" );
+		printf( "b2World_StartRecording: preSolve and custom filtering are not supported when recording\n" );
 		return;
 	}
 
@@ -2228,9 +2245,9 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "\n" );
 
 	// broad-phase
-	int staticTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody );
-	int kinematicTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody );
-	int dynamicTreeBytes = b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody );
+	int staticTreeBytes = (int)b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_staticBody );
+	int kinematicTreeBytes = (int)b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_kinematicBody );
+	int dynamicTreeBytes = (int)b2DynamicTree_GetByteCount( world->broadPhase.trees + b2_dynamicBody );
 	b2HashSet* pairSet = &world->broadPhase.pairSet;
 	int pairSetBytes = b2GetHashSetBytes( pairSet );
 	total += staticTreeBytes + kinematicTreeBytes + dynamicTreeBytes + pairSetBytes;
@@ -2365,7 +2382,7 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 typedef struct WorldQueryContext
 {
 	b2World* world;
-	b2OverlapResultFcn* fcn;
+	b2OverlapResultCallbackFcn* fcn;
 	b2QueryFilter filter;
 	void* userContext;
 } WorldQueryContext;
@@ -2391,7 +2408,7 @@ static bool TreeQueryCallback( int proxyId, uint64_t userData, void* context )
 	return result;
 }
 
-b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b2QueryFilter filter, b2OverlapResultFcn* fcn,
+b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b2QueryFilter filter, b2OverlapResultCallbackFcn* fcn,
 								 void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2403,7 +2420,7 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 	B2_ASSERT( b2IsValidAABB( aabb ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2428,7 +2445,7 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2TreeStats treeResult =
-			b2DynamicTree_Query( world->broadPhase.trees + i, worldBox, filter.maskBits, TreeQueryCallback, &worldContext );
+			b2DynamicTree_OverlapAABB( world->broadPhase.trees + i, worldBox, filter.maskBits, TreeQueryCallback, &worldContext );
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
@@ -2447,7 +2464,7 @@ b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b
 typedef struct WorldOverlapContext
 {
 	b2World* world;
-	b2OverlapResultFcn* fcn;
+	b2OverlapResultCallbackFcn* fcn;
 	b2QueryFilter filter;
 	const b2ShapeProxy* proxy;
 	b2Pos origin;
@@ -2481,7 +2498,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
+	b2DistanceOutput output = b2ComputeShapeDistance( &input, &cache, NULL, 0 );
 
 	float tolerance = 0.1f * B2_LINEAR_SLOP;
 	if ( output.distance > tolerance )
@@ -2495,7 +2512,7 @@ static bool TreeOverlapCallback( int proxyId, uint64_t userData, void* context )
 }
 
 b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2QueryFilter filter,
-								  b2OverlapResultFcn* fcn, void* context )
+								  b2OverlapResultCallbackFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2506,7 +2523,7 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2Shape
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
@@ -2531,7 +2548,7 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2Shape
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
 		b2TreeStats treeResult =
-			b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
+			b2DynamicTree_OverlapAABB( world->broadPhase.trees + i, aabb, filter.maskBits, TreeOverlapCallback, &worldContext );
 
 		treeStats.nodeVisits += treeResult.nodeVisits;
 		treeStats.leafVisits += treeResult.leafVisits;
@@ -2550,7 +2567,7 @@ b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2Shape
 typedef struct WorldRayCastContext
 {
 	b2World* world;
-	b2CastResultFcn* fcn;
+	b2CastResultCallbackFcn* fcn;
 	b2QueryFilter filter;
 	float fraction;
 	b2Pos origin;
@@ -2599,7 +2616,7 @@ static float RayCastCallback( const b2RayCastInput* input, int proxyId, uint64_t
 	return input->maxFraction;
 }
 
-b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultFcn* fcn,
+b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter, b2CastResultCallbackFcn* fcn,
 							 void* context )
 {
 	b2TreeStats treeStats = { 0 };
@@ -2611,7 +2628,7 @@ b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2689,7 +2706,7 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 tran
 		return result;
 	}
 
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RayCastInput input = { b2ToVec2( origin ), translation, 1.0f };
@@ -2728,7 +2745,7 @@ b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 tran
 typedef struct WorldShapeCastContext
 {
 	b2World* world;
-	b2CastResultFcn* fcn;
+	b2CastResultCallbackFcn* fcn;
 	b2QueryFilter filter;
 	float fraction;
 	b2Pos origin;
@@ -2784,7 +2801,7 @@ static float ShapeCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 }
 
 b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
-							   b2QueryFilter filter, b2CastResultFcn* fcn, void* context )
+							   b2QueryFilter filter, b2CastResultCallbackFcn* fcn, void* context )
 {
 	b2TreeStats treeStats = { 0 };
 
@@ -2795,7 +2812,7 @@ b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapePro
 		return treeStats;
 	}
 
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 
 	b2RecQueryWriter recWriter = { 0 };
@@ -2900,7 +2917,7 @@ static float MoverCastCallback( const b2BoxCastInput* input, int proxyId, uint64
 
 float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation, b2QueryFilter filter )
 {
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 	B2_ASSERT( b2IsValidVec2( translation ) );
 	B2_ASSERT( mover->radius > 2.0f * B2_LINEAR_SLOP );
 
@@ -2960,7 +2977,7 @@ float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover
 typedef struct WorldMoverContext
 {
 	b2World* world;
-	b2PlaneResultFcn* fcn;
+	b2PlaneResultCallbackFcn* fcn;
 	b2QueryFilter filter;
 	b2Capsule mover;
 	b2Pos origin;
@@ -3000,7 +3017,7 @@ static bool TreeCollideCallback( int proxyId, uint64_t userData, void* context )
 
 // It is tempting to use a shape proxy for the mover, but this makes handling deep overlap difficult and the generality may
 // not be worth it.
-void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultFcn* fcn,
+void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter, b2PlaneResultCallbackFcn* fcn,
 						   void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -3010,7 +3027,7 @@ void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mov
 		return;
 	}
 
-	B2_ASSERT( b2IsValidPosition( origin ) );
+	B2_ASSERT( b2IsValidPos( origin ) );
 
 	b2RecQueryWriter recWriter = { 0 };
 	if ( world->recording != NULL )
@@ -3040,7 +3057,7 @@ void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mov
 
 	for ( int i = 0; i < b2_bodyTypeCount; ++i )
 	{
-		b2DynamicTree_Query( world->broadPhase.trees + i, aabb, filter.maskBits, TreeCollideCallback, &worldContext );
+		b2DynamicTree_OverlapAABB( world->broadPhase.trees + i, aabb, filter.maskBits, TreeCollideCallback, &worldContext );
 	}
 
 	if ( world->recording != NULL )
@@ -3051,7 +3068,7 @@ void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mov
 	}
 }
 
-void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn, void* context )
+void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackFcn* fcn, void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
 	if ( fcn != NULL && world->recording != NULL )
@@ -3063,7 +3080,7 @@ void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterFcn* fcn,
 	world->customFilterContext = context;
 }
 
-void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveFcn* preSolveFcn, b2PreContinuousFcn* preContinuousFcn,
+void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveCallbackFcn* preSolveFcn, b2PreContinuousCallbackFcn* preContinuousFcn,
 								  void* context )
 {
 	b2World* world = b2GetWorldFromId( worldId );
@@ -3128,7 +3145,7 @@ static bool ExplosionCallback( int proxyId, uint64_t userData, void* context )
 	input.useRadii = true;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
+	b2DistanceOutput output = b2ComputeShapeDistance( &input, &cache, NULL, 0 );
 
 	float radius = explosionContext->radius;
 	float falloff = explosionContext->falloff;
@@ -3192,7 +3209,7 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	float falloff = explosionDef->falloff;
 	float impulsePerLength = explosionDef->impulsePerLength;
 
-	B2_CHECK_INPUT( b2IsValidPosition( position ) );
+	B2_CHECK_INPUT( b2IsValidPos( position ) );
 	B2_CHECK_INPUT( b2IsValidFloat( radius ) && radius >= 0.0f );
 	B2_CHECK_INPUT( b2IsValidFloat( falloff ) && falloff >= 0.0f );
 	B2_CHECK_INPUT( b2IsValidFloat( impulsePerLength ) );
@@ -3213,7 +3230,7 @@ void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionDef )
 	b2AABB localBox = { { -extent, -extent }, { extent, extent } };
 	b2AABB aabb = b2OffsetAABB( localBox, position );
 
-	b2DynamicTree_Query( world->broadPhase.trees + b2_dynamicBody, aabb, maskBits, ExplosionCallback, &explosionContext );
+	b2DynamicTree_OverlapAABB( world->broadPhase.trees + b2_dynamicBody, aabb, maskBits, ExplosionCallback, &explosionContext );
 }
 
 // This is for internal testing. Not optimized.

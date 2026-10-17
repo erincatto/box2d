@@ -283,9 +283,9 @@ typedef struct b2RecQueryWriter
 {
 	union
 	{
-		b2OverlapResultFcn* overlapFcn;
-		b2CastResultFcn* castFcn;
-		b2PlaneResultFcn* planeFcn;
+		b2OverlapResultCallbackFcn* overlapFcn;
+		b2CastResultCallbackFcn* castFcn;
+		b2PlaneResultCallbackFcn* planeFcn;
 	} userFcn;
 	void* userContext;
 	b2RecBuffer buf; // per-call local payload, heap-backed

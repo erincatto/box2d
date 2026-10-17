@@ -48,7 +48,6 @@ set(BOX2D_SOURCE_FILES
 	platform.h
 	pogo_joint.c
 	prismatic_joint.c
-	qsort.h
 	recording_ops.inl
 	recording.c
 	recording.h
@@ -184,7 +183,7 @@ if (MSVC)
 		target_compile_options(box2d PRIVATE /Wall /wd4820 /wd5045 /wd4061 /wd4711 /wd4710)
 	endif()
 
-	if (BOX2D_AVX2 AND NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_ARCHITECTURE_ID MATCHES "^(x64|X86)$")
+	if (NOT BOX2D_DISABLE_SIMD AND NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_ARCHITECTURE_ID MATCHES "^(x64|X86)$")
 		set_source_files_properties(contact_solver_w8.c PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
 	endif()
 

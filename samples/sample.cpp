@@ -297,6 +297,7 @@ Sample::Sample( SampleContext* context, bool createWorld )
 
 	m_stepCount = 0;
 	m_didStep = false;
+	m_stepWhilePaused = true;
 	m_screenTextX = 5.0f;
 	m_screenTextY = 0.0f;
 
@@ -356,7 +357,7 @@ void Sample::FinishRecording()
 	}
 
 	b2World_StopRecording( m_worldId );
-	if ( b2SaveRecordingToFile( m_recording, m_context->recordingFile ) )
+	if ( b2Recording_SaveToFile( m_recording, m_context->recordingFile ) )
 	{
 		snprintf( m_context->savedRecordingFile, sizeof( m_context->savedRecordingFile ), "%s", m_context->recordingFile );
 	}
@@ -578,7 +579,7 @@ void Sample::Step()
 	b2World_EnableRestitutionPropagation( m_worldId, m_context->enableRestitutionPropagation );
 	b2World_EnableSSE2Fallback( m_worldId, m_context->enableSSE2Fallback );
 
-	for ( int i = 0; i < 1; ++i )
+	if ( timeStep > 0.0f || m_stepWhilePaused )
 	{
 		b2World_Step( m_worldId, timeStep, m_context->subStepCount );
 	}

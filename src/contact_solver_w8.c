@@ -8,7 +8,7 @@
 #if defined( B2_SIMD_AVX2 )
 
 #if defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __AVX2__ )
-#error "MSVC must compile this file with /arch:AVX2, or define BOX2D_DISABLE_AVX2"
+#error "MSVC must compile this file with /arch:AVX2, or define BOX2D_DISABLE_SIMD"
 #endif
 
 #include <immintrin.h>

@@ -118,7 +118,7 @@ static int b2MergeIslands( b2World* world, int islandIdA, int islandIdB )
 	}
 
 	int bigIslandId = bigIsland->islandId;
-	b2Array_Reserve( bigIsland->bodies, bigIsland->bodies.count + smallIsland->bodies.count );
+	b2Array_Grow( bigIsland->bodies, bigIsland->bodies.count + smallIsland->bodies.count );
 
 	// Move bodies from smaller island to larger island
 	for ( int i = 0; i < smallIsland->bodies.count; ++i )
@@ -134,7 +134,7 @@ static int b2MergeIslands( b2World* world, int islandIdA, int islandIdB )
 	// Migrate contacts from smaller island to larger island
 	if ( smallIsland->contacts.count > 0 )
 	{
-		b2Array_Reserve( bigIsland->contacts, bigIsland->contacts.count + smallIsland->contacts.count );
+		b2Array_Grow( bigIsland->contacts, bigIsland->contacts.count + smallIsland->contacts.count );
 
 		for ( int i = 0; i < smallIsland->contacts.count; ++i )
 		{
@@ -149,7 +149,7 @@ static int b2MergeIslands( b2World* world, int islandIdA, int islandIdB )
 	// Migrate joints from smaller island to larger island
 	if ( smallIsland->joints.count > 0 )
 	{
-		b2Array_Reserve( bigIsland->joints, bigIsland->joints.count + smallIsland->joints.count );
+		b2Array_Grow( bigIsland->joints, bigIsland->joints.count + smallIsland->joints.count );
 
 		for ( int i = 0; i < smallIsland->joints.count; ++i )
 		{

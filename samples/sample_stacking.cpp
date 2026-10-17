@@ -146,7 +146,7 @@ public:
 	enum
 	{
 		e_maxColumns = 10,
-		e_maxRows = 80,
+		e_maxRows = 160,
 		e_maxBullets = 8
 	};
 
@@ -173,9 +173,9 @@ public:
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
 			b2Segment segment = { { 10.0f, 0.0f }, { 10.0f, 20.0f } };
-			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+			//b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
-			segment = { { -30.0f, 0.0f }, { 30.0f, 0.0f } };
+			segment = { { -100.0f, 0.0f }, { 100.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 		}
 

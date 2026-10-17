@@ -55,9 +55,9 @@ static int b2DefaultAssertFcn( const char* condition, const char* fileName, int 
 	return 1;
 }
 
-static b2AssertFcn* b2AssertHandler = b2DefaultAssertFcn;
+static b2AssertCallbackFcn* b2AssertHandler = b2DefaultAssertFcn;
 
-void b2SetAssertFcn( b2AssertFcn* assertFcn )
+void b2SetAssertCallback( b2AssertCallbackFcn* assertFcn )
 {
 	B2_ASSERT( assertFcn != NULL );
 	b2AssertHandler = assertFcn;
@@ -80,9 +80,9 @@ static void b2DefaultLogFcn( const char* message )
 	printf( "Box2D: %s\n", message );
 }
 
-static b2LogFcn* b2LogHandler = b2DefaultLogFcn;
+static b2LogCallbackFcn* b2LogHandler = b2DefaultLogFcn;
 
-void b2SetLogFcn( b2LogFcn* logFcn )
+void b2SetLogCallback( b2LogCallbackFcn* logFcn )
 {
 	B2_ASSERT( logFcn != NULL );
 	b2LogHandler = logFcn;
@@ -116,12 +116,12 @@ bool b2IsDoublePrecision( void )
 #endif
 }
 
-static b2AllocFcn* b2_allocFcn = NULL;
-static b2FreeFcn* b2_freeFcn = NULL;
+static b2AllocCallbackFcn* b2_allocFcn = NULL;
+static b2FreeCallbackFcn* b2_freeFcn = NULL;
 
 static b2AtomicI64 b2_byteCount;
 
-void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn )
+void b2SetAllocator( b2AllocCallbackFcn* allocFcn, b2FreeCallbackFcn* freeFcn )
 {
 	b2_allocFcn = allocFcn;
 	b2_freeFcn = freeFcn;
@@ -190,7 +190,7 @@ void b2Free( void* mem, size_t size )
 
 	if ( b2_freeFcn != NULL )
 	{
-		size_t alignedSize = ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1;
+		size_t alignedSize = size > 0 ? ( ( size - 1 ) | ( B2_ALIGNMENT - 1 ) ) + 1 : 0;
 		b2_freeFcn( mem, alignedSize );
 	}
 	else
@@ -231,7 +231,7 @@ void* b2GrowAllocZero( void* oldMem, size_t oldSize, size_t newSize )
 	return newMem;
 }
 
-int64_t b2GetByteCount( void )
+size_t b2GetByteCount( void )
 {
-	return b2AtomicLoadI64( &b2_byteCount );
+	return (size_t)b2AtomicLoadI64( &b2_byteCount );
 }

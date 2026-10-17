@@ -64,7 +64,7 @@ float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId )
 	return joint->pogoJoint.dampingRatio;
 }
 
-float b2PogoJoint_GetLength( b2JointId jointId )
+float b2PogoJoint_GetCurrentLength( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_pogoJoint );
@@ -89,7 +89,7 @@ float b2PogoJoint_GetImpulse( b2JointId jointId )
 	return joint->pogoJoint.impulse;
 }
 
-float b2PogoJoint_GetVelocity( b2JointId jointId )
+float b2PogoJoint_GetCurrentSpeed( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
 	return joint->pogoJoint.velocity;
@@ -235,14 +235,13 @@ void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias )
 	b2Vec2 rA = b2RotateVector( stateA->deltaRotation, joint->frameA.p );
 	b2Vec2 rB = b2RotateVector( stateB->deltaRotation, joint->frameB.p );
 
-
 	float bias = 0.0f;
 	if ( useBias )
 	{
 		// This is a custom pogo position correction designed to avoid feeding velocity into
 		// the mover body. Otherwise the mover can make huge jumps going up stairs. This still
 		// works with continuous collision.
-		// However, this position delta is not observer contact forces and can lead to tunnelling.
+
 		b2Vec2 dcA = stateA->deltaPosition;
 		b2Vec2 dcB = stateB->deltaPosition;
 		b2Vec2 d = b2Add( b2Add( b2Sub( dcB, dcA ), b2Sub( rB, rA ) ), joint->deltaCenter );

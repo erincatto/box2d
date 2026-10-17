@@ -65,3 +65,90 @@ The scenes are identical: body, shape and joint counts match in every benchmark.
 - **Scenes:** both versions ran the v3.2 benchmark scenes (`shared/benchmarks.c`). For v3.1.1 the scenes were ported to the v3.1.1 API without changing them.
 - **Timing:** 60 Hz, 4 substeps. Times cover all steps after the first; world creation is excluded.
 - **Repeats:** each value is the minimum of four runs, taken as two interleaved rounds of two runs, ordered so that thermal state is matched across configurations. Run-to-run spread was under 4% in nearly every cell.
+
+## Performance Details
+
+### Many pyramids
+
+The `many_pyramids` benchmark is 400 small pyramids stacked in a 20 by 20 grid. It has 22,000 boxes and 58,000 contacts, with sleeping disabled, so every step solves the whole stack at rest. It measures the cost of contacts that persist from step to step, which is the common case in most games.
+
+v3.2 runs this scene about 3x faster than v3.1.1:
+
+| Threads | v3.1.1 | v3.2 | Speedup |
+|---|---:|---:|---:|
+| 1 | 3095 ms | 1047 ms | 2.96x |
+| 8 | 458 ms | 151 ms | 3.03x |
+
+These are times for 200 steps at 60 Hz with 4 sub-steps, measured on an AMD Ryzen 9 9950X3D with turbo disabled. Read the ratios, not the milliseconds.
+
+#### Where the time went
+
+Single-threaded cost per step, broken out by stage:
+
+| Stage | v3.1.1 | v3.2 (SSE2) | v3.2 (AVX2) |
+|---|---:|---:|---:|
+| Collide | 5.94 ms | 0.64 ms | 0.64 ms |
+| Biased solve | 3.53 ms | 1.56 ms | 0.99 ms |
+| Relax | 3.53 ms | 2.71 ms | 1.52 ms |
+| Prepare, warm start, integrate, store | 2.12 ms | 1.48 ms | 1.53 ms |
+| Transforms, events and other | 0.78 ms | 0.69 ms | 0.70 ms |
+| Total | 15.90 ms | 7.08 ms | 5.38 ms |
+
+Collision is 9x faster, and the contact solver is about 2.3x faster. Here is how the gain divides among the changes, timed at each commit between the two releases:
+
+| Change | Share of the gain |
+|---|---:|
+| Contact recycling (#1038) | 40% |
+| Biased solve without friction (#1050) | 23% |
+| AVX2 selected at runtime (#1118) | 16% |
+| Solver inlining and faster constraint preparation (#1094, #1113) | 12% |
+| Broad-phase and narrow-phase cache work (#1104, #1111) | 8% |
+
+The remaining 1% is spread across other commits, each within measurement noise.
+
+#### Contact recycling
+
+In v3.1.1 every contact recomputed its manifold every step: a full separating axis test and clipping, about 100 ns per box pair. In a resting stack that work repeats the previous answer.
+
+v3.2 keeps the manifold of a contact whose bodies have barely moved relative to each other since the manifold was last computed. The limits are:
+
+- 5 cm of combined movement for touching shapes, or 2 cm for shapes that are not touching;
+- about 11 degrees of rotation for either body.
+
+A recycled contact keeps its anchors and normal and updates its separation from the body motion, the same way sub-stepping does. Its stored impulses warm start the solver directly. Every contact in `many_pyramids` is recycled every step, and collision drops to about 11 ns per contact. Turning recycling off brings collision back to 4.6 ms per step. The rest of the collision gain comes from the narrow-phase cache work.
+
+A recycled contact skips more than the manifold. It does not:
+
+- call the pre-solve callback;
+- remix friction, restitution or tangent speed;
+- produce begin or end touch events.
+
+These updates resume the next time the contact is fully updated. If you rely on any of them every step, or see ghost collisions on a character, you can turn recycling off:
+
+- per body, with `b2BodyDef::enableContactRecycling` or `b2Body_EnableContactRecycling`, which affects contacts created afterwards;
+- for the whole world, with `b2World_SetContactRecycleDistance( worldId, 0.0f )`.
+
+This scene is the best case for recycling. Scenes with more motion recycle fewer contacts and gain less.
+
+#### The contact solver
+
+Each sub-step solves contacts twice: a biased pass that pushes overlapping shapes apart, then a relax pass that removes the velocity the push added. In v3.1.1 both passes ran the same kernel with normal, friction and rolling resistance, so they cost the same.
+
+In v3.2 the biased pass solves only the two normal constraints of each manifold. Friction is solved once per sub-step, in the relax pass. The biased pass reads only the first two thirds of each contact constraint. Before, it read nearly all of it. It is now 2.3x faster at the same SIMD width. This is a behavior change.
+
+The relax pass also got cheaper:
+
+- The soft constraint blending it used to compute and then discard is gone.
+- Rolling resistance is skipped when it is zero.
+
+The contact constraint layout also changed:
+
+- It is smaller.
+- Fields are ordered so the biased pass reads a contiguous prefix.
+- It is 64-byte aligned.
+
+Body gather and scatter are now force inlined. MSVC was not inlining them, so each body state went through memory four times per contact constraint. Constraint preparation now loads manifold points with SIMD and reads body velocities only when restitution or hit events need them.
+
+#### AVX2
+
+v3.2 detects AVX2 at runtime and uses an 8-wide contact solver when the CPU supports it, with no build flag needed. In this scene that halves the solver loop count and brings the solver from 5.7 ms down to 4.0 ms per step. With SSE2 forced, v3.2 is still 2.2x faster than v3.1.1.

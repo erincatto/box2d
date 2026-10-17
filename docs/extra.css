@@ -1,7 +1,7 @@
 /*
-Box2D accents on top of doxygen's built-in dark theme (HTML_COLORSTYLE DARK).
-Doxygen 1.17 bakes a complete dark palette, so this only restores the Box2D
-cyan accent and backs the transparent SVG diagrams. Loaded after doxygen.css,
+Box2D look on top of doxygen's built-in dark theme (HTML_COLORSTYLE DARK).
+Restores the Box2D cyan accent and grays, backs the transparent SVG diagrams,
+and styles screenshots, prose width, and callouts. Loaded after doxygen.css,
 so plain overrides win by order.
 */
 
@@ -28,6 +28,29 @@ h1.glow, h2.glow, h3.glow, h4.glow, h5.glow, h6.glow {
 	border: 10px solid #CCCCCC;
 }
 
+/* Fit wide screenshots to the page, a link around one opens it full size */
+.image img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Linked images are screenshots, already opaque, so no plate */
+.image:has(a) {
+	background-color: transparent;
+	border: none;
+}
+
+.image:has(a) img {
+	border: 1px solid #3c4048;
+	border-radius: 6px;
+}
+
+.image:has(a) .caption {
+	color: #9aa0a6;
+	font-weight: normal;
+	font-size: 90%;
+}
+
 img.inline {
 	background-color: #CCCCCC;
 	border: 10px solid #CCCCCC;
@@ -43,6 +66,16 @@ img.inline {
 /* Cap line length for readability */
 div.contents {
 	max-width: 1000px;
+}
+
+/* Prose reads best near 75 characters, the reference tables keep the wider cap */
+.textblock {
+	max-width: 820px;
+}
+
+/* Doxygen bolds internal links only, so prose would mix two link weights */
+.textblock a.el {
+	font-weight: normal;
 }
 
 /* Soften contrast. doxygen 1.17's dark is near black, restore the Box2D grays */
@@ -76,10 +109,48 @@ table.doxtable tr:nth-child(even) td,
 	background-color: #292a2d;
 }
 
-/* Caution callouts, filled olive box with a full border and real padding */
+/* Callouts share one panel with an accent edge.
+@note and > [!NOTE] give dl.note, @warning and > [!WARNING] give dl.warning,
+> [!CAUTION] gives dl.attention, a plain quote like > **Caution**: gives blockquote.doxtable */
+dl.note, dl.remark, dl.warning, dl.attention, dl.important,
 blockquote.doxtable {
-	background-color: #456114;
-	border: 1px solid #000000;
-	padding: 12px 16px;
-	margin: 10px 24px 10px 4px;
+	background-color: #32363d;
+	color: #D8D8D8;
+	border: none;
+	border-left: 4px solid #67d8ef;
+	border-radius: 4px;
+	padding: 10px 16px;
+	margin: 12px 0;
+}
+
+dl.warning, dl.attention, dl.important,
+blockquote.doxtable {
+	border-left-color: #e5b567;
+}
+
+dl.note dt, dl.remark dt {
+	color: #67d8ef;
+}
+
+dl.warning dt, dl.attention dt, dl.important dt,
+blockquote.doxtable b:first-child {
+	color: #e5b567;
+}
+
+blockquote.doxtable p {
+	margin: 0;
+}
+
+/* Doxygen titles > [!CAUTION] as Attention, overlay the GitHub title in the same font */
+dl.attention dt {
+	visibility: hidden;
+	position: relative;
+}
+
+dl.attention dt::after {
+	content: "Caution";
+	visibility: visible;
+	position: absolute;
+	left: 0;
+	top: 0;
 }

@@ -16,7 +16,7 @@
 // needed for dll export
 #include "box2d/box2d.h"
 
-void b2DistanceJoint_SetLength( b2JointId jointId, float length )
+void b2DistanceJoint_SetRestLength( b2JointId jointId, float length )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( length ) );
 
@@ -31,7 +31,7 @@ void b2DistanceJoint_SetLength( b2JointId jointId, float length )
 	joint->upperImpulse = 0.0f;
 }
 
-float b2DistanceJoint_GetLength( b2JointId jointId )
+float b2DistanceJoint_GetRestLength( b2JointId jointId )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
@@ -53,7 +53,7 @@ bool b2DistanceJoint_IsLimitEnabled( b2JointId jointId )
 	return joint->distanceJoint.enableLimit;
 }
 
-void b2DistanceJoint_SetLengthRange( b2JointId jointId, float minLength, float maxLength )
+void b2DistanceJoint_SetLimits( b2JointId jointId, float minLength, float maxLength )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( minLength ) );
 	B2_CHECK_INPUT( b2IsValidFloat( maxLength ) );
@@ -69,14 +69,14 @@ void b2DistanceJoint_SetLengthRange( b2JointId jointId, float minLength, float m
 	joint->maxLength = b2MaxFloat( minLength, maxLength );
 }
 
-float b2DistanceJoint_GetMinLength( b2JointId jointId )
+float b2DistanceJoint_GetLowerLimit( b2JointId jointId )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 	return joint->minLength;
 }
 
-float b2DistanceJoint_GetMaxLength( b2JointId jointId )
+float b2DistanceJoint_GetUpperLimit( b2JointId jointId )
 {
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;

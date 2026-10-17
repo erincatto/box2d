@@ -779,7 +779,7 @@ public:
 		for ( int i = 0; i < count; ++i )
 		{
 			b2ShapeId shapeId = m_visitorIds[i];
-			b2AABB aabb = b2Shape_GetAABB( shapeId );
+			b2AABB aabb = b2Shape_GetBounds( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
 			DrawPoint( m_draw, b2ToPos( point ), 10.0f, b2_colorWhite );
 		}
@@ -1560,7 +1560,6 @@ public:
 		if ( position.y < 0.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, 1.0f } );
-			// b2Body_SetKinematicTarget( m_kinematicBodyId );
 		}
 		else if ( position.y > 3.0f )
 		{
@@ -1830,6 +1829,8 @@ public:
 
 static int sampleJointEvent = RegisterSample( "Events", "Joint", JointEvent::Create );
 
+// This sample shows how to track a contact across time steps. This can be used
+// for things like rolling or sliding sounds.
 class PersistentContact : public Sample
 {
 public:
@@ -1901,6 +1902,8 @@ public:
 			}
 		}
 
+		// Contacts are created and destroyed by Box2D, so it is important to make
+		// sure a contact id is valid before accessing contact data.
 		if ( B2_IS_NON_NULL( m_contactId ) && b2Contact_IsValid( m_contactId ) )
 		{
 			b2ContactData data = b2Contact_GetData( m_contactId );
@@ -2098,7 +2101,7 @@ public:
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.5f, 0.0f } );
 		}
 
-		float x = b2PrismaticJoint_GetTranslation( m_jointId );
+		float x = b2PrismaticJoint_GetCurrentTranslation( m_jointId );
 		if ( x > 1.0f )
 		{
 			b2PrismaticJoint_SetMotorSpeed( m_jointId, -0.5f );

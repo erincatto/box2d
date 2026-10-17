@@ -371,7 +371,7 @@ int SnapshotTest( void )
 	}
 	ENSURE( b2HashWorldStateDeep( rWorld ) != snapHash );
 
-	ENSURE( b2World_Restore( rId, image, imageSize ) );
+	ENSURE( b2World_RestoreFromSnapshot( rId, image, imageSize ) );
 
 	// Whole-world state rolled back to the snapshot instant
 	ENSURE( b2HashWorldStateDeep( rWorld ) == snapHash );
@@ -388,11 +388,11 @@ int SnapshotTest( void )
 
 	// Phase 6: a rejected image leaves the world untouched
 	uint64_t preBadHash = b2HashWorldStateDeep( rWorld );
-	ENSURE( b2World_Restore( rId, NULL, 0 ) == false );
+	ENSURE( b2World_RestoreFromSnapshot( rId, NULL, 0 ) == false );
 	uint8_t* corrupt = b2Alloc( imageSize );
 	memcpy( corrupt, image, imageSize );
 	corrupt[0] ^= 0xFF; // break the magic
-	ENSURE( b2World_Restore( rId, corrupt, imageSize ) == false );
+	ENSURE( b2World_RestoreFromSnapshot( rId, corrupt, imageSize ) == false );
 	ENSURE( b2HashWorldStateDeep( rWorld ) == preBadHash );
 	b2Free( corrupt, imageSize );
 
@@ -419,7 +419,7 @@ int SnapshotTest( void )
 	memcpy( greedy, image, imageSize );
 	int32_t hugeCapacity = INT32_MAX / 64;
 	memcpy( greedy + treeOffset + 4, &hugeCapacity, 4 );
-	ENSURE( b2World_Restore( rId, greedy, imageSize ) );
+	ENSURE( b2World_RestoreFromSnapshot( rId, greedy, imageSize ) );
 	ENSURE( b2HashWorldStateDeep( rWorld ) == snapHash );
 	ENSURE( staticTree->nodeCapacity <= 2 * staticTree->nodeEnd );
 	b2Free( greedy, imageSize );
@@ -427,7 +427,7 @@ int SnapshotTest( void )
 	// Repeated in-place restore over the chain/sensor/island heap must not leak
 	for ( int i = 0; i < 3; ++i )
 	{
-		ENSURE( b2World_Restore( rId, image, imageSize ) );
+		ENSURE( b2World_RestoreFromSnapshot( rId, image, imageSize ) );
 	}
 	ENSURE( b2HashWorldStateDeep( rWorld ) == snapHash );
 
@@ -436,7 +436,7 @@ int SnapshotTest( void )
 	b2WorldDef def4 = b2DefaultWorldDef();
 	def4.workerCount = 4;
 	b2WorldId sId = b2CreateWorld( &def4 );
-	ENSURE( b2World_Restore( sId, image, imageSize ) );
+	ENSURE( b2World_RestoreFromSnapshot( sId, image, imageSize ) );
 	b2World* sWorld = b2GetWorldFromId( sId );
 
 	b2WorldId freshId = b2CreateWorldFromSnapshot( image, imageSize, 1 );
@@ -480,14 +480,14 @@ int SnapshotTest( void )
 
 		const uint8_t* recData = b2Recording_GetData( rec );
 		int recSize = b2Recording_GetSize( rec );
-		ENSURE( b2ValidateReplay( recData, recSize, 0 ) );
-		ENSURE( b2ValidateReplay( recData, recSize, 4 ) );
+		ENSURE( b2ValidateRecording( recData, recSize, 0 ) );
+		ENSURE( b2ValidateRecording( recData, recSize, 4 ) );
 
 		// File round-trip: save the buffer, load it back, and replay the loaded copy
-		ENSURE( b2SaveRecordingToFile( rec, s_snapPath ) );
-		b2Recording* loaded = b2LoadRecordingFromFile( s_snapPath );
+		ENSURE( b2Recording_SaveToFile( rec, s_snapPath ) );
+		b2Recording* loaded = b2CreateRecordingFromFile( s_snapPath );
 		ENSURE( loaded != NULL );
-		ENSURE( b2ValidateReplay( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 0 ) );
+		ENSURE( b2ValidateRecording( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 0 ) );
 		b2DestroyRecording( loaded );
 
 		// The player opens the recording and the replay world id is stable across a restart
@@ -649,7 +649,7 @@ int SnapshotTest( void )
 		b2Body_Disable( box );
 		ENSURE( w->contactEndEvents[w->endEventArrayIndex].count >= 1 );
 
-		ENSURE( b2World_Restore( wId, snap, snapSize ) );
+		ENSURE( b2World_RestoreFromSnapshot( wId, snap, snapSize ) );
 
 		// Restore must leave no queued end events in either half of the double buffer
 		ENSURE( w->contactEndEvents[0].count == 0 );

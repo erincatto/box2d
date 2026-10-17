@@ -587,16 +587,16 @@ public:
 
 		if ( m_drawBodyAABBs )
 		{
-			b2AABB aabb = b2Body_ComputeAABB( m_table1Id );
+			b2AABB aabb = b2Body_ComputeBounds( m_table1Id );
 			DrawBounds( m_draw, aabb, b2_colorYellow );
 
-			aabb = b2Body_ComputeAABB( m_table2Id );
+			aabb = b2Body_ComputeBounds( m_table2Id );
 			DrawBounds( m_draw, aabb, b2_colorYellow );
 
-			aabb = b2Body_ComputeAABB( m_ship1Id );
+			aabb = b2Body_ComputeBounds( m_ship1Id );
 			DrawBounds( m_draw, aabb, b2_colorYellow );
 
-			aabb = b2Body_ComputeAABB( m_ship2Id );
+			aabb = b2Body_ComputeBounds( m_ship2Id );
 			DrawBounds( m_draw, aabb, b2_colorYellow );
 		}
 	}

@@ -564,16 +564,19 @@ public:
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
 		b2PrismaticJointDef jointDef = b2DefaultPrismaticJointDef();
+
+		m_hertz = jointDef.base.constraintHertz;
+		m_dampingRatio = jointDef.base.constraintDampingRatio;
+
 		jointDef.base.bodyIdA = groundId;
 		jointDef.base.localFrameA.p = { 0.0f, 0.0f };
 		jointDef.base.localFrameB.p = { 0.0f, -0.6f };
 		jointDef.base.drawScale = 1.0f;
-		jointDef.base.constraintHertz = 240.0f;
 		jointDef.lowerTranslation = -6.0f;
 		jointDef.upperTranslation = 6.0f;
 		jointDef.enableLimit = true;
 
-		for ( int i = 0; i < 6; ++i )
+		for ( int i = 0; i < m_count; ++i )
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.position = { 0.0f, 0.6f + 1.2f * i };
@@ -583,7 +586,7 @@ public:
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
 
 			jointDef.base.bodyIdB = bodyId;
-			b2CreatePrismaticJoint( m_worldId, &jointDef );
+			m_jointIds[i] = b2CreatePrismaticJoint( m_worldId, &jointDef );
 
 			jointDef.base.bodyIdA = bodyId;
 			jointDef.base.localFrameA.p = { 0.0f, 0.6f };
@@ -593,10 +596,37 @@ public:
 		m_mouseForceScale = 100000.0f;
 	}
 
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 6.0f * ImGui::GetFontSize() );
+
+		bool changed = false;
+		ImGui::Text( "Multiple Prismatic" );
+		changed = changed || ImGui::SliderFloat( "Hertz##contact", &m_hertz, 0.0f, 480.0f, "%.f" );
+		changed = changed || ImGui::SliderFloat( "Damping Ratio##contact", &m_dampingRatio, 0.0f, 100.0f, "%.f" );
+
+		if ( changed )
+		{
+			for ( int i = 0; i < m_count; ++i )
+			{
+				b2Joint_SetConstraintTuning( m_jointIds[i], m_hertz, m_dampingRatio );
+			}
+		}
+
+		ImGui::PopItemWidth();
+
+		return true;
+	}
 	static Sample* Create( SampleContext* context )
 	{
 		return new MultiplePrismatic( context );
 	}
+
+	static inline constexpr int m_count = 6;
+
+	b2JointId m_jointIds[m_count];
+	float m_hertz;
+	float m_dampingRatio;
 };
 
 static int sampleMultiplePrismatic = RegisterSample( "Robustness", "Multiple Prismatic", MultiplePrismatic::Create );

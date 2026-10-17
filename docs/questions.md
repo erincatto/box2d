@@ -5,7 +5,7 @@
 Box2D is a feature rich 2D rigid body physics engine, written in C17 by Erin Catto. It has been used in many games and in many
 game engines.
 
-Box2D uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License) license and can be used free of charge. Credit
+Box2D uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License) and can be used free of charge. Credit
 should be included if possible. Support is [appreciated](https://github.com/sponsors/erincatto). You may use the
 Box2D [logo](https://box2d.org/images/logo.svg).
 
@@ -22,9 +22,9 @@ Erin Catto is the creator and sole contributor of the C version of Box2D, with v
 
 ## How do I get help?
 
-You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/aM4mRKxW) to ask any remaining questions.
+You should read the documentation and the rest of this FAQ first. Also, you should study the examples included in the source distribution. Then you can visit the [Discord](https://discord.gg/NKYgCBP) to ask any remaining questions.
 
-Please to not message or email Erin Catto directly for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
+Please do not message or email Erin Catto directly for support. It is best to ask questions on the Discord server so that everyone can benefit from the discussion.
 
 ## Documentation
 
@@ -38,7 +38,7 @@ If you grab the latest code from the git main branch you will likely find featur
 
 You should have a working knowledge of C before you use Box2D. You should understand functions, structures, and pointers. There are plenty of resources on the web for learning C. You should also understand your development environment: compilation, linking, and debugging.
 
-### Math and Physics
+### Math and physics
 
 You should have a basic knowledge of rigid bodies, force, torque, and impulses. If you come across a math or physics concept you don't understand, please read about it on Wikipedia. Visit this [page](http://box2d.org/publications/) if you want a deeper knowledge of the algorithms used in Box2D.
 
@@ -46,7 +46,7 @@ You should have a basic knowledge of rigid bodies, force, torque, and impulses. 
 
 ### What units does Box2D use?
 
-Box2D is tuned for meters-kilograms-seconds (MKS). This is recommend as the units for your game. However, you may use
+Box2D is tuned for meters-kilograms-seconds (MKS). This is recommended as the units for your game. However, you may use
 different units if you are careful.
 
 ### How do I convert pixels to meters?
@@ -67,9 +67,9 @@ Yes. See the CMake option `BUILD_SHARED_LIBS`.
 
 ### Is Box2D thread-safe?
 
-No. Box2D will likely never be thread-safe. Box2D has a large API and trying to make such an API thread-safe would have a large performance and complexity impact. However, you can call read only functions from multiple threads. For example, all the [spatial query](#spatial) functions are read only.
+No. Box2D will likely never be thread-safe. Box2D has a large API and trying to make such an API thread-safe would have a large performance and complexity impact. However, you can call read only functions from multiple threads. For example, all the [spatial query](@ref spatial) functions are read only.
 
-## Build Issues
+## Build issues
 
 ### Why doesn't my code compile and/or link?
 
@@ -104,19 +104,20 @@ Box2D uses approximate methods for a few reasons.
 What this means is that constraints are not perfectly rigid and sometimes you will see some bounce even when the restitution is zero.
 Box2D uses [Gauss-Seidel](https://en.wikipedia.org/wiki/Gauss%E2%80%93Seidel_method) to approximately solve constraints.
 Box2D also uses [Semi-implicit Euler](https://en.wikipedia.org/wiki/Semi-implicit_Euler_method) to approximately solve the differential equations.
-Box2D also does not have exact collision. There is no continuous collision between dynamic shapes. Slow moving shapes may have small overlap for a few time steps. In extreme stacking scenarios, shapes may have sustained overlap.
+Box2D also does not have exact collision. There is no continuous collision between dynamic shapes (bullets approximate this). Slow moving shapes may have small overlap for
+a few time steps. In extreme stacking scenarios, shapes may have sustained overlap.
 
-## Making Games
+## Making games
 
-### Worms Clones
+### Worms clones
 
 Making a worms clone requires arbitrarily destructible terrain. This is beyond the scope of Box2D, so you will have to figure out how to do this on your own.
 
-### Tile Based Environment
+### Tile based environment
 
 Using many boxes for your terrain may not work well because box-like characters can get snagged on internal corners. Box2D provides chain shapes for smooth collision, see `b2ChainDef`. In general you should avoid using a rectangular character because collision tolerances will still lead to undesirable snagging. Box2D provides capsules and rounded polygons that may work better for characters.
 
-### Asteroid Type Coordinate Systems
+### Asteroid type coordinate systems
 
 Box2D does not have any support for coordinate frame wrapping. You would likely need to customize Box2D for this purpose. You may need to use a different broad-phase for this to work.
 
@@ -128,9 +129,9 @@ For the same input Box2D will reproduce any simulation. Box2D does not use any r
 
 Box2D is also deterministic under multithreading. A simulation using two threads will give the same result as eight threads.
 
-Box2D has cross-platform determinism as of version 3.1. This is heavily tested and a first class feature of Box2D.
+Box2D has cross-platform determinism as of version 3.1. This is heavily tested and a first class feature of Box2D. This assumes precision is not mixed (single versus double precision).
 
-Some developers want rollback determinism. You can achieve this using the [snapshot] system.
+Some developers want rollback determinism. You can achieve this using the [snapshot](@ref snapshot) system.
 
 ## What are the common mistakes made by new users?
 
