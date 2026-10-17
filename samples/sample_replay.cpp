@@ -1107,7 +1107,7 @@ public:
 		}
 		else
 		{
-			ImGui::Text( "shape    %d", q.shape.index1 );
+			ImGui::Text( "shape    %d", q.shapeId.index1 );
 		}
 		ImGui::Text( "hits     %d", q.hitCount );
 
@@ -1117,7 +1117,7 @@ public:
 		for ( int h = 0; h < q.hitCount && len < (int)sizeof( line ) - 12; ++h )
 		{
 			b2ReplayQueryHit hit = b2Replay_GetFrameQueryHit( m_player, m_selQuery, h );
-			len += snprintf( line + len, sizeof( line ) - len, "%d ", hit.shape.index1 );
+			len += snprintf( line + len, sizeof( line ) - len, "%d ", hit.shapeId.index1 );
 		}
 		if ( q.hitCount > 0 )
 		{

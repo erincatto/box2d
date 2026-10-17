@@ -14,11 +14,12 @@
 
 /// Used to detect bad values. Positions greater than about 16km will have precision
 /// problems in single precision, so 100km as a limit should be fine in all cases.
-/// In large world mode the broad-phase starts to have excessive padding at 10,000km.
+/// In large world mode the broad-phase starts to have excessive padding at 10,000km, so
+/// a value beyond 100,000km is extreme.
 #if defined( BOX2D_DOUBLE_PRECISION )
-#define B2_HUGE ( 1.0e9f * b2_lengthUnitsPerMeter )
+#define B2_HUGE ( (100000.0f * 1000.0f) * b2_lengthUnitsPerMeter )
 #else
-#define B2_HUGE ( 1.0e5f * b2_lengthUnitsPerMeter )
+#define B2_HUGE ( (100.0f * 1000.0f) * b2_lengthUnitsPerMeter )
 #endif
 
 /// Maximum parallel workers. Used for some fixed size arrays.

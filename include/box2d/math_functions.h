@@ -421,8 +421,8 @@ B2_INLINE b2Rot b2InvMulRot( b2Rot a, b2Rot b )
 {
 	// [ ac as] * [bc -bs] = [ac*bc+as*bs -ac*bs+as*bc]
 	// [-as ac]   [bs  bc]   [-as*bc+ac*bs as*bs+ac*bc]
-	// s(a - b) = ac * bs - as * bc
-	// c(a - b) = ac * bc + as * bs
+	// s(b - a) = ac * bs - as * bc
+	// c(b - a) = ac * bc + as * bs
 	b2Rot r;
 	r.s = a.c * b.s - a.s * b.c;
 	r.c = a.c * b.c + a.s * b.s;

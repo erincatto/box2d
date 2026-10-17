@@ -155,13 +155,14 @@ typedef struct b2WorldDef
 	/// Enable continuous collision
 	bool enableContinuous;
 
+	// TODO32 a worker count of 1 with task callbacks still uses the user task system, the text ties
+	// it to above 1
 	/// Number of workers for multithreading. Box2D performs best when using performance cores and
 	/// accessing a single L3 cache (uniform memory). Efficiency cores and SMT provide
-	/// little benefit and may even harm performance.
-	/// This is clamped to the range [1, B2_MAX_WORKERS].
-	/// Using a value above 1 will turn on multithreading. If task callbacks are provided
-	/// then Box2D will use the user provided task system. Otherwise Box2D will create threads and
-	/// use an internal scheduler.
+	/// little benefit and may even harm performance. This is clamped to the range [1,
+	/// B2_MAX_WORKERS]. If task callbacks are provided then Box2D will use the user provided task
+	/// system. If no task callbacks are installed then Box2D will run single-threaded with a worker
+	/// count of 1, or use the internal scheduler with a worker count greater than 1.
 	int workerCount;
 
 	/// Function to spawn tasks
@@ -312,7 +313,7 @@ typedef struct b2BodyDef
 	bool allowFastRotation;
 
 	/// Enable contact recycling. True by default. Leaving this enabled improves performance
-	/// but may lead to ghost collision that should be avoided on characters.
+	/// but may lead to ghost collisions that should be avoided on characters.
 	bool enableContactRecycling;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
@@ -564,51 +565,49 @@ typedef struct b2ChainDef
 B2_API b2ChainDef b2DefaultChainDef( void );
 
 /// Profiling data. Times are in milliseconds.
-/// Comments below are just to make Doxygen happy.
 /// @ingroup world
 typedef struct b2Profile
 {
-	float step;				   ///< profile
-	float pairs;			   ///< profile
-	float collide;			   ///< profile
-	float solve;			   ///< profile
-	float solverSetup;		   ///< profile
-	float constraints;		   ///< profile
-	float prepareConstraints;  ///< profile
-	float integrateVelocities; ///< profile
-	float warmStart;		   ///< profile
-	float solveImpulses;	   ///< profile
-	float integratePositions;  ///< profile
-	float relaxImpulses;	   ///< profile
-	float restitution;		   ///< profile
-	float storeImpulses;	   ///< profile
-	float splitIslands;		   ///< profile
-	float transforms;		   ///< profile
-	float sensorHits;		   ///< profile
-	float jointEvents;		   ///< profile
-	float hitEvents;		   ///< profile
-	float refit;			   ///< profile
-	float bullets;			   ///< profile
-	float sleepIslands;		   ///< profile
-	float sensors;			   ///< profile
+	float step;				   ///<
+	float pairs;			   ///<
+	float collide;			   ///<
+	float solve;			   ///<
+	float solverSetup;		   ///<
+	float constraints;		   ///<
+	float prepareConstraints;  ///<
+	float integrateVelocities; ///<
+	float warmStart;		   ///<
+	float solveImpulses;	   ///<
+	float integratePositions;  ///<
+	float relaxImpulses;	   ///<
+	float restitution;		   ///<
+	float storeImpulses;	   ///<
+	float splitIslands;		   ///<
+	float transforms;		   ///<
+	float sensorHits;		   ///<
+	float jointEvents;		   ///<
+	float hitEvents;		   ///<
+	float refit;			   ///<
+	float bullets;			   ///<
+	float sleepIslands;		   ///<
+	float sensors;			   ///<
 } b2Profile;
 
 /// Counters that give details of the simulation size.
-/// Comments below are just to make Doxygen happy.
 /// @ingroup world
 typedef struct b2Counters
 {
-	int64_t byteCount;	  ///< counter
-	int bodyCount;		  ///< counter
-	int shapeCount;		  ///< counter
-	int contactCount;	  ///< counter
-	int jointCount;		  ///< counter
-	int islandCount;	  ///< counter
-	int stackUsed;		  ///< counter
-	int staticTreeHeight; ///< counter
-	int treeHeight;		  ///< counter
-	int taskCount;		  ///< counter
-	int colorCounts[24];  ///< counter
+	int64_t byteCount;	  ///<
+	int bodyCount;		  ///<
+	int shapeCount;		  ///<
+	int contactCount;	  ///<
+	int jointCount;		  ///<
+	int islandCount;	  ///<
+	int stackUsed;		  ///<
+	int staticTreeHeight; ///<
+	int treeHeight;		  ///<
+	int taskCount;		  ///<
+	int colorCounts[24];  ///<
 
 	/// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
 	int awakeContactCount;
@@ -1083,7 +1082,7 @@ typedef struct b2SensorBeginTouchEvent
 
 /// An end touch event is generated when a shape stops overlapping a sensor shape. Normally this
 /// event is generated from simulation movement. However, this event can also be generated from API
-/// interactions: setting the body transform, destroying a body or shape, or changing	a filter.
+/// interactions: setting the body transform, destroying a body or shape, or changing a filter.
 /// You will also get an end event if the sensor is destroyed. Therefore you should always confirm
 /// the shape id is valid using b2Shape_IsValid.
 typedef struct b2SensorEndTouchEvent
@@ -1243,8 +1242,8 @@ typedef struct b2BodyEvents
 	int moveCount;
 } b2BodyEvents;
 
-/// Joint events report joints that are awake and have a force and/or torque exceeding the threshold
-/// The observed forces and torques are not returned for efficiency reasons.
+/// Joint events report joints that are awake and have a force and/or torque exceeding the
+/// threshold. The observed forces and torques are not returned for efficiency reasons.
 typedef struct b2JointEvent
 {
 	/// The joint id
@@ -1342,10 +1341,10 @@ typedef bool b2OverlapResultCallbackFcn( b2ShapeId shapeId, void* context );
 /// Prototype callback for ray and shape casts.
 /// Called for each shape found in the query. You control how the ray cast
 /// proceeds by returning a float:
-/// return -1: ignore this shape and continue
-/// return 0: terminate the ray cast
-/// return fraction: clip the ray to this point
-/// return 1: don't clip the ray and continue
+/// - return -1: ignore this shape and continue
+/// - return 0: terminate the ray cast
+/// - return fraction: clip the ray to this point
+/// - return 1: don't clip the ray and continue
 /// A cast with initial overlap will return a zero fraction and a zero normal.
 /// @param shapeId the shape hit by the ray
 /// @param point the point of initial intersection
@@ -1365,11 +1364,15 @@ typedef float b2CastResultCallbackFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 no
 typedef bool b2PlaneResultCallbackFcn( b2ShapeId shapeId, const b2PlaneResult* plane,
 									   void* context );
 
+/**
+ * @defgroup debug Debug Draw
+ */
+
 /// These colors are used for debug draw and mostly match the named SVG colors.
 /// See https://www.rapidtables.com/web/color/index.html
 /// https://johndecember.com/html/spec/colorsvg.html
 /// https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg
-/// @defgroup debug
+/// @ingroup debug
 typedef enum b2HexColor
 {
 	b2_colorAliceBlue = 0xF0F8FF,
@@ -1625,7 +1628,7 @@ typedef struct b2DebugDraw
 	void* context;
 } b2DebugDraw;
 
-/// Use this to initialize your drawing interface. This allows you to implement a sub-set
+/// Use this to initialize your drawing interface. This allows you to implement a subset
 /// of the drawing functions.
 /// @ingroup debug
 B2_API b2DebugDraw b2DefaultDebugDraw( void );

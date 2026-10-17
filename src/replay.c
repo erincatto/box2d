@@ -2866,7 +2866,7 @@ b2ReplayQueryInfo b2Replay_GetFrameQuery( const b2Replay* player, int index )
 	info.aabb = q->aabb;
 	info.origin = q->origin;
 	info.translation = q->translation;
-	info.shape = q->shape;
+	info.shapeId = q->shape;
 	info.hitCount = q->hitCount;
 	return info;
 }
@@ -2886,7 +2886,7 @@ b2ReplayQueryHit b2Replay_GetFrameQueryHit( const b2Replay* player, int queryInd
 	}
 
 	const b2RecRecordedHit* h = &player->frameHits[q->hitStart + hitIndex];
-	hit.shape = h->id;
+	hit.shapeId = h->id;
 	hit.point = h->point;
 	hit.normal = h->normal;
 	hit.fraction = h->fraction;

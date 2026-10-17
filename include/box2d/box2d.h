@@ -58,7 +58,7 @@ B2_API b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId );
 /// Get sensor events for the current time step. The event data is transient. Do not store a reference to this data.
 B2_API b2SensorEvents b2World_GetSensorEvents( b2WorldId worldId );
 
-/// Get contact events for this current time step. The event data is transient. Do not store a reference to this data.
+/// Get contact events for the current time step. The event data is transient. Do not store a reference to this data.
 B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 
 /// Get the joint events for the current time step. The event data is transient. Do not store a reference to this data.
@@ -100,6 +100,7 @@ B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2S
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
 /// clipping. The mover capsule is relative to the origin. Near the origin pass b2Pos_zero and a world capsule.
+/// Returns the translation fraction at the first hit.
 B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation,
 								b2QueryFilter filter );
 
@@ -140,7 +141,8 @@ B2_API void b2World_SetRestitutionIterations( b2WorldId worldId, int iterations 
 /// Get the number of iterations used by the restitution solver.
 B2_API int b2World_GetRestitutionIterations( b2WorldId worldId );
 
-/// Enable restitution propagation.
+/// Enable/disable restitution propagation.
+/// @see b2WorldDef::enableRestitutionPropagation
 B2_API void b2World_EnableRestitutionPropagation( b2WorldId worldId, bool flag );
 
 /// Is restitution propagation enabled?
@@ -157,7 +159,7 @@ B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 /// Register the custom filter callback. This is optional.
 B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackFcn* fcn, void* context );
 
-/// Register the pre-solve and pre-continuous callback. This is optional.
+/// Register the pre-solve and pre-continuous callbacks. This is optional.
 B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveCallbackFcn* preSolveFcn, b2PreContinuousCallbackFcn* preContinuousFcn,
 										 void* context );
 
@@ -323,9 +325,9 @@ B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
 B2_API int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity );
 
 /// Restore a world's simulation state from a snapshot image. The b2WorldId and
-/// ids held from this same world stay valid for objects that existed at the snapshot instant
+/// ids held from this same world stay valid for objects that existed at the snapshot instant.
 /// Callbacks and threading configuration are preserved. User data on shapes, bodies,
-/// and joints are nulled.
+/// and joints is nulled.
 /// @param worldId The world to restore into
 /// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
@@ -788,7 +790,7 @@ B2_API void b2Shape_EnablePreSolveEvents( b2ShapeId shapeId, bool flag );
 B2_API bool b2Shape_ArePreSolveEventsEnabled( b2ShapeId shapeId );
 
 /// Enable contact hit events for this shape. Ignored for sensors.
-/// @see b2WorldDef.hitEventThreshold
+/// @see b2WorldDef::hitEventThreshold
 B2_API void b2Shape_EnableHitEvents( b2ShapeId shapeId, bool flag );
 
 /// Returns true if hit events are enabled
@@ -860,7 +862,7 @@ B2_API int b2Shape_GetContactData( b2ShapeId shapeId, b2ContactData* contactData
 /// @returns the required capacity to get all the overlaps in b2Shape_GetSensorData
 B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 
-/// Get the overlap data for a sensor shape computed the previous world step.
+/// Get the overlap data for a sensor shape computed during the previous world step.
 /// @param shapeId the id of a sensor shape
 /// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
 /// @param capacity the capacity of visitorIds
