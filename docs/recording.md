@@ -10,12 +10,11 @@ in the sample app and view the Box2D state as the simulation progresses. You can
 it into a GitHub issue to report a bug.
 
 You own the recording buffer. Box2D records into it and grows it as needed. You save it to disk
-and free it. The library does no file I/O of its own for recording, beyond two optional
-convenience helpers (`b2SaveRecordingToFile` / `b2LoadRecordingFromFile`).
+and free it. You can use the helper `b2Recording_SaveToFile()` to save it to disk.
 
 A recording can start before the first step, capturing the whole session, or mid-session. Either
 way the buffer opens with a snapshot of the world as it stands when recording starts, so there is one
-code path for both.
+code path for both use cases.
 
 ## Recording
 
@@ -33,7 +32,7 @@ b2World_StartRecording( worldId, recording );       // snapshots the world, then
 b2World_StopRecording( worldId );
 ```
 
-`b2CreateRecording` takes a byte capacity to pre-size the buffer. The buffer still grows on
+`b2CreateRecording` takes a byte capacity to pre-size the buffer. The buffer grows on
 demand, so any value is safe. Pre-sizing just avoids reallocations during a long session. Pass
 `0` for a small default.
 
@@ -41,11 +40,15 @@ demand, so any value is safe. Pre-sizing just avoids reallocations during a long
 current world as the seed, so it works whether you call it before any bodies exist or deep into
 a running simulation. It has no effect if the world is already recording.
 
+> [!important]
+> Recording doesn't work pre-solve and custom filtering callbacks. If those are installed
+> no recording is generated.
+
 When you are done, save the buffer and free it. File I/O is yours to do. The convenience helper
 writes the raw bytes:
 
 ```c
-b2SaveRecordingToFile( recording, "session.b2rec" );
+b2Recording_SaveToFile( recording, "session.b2rec" );
 
 // or fwrite the bytes yourself:
 // const uint8_t* data = b2Recording_GetData( recording );
@@ -59,15 +62,15 @@ outlives the world, so you can still save it after the world is gone. You can al
 simulating after `b2World_StopRecording` without recording, and reuse the same handle for a fresh
 recording with another `b2World_StartRecording`.
 
-## Snapshots
+## Snapshots {#snapshot}
 
-A recording is seeded by a snapshot: a serialized image of a world's simulation state between
+A recording starts with a snapshot. It is a serialized image of a world's simulation state between
 world steps. It captures everything the engine needs to continue the simulation: bodies, shapes,
 joints, contacts with their warm-start impulses, the island and sleep partition, the broad-phase
-trees, and the id pools. It does not capture host wiring (worker count, task callbacks, user
-data, the friction and restitution mixers). That is rebuilt or reinstalled at restore.
+trees, and the id pools. It is a lot of data. It does not capture host wiring (worker count, task
+callbacks, user data, the friction and restitution mixers). That is rebuilt or reinstalled at restore.
 
-The same machinery is available directly, without recording, as a public API for save states and
+Snapshots are available directly, without recording, as a public API for save states and
 rollback:
 
 ```c
@@ -79,18 +82,21 @@ b2World_GetSnapshot( worldId, image, size );
 // ... keep simulating ...
 
 // Restore the same world in place. Ids you held at the snapshot instant keep working.
-b2World_Restore( worldId, image, size );
+b2World_RestoreFromSnapshot( worldId, image, size );
 
 // Or load the image into a brand new world. The new world has a fresh id, so origin ids
 // do not match it, and its host wiring is reset to defaults.
 b2WorldId loaded = b2CreateWorldFromSnapshot( image, size, /*workerCount*/ 0 );
 ```
 
-`b2World_Restore` keeps the world's slot and generation, so the `b2WorldId` and every
+`b2World_RestoreFromSnapshot` keeps the world's slot and generation, so the `b2WorldId` and every
 `b2BodyId` / `b2ShapeId` / `b2JointId` / `b2ChainId` you held at the snapshot instant resolve
-again. Ids minted after the snapshot fail validation after a restore rather than aliasing a
-different object. `b2CreateWorldFromSnapshot` allocates a new world, so use it only when there
-is no existing world to restore into.
+again. Ids created after the snapshot will validation after a restore rather than aliasing a
+different object (thanks to a generation number). `b2CreateWorldFromSnapshot` allocates a new world,
+so use it only when there is no existing world to restore into.
+
+You can validate your snapshot workflow using `b2World_GetStateHash()`. This is expensive, so don't
+ship it.
 
 Like recording, snapshots are worker-count independent: a world snapshotted single-threaded
 restores and continues with any worker count.
@@ -103,35 +109,39 @@ The samples app has a **Replay** menu you can use to open a recording.
   supports play, pause, single-step, restart, and camera control. A `DIVERGED` overlay appears
   if a recorded state hash fails to reproduce, which is a real determinism break, not a viewer
   bug.
+- Look at the samples app help menu for shortcuts.
 
-The quickest way in is to pass the recording on the command line, which boots the samples app straight
-into the viewer with the file pre-loaded:
+[![Replay Viewer](images/replay_viewer.png){html: width=100%}](replay_viewer.png)
+
+You can pass the recording on the command line, which boots the samples app into the viewer
+with the file pre-loaded:
 
 ```c
-samples path/to/session.b2rec
+samples path/to/my_recording.b2rec
 ```
+
+There is a public replay API, but that is there to be used by the samples app. Advanced users can look the
+replay viewer for details.
 
 ## Determinism
 
-Replay reproduces the original run exactly only when the replaying build matches the recording
-build in the ways that affect the math. Some of this the format enforces on load, and the rest is
-your responsibility:
+Replay reproduces the original only when using the same build settings on the same Box2D source build.
+It is possible it could work across different source builds, but that is going to be luck. Replay
+will be completely rejected in some cases:
 
 - **Struct layout** is enforced. A recording opens by deserializing a snapshot, which is a raw
-  struct image, so the reader's build must have identical struct layouts. The image carries a
-  layout hash and `b2CreateReplay` / `b2ValidateReplay` reject a recording whose hash differs.
-  A recording therefore does not replay across a build whose internal layout changed.
+  struct image, so the writer and reader builds must have identical struct layouts. The snapshot carries a
+  layout hash that is validated before loading continues. A mismatch stops the load.
 - **Floating-point environment** must match. Box2D builds with `-ffp-contract=off` so fused
-  multiply-add does not change results. Building with `-ffast-math` is unsupported.
+  multiply-add does not change results. Building with `-ffast-math` is unsupported. The writer and reader
+  builds must use the same [floating point precision](#large-worlds).
 
 ## Spatial queries
 
-Overlap and cast queries issued during a recorded step (ray casts, shape casts, overlap tests,
+Overlap and cast queries issued during a recording (ray casts, shape casts, overlap tests,
 and the character mover casts) are recorded too. On replay each query is re-issued against the
 replayed world and its results are compared against what was recorded, so a query that returns
-different hits is flagged like any other divergence. `b2Replay_DrawFrameQueries` draws the
-queries from the most recently replayed frame, layered on top of the world; call it after
-`b2World_Draw`.
+different hits is flagged like any other divergence. This is visualized in the replay viewer.
 
 ## Limitations
 
@@ -145,5 +155,6 @@ queries from the most recently replayed frame, layered on top of the world; call
   their inputs, so their results are not recorded. To replay a session that used a custom mixer,
   install the same mixer on the replay host. The defaults need nothing.
 - **preSolve and customFilter callbacks are not supported while recording.** They carry user
-  context and can change the simulation, so recording them faithfully is deferred. Installing one
-  on a recording world fails loud rather than writing a recording that would diverge on replay.
+  context and can change the simulation. These using these will lead to divergence. However,
+  these should work in a snapshot setup that uses identical callbacks.
+

@@ -833,7 +833,7 @@ void b2DynamicTree_ValidateNoMoved( const b2DynamicTree* tree )
 #endif
 }
 
-int b2DynamicTree_GetByteCount( const b2DynamicTree* tree )
+size_t b2DynamicTree_GetByteCount( const b2DynamicTree* tree )
 {
 	size_t size = sizeof( b2DynamicTree );
 	size += tree->nodeCapacity * sizeof( b2TreeNode );
@@ -852,7 +852,7 @@ int b2DynamicTree_GetByteCount( const b2DynamicTree* tree )
 	// binIndices
 	size += tree->rebuildCapacity * sizeof( int );
 
-	return (int)size;
+	return size;
 }
 
 uint64_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId )
@@ -861,7 +861,7 @@ uint64_t b2DynamicTree_GetUserData( const b2DynamicTree* tree, int proxyId )
 	return tree->proxies[proxyId].userData;
 }
 
-b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId )
+b2AABB b2DynamicTree_GetProxyBounds( const b2DynamicTree* tree, int proxyId )
 {
 	B2_ASSERT( 0 <= proxyId && proxyId < tree->proxyCapacity );
 	int nodeIndex = tree->proxies[proxyId].node;
@@ -869,7 +869,7 @@ b2AABB b2DynamicTree_GetAABB( const b2DynamicTree* tree, int proxyId )
 	return tree->nodes[nodeIndex].aabb;
 }
 
-b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits, b2TreeQueryCallbackFcn* callback,
+b2TreeStats b2DynamicTree_OverlapAABB( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits, b2TreeQueryCallbackFcn* callback,
 								 void* context )
 {
 	b2TreeStats result = { 0 };
@@ -932,7 +932,7 @@ b2TreeStats b2DynamicTree_Query( const b2DynamicTree* tree, b2AABB aabb, uint64_
 }
 
 // This ignores the category bits. Useful for debug draw.
-b2TreeStats b2DynamicTree_QueryAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback, void* context )
+b2TreeStats b2DynamicTree_OverlapAABBAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback, void* context )
 {
 	b2TreeStats result = { 0 };
 

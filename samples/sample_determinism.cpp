@@ -68,14 +68,14 @@ public:
 
 			if ( m_stepCount == 30 )
 			{
-				b2World_RayCastClosest( m_worldId, origin, translation, filter );
+				b2World_CastRayClosest( m_worldId, origin, translation, filter );
 			}
 
 			if ( m_stepCount < 5 || 100 < m_stepCount )
 			{
 				origin = { -10.0f, 2.0f };
 				translation = { 20.0f, 0.0f };
-				b2World_RayCast( m_worldId, origin, translation, filter, CastFcn, nullptr );
+				b2World_CastRay( m_worldId, origin, translation, filter, CastFcn, nullptr );
 			}
 
 			if ( m_done )
@@ -152,7 +152,7 @@ public:
 	void RollBack( int index )
 	{
 		const Snapshot& snapshot = m_snapshots[index];
-		b2World_Restore( m_worldId, snapshot.image, snapshot.size );
+		b2World_RestoreFromSnapshot( m_worldId, snapshot.image, snapshot.size );
 
 		m_data.stepCount = snapshot.step;
 		m_data.sleepStep = -1;

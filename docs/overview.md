@@ -310,7 +310,8 @@ b2ShapeId myShapeId = b2CreatePolygonShape(myBodyId, &shapeDef, &box);
 And the shape may be destroyed as follows:
 
 ```c
-b2DestroyShape(myShapeId);
+bool updateBodyMass = false;
+b2DestroyShape(myShapeId, updateBodyMass);
 myShapeId = b2_nullShapeId;
 ```
 

@@ -226,7 +226,7 @@ static void b2FlushCandidatePairs( b2PairContext* context )
 		// Custom user filter
 		if ( shapeA->enableCustomFiltering || shapeB->enableCustomFiltering )
 		{
-			b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
+			b2CustomFilterCallbackFcn* customFilterFcn = world->customFilterFcn;
 			if ( customFilterFcn != NULL )
 			{
 				b2ShapeId idA = { shapeIdA + 1, world->worldId, shapeA->generation };

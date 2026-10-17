@@ -568,7 +568,7 @@ int main( int argc, char** argv )
 
 	// Install memory hooks
 	b2SetAllocator( AllocFcn, FreeFcn );
-	b2SetAssertFcn( AssertFcn );
+	b2SetAssertCallback( AssertFcn );
 
 	char buffer[128];
 

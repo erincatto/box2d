@@ -22,7 +22,7 @@ B2_API bool b2IsValidFloat( float a );
 B2_API bool b2IsValidVec2( b2Vec2 v );
 
 /// Is this a valid rotation? Not NaN or infinity. Is normalized.
-B2_API bool b2IsValidRotation( b2Rot q );
+B2_API bool b2IsValidRot( b2Rot q );
 
 /// Is this a valid transform? Not NaN or infinity. Rotation is normalized.
 B2_API bool b2IsValidTransform( b2Transform t );
@@ -34,7 +34,7 @@ B2_API bool b2IsValidAABB( b2AABB aabb );
 B2_API bool b2IsValidPlane( b2Plane a );
 
 /// Is this a valid world position? Not NaN or infinity.
-B2_API bool b2IsValidPosition( b2Pos p );
+B2_API bool b2IsValidPos( b2Pos p );
 
 /// Is this a valid world transform? Not NaN or infinity. Rotation is normalized.
 B2_API bool b2IsValidWorldTransform( b2WorldTransform t );
@@ -562,7 +562,7 @@ B2_INLINE b2Pos b2OffsetPos( b2Pos p, b2Vec2 d )
 }
 
 /// World position interpolation for sweeps and sampling.
-B2_INLINE b2Pos b2LerpPosition( b2Pos a, b2Pos b, float t )
+B2_INLINE b2Pos b2LerpPos( b2Pos a, b2Pos b, float t )
 {
 	return B2_LITERAL( b2Pos ){ ( 1.0f - t ) * a.x + t * b.x, ( 1.0f - t ) * a.y + t * b.y };
 }

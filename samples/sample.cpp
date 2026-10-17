@@ -357,7 +357,7 @@ void Sample::FinishRecording()
 	}
 
 	b2World_StopRecording( m_worldId );
-	if ( b2SaveRecordingToFile( m_recording, m_context->recordingFile ) )
+	if ( b2Recording_SaveToFile( m_recording, m_context->recordingFile ) )
 	{
 		snprintf( m_context->savedRecordingFile, sizeof( m_context->savedRecordingFile ), "%s", m_context->recordingFile );
 	}

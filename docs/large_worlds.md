@@ -68,7 +68,7 @@ float      x = b2RoundDownFloat( p.x ); // conservative narrowing, pair with b2R
 
 Full simulation correctness holds everywhere `b2Pos` can represent. The practical limit comes
 from the broad phase, which stays float and stores conservative (outward-rounded) float bounds. Far
-from the origin the float bound quantization grows: about one meter at 1e7, sixteen meters at 1e8.
+from the origin the float bound quantization grows: about one meter at 1e7 and eight meters at 1e8.
 Overlapping shapes always still produce a pair, so correctness is preserved, but beyond roughly 1e7
 to 1e8 meters the broad phase reports extra false pairs and loses some margin hysteresis, which
 costs performance. Stay within about ±1e7 to ±1e8 meters.
@@ -77,7 +77,7 @@ costs performance. Stay within about ±1e7 to ±1e8 meters.
 
 Every spatial query takes a `b2Pos` origin, and the query geometry is relative to that
 origin: the overlap AABB and proxy points, the cast proxy, the ray translation of
-`b2World_CastRay` and `b2Shape_RayCast` (whose origin is the ray start), the mover capsule, and
+`b2World_CastRay` and `b2Shape_CastRay` (whose origin is the ray start), the mover capsule, and
 the planes `b2World_CollideMover` returns. Near the origin pass
 `b2Pos_zero` and the query reads as a plain world query. Far from the origin pass a nearby
 base, typically a body or camera position: the query then runs in float relative to that base
@@ -88,11 +88,6 @@ with full precision, and cast results come back as world `b2Pos` points.
 b2AABB box = { { -0.001f, -0.001f }, { 0.001f, 0.001f } };
 b2World_OverlapAABB( worldId, clickPoint, box, filter, MyCallback, &ctx );
 ```
-
-Character controllers work at any distance: pass the mover's vicinity as the origin to
-`b2World_CastMover` / `b2World_CollideMover` and keep the capsule coordinates relative to it. The
-returned planes are relative to the same origin, and the plane solver is frame agnostic, so they
-feed `b2SolvePlanes` directly.
 
 Internally, overlap query boxes are lifted to world float with outward rounding, so they are
 conservative: an overlapping shape is always found. Ray and shape casts traverse the tree with

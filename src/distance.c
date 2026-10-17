@@ -30,7 +30,7 @@ b2Transform b2GetSweepTransform( const b2Sweep* sweep, float time )
 }
 
 /// Follows Ericson 5.1.9 Closest Points of Two Line Segments
-b2SegmentDistanceResult b2SegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Vec2 q2 )
+b2SegmentDistanceResult b2ComputeSegmentDistance( b2Vec2 p1, b2Vec2 q1, b2Vec2 p2, b2Vec2 q2 )
 {
 	b2SegmentDistanceResult result = { 0 };
 
@@ -421,7 +421,7 @@ static b2Vec2 b2SolveSimplex3( b2Simplex* s )
 // Uses GJK for computing the distance between convex shapes.
 // https://box2d.org/files/ErinCatto_GJK_GDC2010.pdf
 // I spent time optimizing this and could find no further significant gains 3/30/2025
-b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes, int simplexCapacity )
+b2DistanceOutput b2ComputeShapeDistance( const b2DistanceInput* input, b2SimplexCache* cache, b2Simplex* simplexes, int simplexCapacity )
 {
 	B2_UNUSED( simplexes, simplexCapacity );
 	B2_ASSERT( input->proxyA.count > 0 && input->proxyB.count > 0 );
@@ -611,7 +611,7 @@ b2DistanceOutput b2ShapeDistance( const b2DistanceInput* input, b2SimplexCache* 
 }
 
 // Shape cast using conservative advancement
-b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
+b2CastOutput b2CastShape( const b2ShapeCastPairInput* input )
 {
 	// Compute tolerance
 	float linearSlop = B2_LINEAR_SLOP;
@@ -645,7 +645,7 @@ b2CastOutput b2ShapeCast( const b2ShapeCastPairInput* input )
 	{
 		output.iterations += 1;
 
-		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+		b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 		if ( distanceOutput.distance < target + tolerance )
 		{
@@ -737,7 +737,7 @@ typedef struct b2ShapeCastData
 // "Smooth Mesh Contacts with GJK" in Game Physics Pearls. 2010
 // This needs the simplex of A - B because the translation is for B and this
 // is how the relative motion works out when both shapes are translating.
-// This is similar to ray vs polygon and involves plane clipping. See b2RayCastPolygon.
+// This is similar to ray vs polygon and involves plane clipping. See b2CastRayPolygon.
 // In this case the polygon is just points and there are no planes. This uses a modified
 // version of GJK to generate planes for clipping.
 // The algorithm works by incrementally building clipping planes using GJK. Once a valid
@@ -912,7 +912,7 @@ b2CastOutput b2ShapeCastMerged( const b2ShapeCastPairInput* input, b2ShapeCastDa
 	b2Vec2 n = b2Normalize( b2Neg( v ) );
 	b2Vec2 point = { pointA.x + proxyA.radius * n.x, pointA.y + proxyA.radius * n.y };
 
-	// Results stay in frame A, matching b2ShapeCast
+	// Results stay in frame A, matching b2CastShape
 	output.point = point;
 	output.normal = n;
 	output.fraction = lambda;
@@ -1145,7 +1145,7 @@ static float b2EvaluateSeparation( const b2SeparationFunction* f, int indexA, in
 
 // CCD via the local separating axis method. This seeks progression
 // by computing the largest time at which separation is maintained.
-b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
+b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
 {
 #if B2_SNOOP_TOI_COUNTERS
 	uint64_t ticks = b2GetTicks();
@@ -1195,7 +1195,7 @@ b2TOIOutput b2TimeOfImpact( const b2TOIInput* input )
 		b2Transform xfA = b2GetSweepTransform( &sweepA, t1 );
 		b2Transform xfB = b2GetSweepTransform( &sweepB, t1 );
 		distanceInput.transform = b2InvMulTransforms( xfA, xfB );
-		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+		b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 		// The distance query runs in frame A, project the witness data back to world
 		b2Vec2 worldNormal = b2RotateVector( xfA.q, distanceOutput.normal );

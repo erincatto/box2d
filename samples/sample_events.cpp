@@ -779,7 +779,7 @@ public:
 		for ( int i = 0; i < count; ++i )
 		{
 			b2ShapeId shapeId = m_visitorIds[i];
-			b2AABB aabb = b2Shape_GetAABB( shapeId );
+			b2AABB aabb = b2Shape_GetBounds( shapeId );
 			b2Vec2 point = b2AABB_Center( aabb );
 			DrawPoint( m_draw, b2ToPos( point ), 10.0f, b2_colorWhite );
 		}
@@ -1560,7 +1560,6 @@ public:
 		if ( position.y < 0.0f )
 		{
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.0f, 1.0f } );
-			// b2Body_SetKinematicTarget( m_kinematicBodyId );
 		}
 		else if ( position.y > 3.0f )
 		{
@@ -1575,7 +1574,7 @@ public:
 
 		b2Pos origin = { 5.0f, 1.0f };
 		b2Vec2 translation = { -10.0f, 0.0f };
-		b2RayResult result = b2World_RayCastClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
+		b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, b2DefaultQueryFilter() );
 		DrawLine( m_draw, origin, origin + translation, b2_colorDimGray );
 
 		if ( result.hit )
@@ -2102,7 +2101,7 @@ public:
 			b2Body_SetLinearVelocity( m_kinematicBodyId, { 0.5f, 0.0f } );
 		}
 
-		float x = b2PrismaticJoint_GetTranslation( m_jointId );
+		float x = b2PrismaticJoint_GetCurrentTranslation( m_jointId );
 		if ( x > 1.0f )
 		{
 			b2PrismaticJoint_SetMotorSpeed( m_jointId, -0.5f );

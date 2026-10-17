@@ -433,7 +433,7 @@ static void b2DesGraphColor( b2SnapReader* r, b2GraphColor* color, bool isOverfl
 
 // World scalar config (simulation settings only, no runtime/shell fields)
 // Only simulation scalars belong here, never host or worker state (workerCount,
-// scheduler, callbacks, user data). b2World_Restore relies on that so an in-place
+// scheduler, callbacks, user data). b2World_RestoreFromSnapshot relies on that so an in-place
 // restore preserves the live world's wiring.
 static void b2SerWorldConfig( b2RecBuffer* buf, const b2World* world )
 {
@@ -932,7 +932,7 @@ b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int workerC
 	return id;
 }
 
-bool b2World_Restore( b2WorldId worldId, const uint8_t* image, int size )
+bool b2World_RestoreFromSnapshot( b2WorldId worldId, const uint8_t* image, int size )
 {
 	// Validate the image fully before touching the world so a bad image leaves it intact
 	b2SnapReader readerStorage;

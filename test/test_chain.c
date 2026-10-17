@@ -52,13 +52,13 @@ static int CountingAssertFcn( const char* condition, const char* fileName, int l
 static void BeginCountingAsserts( void )
 {
 	assertCount = 0;
-	b2SetAssertFcn( CountingAssertFcn );
+	b2SetAssertCallback( CountingAssertFcn );
 }
 
 // Always zero in a build without asserts, so a check on this is a debug signal only
 static int EndCountingAsserts( void )
 {
-	b2SetAssertFcn( TestAssertFcn );
+	b2SetAssertCallback( TestAssertFcn );
 	return assertCount;
 }
 

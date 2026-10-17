@@ -153,7 +153,7 @@ struct b2ContinuousContext
 
 #define B2_CORE_FRACTION 0.25f
 
-// This is called from b2DynamicTree_Query for continuous collision
+// This is called from b2DynamicTree_OverlapAABB for continuous collision
 static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* context )
 {
 	B2_UNUSED( proxyId );
@@ -218,7 +218,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	// Custom user filtering
 	if ( shape->enableCustomFiltering || fastShape->enableCustomFiltering )
 	{
-		b2CustomFilterFcn* customFilterFcn = world->customFilterFcn;
+		b2CustomFilterCallbackFcn* customFilterFcn = world->customFilterFcn;
 		if ( customFilterFcn != NULL )
 		{
 			b2ShapeId idA = { shape->id + 1, world->worldId, shape->generation };
@@ -291,7 +291,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	input.sweepB = continuousContext->sweep;
 	input.maxFraction = continuousContext->fraction;
 
-	b2TOIOutput output = b2TimeOfImpact( &input );
+	b2TOIOutput output = b2ComputeTimeOfImpact( &input );
 	if ( isSensor )
 	{
 		// Only accept a sensor hit that is sooner than the current solid hit.
@@ -327,7 +327,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
 			float radius = B2_CORE_FRACTION * extent.minExtent;
 			input.proxyB = b2MakeProxy( &centroid, 1, radius );
-			output = b2TimeOfImpact( &input );
+			output = b2ComputeTimeOfImpact( &input );
 			if ( 0.0f < output.fraction && output.fraction < continuousContext->fraction )
 			{
 				hitFraction = output.fraction;
@@ -416,12 +416,12 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		b2AABB sweptBox = b2AABB_Union( box1, box2 );
 
-		b2DynamicTree_Query( staticTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+		b2DynamicTree_OverlapAABB( staticTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
 
 		if ( isBullet )
 		{
-			b2DynamicTree_Query( kinematicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
-			b2DynamicTree_Query( dynamicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_OverlapAABB( kinematicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_OverlapAABB( dynamicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
 		}
 	}
 
@@ -1907,7 +1907,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 				int proxyId = B2_PROXY_ID( proxyKey );
 				B2_VALIDATE( B2_PROXY_TYPE( proxyKey ) == b2_dynamicBody );
 
-				b2AABB treeAABB = b2DynamicTree_GetAABB( dynamicTree, proxyId );
+				b2AABB treeAABB = b2DynamicTree_GetProxyBounds( dynamicTree, proxyId );
 				b2AABB shapeFatAABB = world->fatAABBs.data[shapeId];
 
 				// Double check containment because a bullet can have multiple

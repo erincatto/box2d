@@ -16,33 +16,33 @@
 
 /// Task interface
 /// This is the prototype for a Box2D task. Your task system is expected to run this callback on a worker thread,
-/// exactly once per enqueue, passing back the same taskContext pointer supplied to b2EnqueueTaskCallback.
+/// exactly once per enqueue, passing back the same taskContext pointer supplied to b2EnqueueTaskCallbackFcn.
 /// @ingroup world
-typedef void b2TaskCallback( void* taskContext );
+typedef void b2TaskCallbackFcn( void* taskContext );
 
 /// These functions can be provided to Box2D to invoke a task system.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
-/// serially within the callback and there is no need to call b2FinishTaskCallback.
+/// serially within the callback and there is no need to call b2FinishTaskCallbackFcn.
 /// @ingroup world
-typedef void* b2EnqueueTaskCallback( b2TaskCallback* task, void* taskContext, void* userContext );
+typedef void* b2EnqueueTaskCallbackFcn( b2TaskCallbackFcn* task, void* taskContext, void* userContext );
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
-typedef void b2FinishTaskCallback( void* userTask, void* userContext );
+typedef void b2FinishTaskCallbackFcn( void* userTask, void* userContext );
 
 /// Optional friction mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
 /// @ingroup world
-typedef float b2FrictionCallback( float frictionA, uint64_t userMaterialIdA, float frictionB, uint64_t userMaterialIdB );
+typedef float b2FrictionCallbackFcn( float frictionA, uint64_t userMaterialIdA, float frictionB, uint64_t userMaterialIdB );
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
 /// @ingroup world
-typedef float b2RestitutionCallback( float restitutionA, uint64_t userMaterialIdA, float restitutionB, uint64_t userMaterialIdB );
+typedef float b2RestitutionCallbackFcn( float restitutionA, uint64_t userMaterialIdA, float restitutionB, uint64_t userMaterialIdB );
 
-/// Result from b2World_RayCastClosest
+/// Result from b2World_CastRayClosest
 /// If there is initial overlap the fraction and normal will be zero while the point is an arbitrary point in the overlap region.
 /// @ingroup world
 typedef struct b2RayResult
@@ -127,10 +127,10 @@ typedef struct b2WorldDef
 	float maximumLinearSpeed;
 
 	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
-	b2FrictionCallback* frictionCallback;
+	b2FrictionCallbackFcn* frictionCallback;
 
 	/// Optional mixing callback for restitution. The default uses max(restitutionA, restitutionB).
-	b2RestitutionCallback* restitutionCallback;
+	b2RestitutionCallbackFcn* restitutionCallback;
 
 	/// Can bodies go to sleep to improve performance
 	bool enableSleep;
@@ -148,10 +148,10 @@ typedef struct b2WorldDef
 	int workerCount;
 
 	/// Function to spawn tasks
-	b2EnqueueTaskCallback* enqueueTask;
+	b2EnqueueTaskCallbackFcn* enqueueTask;
 
 	/// Function to finish a task
-	b2FinishTaskCallback* finishTask;
+	b2FinishTaskCallbackFcn* finishTask;
 
 	/// User context that is provided to enqueueTask and finishTask
 	void* userTaskContext;
@@ -303,7 +303,7 @@ typedef struct b2BodyDef
 B2_API b2BodyDef b2DefaultBodyDef( void );
 
 /// This is used to filter collision on shapes. It affects shape-vs-shape collision
-/// and shape-versus-query collision (such as b2World_RayCast).
+/// and shape-versus-query collision (such as b2World_CastRay).
 /// @ingroup shape
 typedef struct b2Filter
 {
@@ -1262,7 +1262,7 @@ typedef struct b2ContactData
 /// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context );
+typedef bool b2CustomFilterCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context );
 
 /// Prototype for a pre-solve callback.
 /// This is called after a contact manifold is updated. This allows you to inspect a
@@ -1277,7 +1277,7 @@ typedef bool b2CustomFilterFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* co
 /// - the supplied manifold impulses are not reliable
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef void b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
+typedef void b2PreSolveCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
 
 /// Prototype for a pre-continuous callback.
 /// This is called when a time of impact event is computed in continuous collision. This function
@@ -1291,14 +1291,14 @@ typedef void b2PreSolveFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* 
 /// Return false if you want to disable the time of impact event.
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreContinuousFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
+typedef bool b2PreContinuousCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context );
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
 /// @see b2World_OverlapAABB
 /// @return false to terminate the query.
 /// @ingroup world
-typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
+typedef bool b2OverlapResultCallbackFcn( b2ShapeId shapeId, void* context );
 
 /// Prototype callback for ray and shape casts.
 /// Called for each shape found in the query. You control how the ray cast
@@ -1314,13 +1314,13 @@ typedef bool b2OverlapResultFcn( b2ShapeId shapeId, void* context );
 /// @param fraction the fraction along the ray at the point of intersection, zero for a shape cast with initial overlap
 /// @param context the user context
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
-/// @see b2World_RayCast
+/// @see b2World_CastRay
 /// @ingroup world
-typedef float b2CastResultFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context );
+typedef float b2CastResultCallbackFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context );
 
 // Used to collect collision planes for character movers.
 // Return true to continue gathering planes.
-typedef bool b2PlaneResultFcn( b2ShapeId shapeId, const b2PlaneResult* plane, void* context );
+typedef bool b2PlaneResultCallbackFcn( b2ShapeId shapeId, const b2PlaneResult* plane, void* context );
 
 /// These colors are used for debug draw and mostly match the named SVG colors.
 /// See https://www.rapidtables.com/web/color/index.html

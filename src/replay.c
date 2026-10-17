@@ -831,7 +831,7 @@ static void b2RecDispatch_WorldSetContactRecycleDistance( const b2RecArgs_WorldS
 
 static void b2RecDispatch_WorldSetMaximumLinearSpeed( const b2RecArgs_WorldSetMaximumLinearSpeed* a, b2RecReader* rdr )
 {
-	b2World_SetMaximumLinearSpeed( rdr->replayWorldId, a->maximumLinearSpeed );
+	b2World_SetMaxLinearSpeed( rdr->replayWorldId, a->maximumLinearSpeed );
 }
 
 static void b2RecDispatch_WorldEnableWarmStarting( const b2RecArgs_WorldEnableWarmStarting* a, b2RecReader* rdr )
@@ -1021,7 +1021,7 @@ static void b2RecDispatch_BodyWakeTouching( const b2RecArgs_BodyWakeTouching* a,
 
 static void b2RecDispatch_BodyEnableSleep( const b2RecArgs_BodyEnableSleep* a, b2RecReader* rdr )
 {
-	b2Body_EnableSleep( b2RecMakeBodyId( rdr, a->body ), a->flag );
+	b2Body_EnableSleeping( b2RecMakeBodyId( rdr, a->body ), a->flag );
 }
 
 static void b2RecDispatch_BodySetSleepThreshold( const b2RecArgs_BodySetSleepThreshold* a, b2RecReader* rdr )
@@ -1351,7 +1351,7 @@ static void b2RecDispatch_JointSetTorqueThreshold( const b2RecArgs_JointSetTorqu
 
 static void b2RecDispatch_DistanceJointSetLength( const b2RecArgs_DistanceJointSetLength* a, b2RecReader* rdr )
 {
-	b2DistanceJoint_SetLength( b2RecMakeJointId( rdr, a->joint ), a->length );
+	b2DistanceJoint_SetRestLength( b2RecMakeJointId( rdr, a->joint ), a->length );
 }
 
 static void b2RecDispatch_DistanceJointEnableSpring( const b2RecArgs_DistanceJointEnableSpring* a, b2RecReader* rdr )
@@ -1383,7 +1383,7 @@ static void b2RecDispatch_DistanceJointEnableLimit( const b2RecArgs_DistanceJoin
 
 static void b2RecDispatch_DistanceJointSetLengthRange( const b2RecArgs_DistanceJointSetLengthRange* a, b2RecReader* rdr )
 {
-	b2DistanceJoint_SetLengthRange( b2RecMakeJointId( rdr, a->joint ), a->minLength, a->maxLength );
+	b2DistanceJoint_SetLimits( b2RecMakeJointId( rdr, a->joint ), a->minLength, a->maxLength );
 }
 
 static void b2RecDispatch_DistanceJointEnableMotor( const b2RecArgs_DistanceJointEnableMotor* a, b2RecReader* rdr )
@@ -1571,7 +1571,7 @@ static void b2RecDispatch_RevoluteJointEnableMotor( const b2RecArgs_RevoluteJoin
 
 static void b2RecDispatch_RevoluteJointSetMotorSpeed( const b2RecArgs_RevoluteJointSetMotorSpeed* a, b2RecReader* rdr )
 {
-	b2RevoluteJoint_SetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
+	b2RevoluteJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
 
 static void b2RecDispatch_RevoluteJointSetMaxMotorTorque( const b2RecArgs_RevoluteJointSetMaxMotorTorque* a, b2RecReader* rdr )
@@ -1819,7 +1819,7 @@ static void b2RecDispatch_QueryCastRay( const b2RecArgs_QueryCastRay* a, b2RecRe
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_RayCast( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_CastRay( rdr->replayWorldId, a->origin, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1851,7 +1851,7 @@ static void b2RecDispatch_QueryCastShape( const b2RecArgs_QueryCastShape* a, b2R
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_ShapeCast( rdr->replayWorldId, a->origin, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
+	b2World_CastShape( rdr->replayWorldId, a->origin, &a->proxy, a->translation, a->filter, b2RecReplayCastTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1903,7 +1903,7 @@ static void b2RecDispatch_QueryCollideMover( const b2RecArgs_QueryCollideMover* 
 	if ( !rdr->ok )
 		return;
 	b2RecReplayQueryCtx rc = { rdr, rdr->hits, (int)n, 0 };
-	b2World_MoverCollide( rdr->replayWorldId, a->origin, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
+	b2World_CollideMover( rdr->replayWorldId, a->origin, &a->mover, a->filter, b2RecReplayPlaneTrampoline, &rc );
 	if ( rc.cursor != (int)n )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1922,7 +1922,7 @@ static void b2RecDispatch_QueryCastRayClosest( const b2RecArgs_QueryCastRayClose
 	b2RayResult rec = b2RecR_RAYRESULT( rdr );
 	if ( !rdr->ok )
 		return;
-	b2RayResult got = b2World_RayCastClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
+	b2RayResult got = b2World_CastRayClosest( rdr->replayWorldId, a->origin, a->translation, a->filter );
 	if ( got.hit != rec.hit ||
 		 ( got.hit && ( got.shapeId.index1 != rec.shapeId.index1 || got.shapeId.generation != rec.shapeId.generation ||
 						b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
@@ -1952,7 +1952,7 @@ static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2R
 	float rec = b2RecR_F32( rdr );
 	if ( !rdr->ok )
 		return;
-	float got = b2World_MoverCast( rdr->replayWorldId, a->origin, &a->mover, a->translation, a->filter );
+	float got = b2World_CastMover( rdr->replayWorldId, a->origin, &a->mover, a->translation, a->filter );
 	if ( b2RecF32Differs( got, rec ) )
 		rdr->diverged = true;
 	if ( rdr->owner )
@@ -1994,7 +1994,7 @@ static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecRe
 	if ( !rdr->ok )
 		return;
 	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
-	b2WorldCastOutput got = b2Shape_RayCast( id, a->origin, a->translation );
+	b2WorldCastOutput got = b2Shape_CastRay( id, a->origin, a->translation );
 	if ( got.hit != rec.hit || ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
 											  b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
 											  b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
@@ -2359,11 +2359,11 @@ static void b2RecCaptureKeyframe( b2Replay* player )
 }
 
 // Restore the world and player state from a keyframe, so a backward seek resumes from it instead of
-// frame 0. Mirrors b2Replay_Restart but targets a mid-stream image. b2World_Restore is in place,
+// frame 0. Mirrors b2Replay_Restart but targets a mid-stream image. b2World_RestoreFromSnapshot is in place,
 // so the replay world id stays stable.
 static void b2ReplayRestoreKeyframe( b2Replay* player, const b2RecKeyframe* kf )
 {
-	if ( b2World_Restore( player->rdr.replayWorldId, kf->image, kf->imageSize ) == false )
+	if ( b2World_RestoreFromSnapshot( player->rdr.replayWorldId, kf->image, kf->imageSize ) == false )
 	{
 		player->rdr.ok = false;
 		return;
@@ -2442,7 +2442,7 @@ void b2Replay_Restart( b2Replay* player )
 	// Restore the frame-0 image in place so the replay world id stays stable across a restart or
 	// backward scrub. Stepping resumes at the first Step, which rebuilds the body
 	// list deterministically.
-	if ( b2World_Restore( player->rdr.replayWorldId, player->frame0Image, player->frame0Size ) == false )
+	if ( b2World_RestoreFromSnapshot( player->rdr.replayWorldId, player->frame0Image, player->frame0Size ) == false )
 	{
 		player->rdr.ok = false;
 		return;
@@ -2662,7 +2662,7 @@ void b2DestroyReplay( b2Replay* player )
 }
 
 // Highlight each reported overlap shape by its AABB. Skip any destroyed since the query,
-// per the b2Shape_GetAABB contract that overlap results may contain stale shapes.
+// per the b2Shape_GetBounds contract that overlap results may contain stale shapes.
 static void b2RecDrawHitAABBs( const b2Replay* player, const b2RecDrawQuery* q, b2DebugDraw* draw )
 {
 	if ( draw->DrawPolygonFcn == NULL )
@@ -2676,7 +2676,7 @@ static void b2RecDrawHitAABBs( const b2Replay* player, const b2RecDrawQuery* q, 
 		{
 			continue;
 		}
-		b2AABB b = b2Shape_GetAABB( id );
+		b2AABB b = b2Shape_GetBounds( id );
 		b2Vec2 lower = b.lowerBound;
 		b2Vec2 upper = b.upperBound;
 		b2Vec2 vs[4] = { lower, { upper.x, lower.y }, upper, { lower.x, upper.y } };
@@ -2845,7 +2845,7 @@ void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int queryIn
 // Public query inspection. The internal b2RecQueryKind values match the public b2ReplayQueryType, so
 // the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift.
 _Static_assert( b2_replayQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
-_Static_assert( b2_replayQueryShapeRayCast == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
+_Static_assert( b2_replayQueryShapeCastRay == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
 
 int b2Replay_GetFrameQueryCount( const b2Replay* player )
 {
@@ -2907,7 +2907,7 @@ b2BodyId b2Replay_GetBodyId( const b2Replay* player, int index )
 	return player->bodyIds[index];
 }
 
-bool b2ValidateReplay( const void* data, int size, int workerCount )
+bool b2ValidateRecording( const void* data, int size, int workerCount )
 {
 	b2Replay* player = b2CreateReplay( data, size, workerCount );
 	if ( player == NULL )

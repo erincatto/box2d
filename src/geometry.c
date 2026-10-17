@@ -547,14 +547,14 @@ bool b2PointInPolygon( const b2Polygon* shape, b2Vec2 point )
 	input.useRadii = false;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
+	b2DistanceOutput output = b2ComputeShapeDistance( &input, &cache, NULL, 0 );
 
 	return output.distance <= shape->radius;
 }
 
 // Precision Improvements for Ray / Sphere Intersection - Ray Tracing Gems 2019
 // http://www.codercorner.com/blog/?p=321
-b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input )
+b2CastOutput b2CastRayCircle( const b2Circle* shape, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidRay( input ) );
 
@@ -630,7 +630,7 @@ b2CastOutput b2RayCastCircle( const b2Circle* shape, const b2RayCastInput* input
 	return output;
 }
 
-b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* input )
+b2CastOutput b2CastRayCapsule( const b2Capsule* shape, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidRay( input ) );
 
@@ -648,7 +648,7 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 	{
 		// Capsule is really a circle
 		b2Circle circle = { v1, shape->radius };
-		return b2RayCastCircle( &circle, input );
+		return b2CastRayCircle( &circle, input );
 	}
 
 	b2Vec2 p1 = input->origin;
@@ -670,14 +670,14 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 		{
 			// start point behind capsule segment
 			b2Circle circle = { v1, shape->radius };
-			return b2RayCastCircle( &circle, input );
+			return b2CastRayCircle( &circle, input );
 		}
 
 		if ( qa > capsuleLength )
 		{
 			// start point ahead of capsule segment
 			b2Circle circle = { v2, shape->radius };
-			return b2RayCastCircle( &circle, input );
+			return b2CastRayCircle( &circle, input );
 		}
 
 		// ray starts inside capsule -> no hit
@@ -746,13 +746,13 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 	{
 		// ray passes behind capsule segment
 		b2Circle circle = { v1, shape->radius };
-		return b2RayCastCircle( &circle, input );
+		return b2CastRayCircle( &circle, input );
 	}
 	else if ( capsuleLength < s1 )
 	{
 		// ray passes ahead of capsule segment
 		b2Circle circle = { v2, shape->radius };
-		return b2RayCastCircle( &circle, input );
+		return b2CastRayCircle( &circle, input );
 	}
 	else
 	{
@@ -766,7 +766,7 @@ b2CastOutput b2RayCastCapsule( const b2Capsule* shape, const b2RayCastInput* inp
 }
 
 // Ray vs line segment
-b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInput* input, bool oneSided )
+b2CastOutput b2CastRaySegment( const b2Segment* shape, const b2RayCastInput* input, bool oneSided )
 {
 	if ( oneSided )
 	{
@@ -847,7 +847,7 @@ b2CastOutput b2RayCastSegment( const b2Segment* shape, const b2RayCastInput* inp
 	return output;
 }
 
-b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* input )
+b2CastOutput b2CastRayPolygon( const b2Polygon* shape, const b2RayCastInput* input )
 {
 	B2_ASSERT( b2IsValidRay( input ) );
 
@@ -937,10 +937,10 @@ b2CastOutput b2RayCastPolygon( const b2Polygon* shape, const b2RayCastInput* inp
 	castInput.translationB = input->translation;
 	castInput.maxFraction = input->maxFraction;
 	castInput.canEncroach = false;
-	return b2ShapeCast( &castInput );
+	return b2CastShape( &castInput );
 }
 
-b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* input )
+b2CastOutput b2CastShapeCircle( const b2Circle* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center, 1, shape->radius );
@@ -950,10 +950,10 @@ b2CastOutput b2ShapeCastCircle( const b2Circle* shape, const b2ShapeCastInput* i
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2ShapeCast( &pairInput );
+	return b2CastShape( &pairInput );
 }
 
-b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput* input )
+b2CastOutput b2CastShapeCapsule( const b2Capsule* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->center1, 2, shape->radius );
@@ -963,10 +963,10 @@ b2CastOutput b2ShapeCastCapsule( const b2Capsule* shape, const b2ShapeCastInput*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2ShapeCast( &pairInput );
+	return b2CastShape( &pairInput );
 }
 
-b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput* input )
+b2CastOutput b2CastShapeSegment( const b2Segment* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( &shape->point1, 2, 0.0f );
@@ -976,10 +976,10 @@ b2CastOutput b2ShapeCastSegment( const b2Segment* shape, const b2ShapeCastInput*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2ShapeCast( &pairInput );
+	return b2CastShape( &pairInput );
 }
 
-b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput* input )
+b2CastOutput b2CastShapePolygon( const b2Polygon* shape, const b2ShapeCastInput* input )
 {
 	b2ShapeCastPairInput pairInput;
 	pairInput.proxyA = b2MakeProxy( shape->vertices, shape->count, shape->radius );
@@ -989,7 +989,7 @@ b2CastOutput b2ShapeCastPolygon( const b2Polygon* shape, const b2ShapeCastInput*
 	pairInput.maxFraction = input->maxFraction;
 	pairInput.canEncroach = input->canEncroach;
 
-	return b2ShapeCast( &pairInput );
+	return b2CastShape( &pairInput );
 }
 
 b2PlaneResult b2CollideMoverAndCircle( const b2Capsule* mover, const b2Circle* shape )
@@ -1003,7 +1003,7 @@ b2PlaneResult b2CollideMoverAndCircle( const b2Capsule* mover, const b2Circle* s
 	float totalRadius = mover->radius + shape->radius;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+	b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 	if ( distanceOutput.distance <= totalRadius )
 	{
@@ -1029,7 +1029,7 @@ b2PlaneResult b2CollideMoverAndCapsule( const b2Capsule* mover, const b2Capsule*
 	float totalRadius = mover->radius + shape->radius;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+	b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 	if ( distanceOutput.distance <= totalRadius )
 	{
@@ -1055,7 +1055,7 @@ b2PlaneResult b2CollideMoverAndPolygon( const b2Capsule* mover, const b2Polygon*
 	float totalRadius = mover->radius + shape->radius;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+	b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 	if ( distanceOutput.distance <= totalRadius )
 	{
@@ -1081,7 +1081,7 @@ b2PlaneResult b2CollideMoverAndSegment( const b2Capsule* mover, const b2Segment*
 	float totalRadius = mover->radius;
 
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, NULL, 0 );
+	b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, NULL, 0 );
 
 	if ( distanceOutput.distance <= totalRadius )
 	{

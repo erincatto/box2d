@@ -683,7 +683,7 @@ public:
 
 		if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -0.3f, 0.3f, "%.2f" ) )
 		{
-			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}
 
@@ -697,14 +697,14 @@ public:
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) )
 		{
 			m_motorSpeed = b2MaxFloat( -0.3f, m_motorSpeed - 0.01f );
-			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_D ) )
 		{
 			m_motorSpeed = b2MinFloat( 0.3f, m_motorSpeed + 0.01f );
-			b2RevoluteJoint_SetMotorSpeed( m_driverId, m_motorSpeed );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_driverId, m_motorSpeed );
 			b2Joint_WakeBodies( m_driverId );
 		}
 

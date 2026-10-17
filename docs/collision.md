@@ -195,8 +195,8 @@ chainSegment.ghost2 = (b2Vec2){-1.7f, 0.4f};
 These ghost vertices must align with vertices of neighboring chain segments, making them
 tedious and error-prone to setup.
 
-Chain segments are not created directly. Instead, you can create chains of line
-segments. See `b2ChainDef` and `b2CreateChain()`.
+Chain segments can be created using `b2CreateChainSegmentShape()`. Alternatively you can create chains of
+multiple line segments in one operation. See `b2ChainDef` and `b2CreateChain()`.
 
 ## Geometric queries
 
@@ -224,7 +224,7 @@ input.origin = (b2Vec2){0.0f, 0.0f};
 input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
 
-b2CastOutput output = b2RayCastPolygon(&myPolygon, &input);
+b2CastOutput output = b2CastRayPolygon(&myPolygon, &input);
 if (output.hit == true)
 {
     // do something
@@ -247,18 +247,18 @@ input.proxy.count = 2;
 input.translation = (b2Vec2){1.0f, 0.0f};
 input.maxFraction = 1.0f;
 
-b2CastOutput output = b2ShapeCastPolygon(&myPolygon, &input);
+b2CastOutput output = b2CastShapePolygon(&myPolygon, &input);
 if (output.hit == true)
 {
     // do something
 }
 ```
 
-Even more generic, you can use `b2ShapeCast()` to linearly cast one point cloud at another point cloud. All shape cast functions use this internally.
+Even more generic, you can use `b2CastShape()` to linearly cast one point cloud at another point cloud. All shape cast functions use this internally.
 
 ### Distance
 
-`b2ShapeDistance()` function can be used to compute the distance between two
+`b2ComputeShapeDistance()` function can be used to compute the distance between two
 shapes. The distance function needs both shapes to be converted into a
 `b2ShapeProxy` (which are point clouds with radii). There is also some caching used to warm start the
 distance function for repeated calls. This can improve performance when the shapes move by small amounts.
@@ -272,12 +272,12 @@ single time step.
 
 ![Tunneling](images/tunneling2.svg){html: width=30%}
 
-The `b2TimeOfImpact()` function is used to determine the time when two moving shapes collide.
-This is called the *time of impact* (TOI). The main purpose of `b2TimeOfImpact()` is for
+The `b2ComputeTimeOfImpact()` function is used to determine the time when two moving shapes collide.
+This is called the *time of impact* (TOI). The main purpose of `b2ComputeTimeOfImpact()` is for
 tunnel prevention. Box2D uses this internally to prevent moving objects from tunneling through
 static shapes.
 
-The `b2TimeOfImpact()` identifies an initial separating axis and
+The `b2ComputeTimeOfImpact()` identifies an initial separating axis and
 ensures the shapes do not cross on that axis. This process is repeated
 as shapes are moved closer together, until they touch or pass by each other.
 
@@ -344,6 +344,9 @@ be skipped.
 ![Ray cast](images/raycast.svg){html: width=30%}
 
 ![Overlap Test](images/overlap_test.svg){html: width=30%}
+
+The tree also supports a box cast which can be used for shape casts where the
+shape is fully contained in the box.
 
 Normally you will not use the dynamic tree directly. Rather you will go
 through the `b2World` functions for ray casts and region queries. If you plan

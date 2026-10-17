@@ -10,7 +10,7 @@ you use negative values for things that should only be positive, such as density
 Box2D will also assert if an internal bug is detected. For this reason, it is advisable to build Box2D from source.
 The Box2D library compiles in about a second on my computer.
 
-You may wish to capture assertions in your application. In this case you can use `b2SetAssertFcn()`. This allows you
+You may wish to capture assertions in your application. In this case you can use `b2SetAssertCallback()`. This allows you
 to override the debugger break and/or perform your own error handling.
 
 ## Allocation
@@ -26,7 +26,7 @@ You can provide a custom allocator using `b2SetAllocator()` and you can get the 
 
 ## Logging
 
-You can get logging from Box2D using `b2SetLogFcn()`. Logging in Box2D basic. It is just a substitute for `printf`. Logging is mainly used to report invalid input data.
+You can get logging from Box2D using `b2SetLogCallback()`. Logging in Box2D basic. It is just a substitute for `printf`. Logging is mainly used to report invalid input data.
 
 ## Version
 
@@ -41,13 +41,13 @@ printf("Box2D version %d.%d.%d\n", version.major, version.minor, version.revisio
 The version is also available at compile time from these macros:
 
 ```c
-/// Significant API and behavior changes.
+// Significant API and behavior changes.
 #define B2_VERSION_MAJOR 3
 
-/// API changes and features.
+// API changes and features.
 #define B2_VERSION_MINOR 2
 
-/// Bug fixes. No API changes.
+// Bug fixes. No API changes.
 #define B2_VERSION_REVISION 0
 ```
 
@@ -75,7 +75,9 @@ Box2D has been highly optimized for multithreading. Multithreading is not requir
 
 Box2D has a built-in task scheduler that creates threads. You can optionally connect your own task scheduler if you want more control.
 
-Multithreading is established for each Box2D world you create and must be configured in the world definition. See `b2TaskCallback()`, `b2EnqueueTaskCallback()`, and `b2FinishTaskCallback()` for more details. Also see `b2WorldDef::workerCount`, `b2WorldDef::enqueueTask`, and `b2WorldDef::finishTask`.
+Multithreading is established for each Box2D world you create and must be configured in the world definition. See `b2TaskCallbackFcn()`, `b2EnqueueTaskCallbackFcn()`, and `b2FinishTaskCallbackFcn()` for more details. Also see `b2WorldDef::workerCount`, `b2WorldDef::enqueueTask`, and `b2WorldDef::finishTask`.
+
+You can change the worker count using `b2World_SetWorkerCount()`.
 
 ### Using the built-in task scheduler
 
@@ -101,11 +103,11 @@ b2WorldDef def = b2DefaultWorldDef();
 def.workerCount = 5;
 
 // MyEnqueueTask is a function you implement that has the signature of
-// b2EnqueueTaskCallback.
+// b2EnqueueTaskCallbackFcn.
 def.enqueueTask = MyEnqueueTask;
 
 // MyFinishTask is a function you implement that has the signature of
-// b2FinishTaskCallback.
+// b2FinishTaskCallbackFcn.
 def.finishTask = MyFinishTask;
 
 // myTaskContext is a void pointer to your data that you get access to in the

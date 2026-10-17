@@ -86,8 +86,8 @@ int main( int argc, char** argv )
 	___tracy_startup_profiler();
 #endif
 
-	b2SetAssertFcn( TestAssertFcn );
-	b2SetLogFcn( TestLogFcn );
+	b2SetAssertCallback( TestAssertFcn );
+	b2SetLogCallback( TestLogFcn );
 
 	const char* filter = NULL;
 	if ( argc > 1 )

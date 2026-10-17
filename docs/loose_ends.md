@@ -1,6 +1,7 @@
 # Loose Ends
 
 ## User data
+
 Bodies, shapes, and joints allow you to attach user data
 as a `void*`. This is handy when you are examining Box2D data
 structures and you want to determine how they relate to the objects in
@@ -18,10 +19,10 @@ entity->bodyId = b2CreateBody(myWorldId, &bodyDef);
 ```
 
 Here are some examples of cases where you would need the user data:
--   Applying damage to an entity using a collision result.
--   Playing a scripted event if the player is inside an axis-aligned box.
--   Accessing a game structure when Box2D notifies you that a joint is
-    going to be destroyed.
+
+- Applying damage to an entity using a collision result.
+- Playing a scripted event if the player is inside an axis-aligned box.
+- Accessing a game structure from a body movement event.
 
 Keep in mind that user data is optional and you can put anything in it.
 However, you should be consistent. For example, if you want to store an

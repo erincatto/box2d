@@ -319,7 +319,7 @@ public:
 			m_cache.count = 0;
 		}
 
-		b2DistanceOutput output = b2ShapeDistance( &input, &m_cache, m_simplexes, m_simplexCapacity );
+		b2DistanceOutput output = b2ComputeShapeDistance( &input, &m_cache, m_simplexes, m_simplexCapacity );
 
 		m_simplexCount = output.simplexCount;
 
@@ -656,7 +656,7 @@ public:
 			b2Vec2 p1 = b2ToVec2( m_startPoint );
 			b2Vec2 p2 = b2ToVec2( m_endPoint );
 			b2AABB box = { b2Min( p1, p2 ), b2Max( p1, p2 ) };
-			b2DynamicTree_Query( &m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
+			b2DynamicTree_OverlapAABB( &m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
 
 			DrawBounds( m_draw, box, b2_colorWhite );
 		}
@@ -981,7 +981,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, m_rayEnd - m_rayStart );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastCircle( &m_circle, &input );
+			b2CastOutput localOutput = b2CastRayCircle( &m_circle, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1004,7 +1004,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, m_rayEnd - m_rayStart );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastCapsule( &m_capsule, &input );
+			b2CastOutput localOutput = b2CastRayCapsule( &m_capsule, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1025,7 +1025,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, m_rayEnd - m_rayStart );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastPolygon( &m_box, &input );
+			b2CastOutput localOutput = b2CastRayPolygon( &m_box, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1046,7 +1046,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, m_rayEnd - m_rayStart );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastPolygon( &m_triangle, &input );
+			b2CastOutput localOutput = b2CastRayPolygon( &m_triangle, &input );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1070,7 +1070,7 @@ public:
 			b2Vec2 translation = b2InvRotateVector( transform.q, m_rayEnd - m_rayStart );
 			b2RayCastInput input = { start, translation, maxFraction };
 
-			b2CastOutput localOutput = b2RayCastSegment( &m_segment, &input, false );
+			b2CastOutput localOutput = b2CastRaySegment( &m_segment, &input, false );
 			if ( localOutput.hit )
 			{
 				output = localOutput;
@@ -1603,7 +1603,7 @@ public:
 			DrawScreenTextLine( "Simple closest point ray cast" );
 
 			// This version doesn't have a callback, but it doesn't skip the ignored shape
-			b2RayResult result = b2World_RayCastClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
+			b2RayResult result = b2World_CastRayClosest( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter() );
 
 			if ( result.hit == true && result.fraction > 0.0f )
 			{
@@ -1643,13 +1643,13 @@ public:
 					break;
 			}
 
-			b2CastResultFcn* functions[] = {
+			b2CastResultCallbackFcn* functions[] = {
 				RayCastAnyCallback,
 				RayCastClosestCallback,
 				RayCastMultipleCallback,
 				RayCastSortedCallback,
 			};
-			b2CastResultFcn* modeFcn = functions[m_mode];
+			b2CastResultCallbackFcn* modeFcn = functions[m_mode];
 
 			CastContext context = {};
 
@@ -1667,7 +1667,7 @@ public:
 
 			if ( m_castType == e_rayCast )
 			{
-				b2World_RayCast( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_CastRay( m_worldId, m_rayStart, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 			else
 			{
@@ -1684,7 +1684,7 @@ public:
 					proxy = b2MakeProxy( box.vertices, box.count, box.radius );
 				}
 
-				b2World_ShapeCast( m_worldId, m_rayStart, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
+				b2World_CastShape( m_worldId, m_rayStart, &proxy, rayTranslation, b2DefaultQueryFilter(), modeFcn, &context );
 			}
 
 			if ( context.count > 0 )
@@ -2166,7 +2166,7 @@ public:
 		m_transform = b2Transform_identity;
 		m_transform.p.x = 0.17f;
 		m_transform.p.y = 1.12f;
-		// m_transform.q = b2MakeRot( 0.5f * b2_pi );
+		// m_transform.q = b2MakeRot( 0.5f * B2_PI );
 		m_angle = 0.0f;
 		m_round = 0.1f;
 
@@ -2282,7 +2282,7 @@ public:
 
 		if ( m_showCount )
 		{
-			b2Pos p = b2LerpPosition( transformA.p, transformB.p, 0.5f );
+			b2Pos p = b2LerpPos( transformA.p, transformB.p, 0.5f );
 			DrawString( m_draw, m_camera, p, b2_colorWhite, "%d", manifold->pointCount );
 		}
 
@@ -2764,7 +2764,7 @@ public:
 			b2Pos p2 = b2TransformWorldPoint( transform2, capsule.center2 );
 			DrawCapsule( m_draw, p1, p2, capsule.radius, color2 );
 
-			DrawPoint( m_draw, b2LerpPosition( p1, p2, 0.5f ), 5.0f, b2_colorGainsboro );
+			DrawPoint( m_draw, b2LerpPos( p1, p2, 0.5f ), 5.0f, b2_colorGainsboro );
 
 			DrawManifold( &m1, transform1, transform2 );
 			DrawManifold( &m2, transform1, transform2 );
@@ -3405,7 +3405,7 @@ public:
 		input.maxFraction = 1.0f;
 		input.canEncroach = m_encroach;
 
-		b2CastOutput output = b2ShapeCast( &input );
+		b2CastOutput output = b2CastShape( &input );
 
 		float t = output.hit ? output.fraction : 1.0f;
 		b2Transform transform;
@@ -3419,7 +3419,7 @@ public:
 		distanceInput.useRadii = false;
 		b2SimplexCache distanceCache;
 		distanceCache.count = 0;
-		b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &distanceCache, nullptr, 0 );
+		b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &distanceCache, nullptr, 0 );
 
 		DrawScreenTextLine( "hit = %s, iterations = %d, fraction = %g, distance = %g", output.hit ? "true" : "false",
 							output.iterations, output.fraction, distanceOutput.distance );
@@ -3542,7 +3542,7 @@ public:
 		input.sweepB = sweepB;
 		input.maxFraction = 1.0f;
 
-		b2TOIOutput output = b2TimeOfImpact( &input );
+		b2TOIOutput output = b2ComputeTimeOfImpact( &input );
 
 		DrawScreenTextLine( "toi = %g", output.fraction );
 
@@ -3573,7 +3573,7 @@ public:
 														  b2GetSweepTransform( &sweepB, output.fraction ) );
 			distanceInput.useRadii = false;
 			b2SimplexCache cache = { 0 };
-			b2DistanceOutput distanceOutput = b2ShapeDistance( &distanceInput, &cache, nullptr, 0 );
+			b2DistanceOutput distanceOutput = b2ComputeShapeDistance( &distanceInput, &cache, nullptr, 0 );
 			DrawScreenTextLine( "distance = %g", distanceOutput.distance );
 		}
 	}

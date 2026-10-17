@@ -406,7 +406,7 @@ bodyDef.isBullet = true;
 ```
 The bullet flag only affects dynamic bodies. I recommend using bullets sparingly.
 
-### Safey factor
+### Safety factor
 
 Box2D speeds up continuous collision detection (CCD) by skipping expensive work when
 shapes are moving slowly and have no risk of tunneling. In some cases you may wish a body
@@ -537,11 +537,11 @@ Computing the mass data can become expensive if a body has many shapes. In that 
 
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
-shapeDef.updateMassData = false;
+shapeDef.updateBodyMass = false;
 for (int i = 0; i < 100; ++i)
 {
     b2Circle circle = {.center = {2.0f * i, 0.0f}, .radius = 0.5f};
-    b2CreateCircleShape(myBodyId, &circle);
+    b2CreateCircleShape(myBodyId, &shapeDef, &circle);
 }
 b2Body_UpdateMassFromShapes(myBodyId);
 ```
@@ -558,8 +558,8 @@ b2Body_SetType(myBodyId, b2_kinematicBody);
 b2BodyType bodyType = b2Body_GetType(myBodyId);
 b2Body_SetBullet(myBodyId, true);
 bool isBullet = b2Body_IsBullet(myBodyId);
-b2Body_EnableSleep(myBodyId, false);
-bool isSleepEnabled = b2Body_IsSleepEnabled(myBodyId);
+b2Body_EnableSleeping(myBodyId, false);
+bool isSleepingEnabled = b2Body_IsSleepingEnabled(myBodyId);
 b2Body_SetAwake(myBodyId, true);
 bool isAwake = b2Body_IsAwake(myBodyId);
 b2Body_Disable(myBodyId);
@@ -652,6 +652,12 @@ b2Body_ApplyLinearImpulseToCenter(myBodyId, linearImpulse, wake);
 > Since Box2D uses sub-stepping, you should not apply a steady impulse
 > for several frames. Instead you should apply a force which Box2D will
 > spread out evenly across the sub-steps, resulting in smoother movement.
+
+You can also apply wind using `b2Shape_ApplyWind()`. This considers the geometry of the shape, such
+as the projected area. It also generates a lift force for flutter.
+
+`b2World_Explode()` efficiently applies explosion in a circular area and also uses the shape's
+projected area.
 
 ### Coordinate transformations
 
@@ -761,7 +767,8 @@ breakable object. Otherwise you can just leave the shape alone and let
 the body destruction take care of destroying the attached shapes.
 
 ```c
-b2DestroyShape(myShapeId);
+bool updateBodyMass = false;
+b2DestroyShape(myShapeId, updateBodyMass);
 ```
 
 Material properties such as density, friction, and restitution are associated with shapes
@@ -789,6 +796,16 @@ that grows proportional to the number of shapes on the body.
 ```c
 bool updateBodyMass = true;
 b2Shape_SetDensity(myShapeId, 5.0f, updateBodyMass);
+```
+
+### Surface material
+
+Surface properties are combined in a `b2SurfaceMaterial` structure. This is mainly a convenience because game editing
+environments tend to bundle material properties.
+
+```c
+b2SurfaceMaterial myMaterial = b2DefaultSurfaceMaterial()`
+myMaterial.restitution = 0.4f;
 ```
 
 ### Friction
@@ -888,8 +905,8 @@ if (result.hit == true)
 
 ### Friction and restitution callbacks
 
-Advanced users can override friction and restitution mixing using b2FrictionCallback
-and b2RestitutionCallback. These should be very light weight functions because they
+Advanced users can override friction and restitution mixing using b2FrictionCallbackFcn
+and b2RestitutionCallbackFcn. These should be very light weight functions because they
 are called frequently. See the API reference for details.
 
 ```c
@@ -1044,7 +1061,29 @@ The segment normal depends on the winding order. A counter-clockwise winding ord
 ![Chain Shape Inwards Loop](images/chain_loop_inwards.svg)
 
 You may have a scrolling game world and would like to connect several chains together.
-You can connect chains together using ghost points. See the sample `ChainLink` for details.
+You can connect chains together using ghost points. For example:
+
+```c
+b2Vec2 points[18];
+float x = 9.0f;
+for ( int i = 0; i < 18; ++i )
+{
+    points[i] = { x, 0.0f };
+    x -= 1.0f;
+}
+
+b2ChainDef chainDef = b2DefaultChainDef();
+chainDef.points = points;
+chainDef.pointCount = 18;
+chainDef.ghost1 = { 10.0f, 0.0f };
+chainDef.ghost2 = { -9.0f, 0.0f };
+chainDef.isLoop = false;
+
+b2CreateChain( groundId, &chainDef );
+```
+
+Presumably you would create additional open chains with overlapping ghost regions for a fully ghost collision
+reducing surface.
 
 ![Chain Shape](images/chain_shape.svg)
 
@@ -1298,6 +1337,9 @@ bodies as needed.
 bodyDef.enableContactRecycling = false;
 ```
 
+> [!note]
+> Recycled contacts skip friction and restitution updates. They also skip pre-solve callbacks.
+
 ### Contact data
 
 As mentioned before, the contact is created and destroyed by
@@ -1448,7 +1490,7 @@ Contact filtering is setup on shapes and is covered [here](@ref filtering).
 
 For the best performance, use the contact filtering provided by `b2Filter`.
 However, in some cases you may need custom filtering. You can do
-this by registering a custom filter callback that implements `b2CustomFilterFcn()`.
+this by registering a custom filter callback that implements `b2CustomFilterCallbackFcn()`.
 
 ```c
 bool MyCustomFilter(b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context)
@@ -1603,7 +1645,7 @@ if (b2Joint_IsValid(myJointId) == false)
 ```
 
 This is certainly useful, but should not be overused because if you are creating
-and destroying many joints, this may eventually alias to a different joint. All ids have
+and destroying many joints, this may eventually alias to a different joint. Joint ids have
 a limit of 64k generations.
 
 ### Using joints
@@ -1717,6 +1759,21 @@ It is also possible to define a minimum and maximum length for the distance join
 You can even motorize the distance joint to adjust its length dynamically.
 See `b2DistanceJointDef` and the `DistanceJoint` sample for details.
 
+### Filter joint
+
+Sometimes you want to prevent collision between two specific bodies and `b2Filter` is too broad. This is common in ragdolls
+where shapes can overlap even when not connected by other types of joints. The filter joint solves this problem. It applies
+no constraint, but uses the ability of all joint types to disable collision between connected bodies.
+
+The filter joint doesn't have any per-step computation, so it is essentially free. The main cost is memory.
+
+```c
+b2FilterJointDef jointDef = b2DefaultFilterJointDef();
+jointDef.base.bodyIdA = bodyId1;
+jointDef.base.bodyIdB = bodyId2;
+b2CreateFilterJoint(m_worldId, &jointDef);
+```
+
 ### Revolute joint
 
 A revolute joint forces two bodies to share a common anchor point, often
@@ -1751,9 +1808,8 @@ revolute joint can simulate a joint limit and/or a motor.
 
 A joint limit forces the joint angle to remain between a lower and upper
 angle. The limit will apply as much torque as needed to make this
-happen. The limit range should include zero, otherwise the joint will
-lurch when the simulation begins. The lower and upper limit are relative to
-the reference angle.
+happen. The lower and upper limit are defined in the joint frame of body A
+and control the relative rotation of the joint frame of body B.
 
 A joint motor allows you to specify the joint speed. The speed can be negative or
 positive. A motor can have infinite force, but this is usually not desirable. Recall the eternal
@@ -1791,12 +1847,12 @@ jointDef.motorSpeed = 0.0f;
 jointDef.enableMotor = true;
 ```
 
-You can access a revolute joint's angle, speed, and motor torque.
+You can access a revolute joint's current angle, speed, and motor torque.
 
 ```c
-float angleInRadians = b2RevoluteJoint_GetAngle(myJointId);
-float speed = b2RevoluteJoint_GetMotorSpeed(myJointId);
-float currentTorque = b2RevoluteJoint_GetMotorTorque(myJointId);
+float angleInRadians = b2RevoluteJoint_GetCurrentAngle(myJointId);
+float speed = b2RevoluteJoint_GetCurrentSpeed(myJointId);
+float currentTorque = b2RevoluteJoint_GetCurrentMotorTorque(myJointId);
 ```
 
 You also update the motor parameters each step.
@@ -1823,7 +1879,7 @@ You can also use joint motors to track a desired joint angle. For example:
 ```c
 // ... Game Loop Begin ...
 
-float angleError = b2RevoluteJoint_GetAngle(myJointId) - angleTarget;
+float angleError = b2RevoluteJoint_GetCurrentAngle(myJointId) - angleTarget;
 float gain = 0.1f;
 b2RevoluteJoint_SetMotorSpeed(myJointId, -gain * angleError);
 
@@ -1876,8 +1932,8 @@ Using a prismatic joint is similar to using a revolute joint. Here are
 the relevant functions:
 
 ```c
-float b2PrismaticJoint_GetTranslation(b2JointId jointId);
-float b2PrismaticJoint_GetSpeed(b2JointId jointId);
+float b2PrismaticJoint_GetCurrentTranslation(b2JointId jointId);
+float b2PrismaticJoint_GetCurrentSpeed(b2JointId jointId);
 float b2PrismaticJoint_GetMotorForce(b2JointId jointId);
 void b2PrismaticJoint_SetMotorSpeed(b2JointId jointId, float motorSpeed);
 void b2PrismaticJoint_SetMaxMotorForce(b2JointId jointId, float force);
@@ -1928,8 +1984,8 @@ See `b2MotorJointDef` and the `MotorJoint` sample for details.
 
 ### Wheel joint
 
-The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
-joint also provides a suspension spring and a motor. See the `Driving` sample
+The wheel joint restricts a point on bodyB to the x-axis of the joint frame in bodyA.
+The wheel joint also provides a suspension spring and a motor. See the `Driving` sample
 for details.
 
 ![Wheel Joint](images/wheel_joint.svg)
@@ -1999,7 +2055,7 @@ If you want to query everything you can use `b2DefaultQueryFilter()`;
 #### AABB overlap
 
 You provide an AABB in world coordinates and an
-implementation of `b2OverlapResultFcn()`. The world calls your function with each
+implementation of `b2OverlapResultCallbackFcn()`. The world calls your function with each
 shape whose AABB overlaps the query AABB. Return true to continue the
 query, otherwise return false. For example, the following code finds all
 the shapes that potentially intersect a specified AABB and wakes up
@@ -2043,7 +2099,7 @@ a rounded rectangle, and so on. The helper function `b2MakeProxy` takes an array
 and a radius.
 
 In this example, I'm creating a shape proxy from a circle and then calling `b2World_OverlapShape()`.
-This takes a `b2OverlapResultFcn()` to receive results and control the search progress.
+This takes a `b2OverlapResultCallbackFcn()` to receive results and control the search progress.
 
 ```c
 b2Circle circle = {b2Vec2_zero, 0.2f};
@@ -2054,7 +2110,7 @@ b2World_OverlapShape(myWorldId, b2Pos_zero, &proxy, grenadeFilter, MyOverlapCall
 ### Ray-casts
 
 You can use ray-casts to do line-of-sight checks, fire guns, etc. You
-perform a ray-cast by implementing the `b2CastResultFcn()` callback
+perform a ray-cast by implementing the `b2CastResultCallbackFcn()` callback
 function and providing the
 origin point and translation. The world calls your function with each shape
 hit by the ray. Your callback is provided with the shape, the point of
@@ -2114,13 +2170,13 @@ to represent an arbitrary shape.
 
 ```c
 // This struct captures the closest hit shape
-struct MyRayCastContext
+typedef struct MyRayCastContext
 {
     b2ShapeId shapeId;
     b2Pos point;
     b2Vec2 normal;
     float fraction;
-};
+} typedef;
 
 float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
@@ -2192,7 +2248,7 @@ are known. This is necessary for obtaining good simulation results efficiently. 
 of the time step then new contact points would not be known to the constraint solver and shapes would sink into each
 other.
 
-The `b2PreSolveFcn` is called within the parallel-for so it should be efficient and thread-safe. This is only called for shapes that have `enablePreSolveEvents == true`.
+The `b2PreSolveCallbackFcn` is called within the parallel-for so it should be efficient and thread-safe. This is only called for shapes that have `enablePreSolveEvents == true`.
 
 ### merge islands
 
@@ -2226,7 +2282,7 @@ This stage does several tasks:
 - performs continuous collision between dynamic and static bodies
 This stage is parallel-for.
 
-Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreContinuousFcn` callback.
+Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreContinuousCallbackFcn` callback.
 
 ### hit events
 
@@ -2268,11 +2324,10 @@ Cross-platform determinism is achieved on 64-bit platforms by using compiler fla
 - floating point contraction is disabled on clang and GCC
 - Box2D has custom implementations of atan2, cosine, and sine.
 
-Determinism is on by default and there is no explicit option to disable it. However, you can break determinism by choosing different compiler flags. Box2D was designed to provide determinism with minimal cost. So there is no advantage to attempting
-to disable determinism.
+Determinism is on by default and there is no explicit option to disable it. However, you can break determinism by choosing different compiler flags. Box2D was designed to provide determinism with minimal cost. So there is no advantage to attempting to disable determinism.
 
 I maintain a unit test for determinism that is run for every pull request. Determinism is easy to break, so it is important to have regular validation.
 
-> [!NOTE]
+> [!note]
 > Box2D determinism does not mean your application will be deterministic. Consider using similar strategies to make your
 > application deterministic as I have used for Box2D.

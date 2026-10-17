@@ -1328,7 +1328,7 @@ public:
 		OverlapResult* result = (OverlapResult*)context;
 		if ( result->count < 32 )
 		{
-			b2AABB aabb = b2Shape_GetAABB( shapeId );
+			b2AABB aabb = b2Shape_GetBounds( shapeId );
 			result->points[result->count] = b2AABB_Center( aabb );
 			result->count += 1;
 		}
@@ -1359,7 +1359,7 @@ public:
 				b2Pos origin = m_origins[i];
 				b2Vec2 translation = m_translations[i];
 
-				b2RayResult result = b2World_RayCastClosest( m_worldId, origin, translation, filter );
+				b2RayResult result = b2World_CastRayClosest( m_worldId, origin, translation, filter );
 
 				if ( i == m_drawIndex )
 				{
@@ -1398,7 +1398,7 @@ public:
 
 				CastResult result;
 				b2TreeStats traversalResult =
-					b2World_ShapeCast( m_worldId, m_origins[i], &proxy, translation, filter, CastCallback, &result );
+					b2World_CastShape( m_worldId, m_origins[i], &proxy, translation, filter, CastCallback, &result );
 
 				if ( i == m_drawIndex )
 				{
@@ -1671,7 +1671,7 @@ public:
 			{
 				b2SimplexCache cache = {};
 				input.transform = b2InvMulWorldTransforms( m_transformAs[i], m_transformBs[i] );
-				m_outputs[i] = b2ShapeDistance( &input, &cache, nullptr, 0 );
+				m_outputs[i] = b2ComputeShapeDistance( &input, &cache, nullptr, 0 );
 				totalIterations += m_outputs[i].iterations;
 			}
 

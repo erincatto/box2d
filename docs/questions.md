@@ -104,7 +104,8 @@ Box2D uses approximate methods for a few reasons.
 What this means is that constraints are not perfectly rigid and sometimes you will see some bounce even when the restitution is zero.
 Box2D uses [Gauss-Seidel](https://en.wikipedia.org/wiki/Gauss%E2%80%93Seidel_method) to approximately solve constraints.
 Box2D also uses [Semi-implicit Euler](https://en.wikipedia.org/wiki/Semi-implicit_Euler_method) to approximately solve the differential equations.
-Box2D also does not have exact collision. There is no continuous collision between dynamic shapes. Slow moving shapes may have small overlap for a few time steps. In extreme stacking scenarios, shapes may have sustained overlap.
+Box2D also does not have exact collision. There is no continuous collision between dynamic shapes (bullets approximate this). Slow moving shapes may have small overlap for
+a few time steps. In extreme stacking scenarios, shapes may have sustained overlap.
 
 ## Making games
 
@@ -128,9 +129,9 @@ For the same input Box2D will reproduce any simulation. Box2D does not use any r
 
 Box2D is also deterministic under multithreading. A simulation using two threads will give the same result as eight threads.
 
-Box2D has cross-platform determinism as of version 3.1. This is heavily tested and a first class feature of Box2D.
+Box2D has cross-platform determinism as of version 3.1. This is heavily tested and a first class feature of Box2D. This assumes precision is not mixed (single verus double precision).
 
-Some developers want rollback determinism. You can achieve this using the [recording] system.
+Some developers want rollback determinism. You can achieve this using the [snapshot](#snapshot) system.
 
 ## What are the common mistakes made by new users?
 

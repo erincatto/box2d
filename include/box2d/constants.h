@@ -17,7 +17,7 @@
 /// Maximum parallel workers. Used for some fixed size arrays.
 #define B2_MAX_WORKERS 32
 
-/// Maximum number of tasks queued per world step. b2EnqueueTaskCallback will never be called
+/// Maximum number of tasks queued per world step. b2EnqueueTaskCallbackFcn will never be called
 /// more than this per world step. This is related to B2_MAX_WORKERS. With 32 workers,
 /// the maximum observed task count is 130. This allows an external task system to use a fixed
 /// size array for Box2D task, which may help with creating stable user task pointers.

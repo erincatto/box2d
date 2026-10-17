@@ -64,7 +64,7 @@ float b2PogoJoint_GetSpringDampingRatio( b2JointId jointId )
 	return joint->pogoJoint.dampingRatio;
 }
 
-float b2PogoJoint_GetLength( b2JointId jointId )
+float b2PogoJoint_GetCurrentLength( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2JointSim* jointSim = b2GetJointSimCheckType( jointId, b2_pogoJoint );
@@ -89,7 +89,7 @@ float b2PogoJoint_GetImpulse( b2JointId jointId )
 	return joint->pogoJoint.impulse;
 }
 
-float b2PogoJoint_GetVelocity( b2JointId jointId )
+float b2PogoJoint_GetCurrentSpeed( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_pogoJoint );
 	return joint->pogoJoint.velocity;

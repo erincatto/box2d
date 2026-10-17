@@ -144,9 +144,6 @@ typedef struct b2World
 	// impulses must be deferred because sleeping bodies have no velocity state
 	// Problems:
 	// - multiple forces applied to the same body from multiple threads
-	// Deferred wake
-	// b2BitSet bodyWakeSet;
-	// b2ImpulseArray deferredImpulses;
 
 	// Used to track debug draw
 	b2BitSet debugBodySet;
@@ -177,8 +174,8 @@ typedef struct b2World
 	float contactDampingRatio;
 	float contactRecycleDistance;
 
-	b2FrictionCallback* frictionCallback;
-	b2RestitutionCallback* restitutionCallback;
+	b2FrictionCallbackFcn* frictionCallback;
+	b2RestitutionCallbackFcn* restitutionCallback;
 
 	uint16_t generation;
 
@@ -186,17 +183,17 @@ typedef struct b2World
 
 	b2Capacity maxCapacity;
 
-	b2PreSolveFcn* preSolveFcn;
-	b2PreContinuousFcn* preContinuousFcn;
+	b2PreSolveCallbackFcn* preSolveFcn;
+	b2PreContinuousCallbackFcn* preContinuousFcn;
 	void* preSolveContext;
 
-	b2CustomFilterFcn* customFilterFcn;
+	b2CustomFilterCallbackFcn* customFilterFcn;
 	void* customFilterContext;
 
 	int workerCount;
 	int simdWidth;
-	b2EnqueueTaskCallback* enqueueTaskFcn;
-	b2FinishTaskCallback* finishTaskFcn;
+	b2EnqueueTaskCallbackFcn* enqueueTaskFcn;
+	b2FinishTaskCallbackFcn* finishTaskFcn;
 	void* userTaskContext;
 	void* userTreeTask;
 

@@ -92,7 +92,7 @@ static const char* ReplayQueryTypeName( b2ReplayQueryType type )
 			return "cast mover";
 		case b2_replayQueryShapeTestPoint:
 			return "shape test point";
-		case b2_replayQueryShapeRayCast:
+		case b2_replayQueryShapeCastRay:
 			return "shape ray cast";
 		default:
 			return "?";
@@ -200,7 +200,7 @@ public:
 		// Load the file into a recording buffer, then hand its bytes to the player. The player
 		// copies them, so the buffer is freed right away. Replay workers of 0 uses the serial
 		// fallback, otherwise force a different count to spot-check cross-thread determinism.
-		b2Recording* recording = b2LoadRecordingFromFile( m_path );
+		b2Recording* recording = b2CreateRecordingFromFile( m_path );
 		if ( recording != nullptr )
 		{
 			const uint8_t* data = b2Recording_GetData( recording );
@@ -717,7 +717,7 @@ public:
 				return;
 			}
 			b2BodyId body = b2Shape_GetBody( shape );
-			DrawBounds( draw, b2Shape_GetAABB( shape ), b2_colorYellow );
+			DrawBounds( draw, b2Shape_GetBounds( shape ), b2_colorYellow );
 			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
 			DrawPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
@@ -729,7 +729,7 @@ public:
 			{
 				return;
 			}
-			DrawBounds( draw, b2Body_ComputeAABB( body ), b2_colorYellow );
+			DrawBounds( draw, b2Body_ComputeBounds( body ), b2_colorYellow );
 			DrawTransform( draw, b2Body_GetTransform( body ), 0.5f );
 			DrawPoint( draw, b2Body_GetWorldCenter( body ), 8.0f, b2_colorYellow );
 			DrawBodyContacts( body );
@@ -1014,7 +1014,7 @@ public:
 		ImGui::Text( "sensor   %s", b2Shape_IsSensor( shape ) ? "yes" : "no" );
 		b2SurfaceMaterial mat = b2Shape_GetSurfaceMaterial( shape );
 		ImGui::Text( "custom color 0x%06x", (unsigned)mat.customColor );
-		b2AABB aabb = b2Shape_GetAABB( shape );
+		b2AABB aabb = b2Shape_GetBounds( shape );
 		ImGui::Text( "aabb (%.2f, %.2f)-(%.2f, %.2f)", aabb.lowerBound.x, aabb.lowerBound.y, aabb.upperBound.x,
 					 aabb.upperBound.y );
 	}
@@ -1070,10 +1070,10 @@ public:
 		switch ( type )
 		{
 			case b2_revoluteJoint:
-				ImGui::Text( "angle    %.1f deg", b2RevoluteJoint_GetAngle( joint ) * 57.2957795f );
+				ImGui::Text( "angle    %.1f deg", b2RevoluteJoint_GetCurrentAngle( joint ) * 57.2957795f );
 				break;
 			case b2_prismaticJoint:
-				ImGui::Text( "translation %.3f", b2PrismaticJoint_GetTranslation( joint ) );
+				ImGui::Text( "translation %.3f", b2PrismaticJoint_GetCurrentTranslation( joint ) );
 				break;
 			case b2_distanceJoint:
 				ImGui::Text( "length   %.3f", b2DistanceJoint_GetCurrentLength( joint ) );
@@ -1099,7 +1099,7 @@ public:
 		}
 
 		ImGui::Text( "type     %s", ReplayQueryTypeName( q.type ) );
-		bool shapeLocal = q.type == b2_replayQueryShapeTestPoint || q.type == b2_replayQueryShapeRayCast;
+		bool shapeLocal = q.type == b2_replayQueryShapeTestPoint || q.type == b2_replayQueryShapeCastRay;
 		if ( shapeLocal == false )
 		{
 			ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );

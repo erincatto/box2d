@@ -305,9 +305,12 @@ int TestWorldCoverage( void )
 	b2World_Explode( worldId, &explosionDef );
 
 	b2World_SetContactTuning( worldId, 10.0f, 2.0f, 4.0f );
+	float hertz, dampingRatio, pushSpeed;
+	b2World_GetContactTuning( worldId, &hertz, &dampingRatio, &pushSpeed );
+	ENSURE( hertz == 10.0f && dampingRatio == 2.0f && pushSpeed == 4.0f );
 
-	b2World_SetMaximumLinearSpeed( worldId, 10.0f );
-	value = b2World_GetMaximumLinearSpeed( worldId );
+	b2World_SetMaxLinearSpeed( worldId, 10.0f );
+	value = b2World_GetMaxLinearSpeed( worldId );
 	ENSURE( value == 10.0f );
 
 	b2World_EnableWarmStarting( worldId, true );
@@ -569,10 +572,10 @@ static int EnableSleepFlagSyncTest( void )
 	bodyDef.enableSleep = false;
 	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
 
-	ENSURE( b2Body_IsSleepEnabled( bodyId ) == false );
+	ENSURE( b2Body_IsSleepingEnabled( bodyId ) == false );
 
-	b2Body_EnableSleep( bodyId, true );
-	ENSURE( b2Body_IsSleepEnabled( bodyId ) == true );
+	b2Body_EnableSleeping( bodyId, true );
+	ENSURE( b2Body_IsSleepingEnabled( bodyId ) == true );
 
 	b2World_Step( worldId, 1.0f / 60.0f, 4 );
 
@@ -1439,7 +1442,7 @@ static int LocatorSleepingNeighbor( int workerCount, uint64_t* hash )
 
 	// The fat boxes overlap across a tenth of a meter, well past the speculative distance
 	b2BodyId mover = CreateLocatorBox( worldId, b2_kinematicBody, 1.1f, 0.5f );
-	b2Body_EnableSleep( mover, false );
+	b2Body_EnableSleeping( mover, false );
 
 	ENSURE( StepUntilAsleep( worldId, sleeper, 600 ) );
 	ENSURE( b2Body_IsAwake( mover ) );
@@ -1513,7 +1516,7 @@ static int LocatorSetMerge( int workerCount, uint64_t* hash )
 	b2BodyId right = CreateLocatorBox( worldId, b2_dynamicBody, 5.0f, 0.5f );
 
 	b2BodyId watcher = CreateLocatorBox( worldId, b2_kinematicBody, -3.9f, 0.5f );
-	b2Body_EnableSleep( watcher, false );
+	b2Body_EnableSleeping( watcher, false );
 
 	ENSURE( StepUntilAsleep( worldId, left, 600 ) );
 	ENSURE( b2Body_IsAwake( right ) == false );
@@ -1561,10 +1564,10 @@ static int LocatorFastBody( int workerCount, uint64_t* hash )
 	StepLocatorWorld( worldId, 4 );
 	ENSURE( (float)b2Body_GetPosition( bullet ).x > 2.0f );
 
-	b2Body_EnableSleep( bullet, false );
+	b2Body_EnableSleeping( bullet, false );
 	StepLocatorWorld( worldId, 4 );
 
-	b2Body_EnableSleep( bullet, true );
+	b2Body_EnableSleeping( bullet, true );
 	StepLocatorWorld( worldId, 30 );
 
 	// It stopped at the wall instead of tunneling through

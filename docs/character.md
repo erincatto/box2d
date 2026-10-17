@@ -30,7 +30,7 @@ Let's review the features. First there are a couple world query functions.
 
 ### Cast mover
 
-`b2World_MoverCast()` is a custom shape cast that tries to avoid getting stuck when shapes start out touching.
+`b2World_CastMover()` is a custom shape cast that tries to avoid getting stuck when shapes start out touching.
 The feature is called _encroachment_. Since the capsule has a significant radius it can move closer
 to a surface it is touching without the inner line segment generating an overlap, which would cause
 the shape cast to fail. Due to the internal use of GJK, encroachment has little cost. The idea with encroachment is that
@@ -38,19 +38,18 @@ the mover is trying to slide along a surface and we don't want to stop that even
 
 ### Collide mover
 
-`b2World_MoverCollide()` complements the cast function. This function generates collision planes for touching and/or overlapped
+`b2World_CollideMover()` complements the cast function. This function generates collision planes for touching and/or overlapped
 surfaces. The character mover is assumed to have a fixed rotation, so it doesn't need contact manifolds or contact points. It just
 needs collision planes. Each plane is returned with the `b2Plane` and a `b2ShapeId` for each shape the mover is touching.
 
 Both mover functions take a `b2Pos` origin and the mover capsule is relative to it. I recommend to assign the mover position to a point
 on the capsule axis, such as the bottom of the segment. Another option is to use your game entity position. This is usually on the ground
-below the capsule. The returned planes are relative to the mover position and feed `b2SolvePlanes()` directly.
+below the capsule. The returned planes are relative to the mover position.
 
 ### Solve planes
 
-Once you have some collision planes from `b2World_MoverCollide()`, you can process and filter them to generate an array of `b2CollisionPlane`.
-These collision planes can then be sent to `b2SolvePlanes()` to generate a new position for the mover
-that attempts to find the optimal new position given the current position.
+Once you have some collision planes from `b2World_CollideMover()`, you can process and filter them to generate an array of `b2CollisionPlane`.
+These collision planes can then be sent to `b2SolvePlanes()` to generate a position delta for the mover. The goal is to find the position closest to the target that satisfies the given set of planes. The plane solver uses an iterative algorithm to solve the constrained optimization problem. This is different than traditional character movers that use an iterative clip and slide scheme. The benefit of the optimizer is that it includes de-penetration and movement in one loop.
 
 These collision planes support *soft collision* using a `pushLimit`. This push limit is a distance value. A rigid surface will have a push
 limit of `FLT_MAX`. However, you may want some surfaces to have a limited effect on the character. For example, you may want the mover to
@@ -94,7 +93,7 @@ The pogo is designed to be recreated every time step based on user ray casts. Th
 
 ### Dynamic mover sample
 
-See the `DynamicMoverSample` for details. There is a `DynamicMover` class that you can use as a starting point. I also made a [video]() that demonstrates the dynamic mover.
+See the `DynamicMoverSample` for details. There is a `DynamicMover` class that you can use as a starting point. I also made a [video](https://www.youtube.com/watch?v=MWnTQUKUc0s) that demonstrates the dynamic mover.
 
 ## Choosing a mover
 

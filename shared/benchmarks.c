@@ -515,7 +515,7 @@ float StepSpinner( b2WorldId worldId, int stepCount )
 	(void)worldId;
 	(void)stepCount;
 
-	return b2RevoluteJoint_GetAngle( g_spinnerData.spinnerId );
+	return b2RevoluteJoint_GetCurrentAngle( g_spinnerData.spinnerId );
 }
 
 b2Capacity GetSmashCapacity( void )
@@ -1339,7 +1339,7 @@ float StepQueries( b2WorldId worldId, int stepCount )
 
 		for ( int i = 0; i < queryCount; ++i )
 		{
-			b2RayResult result = b2World_RayCastClosest( worldId, data->origins[i], data->translations[i], filter );
+			b2RayResult result = b2World_CastRayClosest( worldId, data->origins[i], data->translations[i], filter );
 			stats.nodeVisits += result.nodeVisits;
 			stats.leafVisits += result.leafVisits;
 			hitCount += result.hit ? 1 : 0;
@@ -1348,7 +1348,7 @@ float StepQueries( b2WorldId worldId, int stepCount )
 		for ( int i = 0; i < queryCount; ++i )
 		{
 			float fraction = 1.0f;
-			b2TreeStats castStats = b2World_ShapeCast( worldId, data->origins[i], &circle, data->translations[i], filter,
+			b2TreeStats castStats = b2World_CastShape( worldId, data->origins[i], &circle, data->translations[i], filter,
 													   QueryCastClosest, &fraction );
 			stats.nodeVisits += castStats.nodeVisits;
 			stats.leafVisits += castStats.leafVisits;
@@ -1873,7 +1873,7 @@ float StepTileWorld( b2WorldId worldId, int stepCount )
 		float angle = TileRandom( &state, 0.0f, 2.0f * B2_PI );
 		b2Vec2 translation = { TILE_RAY_LENGTH * cosf( angle ), TILE_RAY_LENGTH * sinf( angle ) };
 
-		b2RayResult result = b2World_RayCastClosest( worldId, origin, translation, filter );
+		b2RayResult result = b2World_CastRayClosest( worldId, origin, translation, filter );
 		stats.nodeVisits += result.nodeVisits;
 		stats.leafVisits += result.leafVisits;
 		hitCount += result.hit ? 1 : 0;
