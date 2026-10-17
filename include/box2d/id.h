@@ -9,10 +9,9 @@
 
 /**
  * @defgroup id Ids
- * These ids serve as handles to internal Box2D objects.
- * These should be considered opaque data and passed by value.
- * Include this header if you need the id types and not the whole Box2D API.
- * All ids are considered null if initialized to zero.
+ * These ids serve as handles to internal Box2D objects. These should be considered opaque data and
+ * passed by value. Include this header if you need the id types and not the whole Box2D API. All
+ * ids are considered null if initialized to zero.
  *
  * For example in C++:
  *
@@ -28,8 +27,10 @@
  *
  * These are both considered null.
  *
- * @warning Do not use the internals of these ids. They are subject to change. Ids should be treated as opaque objects.
- * @warning You should use ids to access objects in Box2D. Do not access files within the src folder. Such usage is unsupported.
+ * @warning Do not use the internals of these ids. They are subject to change. Ids should be treated
+ * as opaque objects.
+ * @warning You should use ids to access objects in Box2D. Do not access files within the src
+ * folder. Such usage is unsupported.
  * @{
  */
 
@@ -95,8 +96,7 @@ typedef struct b2ContactId
 #endif
 // clang-format on
 
-/// Use these to make your identifiers null.
-/// You may also use zero initialization to get null.
+/// Use these to make your identifiers null. You may also use zero initialization to get null.
 static const b2WorldId b2_nullWorldId = B2_NULL_ID;
 static const b2BodyId b2_nullBodyId = B2_NULL_ID;
 static const b2ShapeId b2_nullShapeId = B2_NULL_ID;
@@ -111,8 +111,9 @@ static const b2ContactId b2_nullContactId = B2_NULL_ID;
 #define B2_IS_NON_NULL( id ) ( ( id ).index1 != 0 )
 
 /// Compare two ids for equality. Doesn't work for b2WorldId. Don't mix types.
-#define B2_ID_EQUALS( id1, id2 )                                                                                                 \
-	( ( id1 ).index1 == ( id2 ).index1 && ( id1 ).world0 == ( id2 ).world0 && ( id1 ).generation == ( id2 ).generation )
+#define B2_ID_EQUALS( id1, id2 )                                                                   \
+	( ( id1 ).index1 == ( id2 ).index1 && ( id1 ).world0 == ( id2 ).world0 &&                      \
+	  ( id1 ).generation == ( id2 ).generation )
 
 /// Store a world id into a uint32_t.
 B2_ID_INLINE uint32_t b2StoreWorldId( b2WorldId id )

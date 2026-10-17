@@ -27,7 +27,8 @@ B2_API bool b2IsValidRot( b2Rot q );
 /// Is this a valid transform? Not NaN or infinity. Rotation is normalized.
 B2_API bool b2IsValidTransform( b2Transform t );
 
-/// Is this a valid bounding box? Not NaN or infinity. Upper bound greater than or equal to lower bound.
+/// Is this a valid bounding box? Not NaN or infinity. Upper bound greater than or equal to lower
+/// bound.
 B2_API bool b2IsValidAABB( b2AABB aabb );
 
 /// Is this a valid plane? Normal is a unit vector. Not NaN or infinity.
@@ -94,14 +95,12 @@ B2_INLINE float b2ClampFloat( float a, float lower, float upper )
 	return a < lower ? lower : ( a > upper ? upper : a );
 }
 
-/// Compute an approximate arctangent in the range [-pi, pi]
-/// This is hand coded for cross-platform determinism. The atan2f
-/// function in the standard library is not cross-platform deterministic.
-///	Accurate to around 0.0023 degrees
+/// Compute an approximate arctangent in the range [-pi, pi] This is hand coded for cross-platform
+/// determinism. The atan2f function in the standard library is not cross-platform deterministic.
+/// Accurate to around 0.0023 degrees
 B2_API float b2Atan2( float y, float x );
 
-/// Compute the cosine and sine of an angle in radians. Implemented
-/// for cross-platform determinism.
+/// Compute the cosine and sine of an angle in radians. Implemented for cross-platform determinism.
 B2_API b2CosSin b2ComputeCosSin( float radians );
 
 /// Vector dot product
@@ -259,8 +258,8 @@ B2_INLINE bool b2IsNormalized( b2Vec2 a )
 	return b2AbsFloat( 1.0f - aa ) < 100.0f * FLT_EPSILON;
 }
 
-/// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also
-/// outputs the length.
+/// Convert a vector into a unit vector if possible, otherwise returns the zero vector. Also outputs
+/// the length.
 B2_INLINE b2Vec2 b2GetLengthAndNormalize( float* length, b2Vec2 a )
 {
 	float lengthSquared = a.x * a.x + a.y * a.y;
@@ -347,7 +346,7 @@ B2_INLINE b2Rot b2InvertRot( b2Rot a )
 
 /// Normalized linear interpolation
 /// https://fgiesen.wordpress.com/2012/08/15/linear-interpolation-past-present-and-future/
-///	https://web.archive.org/web/20170825184056/http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/
+/// https://web.archive.org/web/20170825184056/http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/
 B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 {
 	float omt = 1.0f - t;
@@ -415,8 +414,8 @@ B2_INLINE b2Rot b2MulRot( b2Rot q, b2Rot r )
 	return qr;
 }
 
-/// Transpose multiply two rotations: inv(a) * b
-/// This rotates a vector local in frame b into a vector local in frame a
+/// Transpose multiply two rotations: inv(a) * b This rotates a vector local in frame b into a
+/// vector local in frame a
 B2_INLINE b2Rot b2InvMulRot( b2Rot a, b2Rot b )
 {
 	// [ ac as] * [bc -bs] = [ac*bc+as*bs -ac*bs+as*bc]
@@ -486,9 +485,8 @@ B2_INLINE b2Vec2 b2InvTransformPoint( b2Transform t, const b2Vec2 p )
 	return B2_LITERAL( b2Vec2 ){ t.q.c * vx + t.q.s * vy, -t.q.s * vx + t.q.c * vy };
 }
 
-/// Multiply two transforms. If the result is applied to a point p local to frame B,
-/// the transform would first convert p to a point local to frame A, then into a point
-/// in the world frame.
+/// Multiply two transforms. If the result is applied to a point p local to frame B, the transform
+/// would first convert p to a point local to frame A, then into a point in the world frame.
 /// v2 = A.q.Rot(B.q.Rot(v1) + B.p) + A.p
 ///    = (A.q * B.q).Rot(v1) + A.q.Rot(B.p) + A.p
 B2_INLINE b2Transform b2MulTransforms( b2Transform A, b2Transform B )
@@ -522,11 +520,10 @@ B2_INLINE b2Vec2 b2ToVec2( b2Pos p )
 	return B2_LITERAL( b2Vec2 ){ (float)p.x, (float)p.y };
 }
 
-/// Narrow a world coordinate to float, rounding toward negative infinity. Use with
-/// b2RoundUpFloat to build a conservative float box that always contains double bounds,
-/// where plain rounding far from the origin could clip. nextafterf is an exact IEEE
-/// operation, so this is cross-platform deterministic. With large world mode off this is
-/// a plain conversion.
+/// Narrow a world coordinate to float, rounding toward negative infinity. Use with b2RoundUpFloat
+/// to build a conservative float box that always contains double bounds, where plain rounding far
+/// from the origin could clip. nextafterf is an exact IEEE operation, so this is cross-platform
+/// deterministic. With large world mode off this is a plain conversion.
 B2_INLINE float b2RoundDownFloat( double x )
 {
 #if defined( BOX2D_DOUBLE_PRECISION )
@@ -646,8 +643,8 @@ B2_INLINE b2Mat22 b2GetInverse22( b2Mat22 A )
 	return B;
 }
 
-/// Solve A * x = b, where b is a column vector. This is more efficient
-/// than computing the inverse in one-shot cases.
+/// Solve A * x = b, where b is a column vector. This is more efficient than computing the inverse
+/// in one-shot cases.
 B2_INLINE b2Vec2 b2Solve22( b2Mat22 A, b2Vec2 b )
 {
 	float a11 = A.cx.x, a12 = A.cy.x, a21 = A.cx.y, a22 = A.cy.y;
@@ -674,14 +671,16 @@ B2_INLINE bool b2AABB_Contains( b2AABB a, b2AABB b )
 /// Get the center of the AABB.
 B2_INLINE b2Vec2 b2AABB_Center( b2AABB a )
 {
-	b2Vec2 b = { 0.5f * ( a.lowerBound.x + a.upperBound.x ), 0.5f * ( a.lowerBound.y + a.upperBound.y ) };
+	b2Vec2 b = { 0.5f * ( a.lowerBound.x + a.upperBound.x ),
+				 0.5f * ( a.lowerBound.y + a.upperBound.y ) };
 	return b;
 }
 
 /// Get the extents of the AABB (half-widths).
 B2_INLINE b2Vec2 b2AABB_Extents( b2AABB a )
 {
-	b2Vec2 b = { 0.5f * ( a.upperBound.x - a.lowerBound.x ), 0.5f * ( a.upperBound.y - a.lowerBound.y ) };
+	b2Vec2 b = { 0.5f * ( a.upperBound.x - a.lowerBound.x ),
+				 0.5f * ( a.upperBound.y - a.lowerBound.y ) };
 	return b;
 }
 
@@ -699,8 +698,8 @@ B2_INLINE b2AABB b2AABB_Union( b2AABB a, b2AABB b )
 /// Do a and b overlap
 B2_INLINE bool b2AABB_Overlaps( b2AABB a, b2AABB b )
 {
-	return !( b.lowerBound.x > a.upperBound.x || b.lowerBound.y > a.upperBound.y || a.lowerBound.x > b.upperBound.x ||
-			  a.lowerBound.y > b.upperBound.y );
+	return !( b.lowerBound.x > a.upperBound.x || b.lowerBound.y > a.upperBound.y ||
+			  a.lowerBound.x > b.upperBound.x || a.lowerBound.y > b.upperBound.y );
 }
 
 /// Compute the bounding box of an array of circles
@@ -727,31 +726,31 @@ B2_INLINE float b2PlaneSeparation( b2Plane plane, b2Vec2 point )
 	return b2Dot( plane.normal, point ) - plane.offset;
 }
 
-/// One-dimensional mass-spring-damper simulation. Returns the new velocity given the position and time step.
-/// You can then compute the new position using:
+/// One-dimensional mass-spring-damper simulation. Returns the new velocity given the position and
+/// time step. You can then compute the new position using:
 /// position += timeStep * newVelocity
-/// This drives towards a zero position. By using implicit integration we get a stable solution
-/// that doesn't require transcendental functions.
-B2_INLINE float b2SpringDamper( float hertz, float dampingRatio, float position, float velocity, float timeStep )
+/// This drives towards a zero position. By using implicit integration we get a stable solution that
+/// doesn't require transcendental functions.
+B2_INLINE float b2SpringDamper( float hertz, float dampingRatio, float position, float velocity,
+								float timeStep )
 {
 	float omega = 2.0f * B2_PI * hertz;
 	float omegaH = omega * timeStep;
-	return ( velocity - omega * omegaH * position ) / ( 1.0f + 2.0f * dampingRatio * omegaH + omegaH * omegaH );
+	return ( velocity - omega * omegaH * position ) /
+		   ( 1.0f + 2.0f * dampingRatio * omegaH + omegaH * omegaH );
 }
 
-/// Box2D bases all length units on meters, but you may need different units for your game.
-/// You can set this value to use different units. This should be done at application startup
-/// and only modified once. Default value is 1.
-/// For example, if your game uses pixels for units you can use pixels for all length values
-/// sent to Box2D. There should be no extra cost. However, Box2D has some internal tolerances
-/// and thresholds that have been tuned for meters. By calling this function, Box2D is able
-/// to adjust those tolerances and thresholds to improve accuracy.
-/// A good rule of thumb is to pass the height of your player character to this function. So
-/// if your player character is 32 pixels high, then pass 32 to this function. Then you may
-/// confidently use pixels for all the length values sent to Box2D. All length values returned
-/// from Box2D will also be pixels because Box2D does not do any scaling internally.
-/// However, you are now on the hook for coming up with good values for gravity, density, and
-/// forces.
+/// Box2D bases all length units on meters, but you may need different units for your game. You can
+/// set this value to use different units. This should be done at application startup and only
+/// modified once. Default value is 1. For example, if your game uses pixels for units you can use
+/// pixels for all length values sent to Box2D. There should be no extra cost. However, Box2D has
+/// some internal tolerances and thresholds that have been tuned for meters. By calling this
+/// function, Box2D is able to adjust those tolerances and thresholds to improve accuracy. A good
+/// rule of thumb is to pass the height of your player character to this function. So if your player
+/// character is 32 pixels high, then pass 32 to this function. Then you may confidently use pixels
+/// for all the length values sent to Box2D. All length values returned from Box2D will also be
+/// pixels because Box2D does not do any scaling internally. However, you are now on the hook for
+/// coming up with good values for gravity, density, and forces.
 /// @warning This must be modified before any calls to Box2D
 B2_API void b2SetLengthUnitsPerMeter( float lengthUnits );
 
@@ -770,10 +769,8 @@ BOX2D_EXPORT extern float b2_lengthUnitsPerMeter;
 
 /**
  * @defgroup math_cpp C++ Math
- * @brief Math operator overloads for C++
- * See math_functions.h for details.
- * These operators don't reach the published documentation because mixing C and C++ in
- * Doxygen is awkward.
+ * @brief Math operator overloads for C++ See math_functions.h for details. These operators don't
+ * reach the published documentation because mixing C and C++ in Doxygen is awkward.
  * @{
  */
 

@@ -101,8 +101,8 @@ typedef int b2AssertCallbackFcn( const char* condition, const char* fileName, in
 /// Prototype for user log callback. Used to log warnings.
 typedef void b2LogCallbackFcn( const char* message );
 
-/// This allows the user to override the allocation functions. These should be
-/// set during application startup.
+/// This allows the user to override the allocation functions. These should be set during
+/// application startup.
 B2_API void b2SetAllocator( b2AllocCallbackFcn* allocFcn, b2FreeCallbackFcn* freeFcn );
 
 /// @return the total bytes allocated by Box2D
@@ -165,8 +165,9 @@ B2_API bool b2IsAVX2Available( void );
 
 #if !defined( NDEBUG ) || defined( B2_ENABLE_ASSERT )
 B2_API int b2InternalAssert( const char* condition, const char* fileName, int lineNumber );
-#define B2_ASSERT( condition )                                                                                                   \
-	( (void)( ( !!( condition ) ) || ( b2InternalAssert( #condition, __FILE__, (int)( __LINE__ ) ), 0 ) ) )
+#define B2_ASSERT( condition )                                                                     \
+	( (void)( ( !!( condition ) ) ||                                                               \
+			  ( b2InternalAssert( #condition, __FILE__, (int)( __LINE__ ) ), 0 ) ) )
 #else
 #define B2_ASSERT( ... ) ( (void)0 )
 #endif
@@ -184,8 +185,8 @@ B2_API uint64_t b2GetTicks( void );
 /// Get the milliseconds passed from an initial tick value.
 B2_API float b2GetMilliseconds( uint64_t ticks );
 
-/// Get the milliseconds passed from an initial tick value. Resets the passed in
-/// value to the current tick value.
+/// Get the milliseconds passed from an initial tick value. Resets the passed in value to the
+/// current tick value.
 B2_API float b2GetMillisecondsAndReset( uint64_t* ticks );
 
 /// Yield to be used in a busy loop.

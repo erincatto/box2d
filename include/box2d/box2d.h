@@ -22,15 +22,17 @@
  * @defgroup world World
  * These functions allow you to create a simulation world.
  *
- * You can add rigid bodies and joint constraints to the world and run the simulation. You can get contact
- * information to get contact points and normals as well as events. You can query the world, checking for overlaps and casting rays
- * or shapes. There is also debugging information such as debug draw, timing information, and counters. You can find documentation
+ * You can add rigid bodies and joint constraints to the world and run the simulation. You can get
+ * contact information to get contact points and normals as well as events. You can query the world,
+ * checking for overlaps and casting rays or shapes. There is also debugging information such as
+ * debug draw, timing information, and counters. You can find documentation
  * here: https://box2d.org/
  * @{
  */
 
-/// Create a world for rigid body simulation. A world contains bodies, shapes, and constraints. You may create
-/// up to B2_MAX_WORLDS worlds. Each world is completely independent and may be simulated in parallel.
+/// Create a world for rigid body simulation. A world contains bodies, shapes, and constraints. You
+/// may create up to B2_MAX_WORLDS worlds. Each world is completely independent and may be simulated
+/// in parallel.
 /// @return the world id.
 B2_API b2WorldId b2CreateWorld( const b2WorldDef* def );
 
@@ -40,10 +42,12 @@ B2_API void b2DestroyWorld( b2WorldId worldId );
 /// World id validation. Provides validation for up to 64K allocations.
 B2_API bool b2World_IsValid( b2WorldId id );
 
-/// Simulate a world for one time step. This performs collision detection, integration, and constraint solution.
+/// Simulate a world for one time step. This performs collision detection, integration, and
+/// constraint solution.
 /// @param worldId The world to simulate
 /// @param timeStep The amount of time to simulate, this should be a fixed number. Usually 1/60.
-/// @param subStepCount The number of sub-steps, increasing the sub-step count can increase accuracy. Usually 4.
+/// @param subStepCount The number of sub-steps, increasing the sub-step count can increase
+/// accuracy. Usually 4.
 B2_API void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount );
 
 /// Call this to draw shapes and other debug draw data
@@ -52,31 +56,37 @@ B2_API void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw );
 /// Call this to get the world bounds based on the union of all shape bounds.
 B2_API b2AABB b2World_GetBounds( b2WorldId worldId );
 
-/// Get the body events for the current time step. The event data is transient. Do not store a reference to this data.
+/// Get the body events for the current time step. The event data is transient. Do not store a
+/// reference to this data.
 B2_API b2BodyEvents b2World_GetBodyEvents( b2WorldId worldId );
 
-/// Get sensor events for the current time step. The event data is transient. Do not store a reference to this data.
+/// Get sensor events for the current time step. The event data is transient. Do not store a
+/// reference to this data.
 B2_API b2SensorEvents b2World_GetSensorEvents( b2WorldId worldId );
 
-/// Get contact events for the current time step. The event data is transient. Do not store a reference to this data.
+/// Get contact events for the current time step. The event data is transient. Do not store a
+/// reference to this data.
 B2_API b2ContactEvents b2World_GetContactEvents( b2WorldId worldId );
 
-/// Get the joint events for the current time step. The event data is transient. Do not store a reference to this data.
+/// Get the joint events for the current time step. The event data is transient. Do not store a
+/// reference to this data.
 B2_API b2JointEvents b2World_GetJointEvents( b2WorldId worldId );
 
-/// Overlap test for all shapes that *potentially* overlap the provided AABB.
-/// The AABB is relative to the origin, which keeps the test precise far from the world origin
-/// in large world mode. Near the origin pass b2Pos_zero and a world AABB.
-B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b2QueryFilter filter,
-										b2OverlapResultCallbackFcn* fcn, void* context );
+/// Overlap test for all shapes that *potentially* overlap the provided AABB. The AABB is relative
+/// to the origin, which keeps the test precise far from the world origin in large world mode. Near
+/// the origin pass b2Pos_zero and a world AABB.
+B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb,
+										b2QueryFilter filter, b2OverlapResultCallbackFcn* fcn,
+										void* context );
 
-/// Overlap test for all shapes that overlap the provided shape proxy.
-/// The proxy points are relative to the origin. Near the origin pass b2Pos_zero and world points.
-B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2QueryFilter filter,
-										 b2OverlapResultCallbackFcn* fcn, void* context );
+/// Overlap test for all shapes that overlap the provided shape proxy. The proxy points are relative
+/// to the origin. Near the origin pass b2Pos_zero and world points.
+B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy,
+										 b2QueryFilter filter, b2OverlapResultCallbackFcn* fcn,
+										 void* context );
 
-/// Cast a ray into the world to collect shapes in the path of the ray.
-/// Your callback function controls whether you get the closest point, any point, or n-points.
+/// Cast a ray into the world to collect shapes in the path of the ray. Your callback function
+/// controls whether you get the closest point, any point, or n-points.
 /// @note The callback function may receive shapes in any order
 /// @param worldId The world to cast the ray against
 /// @param origin The start point of the ray
@@ -84,30 +94,36 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const 
 /// @param filter Contains bit flags to filter unwanted shapes from the results
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
-///	@return traversal performance counters
-B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter,
-									b2CastResultCallbackFcn* fcn, void* context );
+/// @return traversal performance counters
+B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation,
+									b2QueryFilter filter, b2CastResultCallbackFcn* fcn,
+									void* context );
 
-/// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores initial overlap.
-/// This is less general than b2World_CastRay() and does not allow for custom filtering.
-B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter );
+/// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores
+/// initial overlap. This is less general than b2World_CastRay() and does not allow for custom
+/// filtering.
+B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation,
+										   b2QueryFilter filter );
 
-/// Cast a shape through the world. Similar to a ray cast except that a shape is cast instead of a point.
-/// The proxy points are relative to the origin. Callback points are world positions.
-///	@see b2World_CastRay
-B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
-									  b2QueryFilter filter, b2CastResultCallbackFcn* fcn, void* context );
+/// Cast a shape through the world. Similar to a ray cast except that a shape is cast instead of a
+/// point. The proxy points are relative to the origin. Callback points are world positions.
+/// @see b2World_CastRay
+B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy,
+									  b2Vec2 translation, b2QueryFilter filter,
+									  b2CastResultCallbackFcn* fcn, void* context );
 
-/// Cast a capsule mover through the world. This is a special shape cast that handles sliding along other shapes while reducing
-/// clipping. The mover capsule is relative to the origin. Near the origin pass b2Pos_zero and a world capsule.
-/// Returns the translation fraction at the first hit.
-B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation,
-								b2QueryFilter filter );
+/// Cast a capsule mover through the world. This is a special shape cast that handles sliding along
+/// other shapes while reducing clipping. The mover capsule is relative to the origin. Near the
+/// origin pass b2Pos_zero and a world capsule. Returns the translation fraction at the first hit.
+B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover,
+								b2Vec2 translation, b2QueryFilter filter );
 
-/// Collide a capsule mover with the world, gathering collision planes that can be fed to b2SolvePlanes. Useful for
-/// kinematic character movement. The mover capsule and the resulting planes are relative to the origin.
-B2_API void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
-								  b2PlaneResultCallbackFcn* fcn, void* context );
+/// Collide a capsule mover with the world, gathering collision planes that can be fed to
+/// b2SolvePlanes. Useful for kinematic character movement. The mover capsule and the resulting
+/// planes are relative to the origin.
+B2_API void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover,
+								  b2QueryFilter filter, b2PlaneResultCallbackFcn* fcn,
+								  void* context );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 /// by disabling sleep completely at the world level.
@@ -117,17 +133,17 @@ B2_API void b2World_EnableSleeping( b2WorldId worldId, bool flag );
 /// Is body sleeping enabled?
 B2_API bool b2World_IsSleepingEnabled( b2WorldId worldId );
 
-/// Enable/disable continuous collision between dynamic and static bodies. Generally you should keep continuous
-/// collision enabled to prevent fast moving objects from going through static objects. The performance gain from
-/// disabling continuous collision is minor.
+/// Enable/disable continuous collision between dynamic and static bodies. Generally you should keep
+/// continuous collision enabled to prevent fast moving objects from going through static objects.
+/// The performance gain from disabling continuous collision is minor.
 /// @see b2WorldDef
 B2_API void b2World_EnableContinuous( b2WorldId worldId, bool flag );
 
 /// Is continuous collision enabled?
 B2_API bool b2World_IsContinuousEnabled( b2WorldId worldId );
 
-/// Adjust the restitution threshold. It is recommended not to make this value very small
-/// because it will prevent bodies from sleeping. Usually in meters per second.
+/// Adjust the restitution threshold. It is recommended not to make this value very small because it
+/// will prevent bodies from sleeping. Usually in meters per second.
 /// @see b2WorldDef
 B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 
@@ -148,8 +164,8 @@ B2_API void b2World_EnableRestitutionPropagation( b2WorldId worldId, bool flag )
 /// Is restitution propagation enabled?
 B2_API bool b2World_IsRestitutionPropagationEnabled( b2WorldId worldId );
 
-/// Adjust the hit event threshold. This controls the collision speed needed to generate a b2ContactHitEvent.
-/// Usually in meters per second.
+/// Adjust the hit event threshold. This controls the collision speed needed to generate a
+/// b2ContactHitEvent. Usually in meters per second.
 /// @see b2WorldDef::hitEventThreshold
 B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
 
@@ -157,14 +173,16 @@ B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
 B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 
 /// Register the custom filter callback. This is optional.
-B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackFcn* fcn, void* context );
+B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackFcn* fcn,
+											 void* context );
 
 /// Register the pre-solve and pre-continuous callbacks. This is optional.
-B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveCallbackFcn* preSolveFcn, b2PreContinuousCallbackFcn* preContinuousFcn,
+B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveCallbackFcn* preSolveFcn,
+										 b2PreContinuousCallbackFcn* preContinuousFcn,
 										 void* context );
 
-/// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
-/// is left as a decision for the application. Usually in m/s^2.
+/// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this is
+/// left as a decision for the application. Usually in m/s^2.
 /// @see b2WorldDef
 B2_API void b2World_SetGravity( b2WorldId worldId, b2Vec2 gravity );
 
@@ -182,10 +200,12 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
 /// @param pushSpeed The maximum contact constraint push out speed (meters per second)
 /// @note Advanced feature
-B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
+B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio,
+									  float pushSpeed );
 
 /// Get the contact tuning.
-B2_API void b2World_GetContactTuning( b2WorldId worldId, float* hertz, float* dampingRatio, float* pushSpeed );
+B2_API void b2World_GetContactTuning( b2WorldId worldId, float* hertz, float* dampingRatio,
+									  float* pushSpeed );
 
 /// Set the contact point recycling distance. Setting this to zero disables contact point recycling.
 /// Usually in meters.
@@ -200,8 +220,8 @@ B2_API void b2World_SetMaxLinearSpeed( b2WorldId worldId, float maximumLinearSpe
 /// Get the maximum linear speed. Usually in m/s.
 B2_API float b2World_GetMaxLinearSpeed( b2WorldId worldId );
 
-/// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
-/// warm starting greatly reduces stability and provides no performance gain.
+/// Enable/disable constraint warm starting. Advanced feature for testing. Disabling warm starting
+/// greatly reduces stability and provides no performance gain.
 B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 
 /// Is constraint warm starting enabled?
@@ -246,7 +266,8 @@ B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 
-/// Compute a hash of the simulation state. Use this to detect desyncs, for example in rollback resimulation.
+/// Compute a hash of the simulation state. Use this to detect desyncs, for example in rollback
+/// resimulation.
 B2_API uint64_t b2World_GetStateHash( b2WorldId worldId );
 
 /** @} */
@@ -257,8 +278,8 @@ B2_API uint64_t b2World_GetStateHash( b2WorldId worldId );
  * @{
  */
 
-/// Opaque handle for a recording buffer. Create one, hand it to b2World_StartRecording, then
-/// save its bytes and destroy it. The buffer grows as the world records into it.
+/// Opaque handle for a recording buffer. Create one, hand it to b2World_StartRecording, then save
+/// its bytes and destroy it. The buffer grows as the world records into it.
 typedef struct b2Recording b2Recording;
 
 /// Create a recording buffer. The buffer grows on demand. @p byteCapacity pre-sizes it to avoid
@@ -269,8 +290,8 @@ B2_API b2Recording* b2CreateRecording( int byteCapacity );
 /// Destroy a recording buffer and free its memory.
 B2_API void b2DestroyRecording( b2Recording* recording );
 
-/// Get a pointer to the recorded bytes, for saving to a file or transmitting. Valid until the
-/// next recording call or b2DestroyRecording.
+/// Get a pointer to the recorded bytes, for saving to a file or transmitting. Valid until the next
+/// recording call or b2DestroyRecording.
 B2_API const uint8_t* b2Recording_GetData( const b2Recording* recording );
 
 /// Get the number of recorded bytes.
@@ -292,8 +313,8 @@ B2_API void b2World_StopRecording( b2WorldId worldId );
 /// @return false if the file could not be written
 B2_API bool b2Recording_SaveToFile( const b2Recording* recording, const char* path );
 
-/// Load a recording from a file into a new recording buffer. Convenience wrapper over your own
-/// file I/O. Destroy the result with b2DestroyRecording.
+/// Load a recording from a file into a new recording buffer. Convenience wrapper over your own file
+/// I/O. Destroy the result with b2DestroyRecording.
 /// @return NULL if the file is missing or unreadable
 B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
 
@@ -301,22 +322,22 @@ B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
 
 /**
  * @defgroup snapshot Snapshot
- * Save and restore the full simulation state of a world as a byte image. Unlike a
- * recording, which is a stream of API events, a snapshot is a single instant. Useful for
- * rollback, undo, and deterministic save games. Call between world steps.
+ * Save and restore the full simulation state of a world as a byte image. Unlike a recording, which
+ * is a stream of API events, a snapshot is a single instant. Useful for rollback, undo, and
+ * deterministic save games. Call between world steps.
  *
- * A snapshot carries only simulation state. Application hooks are not included. So callbacks
- * and user data are not preserved. However, if you apply a snapshot to an existing world
- * then the callbacks stay.
+ * A snapshot carries only simulation state. Application hooks are not included. So callbacks and
+ * user data are not preserved. However, if you apply a snapshot to an existing world then the
+ * callbacks stay.
  *
  * All the ids remain valid when a world is restored in place: b2BodyId, b2ShapeId, b2JointId,
  * b2ChainId, and b2ContactId.
  * @{
  */
 
-/// Write a snapshot of the world's simulation state into a caller-owned buffer.
-/// Call once with image == NULL to get the required size, then again with a buffer
-/// of at least that size. Must be called at a step boundary.
+/// Write a snapshot of the world's simulation state into a caller-owned buffer. Call once with
+/// image == NULL to get the required size, then again with a buffer of at least that size. Must be
+/// called at a step boundary.
 /// @param worldId The world to snapshot
 /// @param image Destination buffer, or NULL to query the size
 /// @param capacity Size of image in bytes, ignored when querying
@@ -324,20 +345,19 @@ B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
 ///         Returns 0 if the world is mid-step.
 B2_API int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity );
 
-/// Restore a world's simulation state from a snapshot image. The b2WorldId and
-/// ids held from this same world stay valid for objects that existed at the snapshot instant.
-/// Callbacks and threading configuration are preserved. User data on shapes, bodies,
-/// and joints is nulled.
+/// Restore a world's simulation state from a snapshot image. The b2WorldId and ids held from this
+/// same world stay valid for objects that existed at the snapshot instant. Callbacks and threading
+/// configuration are preserved. User data on shapes, bodies, and joints is nulled.
 /// @param worldId The world to restore into
 /// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
-/// @return true on success. On a rejected image (bad magic, version, or layout) the world
-///         is left unchanged. A corrupt payload detected after the rebuild begins returns
-///         false and leaves the world unusable, so the caller must destroy it.
+/// @return true on success. On a rejected image (bad magic, version, or layout) the world is left
+///         unchanged. A corrupt payload detected after the rebuild begins returns false and leaves
+///         the world unusable, so the caller must destroy it.
 B2_API bool b2World_RestoreFromSnapshot( b2WorldId worldId, const uint8_t* image, int size );
 
-/// Create a new world from a snapshot image. This is mainly useful for replay. Callbacks
-/// are reset to default.
+/// Create a new world from a snapshot image. This is mainly useful for replay. Callbacks are reset
+/// to default.
 /// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
 /// @param workerCount Worker count for the new world. 0 uses the serial single-worker fallback.
@@ -352,8 +372,8 @@ B2_API b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int 
  * @{
  */
 
-/// Create a rigid body given a definition. No reference to the definition is retained. So you can create the definition
-/// on the stack and pass it as a pointer.
+/// Create a rigid body given a definition. No reference to the definition is retained. So you can
+/// create the definition on the stack and pass it as a pointer.
 /// @code{.c}
 /// b2BodyDef bodyDef = b2DefaultBodyDef();
 /// b2BodyId myBodyId = b2CreateBody(myWorldId, &bodyDef);
@@ -361,12 +381,12 @@ B2_API b2WorldId b2CreateWorldFromSnapshot( const uint8_t* image, int size, int 
 /// @warning This function is locked during callbacks.
 B2_API b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def );
 
-/// Destroy a rigid body given an id. This destroys all shapes and joints attached to the body.
-/// Do not keep references to the associated shapes and joints.
+/// Destroy a rigid body given an id. This destroys all shapes and joints attached to the body. Do
+/// not keep references to the associated shapes and joints.
 B2_API void b2DestroyBody( b2BodyId bodyId );
 
-/// Body identifier validation. A valid body exists in a world and is non-null.
-/// This can be used to detect orphaned ids. Provides validation for up to 64K allocations.
+/// Body identifier validation. A valid body exists in a world and is non-null. This can be used to
+/// detect orphaned ids. Provides validation for up to 64K allocations.
 B2_API bool b2Body_IsValid( b2BodyId id );
 
 /// Get the body type: static, kinematic, or dynamic
@@ -426,15 +446,15 @@ B2_API void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity );
 /// Set the angular velocity of a body in radians per second
 B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
-/// Set the velocity to reach the given transform after a given time step.
-/// The result will be close but may not be exact. This is meant for kinematic bodies.
-/// The target is not applied if the velocity would be below the sleep threshold and
-/// the body is currently asleep.
+/// Set the velocity to reach the given transform after a given time step. The result will be close
+/// but may not be exact. This is meant for kinematic bodies. The target is not applied if the
+/// velocity would be below the sleep threshold and the body is currently asleep.
 /// @param bodyId The body id
 /// @param target The target transform for the body
 /// @param timeStep The time step of the next call to b2World_Step
 /// @param wake Option to wake the body or not
-B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float timeStep, bool wake );
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float timeStep,
+									   bool wake );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -442,63 +462,62 @@ B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint )
 /// Get the linear velocity of a world point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Pos worldPoint );
 
-/// Apply a force at a world point. If the force is not applied at the center of mass,
-/// it will generate a torque and affect the angular velocity. This optionally wakes up the body.
-/// The force is ignored if the body is not awake.
+/// Apply a force at a world point. If the force is not applied at the center of mass, it will
+/// generate a torque and affect the angular velocity. This optionally wakes up the body. The force
+/// is ignored if the body is not awake.
 /// @param bodyId The body id
 /// @param force The world force vector, usually in newtons (N)
 /// @param point The world position of the point of application
 /// @param wake Option to wake up the body
 B2_API void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Pos point, bool wake );
 
-/// Apply a force to the center of mass. This optionally wakes up the body.
-/// The force is ignored if the body is not awake.
+/// Apply a force to the center of mass. This optionally wakes up the body. The force is ignored if
+/// the body is not awake.
 /// @param bodyId The body id
 /// @param force the world force vector, usually in newtons (N).
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyForceToCenter( b2BodyId bodyId, b2Vec2 force, bool wake );
 
-/// Apply a torque. This affects the angular velocity without affecting the linear velocity.
-/// This optionally wakes the body. The torque is ignored if the body is not awake.
+/// Apply a torque. This affects the angular velocity without affecting the linear velocity. This
+/// optionally wakes the body. The torque is ignored if the body is not awake.
 /// @param bodyId The body id
 /// @param torque about the z-axis (out of the screen), usually in N*m.
 /// @param wake also wake up the body
 B2_API void b2Body_ApplyTorque( b2BodyId bodyId, float torque, bool wake );
 
-/// Clear the force and torque on this body. Forces and torques are automatically cleared after each world
-/// step. So this only needs to be called if the application wants to remove the effect of previous
-/// calls to apply forces and torques before the world step is called.
+/// Clear the force and torque on this body. Forces and torques are automatically cleared after each
+/// world step. So this only needs to be called if the application wants to remove the effect of
+/// previous calls to apply forces and torques before the world step is called.
 /// @param bodyId The body id
 B2_API void b2Body_ClearForces( b2BodyId bodyId );
 
-/// Apply an impulse at a point. This immediately modifies the velocity.
-/// It also modifies the angular velocity if the point of application
-/// is not at the center of mass. This optionally wakes the body.
-/// The impulse is ignored if the body is not awake.
+/// Apply an impulse at a point. This immediately modifies the velocity. It also modifies the
+/// angular velocity if the point of application is not at the center of mass. This optionally wakes
+/// the body. The impulse is ignored if the body is not awake.
 /// @param bodyId The body id
 /// @param impulse the world impulse vector, usually in N*s or kg*m/s.
 /// @param point the world position of the point of application.
 /// @param wake also wake up the body
-/// @warning This should be used for one-shot impulses. If you need a steady force,
-/// use a force instead, which will work better with the sub-stepping solver.
+/// @warning This should be used for one-shot impulses. If you need a steady force, use a force
+/// instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Pos point, bool wake );
 
-/// Apply an impulse to the center of mass. This immediately modifies the velocity.
-/// The impulse is ignored if the body is not awake. This optionally wakes the body.
+/// Apply an impulse to the center of mass. This immediately modifies the velocity. The impulse is
+/// ignored if the body is not awake. This optionally wakes the body.
 /// @param bodyId The body id
 /// @param impulse the world impulse vector, usually in N*s or kg*m/s.
 /// @param wake also wake up the body
-/// @warning This should be used for one-shot impulses. If you need a steady force,
-/// use a force instead, which will work better with the sub-stepping solver.
+/// @warning This should be used for one-shot impulses. If you need a steady force, use a force
+/// instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyLinearImpulseToCenter( b2BodyId bodyId, b2Vec2 impulse, bool wake );
 
-/// Apply an angular impulse. The impulse is ignored if the body is not awake.
-/// This optionally wakes the body.
+/// Apply an angular impulse. The impulse is ignored if the body is not awake. This optionally wakes
+/// the body.
 /// @param bodyId The body id
 /// @param impulse the angular impulse, usually in units of kg*m*m/s
 /// @param wake also wake up the body
-/// @warning This should be used for one-shot impulses. If you need a steady torque,
-/// use a torque instead, which will work better with the sub-stepping solver.
+/// @warning This should be used for one-shot impulses. If you need a steady torque, use a torque
+/// instead, which will work better with the sub-stepping solver.
 B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wake );
 
 /// Get the mass of the body, usually in kilograms
@@ -513,22 +532,19 @@ B2_API b2Vec2 b2Body_GetLocalCenter( b2BodyId bodyId );
 /// Get the center of mass position of the body in world space.
 B2_API b2Pos b2Body_GetWorldCenter( b2BodyId bodyId );
 
-/// Override the body's mass properties. Normally this is computed automatically using the
-/// shape geometry and density. This information is lost if a shape is added or removed or if the
-/// body type changes.
-/// If motion locks are used to fix rotation then the rotational inertia value is ignored and
-/// rotational inertia remains fixed at zero.
+/// Override the body's mass properties. Normally this is computed automatically using the shape
+/// geometry and density. This information is lost if a shape is added or removed or if the body
+/// type changes. If motion locks are used to fix rotation then the rotational inertia value is
+/// ignored and rotational inertia remains fixed at zero.
 B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 
 /// Get the mass data for a body
 B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 
-/// This updates the mass properties to the sum of the mass properties of the shapes.
-/// This normally does not need to be called unless you called b2Body_SetMassData to override
-/// the mass and you later want to reset the mass.
-/// You may also use this when automatic mass computation has been disabled.
-/// You should call this regardless of body type.
-/// Note that sensor shapes may have mass.
+/// This updates the mass properties to the sum of the mass properties of the shapes. This normally
+/// does not need to be called unless you called b2Body_SetMassData to override the mass and you
+/// later want to reset the mass. You may also use this when automatic mass computation has been
+/// disabled. You should call this regardless of body type. Note that sensor shapes may have mass.
 B2_API void b2Body_UpdateMassFromShapes( b2BodyId bodyId );
 
 /// Adjust the linear damping. Normally this is set in b2BodyDef before creation.
@@ -554,14 +570,15 @@ B2_API float b2Body_GetGravityScale( b2BodyId bodyId );
 B2_API bool b2Body_IsAwake( b2BodyId bodyId );
 
 /// Wake a body from sleep. This wakes the entire island the body is touching.
-/// @warning Putting a body to sleep will put the entire island of bodies touching this body to sleep,
-/// which can be expensive and possibly unintuitive.
+/// @warning Putting a body to sleep will put the entire island of bodies touching this body to
+/// sleep, which can be expensive and possibly unintuitive.
 B2_API void b2Body_SetAwake( b2BodyId bodyId, bool awake );
 
 /// Wake bodies touching this body. Works for static bodies.
 B2_API void b2Body_WakeTouching( b2BodyId bodyId );
 
-/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake (and the entire island).
+/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake (and the
+/// entire island).
 B2_API void b2Body_EnableSleeping( b2BodyId bodyId, bool enableSleep );
 
 /// Returns true if sleeping is enabled for this body
@@ -573,7 +590,8 @@ B2_API void b2Body_SetSleepThreshold( b2BodyId bodyId, float sleepThreshold );
 /// Get the sleep threshold, usually in meters per second.
 B2_API float b2Body_GetSleepThreshold( b2BodyId bodyId );
 
-/// Set the continuous collision safety factor. Smaller is safer but can lead to hitching. Recommended range [0.01, 0.5]. Non-dimensional.
+/// Set the continuous collision safety factor. Smaller is safer but can lead to hitching.
+/// Recommended range [0.01, 0.5]. Non-dimensional.
 B2_API void b2Body_SetSafetyFactor( b2BodyId bodyId, float safetyFactor );
 
 /// Get the continuous collision safety factor. Non-dimensional.
@@ -588,22 +606,23 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Set the motion locks on this body. This causes mass properties to be recomputed because
-/// fixed rotation sets the rotational inertia to zero.
+/// Set the motion locks on this body. This causes mass properties to be recomputed because fixed
+/// rotation sets the rotational inertia to zero.
 B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 
 /// Get the motion locks for this body.
 B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
 
-/// Set this body to be a bullet. A bullet does continuous collision detection
-/// against dynamic bodies (but not other bullets). This only works on dynamic bodies.
+/// Set this body to be a bullet. A bullet does continuous collision detection against dynamic
+/// bodies (but not other bullets). This only works on dynamic bodies.
 B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 
 /// Is this body a bullet?
 B2_API bool b2Body_IsBullet( b2BodyId bodyId );
 
-/// Enable or disable contact recycling for this body. Contact recycling is a performance optimization
-/// that reuses contact manifolds when bodies move slightly. Disabling it can avoid ghost collisions
+/// Enable or disable contact recycling for this body. Contact recycling is a performance
+/// optimization that reuses contact manifolds when bodies move slightly. Disabling it can avoid
+/// ghost collisions
 /// on characters at the cost of higher per-step work. Existing contacts retain their prior setting;
 /// only contacts created after this call see the new value.
 /// @see b2BodyDef::enableContactRecycling
@@ -647,8 +666,9 @@ B2_API int b2Body_GetContactCapacity( b2BodyId bodyId );
 /// @warning do not ignore the return value, it specifies the valid number of elements
 B2_API int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capacity );
 
-/// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.
-/// If there are no shapes attached then the returned AABB is empty and centered on the body origin.
+/// Get the current world AABB that contains all the attached shapes. Note that this may not
+/// encompass the body origin. If there are no shapes attached then the returned AABB is empty and
+/// centered on the body origin.
 B2_API b2AABB b2Body_ComputeBounds( b2BodyId bodyId );
 
 /// The minimum distance from any point on the body shapes to the center of mass.
@@ -664,41 +684,47 @@ B2_API float b2Body_GetMaxExtentFromOrigin( b2BodyId bodyId );
 
 /**
  * @defgroup shape Shape
- * Functions to create, destroy, and access shapes.
- * Shapes bind raw geometry to bodies and hold material properties including friction and restitution.
+ * Functions to create, destroy, and access shapes. Shapes bind raw geometry to bodies and hold
+ * material properties including friction and restitution.
  * @{
  */
 
-/// Create a circle shape and attach it to a body. The shape definition and geometry are fully cloned.
-/// Contacts are not created until the next time step.
+/// Create a circle shape and attach it to a body. The shape definition and geometry are fully
+/// cloned. Contacts are not created until the next time step.
 /// @return the shape id for accessing the shape
-B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Circle* circle );
+B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def,
+									  const b2Circle* circle );
 
-/// Create a line segment shape and attach it to a body. The shape definition and geometry are fully cloned.
-/// Contacts are not created until the next time step.
+/// Create a line segment shape and attach it to a body. The shape definition and geometry are fully
+/// cloned. Contacts are not created until the next time step.
 /// @return the shape id or b2_nullShapeId if the segment is too short.
-B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment );
+B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def,
+									   const b2Segment* segment );
 
-/// Create a chain segment shape and attach it to a body. The shape definition and geometry are fully cloned.
-/// The segment is not owned by any chain shape (b2Shape_GetParentChain returns b2_nullChainId). Contacts are
-/// not created until the next time step. The chainId on the segment is ignored. This uses more memory than
-/// using a chain shape, so I don't recommend using this.
+/// Create a chain segment shape and attach it to a body. The shape definition and geometry are
+/// fully cloned. The segment is not owned by any chain shape (b2Shape_GetParentChain returns
+/// b2_nullChainId). Contacts are not created until the next time step. The chainId on the segment
+/// is ignored. This uses more memory than using a chain shape, so I don't recommend using this.
 /// @return the shape id, or b2_nullShapeId if the segment is too short.
-B2_API b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2ChainSegment* chainSegment );
+B2_API b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def,
+											const b2ChainSegment* chainSegment );
 
-/// Create a capsule shape and attach it to a body. The shape definition and geometry are fully cloned.
-/// Contacts are not created until the next time step.
-/// @return the shape id for accessing the shape, this will be b2_nullShapeId if the length is too small.
-B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule );
+/// Create a capsule shape and attach it to a body. The shape definition and geometry are fully
+/// cloned. Contacts are not created until the next time step.
+/// @return the shape id for accessing the shape, this will be b2_nullShapeId if the length is too
+/// small.
+B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def,
+									   const b2Capsule* capsule );
 
-/// Create a polygon shape and attach it to a body. The shape definition and geometry are fully cloned.
-/// Contacts are not created until the next time step.
+/// Create a polygon shape and attach it to a body. The shape definition and geometry are fully
+/// cloned. Contacts are not created until the next time step.
 /// @return the shape id for accessing the shape
-B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Polygon* polygon );
+B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def,
+									   const b2Polygon* polygon );
 
-/// Destroy a shape. You may defer the body mass update which can improve performance if several shapes on a
-///	body are destroyed at once.
-///	@see b2Body_UpdateMassFromShapes
+/// Destroy a shape. You may defer the body mass update which can improve performance if several
+/// shapes on a body are destroyed at once.
+/// @see b2Body_UpdateMassFromShapes
 B2_API void b2DestroyShape( b2ShapeId shapeId, bool updateBodyMass );
 
 /// Shape identifier validation. Provides validation for up to 64K allocations.
@@ -713,20 +739,18 @@ B2_API b2BodyId b2Shape_GetBody( b2ShapeId shapeId );
 /// Get the world that owns this shape
 B2_API b2WorldId b2Shape_GetWorld( b2ShapeId shapeId );
 
-/// Returns true if the shape is a sensor. It is not possible to change a shape
-/// from sensor to solid dynamically because this breaks the contract for
-/// sensor events.
+/// Returns true if the shape is a sensor. It is not possible to change a shape from sensor to solid
+/// dynamically because this breaks the contract for sensor events.
 B2_API bool b2Shape_IsSensor( b2ShapeId shapeId );
 
 /// Set the user data for a shape
 B2_API void b2Shape_SetUserData( b2ShapeId shapeId, void* userData );
 
-/// Get the user data for a shape. This is useful when you get a shape id
-/// from an event or query.
+/// Get the user data for a shape. This is useful when you get a shape id from an event or query.
 B2_API void* b2Shape_GetUserData( b2ShapeId shapeId );
 
-/// Set the mass density of a shape, usually in kg/m^2.
-/// This will optionally update the mass properties on the parent body.
+/// Set the mass density of a shape, usually in kg/m^2. This will optionally update the mass
+/// properties on the parent body.
 /// @see b2ShapeDef::density, b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetDensity( b2ShapeId shapeId, float density, bool updateBodyMass );
 
@@ -752,7 +776,8 @@ B2_API void b2Shape_SetUserMaterial( b2ShapeId shapeId, uint64_t material );
 B2_API uint64_t b2Shape_GetUserMaterial( b2ShapeId shapeId );
 
 /// Set the shape surface material
-B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, const b2SurfaceMaterial* surfaceMaterial );
+B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId,
+										const b2SurfaceMaterial* surfaceMaterial );
 
 /// Get the shape surface material
 B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
@@ -761,8 +786,8 @@ B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
 B2_API b2Filter b2Shape_GetFilter( b2ShapeId shapeId );
 
 /// Set the current filter. This is almost as expensive as recreating the shape. This may cause
-/// contacts to be immediately destroyed. However contacts are not created until the next world step.
-/// Sensor overlap state is also not updated until the next world step.
+/// contacts to be immediately destroyed. However contacts are not created until the next world
+/// step. Sensor overlap state is also not updated until the next world step.
 /// @see b2ShapeDef::filter
 B2_API void b2Shape_SetFilter( b2ShapeId shapeId, b2Filter filter );
 
@@ -773,7 +798,8 @@ B2_API void b2Shape_EnableSensorEvents( b2ShapeId shapeId, bool flag );
 /// Returns true if sensor events are enabled.
 B2_API bool b2Shape_AreSensorEventsEnabled( b2ShapeId shapeId );
 
-/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
+/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for
+/// sensors.
 /// @see b2ShapeDef::enableContactEvents
 /// @warning changing this at run-time may lead to lost begin/end events
 B2_API void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag );
@@ -781,8 +807,8 @@ B2_API void b2Shape_EnableContactEvents( b2ShapeId shapeId, bool flag );
 /// Returns true if contact events are enabled
 B2_API bool b2Shape_AreContactEventsEnabled( b2ShapeId shapeId );
 
-/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
-/// and must be carefully handled due to multithreading. Ignored for sensors.
+/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are
+/// expensive and must be carefully handled due to multithreading. Ignored for sensors.
 /// @see b2PreSolveCallbackFcn
 B2_API void b2Shape_EnablePreSolveEvents( b2ShapeId shapeId, bool flag );
 
@@ -809,8 +835,8 @@ B2_API b2Circle b2Shape_GetCircle( b2ShapeId shapeId );
 /// Get a copy of the shape's line segment. Asserts the type is correct.
 B2_API b2Segment b2Shape_GetSegment( b2ShapeId shapeId );
 
-/// Get a copy of the shape's chain segment. These come from chain shapes.
-/// Asserts the type is correct.
+/// Get a copy of the shape's chain segment. These come from chain shapes. Asserts the type is
+/// correct.
 B2_API b2ChainSegment b2Shape_GetChainSegment( b2ShapeId shapeId );
 
 /// Get a copy of the shape's capsule. Asserts the type is correct.
@@ -819,38 +845,37 @@ B2_API b2Capsule b2Shape_GetCapsule( b2ShapeId shapeId );
 /// Get a copy of the shape's convex polygon. Asserts the type is correct.
 B2_API b2Polygon b2Shape_GetPolygon( b2ShapeId shapeId );
 
-/// Allows you to change a shape to be a circle or update the current circle.
-/// This does not modify the mass properties.
+/// Allows you to change a shape to be a circle or update the current circle. This does not modify
+/// the mass properties.
 /// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetCircle( b2ShapeId shapeId, const b2Circle* circle );
 
-/// Allows you to change a shape to be a capsule or update the current capsule.
-/// This does not modify the mass properties.
+/// Allows you to change a shape to be a capsule or update the current capsule. This does not modify
+/// the mass properties.
 /// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule );
 
 /// Allows you to change a shape to be a segment or update the current segment.
 B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 
-/// Allows you to change a shape to be a polygon or update the current polygon.
-/// This does not modify the mass properties.
+/// Allows you to change a shape to be a polygon or update the current polygon. This does not modify
+/// the mass properties.
 /// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
 
-/// Allows you to change a shape to be a loose chain segment or update the current chain
-/// segment. The resulting shape does not belong to a chain shape. Asserts if the shape is already a chain
+/// Allows you to change a shape to be a loose chain segment or update the current chain segment.
+/// The resulting shape does not belong to a chain shape. Asserts if the shape is already a chain
 /// segment owned by a chain shape (chainId != B2_NULL_INDEX).
 B2_API void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegment );
 
-/// Get the parent chain id if the shape type is a chain segment, otherwise
-/// returns b2_nullChainId.
+/// Get the parent chain id if the shape type is a chain segment, otherwise returns b2_nullChainId.
 B2_API b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId );
 
 /// Get the maximum capacity required for retrieving all the touching contacts on a shape
 B2_API int b2Shape_GetContactCapacity( b2ShapeId shapeId );
 
-/// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the
-/// contact data.
+/// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or
+/// shapeIdB on the contact data.
 /// @note Box2D uses speculative collision so some contact points may be separated.
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
@@ -880,9 +905,9 @@ B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 /// Get the closest point on a shape to a target point. Target and result are world positions.
 B2_API b2Pos b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Pos target );
 
-/// Apply a wind force to the body for this shape using the density of air. This considers
-/// the projected area of the shape in the wind direction. This also considers
-/// the relative velocity of the shape.
+/// Apply a wind force to the body for this shape using the density of air. This considers the
+/// projected area of the shape in the wind direction. This also considers the relative velocity of
+/// the shape.
 /// @param shapeId the shape id
 /// @param wind the wind velocity in world space
 /// @param drag the drag coefficient, the force that opposes the relative velocity
@@ -912,15 +937,16 @@ B2_API b2WorldId b2Chain_GetWorld( b2ChainId chainId );
 /// Get the number of segments on this chain
 B2_API int b2Chain_GetSegmentCount( b2ChainId chainId );
 
-/// Fill a user array with chain segment shape ids up to the specified capacity. Returns
-/// the actual number of segments returned.
+/// Fill a user array with chain segment shape ids up to the specified capacity. Returns the actual
+/// number of segments returned.
 B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int capacity );
 
 /// Set the chain material on all segments.
 B2_API void b2Chain_SetAllSurfaceMaterials( b2ChainId chainId, const b2SurfaceMaterial* material );
 
 /// Set a chain material by segment index.
-B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int segmentIndex );
+B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material,
+										int segmentIndex );
 
 /// Get a chain material by segment index.
 B2_API b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int segmentIndex );
@@ -932,7 +958,8 @@ B2_API bool b2Chain_IsValid( b2ChainId id );
 
 /**
  * @defgroup joint Joint
- * @brief Joints allow you to connect rigid bodies together while allowing various forms of relative motion.
+ * @brief Joints allow you to connect rigid bodies together while allowing various forms of relative
+ * motion.
  * @{
  */
 
@@ -987,10 +1014,12 @@ B2_API b2Vec2 b2Joint_GetConstraintForce( b2JointId jointId );
 /// Get the current constraint torque for this joint. Usually in Newton * meters.
 B2_API float b2Joint_GetConstraintTorque( b2JointId jointId );
 
-/// Get the current linear separation error for this joint. Does not consider admissible movement. Usually in meters.
+/// Get the current linear separation error for this joint. Does not consider admissible movement.
+/// Usually in meters.
 B2_API float b2Joint_GetLinearSeparation( b2JointId jointId );
 
-/// Get the current angular separation error for this joint. Does not consider admissible movement. Radians.
+/// Get the current angular separation error for this joint. Does not consider admissible movement.
+/// Radians.
 B2_API float b2Joint_GetAngularSeparation( b2JointId jointId );
 
 /// Set the joint constraint tuning. Advanced feature.
@@ -1039,10 +1068,12 @@ B2_API void b2DistanceJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 B2_API bool b2DistanceJoint_IsSpringEnabled( b2JointId jointId );
 
 /// Set the force range for the spring.
-B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, float upperForce );
+B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce,
+												 float upperForce );
 
 /// Get the force range for the spring.
-B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
+B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce,
+												 float* upperForce );
 
 /// Set the spring stiffness in Hertz
 B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
@@ -1059,8 +1090,8 @@ B2_API float b2DistanceJoint_GetSpringDampingRatio( b2JointId jointId );
 /// Get the current spring force.
 B2_API float b2DistanceJoint_GetSpringForce( b2JointId jointId );
 
-/// Enable joint limit. The limit only works if the joint spring is enabled. Otherwise the joint is rigid
-/// and the limit has no effect.
+/// Enable joint limit. The limit only works if the joint spring is enabled. Otherwise the joint is
+/// rigid and the limit has no effect.
 B2_API void b2DistanceJoint_EnableLimit( b2JointId jointId, bool enableLimit );
 
 /// Is the distance joint limit enabled?
@@ -1105,8 +1136,8 @@ B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
  * @defgroup filter_joint Filter Joint
  * @brief Functions for the filter joint.
  *
- * The filter joint is used to disable collision between two bodies. As a side effect of being a joint, it also
- * keeps the two bodies in the same simulation island.
+ * The filter joint is used to disable collision between two bodies. As a side effect of being a
+ * joint, it also keeps the two bodies in the same simulation island.
  * @{
  */
 
@@ -1120,11 +1151,11 @@ B2_API b2JointId b2CreateFilterJoint( b2WorldId worldId, const b2FilterJointDef*
  * @defgroup motor_joint Motor Joint
  * @brief Functions for the motor joint.
  *
- * The motor joint is designed to control the movement of a body while still being
- * responsive to collisions. A spring controls the position and rotation. A velocity motor
- * can be used to control velocity and allows for friction in top-down games. Both types
- * of control can be combined. For example, you can have a spring with friction.
- * Position and velocity control have force and torque limits.
+ * The motor joint is designed to control the movement of a body while still being responsive to
+ * collisions. A spring controls the position and rotation. A velocity motor can be used to control
+ * velocity and allows for friction in top-down games. Both types of control can be combined. For
+ * example, you can have a spring with friction. Position and velocity control have force and torque
+ * limits.
  * @{
  */
 
@@ -1265,8 +1296,8 @@ B2_API float b2PogoJoint_GetImpulse( b2JointId jointId );
  * @defgroup prismatic_joint Prismatic Joint
  * @brief A prismatic joint allows for translation along a single axis with no rotation.
  *
- * The prismatic joint is useful for things like pistons and moving platforms, where you want a body to translate
- * along an axis and have no rotation. Also called a *slider* joint.
+ * The prismatic joint is useful for things like pistons and moving platforms, where you want a body
+ * to translate along an axis and have no rotation. Also called a *slider* joint.
  * @{
  */
 
@@ -1280,9 +1311,9 @@ B2_API void b2PrismaticJoint_EnableSpring( b2JointId jointId, bool enableSpring 
 /// Is the prismatic joint spring enabled or not?
 B2_API bool b2PrismaticJoint_IsSpringEnabled( b2JointId jointId );
 
-/// Set the prismatic joint stiffness in Hertz.
-/// This should usually be less than a quarter of the simulation rate. For example, if the simulation
-/// runs at 60Hz then the joint stiffness should be 15Hz or less.
+/// Set the prismatic joint stiffness in Hertz. This should usually be less than a quarter of the
+/// simulation rate. For example, if the simulation runs at 60Hz then the joint stiffness should be
+/// 15Hz or less.
 B2_API void b2PrismaticJoint_SetSpringHertz( b2JointId jointId, float hertz );
 
 /// Get the prismatic joint stiffness in Hertz
@@ -1346,7 +1377,8 @@ B2_API float b2PrismaticJoint_GetCurrentMotorForce( b2JointId jointId );
 
 /**
  * @defgroup revolute_joint Revolute Joint
- * @brief A revolute joint allows for relative rotation in the 2D plane with no relative translation.
+ * @brief A revolute joint allows for relative rotation in the 2D plane with no relative
+ * translation.
  *
  * Also called a *hinge* or *pin* joint.
  * @{
@@ -1392,8 +1424,8 @@ B2_API float b2RevoluteJoint_GetLowerLimit( b2JointId jointId );
 /// Get the revolute joint upper limit in radians
 B2_API float b2RevoluteJoint_GetUpperLimit( b2JointId jointId );
 
-/// Set the revolute joint limits in radians. It is expected that lower <= upper
-/// and that -0.99 * B2_PI <= lower && upper <= 0.99 * B2_PI.
+/// Set the revolute joint limits in radians. It is expected that lower <= upper and that -0.99 *
+/// B2_PI <= lower && upper <= 0.99 * B2_PI.
 B2_API void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper );
 
 /// Enable/disable a revolute joint motor
@@ -1414,8 +1446,8 @@ B2_API void b2RevoluteJoint_SetMaxMotorTorque( b2JointId jointId, float torque )
 /// Get the revolute joint maximum motor torque, usually in newton-meters
 B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
 
-/// Get the revolute joint current angle in radians. This is the relative
-/// rotation of the joint frames.
+/// Get the revolute joint current angle in radians. This is the relative rotation of the joint
+/// frames.
 B2_API float b2RevoluteJoint_GetCurrentAngle( b2JointId jointId );
 
 /// Get the current revolute joint motor speed in radians per second
@@ -1428,12 +1460,14 @@ B2_API float b2RevoluteJoint_GetCurrentMotorTorque( b2JointId jointId );
 
 /**
  * @defgroup weld_joint Weld Joint
- * @brief A weld joint fully constrains the relative transform between two bodies while allowing for springiness
+ * @brief A weld joint fully constrains the relative transform between two bodies while allowing for
+ * springiness
  *
- * A weld joint constrains the relative rotation and translation between two bodies. Both rotation and translation
- * can have damped springs.
+ * A weld joint constrains the relative rotation and translation between two bodies. Both rotation
+ * and translation can have damped springs.
  *
- * @note The accuracy of the weld joint is limited by the accuracy of the solver. Long chains of weld joints may flex.
+ * @note The accuracy of the weld joint is limited by the accuracy of the solver. Long chains of
+ * weld joints may flex.
  * @{
  */
 
@@ -1471,8 +1505,8 @@ B2_API float b2WeldJoint_GetAngularDampingRatio( b2JointId jointId );
  * @defgroup wheel_joint Wheel Joint
  * The wheel joint can be used to simulate wheels on vehicles.
  *
- * The wheel joint restricts body B to move along a local axis in body A. Body B is free to
- * rotate. Supports a linear spring, linear limits, and a rotational motor.
+ * The wheel joint restricts body B to move along a local axis in body A. Body B is free to rotate.
+ * Supports a linear spring, linear limits, and a rotational motor.
  *
  * @{
  */
@@ -1555,9 +1589,9 @@ B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 
 /**
  * @defgroup replay Replay
- * These functions allow you to replay a recorded simulation. This functionality is built
- * to serve the replay viewer in the sample app. It is unlikely that any game or application
- * would use these features, so consider them internal.
+ * These functions allow you to replay a recorded simulation. This functionality is built to serve
+ * the replay viewer in the sample app. It is unlikely that any game or application would use these
+ * features, so consider them internal.
  * @{
  */
 
@@ -1568,8 +1602,8 @@ B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 /// @return true if replay completed without divergence, false on any mismatch
 B2_API bool b2ValidateRecording( const void* data, int size, int workerCount );
 
-/// Open a recording for incremental playback and replay up to the first step. The player copies
-/// the bytes, so you may free or destroy the source buffer immediately after this call.
+/// Open a recording for incremental playback and replay up to the first step. The player copies the
+/// bytes, so you may free or destroy the source buffer immediately after this call.
 /// @param data Recorded bytes
 /// @param size Number of recorded bytes
 /// @param workerCount Worker count for the replay world. 0 uses the serial single-worker fallback.
@@ -1589,8 +1623,8 @@ B2_API b2WorldId b2Replay_GetWorldId( const b2Replay* player );
 /// Rewind the player to the first step, recreating the replay world from the file.
 B2_API void b2Replay_Restart( b2Replay* player );
 
-/// Seek to a recorded step. Seeking backward rewinds and re-runs from the nearest keyframe. Clamps to
-/// the recording bounds.
+/// Seek to a recorded step. Seeking backward rewinds and re-runs from the nearest keyframe. Clamps
+/// to the recording bounds.
 B2_API void b2Replay_SeekFrame( b2Replay* player, int targetFrame );
 
 /// Get the number of steps replayed so far.
@@ -1613,7 +1647,8 @@ B2_API int b2Replay_GetDivergeFrame( const b2Replay* player );
 /// @param player the recording player
 /// @param budgetBytes Memory cap for the kept snapshots. The spacing widens to stay under it.
 /// @param minIntervalFrames Finest spacing between keyframes, in frames.
-B2_API void b2Replay_SetKeyframePolicy( b2Replay* player, size_t budgetBytes, int minIntervalFrames );
+B2_API void b2Replay_SetKeyframePolicy( b2Replay* player, size_t budgetBytes,
+										int minIntervalFrames );
 
 /// Get the keyframe memory budget in bytes.
 B2_API size_t b2Replay_GetKeyframeBudget( const b2Replay* player );
@@ -1628,8 +1663,8 @@ B2_API int b2Replay_GetKeyframeInterval( const b2Replay* player );
 /// Get the memory currently held by keyframe snapshots, in bytes.
 B2_API size_t b2Replay_GetKeyframeBytes( const b2Replay* player );
 
-/// Draw spatial queries recorded during the most recently replayed frame.
-/// Call after b2World_Draw so queries are layered on top of the world.
+/// Draw spatial queries recorded during the most recently replayed frame. Call after b2World_Draw
+/// so queries are layered on top of the world.
 /// @param player A valid player handle
 /// @param draw Debug draw callbacks. NULL draw function pointers are skipped.
 /// @param queryIndex Index into the frame's queries to draw, or -1 to draw all of them.
@@ -1642,14 +1677,15 @@ B2_API int b2Replay_GetFrameQueryCount( const b2Replay* player );
 B2_API b2ReplayQueryInfo b2Replay_GetFrameQuery( const b2Replay* player, int index );
 
 /// Get one result of a recorded query from the most recently replayed frame.
-B2_API b2ReplayQueryHit b2Replay_GetFrameQueryHit( const b2Replay* player, int queryIndex, int hitIndex );
+B2_API b2ReplayQueryHit b2Replay_GetFrameQueryHit( const b2Replay* player, int queryIndex,
+												   int hitIndex );
 
 /// Get the number of body slots tracked for the outliner. This is the creation-order span and
 /// includes holes for destroyed bodies, so it only grows as the replay advances.
 B2_API int b2Replay_GetBodyCount( const b2Replay* player );
 
-/// Get a tracked body by creation ordinal. Returns b2_nullBodyId for a destroyed slot, an ordinal not
-/// yet reached at the current frame, or an out-of-range index. Validate with b2Body_IsValid.
+/// Get a tracked body by creation ordinal. Returns b2_nullBodyId for a destroyed slot, an ordinal
+/// not yet reached at the current frame, or an out-of-range index. Validate with b2Body_IsValid.
 B2_API b2BodyId b2Replay_GetBodyId( const b2Replay* player, int index );
 
 /** @} */
