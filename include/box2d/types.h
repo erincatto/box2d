@@ -152,8 +152,6 @@ typedef struct b2WorldDef
 	/// Enable continuous collision
 	bool enableContinuous;
 
-	// TODO32 a worker count of 1 with task callbacks still uses the user task system, the text ties
-	// it to above 1
 	/// Number of workers for multithreading. Box2D performs best when using performance cores and
 	/// accessing a single L3 cache (uniform memory). Efficiency cores and SMT provide little
 	/// benefit and may even harm performance. This is clamped to the range [1, B2_MAX_WORKERS]. If
