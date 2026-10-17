@@ -38,7 +38,7 @@ typedef struct b2RayCastInput
 } b2RayCastInput;
 
 /// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
-/// You can provide between 1 and B2_MAX_POLYGON_VERTICES and a radius.
+/// You can provide between 1 and B2_MAX_POLYGON_VERTICES points and a radius.
 typedef struct b2ShapeProxy
 {
 	/// The point cloud
@@ -52,7 +52,7 @@ typedef struct b2ShapeProxy
 } b2ShapeProxy;
 
 /// Low level shape cast input in generic form. This allows casting an arbitrary point
-/// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
+/// cloud wrapped with a radius. For example, a circle is a single point with a non-zero radius.
 /// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
 typedef struct b2ShapeCastInput
 {
@@ -208,7 +208,7 @@ B2_API b2Polygon b2MakePolygon( const b2Hull* hull, float radius );
 /// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
 B2_API b2Polygon b2MakeOffsetPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation );
 
-/// Make an offset convex polygon from a convex hull. This will assert if the hull is not valid.
+/// Make an offset convex polygon from a convex hull with a radius. This will assert if the hull is not valid.
 /// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
 B2_API b2Polygon b2MakeOffsetRoundedPolygon( const b2Hull* hull, b2Vec2 position, b2Rot rotation, float radius );
 
@@ -504,7 +504,7 @@ typedef struct b2TOIOutput
 } b2TOIOutput;
 
 /// Compute the upper bound on time before two shapes penetrate. Time is represented as
-/// a fraction between [0,tMax]. This uses a swept separating axis and may miss some intermediate,
+/// a fraction between [0,maxFraction]. This uses a swept separating axis and may miss some intermediate,
 /// non-tunneling collisions. If you change the time interval, you should call this function
 /// again.
 B2_API b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input );
@@ -533,10 +533,7 @@ typedef struct b2ManifoldPoint
 	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
-	/// Location of the contact point relative to bodyB's center of mass in world space.
-	/// This can be converted to a world point using:
-	/// b2Pos worldPointB = b2OffsetPos(b2Body_GetWorldCenter(myBodyIdB), anchorB);
-	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
+	/// Similar for body B.
 	b2Vec2 anchorB;
 
 	/// The separation of the contact point, negative if penetrating
@@ -573,16 +570,16 @@ typedef struct b2ManifoldPoint
 /// @note Box2D uses speculative collision so some contact points may be separated.
 typedef struct b2Manifold
 {
-	/// The unit normal vector in world space, points from shape A to bodyB
+	/// The unit normal vector in world space, points from shape A to shape B.
 	b2Vec2 normal;
 
 	/// Angular impulse applied for rolling resistance. N * m * s = kg * m^2 / s
 	float rollingImpulse;
 
-	/// The manifold points, up to two are possible in 2D
+	/// The manifold points, up to two are possible in 2D.
 	b2ManifoldPoint points[2];
 
-	/// The number of contacts points, will be 0, 1, or 2
+	/// The number of contact points, will be 0, 1, or 2.
 	int pointCount;
 
 } b2Manifold;
@@ -609,7 +606,7 @@ typedef struct b2LocalManifold
 	/// The manifold points, up to two are possible in 2D
 	b2LocalManifoldPoint points[2];
 
-	/// The number of contacts points, will be 0, 1, or 2
+	/// The number of contact points, will be 0, 1, or 2
 	int pointCount;
 
 } b2LocalManifold;
@@ -620,16 +617,16 @@ B2_API b2LocalManifold b2CollideCircles( const b2Circle* circleA, const b2Circle
 /// Compute the contact manifold between a capsule and circle
 B2_API b2LocalManifold b2CollideCapsuleAndCircle( const b2Capsule* capsuleA, const b2Circle* circleB, b2Transform xf );
 
-/// Compute the contact manifold between an segment and a circle
+/// Compute the contact manifold between a segment and a circle
 B2_API b2LocalManifold b2CollideSegmentAndCircle( const b2Segment* segmentA, const b2Circle* circleB, b2Transform xf );
 
 /// Compute the contact manifold between a polygon and a circle
 B2_API b2LocalManifold b2CollidePolygonAndCircle( const b2Polygon* polygonA, const b2Circle* circleB, b2Transform xf );
 
-/// Compute the contact manifold between a capsule and circle
+/// Compute the contact manifold between a two capsules.
 B2_API b2LocalManifold b2CollideCapsules( const b2Capsule* capsuleA, const b2Capsule* capsuleB, b2Transform xf );
 
-/// Compute the contact manifold between an segment and a capsule
+/// Compute the contact manifold between a segment and a capsule
 B2_API b2LocalManifold b2CollideSegmentAndCapsule( const b2Segment* segmentA, const b2Capsule* capsuleB, b2Transform xf );
 
 /// Compute the contact manifold between a polygon and capsule
@@ -638,7 +635,7 @@ B2_API b2LocalManifold b2CollidePolygonAndCapsule( const b2Polygon* polygonA, co
 /// Compute the contact manifold between two polygons
 B2_API b2LocalManifold b2CollidePolygons( const b2Polygon* polygonA, const b2Polygon* polygonB, b2Transform xf );
 
-/// Compute the contact manifold between an segment and a polygon
+/// Compute the contact manifold between a segment and a polygon
 B2_API b2LocalManifold b2CollideSegmentAndPolygon( const b2Segment* segmentA, const b2Polygon* polygonB, b2Transform xf );
 
 /// Compute the contact manifold between a chain segment and a circle
@@ -673,7 +670,7 @@ B2_API b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* se
  */
 
 /// A node in the dynamic tree. Siblings sit together at an even index so two nodes fit in
-/// a 64 byte cache line. The root is at index zero and index one always empty.
+/// a 64 byte cache line. The root is at index zero and index one is always empty.
 typedef struct b2TreeNode
 {
 	/// The node bounding box
@@ -720,10 +717,10 @@ typedef struct b2TreeProxy
 typedef struct b2DynamicTree
 {
 	/// Array of nodes. The root is at index zero and index 1 is empty.
-	// Otherwise siblings are paired at even indices. Has holes for free node pairs.
+	/// Otherwise siblings are paired at even indices. Has holes for free node pairs.
 	b2TreeNode* nodes;
 
-	/// Parent index per node. The free list is interweaved.
+	/// Parent index per node. The free list is interwoven.
 	int32_t* parents;
 
 	/// Proxy data split from node array as cold data.
@@ -809,12 +806,12 @@ B2_API uint64_t b2DynamicTree_GetCategoryBits( b2DynamicTree* tree, int proxyId 
 /// @return true if the query should continue
 typedef bool b2TreeQueryCallbackFcn( int proxyId, uint64_t userData, void* context );
 
-/// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
+/// Query an AABB for overlapping proxies. The callback is called for each proxy that overlaps the supplied AABB.
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_OverlapAABB( const b2DynamicTree* tree, b2AABB aabb, uint64_t maskBits,
 										b2TreeQueryCallbackFcn* callback, void* context );
 
-/// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
+/// Query an AABB for overlapping proxies. The callback is called for each proxy that overlaps the supplied AABB.
 /// No filtering is performed.
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_OverlapAABBAll( const b2DynamicTree* tree, b2AABB aabb, b2TreeQueryCallbackFcn* callback,
@@ -828,16 +825,16 @@ B2_API b2TreeStats b2DynamicTree_OverlapAABBAll( const b2DynamicTree* tree, b2AA
 typedef float b2TreeRayCastCallbackFcn( const b2RayCastInput* input, int proxyId, uint64_t userData, void* context );
 
 /// Ray cast against the proxies in the tree. This relies on the callback
-/// to perform a exact ray cast in the case were the proxy contains a shape.
-/// The callback also performs the any collision filtering. This has performance
+/// to perform an exact ray cast in the case where the proxy contains a shape.
+/// The callback also performs any collision filtering. This has performance
 /// roughly equal to k * log(n), where k is the number of collisions and n is the
 /// number of proxies in the tree.
-/// Bit-wise filtering using mask bits can greatly improve performance in some scenarios.
+/// Bit-wise filtering using mask bits can improve performance in some scenarios.
 ///	However, this filtering may be approximate, so the user should still apply filtering to results.
 /// @param tree the dynamic tree to ray cast
-/// @param input the ray cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1)
-/// @param maskBits mask bit hint: `bool accept = (maskBits & node->categoryBits) != 0;`
-/// @param callback a callback class that is called for each proxy that is hit by the ray
+/// @param input the ray cast input data.
+/// @param maskBits mask bits used to filter proxies.
+/// @param callback a callback that is called for each proxy that is hit by the ray
 /// @param context user context that is passed to the callback
 ///	@return performance data
 B2_API b2TreeStats b2DynamicTree_CastRay( const b2DynamicTree* tree, const b2RayCastInput* input, uint64_t maskBits,
@@ -913,7 +910,7 @@ typedef struct b2PlaneResult
 	/// The collision plane between the mover and a convex shape
 	b2Plane plane;
 
-	// The collision point on the shape.
+	/// The collision point on the shape.
 	b2Vec2 point;
 
 	/// Did the collision register a hit? If not this plane should be ignored.

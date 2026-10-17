@@ -23,14 +23,14 @@
  * These functions allow you to create a simulation world.
  *
  * You can add rigid bodies and joint constraints to the world and run the simulation. You can get contact
- * information to get contact points and normals as well as events. You can query to world, checking for overlaps and casting rays
+ * information to get contact points and normals as well as events. You can query the world, checking for overlaps and casting rays
  * or shapes. There is also debugging information such as debug draw, timing information, and counters. You can find documentation
  * here: https://box2d.org/
  * @{
  */
 
-/// Create a world for rigid body simulation. A world contains bodies, shapes, and constraints. You make create
-/// up to 128 worlds. Each world is completely independent and may be simulated in parallel.
+/// Create a world for rigid body simulation. A world contains bodies, shapes, and constraints. You may create
+/// up to B2_MAX_WORLDS worlds. Each world is completely independent and may be simulated in parallel.
 /// @return the world id.
 B2_API b2WorldId b2CreateWorld( const b2WorldDef* def );
 
@@ -92,7 +92,7 @@ B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 tran
 /// This is less general than b2World_CastRay() and does not allow for custom filtering.
 B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter );
 
-/// Cast a shape through the world. Similar to a cast ray except that a shape is cast instead of a point.
+/// Cast a shape through the world. Similar to a ray cast except that a shape is cast instead of a point.
 /// The proxy points are relative to the origin. Callback points are world positions.
 ///	@see b2World_CastRay
 B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
@@ -130,7 +130,7 @@ B2_API bool b2World_IsContinuousEnabled( b2WorldId worldId );
 /// @see b2WorldDef
 B2_API void b2World_SetRestitutionThreshold( b2WorldId worldId, float value );
 
-/// Get the the restitution speed threshold. Usually in meters per second.
+/// Get the restitution speed threshold. Usually in meters per second.
 B2_API float b2World_GetRestitutionThreshold( b2WorldId worldId );
 
 /// Set the number of iterations used by the restitution solver.
@@ -151,7 +151,7 @@ B2_API bool b2World_IsRestitutionPropagationEnabled( b2WorldId worldId );
 /// @see b2WorldDef::hitEventThreshold
 B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
 
-/// Get the the hit event speed threshold. Usually in meters per second.
+/// Get the hit event speed threshold. Usually in meters per second.
 B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 
 /// Register the custom filter callback. This is optional.
@@ -182,6 +182,7 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @note Advanced feature
 B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
+/// Get the contact tuning.
 B2_API void b2World_GetContactTuning( b2WorldId worldId, float* hertz, float* dampingRatio, float* pushSpeed );
 
 /// Set the contact point recycling distance. Setting this to zero disables contact point recycling.
@@ -204,8 +205,7 @@ B2_API void b2World_EnableWarmStarting( b2WorldId worldId, bool flag );
 /// Is constraint warm starting enabled?
 B2_API bool b2World_IsWarmStartingEnabled( b2WorldId worldId );
 
-/// Enable the SSE2 fallback even when AVX2 is present. This is for testing.
-/// Normally you should use the CMake build settings to disable AVX2.
+/// Force SSE2 to be used even when AVX2 is available. This is for testing.
 B2_API void b2World_EnableSSE2Fallback( b2WorldId worldId, bool flag );
 
 /// Get the number of awake bodies.
@@ -232,7 +232,7 @@ B2_API void b2World_SetFrictionCallback( b2WorldId worldId, b2FrictionCallbackFc
 /// Set the restitution callback. Passing NULL resets to default.
 B2_API void b2World_SetRestitutionCallback( b2WorldId worldId, b2RestitutionCallbackFcn* callback );
 
-/// Set the worker count. Must be between in the range [1, B2_MAX_WORKERS]
+/// Set the worker count. Must be in the range [1, B2_MAX_WORKERS]
 B2_API void b2World_SetWorkerCount( b2WorldId worldId, int count );
 
 /// Get the worker count.
@@ -244,7 +244,7 @@ B2_API void b2World_DumpMemoryStats( b2WorldId worldId );
 /// This is for internal testing
 B2_API void b2World_RebuildStaticTree( b2WorldId worldId );
 
-/// Compute a hash of the simulation state. Use this to detect desyncs for example rollback resimulation.
+/// Compute a hash of the simulation state. Use this to detect desyncs, for example in rollback resimulation.
 B2_API uint64_t b2World_GetStateHash( b2WorldId worldId );
 
 /** @} */
@@ -322,11 +322,10 @@ B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
 ///         Returns 0 if the world is mid-step.
 B2_API int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity );
 
-/// Restore a world's simulation state from a snapshot image, in place. The world keeps
-/// its slot and generation, so this b2WorldId and any ids held from this same world stay
-/// valid for objects that existed at the snapshot instant. Host wiring is preserved.
-/// Restore into the same world the snapshot came from to keep held ids valid. Must be
-/// called at a step boundary.
+/// Restore a world's simulation state from a snapshot image. The b2WorldId and
+/// ids held from this same world stay valid for objects that existed at the snapshot instant
+/// Callbacks and threading configuration are preserved. User data on shapes, bodies,
+/// and joints are nulled.
 /// @param worldId The world to restore into
 /// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
@@ -335,9 +334,8 @@ B2_API int b2World_GetSnapshot( b2WorldId worldId, uint8_t* image, int capacity 
 ///         false and leaves the world unusable, so the caller must destroy it.
 B2_API bool b2World_RestoreFromSnapshot( b2WorldId worldId, const uint8_t* image, int size );
 
-/// Create a new world from a snapshot image. Use this to load a saved world when there is
-/// no existing world to restore into. The new world gets a fresh slot and id, so ids held
-/// from the origin world will not match it. Host wiring is reset to defaults.
+/// Create a new world from a snapshot image. This is mainly useful for replay. Callbacks
+/// are reset to default.
 /// @param image A snapshot image produced by b2World_GetSnapshot
 /// @param size Size of image in bytes
 /// @param workerCount Worker count for the new world. 0 uses the serial single-worker fallback.
@@ -398,7 +396,7 @@ B2_API b2Rot b2Body_GetRotation( b2BodyId bodyId );
 B2_API b2WorldTransform b2Body_GetTransform( b2BodyId bodyId );
 
 /// Set the world transform of a body. This acts as a teleport and is fairly expensive.
-/// @note Generally you should create a body with then intended transform.
+/// @note Generally you should create a body with the intended transform.
 /// @see b2BodyDef::position and b2BodyDef::rotation
 B2_API void b2Body_SetTransform( b2BodyId bodyId, b2Pos position, b2Rot rotation );
 
@@ -427,7 +425,7 @@ B2_API void b2Body_SetLinearVelocity( b2BodyId bodyId, b2Vec2 linearVelocity );
 B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 
 /// Set the velocity to reach the given transform after a given time step.
-/// The result will be close but maybe not exact. This is meant for kinematic bodies.
+/// The result will be close but may not be exact. This is meant for kinematic bodies.
 /// The target is not applied if the velocity would be below the sleep threshold and
 /// the body is currently asleep.
 /// @param bodyId The body id
@@ -524,7 +522,7 @@ B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 B2_API b2MassData b2Body_GetMassData( b2BodyId bodyId );
 
 /// This updates the mass properties to the sum of the mass properties of the shapes.
-/// This normally does not need to be called unless you called SetMassData to override
+/// This normally does not need to be called unless you called b2Body_SetMassData to override
 /// the mass and you later want to reset the mass.
 /// You may also use this when automatic mass computation has been disabled.
 /// You should call this regardless of body type.
@@ -596,7 +594,7 @@ B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
 
 /// Set this body to be a bullet. A bullet does continuous collision detection
-/// against dynamic bodies (but not other bullets).
+/// against dynamic bodies (but not other bullets). This only works on dynamic bodies.
 B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 
 /// Is this body a bullet?
@@ -664,7 +662,7 @@ B2_API float b2Body_GetMaxExtentFromOrigin( b2BodyId bodyId );
 
 /**
  * @defgroup shape Shape
- * Functions to create, destroy, and access.
+ * Functions to create, destroy, and access shapes.
  * Shapes bind raw geometry to bodies and hold material properties including friction and restitution.
  * @{
  */
@@ -679,10 +677,10 @@ B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, co
 /// @return the shape id or b2_nullShapeId if the segment is too short.
 B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment );
 
-/// Create an orphaned chain segment shape and attach it to a body. The shape definition and
-/// geometry are fully cloned. The caller is responsible for the segment's ghost vertices and
-/// lifetime. The segment is not owned by any b2ChainShape (b2Shape_GetParentChain returns
-/// b2_nullChainId). Contacts are not created until the next time step.
+/// Create a chain segment shape and attach it to a body. The shape definition and geometry are fully cloned.
+/// The segment is not owned by any chain shape (b2Shape_GetParentChain returns b2_nullChainId). Contacts are
+/// not created until the next time step. The chainId on the segment is ignored. This uses more memory than
+/// using a chain shape, so I don't recommend using this.
 /// @return the shape id, or b2_nullShapeId if the segment is too short.
 B2_API b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2ChainSegment* chainSegment );
 
@@ -837,10 +835,9 @@ B2_API void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment );
 /// @see b2Body_UpdateMassFromShapes
 B2_API void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon );
 
-/// Allows you to change a shape to be an orphaned chain segment or update the current chain
-/// segment, including its ghost vertices. The chainId on the input is ignored. The resulting
-/// shape is always orphaned. Asserts if the shape is already a chain segment
-/// owned by a b2ChainShape (chainId != B2_NULL_INDEX).
+/// Allows you to change a shape to be a loose chain segment or update the current chain
+/// segment. The resulting shape does not belong to a chain shape. Asserts if the shape is already a chain
+/// segment owned by a chain shape (chainId != B2_NULL_INDEX).
 B2_API void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegment );
 
 /// Get the parent chain id if the shape type is a chain segment, otherwise
@@ -850,7 +847,8 @@ B2_API b2ChainId b2Shape_GetParentChain( b2ShapeId shapeId );
 /// Get the maximum capacity required for retrieving all the touching contacts on a shape
 B2_API int b2Shape_GetContactCapacity( b2ShapeId shapeId );
 
-/// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the contact data.
+/// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the
+/// contact data.
 /// @note Box2D uses speculative collision so some contact points may be separated.
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
@@ -865,7 +863,7 @@ B2_API int b2Shape_GetSensorCapacity( b2ShapeId shapeId );
 /// Get the overlap data for a sensor shape computed the previous world step.
 /// @param shapeId the id of a sensor shape
 /// @param visitorIds a user allocated array that is filled with the overlapping shapes (visitors)
-/// @param capacity the capacity of overlappedShapes
+/// @param capacity the capacity of visitorIds
 /// @returns the number of elements filled in the provided array
 /// @warning do not ignore the return value, it specifies the valid number of elements
 /// @warning overlaps may contain destroyed shapes so use b2Shape_IsValid to confirm each overlap
@@ -878,7 +876,6 @@ B2_API b2AABB b2Shape_GetBounds( b2ShapeId shapeId );
 B2_API b2MassData b2Shape_ComputeMassData( b2ShapeId shapeId );
 
 /// Get the closest point on a shape to a target point. Target and result are world positions.
-/// todo need sample
 B2_API b2Pos b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Pos target );
 
 /// Apply a wind force to the body for this shape using the density of air. This considers
@@ -891,7 +888,14 @@ B2_API b2Pos b2Shape_GetClosestPoint( b2ShapeId shapeId, b2Pos target );
 /// @param wake should this wake the body
 B2_API void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, bool wake );
 
-/// Chain Shape
+/** @} */
+
+/**
+ * @defgroup chain Chain
+ * @brief Chain shapes allow you to create a polygonal chain that is resistant to ghost collisions.
+ * See https://box2d.org/posts/2020/06/ghost-collisions/
+ * @{
+ */
 
 /// Create a chain shape
 /// @see b2ChainDef for details
@@ -926,7 +930,7 @@ B2_API bool b2Chain_IsValid( b2ChainId id );
 
 /**
  * @defgroup joint Joint
- * @brief Joints allow you to connect rigid bodies together while allowing various forms of relative motions.
+ * @brief Joints allow you to connect rigid bodies together while allowing various forms of relative motion.
  * @{
  */
 
@@ -972,7 +976,7 @@ B2_API void b2Joint_SetUserData( b2JointId jointId, void* userData );
 /// Get the user data on a joint
 B2_API void* b2Joint_GetUserData( b2JointId jointId );
 
-/// Wake the bodies connect to this joint
+/// Wake the bodies connected to this joint
 B2_API void b2Joint_WakeBodies( b2JointId jointId );
 
 /// Get the current constraint force for this joint. Usually in Newtons.
@@ -984,7 +988,7 @@ B2_API float b2Joint_GetConstraintTorque( b2JointId jointId );
 /// Get the current linear separation error for this joint. Does not consider admissible movement. Usually in meters.
 B2_API float b2Joint_GetLinearSeparation( b2JointId jointId );
 
-/// Get the current angular separation error for this joint. Does not consider admissible movement. Usually in meters.
+/// Get the current angular separation error for this joint. Does not consider admissible movement. Radians.
 B2_API float b2Joint_GetAngularSeparation( b2JointId jointId );
 
 /// Set the joint constraint tuning. Advanced feature.
@@ -1288,7 +1292,7 @@ B2_API void b2PrismaticJoint_SetSpringDampingRatio( b2JointId jointId, float dam
 /// Get the prismatic spring damping ratio (non-dimensional)
 B2_API float b2PrismaticJoint_GetSpringDampingRatio( b2JointId jointId );
 
-/// Set the prismatic joint spring target angle, usually in meters
+/// Set the prismatic joint spring target translation, usually in meters
 B2_API void b2PrismaticJoint_SetTargetTranslation( b2JointId jointId, float translation );
 
 /// Get the prismatic joint spring target translation, usually in meters
@@ -1353,7 +1357,7 @@ B2_API b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJoint
 /// Enable/disable the revolute joint spring
 B2_API void b2RevoluteJoint_EnableSpring( b2JointId jointId, bool enableSpring );
 
-/// It the revolute angular spring enabled?
+/// Is the revolute angular spring enabled?
 B2_API bool b2RevoluteJoint_IsSpringEnabled( b2JointId jointId );
 
 /// Set the revolute joint spring stiffness in Hertz
@@ -1387,7 +1391,7 @@ B2_API float b2RevoluteJoint_GetLowerLimit( b2JointId jointId );
 B2_API float b2RevoluteJoint_GetUpperLimit( b2JointId jointId );
 
 /// Set the revolute joint limits in radians. It is expected that lower <= upper
-/// and that -0.99 * B2_PI <= lower && upper <= -0.99 * B2_PI.
+/// and that -0.99 * B2_PI <= lower && upper <= 0.99 * B2_PI.
 B2_API void b2RevoluteJoint_SetLimits( b2JointId jointId, float lower, float upper );
 
 /// Enable/disable a revolute joint motor
@@ -1408,7 +1412,8 @@ B2_API void b2RevoluteJoint_SetMaxMotorTorque( b2JointId jointId, float torque )
 /// Get the revolute joint maximum motor torque, usually in newton-meters
 B2_API float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId );
 
-/// Get the revolute joint current angle in radians relative to the reference angle
+/// Get the revolute joint current angle in radians. This is the relative
+/// rotation of the joint frames.
 B2_API float b2RevoluteJoint_GetCurrentAngle( b2JointId jointId );
 
 /// Get the current revolute joint motor speed in radians per second
@@ -1426,7 +1431,7 @@ B2_API float b2RevoluteJoint_GetCurrentMotorTorque( b2JointId jointId );
  * A weld joint constrains the relative rotation and translation between two bodies. Both rotation and translation
  * can have damped springs.
  *
- * @note The accuracy of weld joint is limited by the accuracy of the solver. Long chains of weld joints may flex.
+ * @note The accuracy of the weld joint is limited by the accuracy of the solver. Long chains of weld joints may flex.
  * @{
  */
 
@@ -1549,7 +1554,7 @@ B2_API b2ContactData b2Contact_GetData( b2ContactId contactId );
 /**
  * @defgroup replay Replay
  * These functions allow you to replay a recorded simulation. This functionality is built
- * to serve the replay viewer in the sample app. It is unlikey that any game or application
+ * to serve the replay viewer in the sample app. It is unlikely that any game or application
  * would use these features, so consider them internal.
  * @{
  */
@@ -1582,8 +1587,8 @@ B2_API b2WorldId b2Replay_GetWorldId( const b2Replay* player );
 /// Rewind the player to the first step, recreating the replay world from the file.
 B2_API void b2Replay_Restart( b2Replay* player );
 
-/// Seek to a recorded step. Seeking backward rewinds and re-runs from the start, so the
-/// cost grows with the target frame. Clamps to the recording bounds.
+/// Seek to a recorded step. Seeking backward rewinds and re-runs from the nearest keyframe. Clamps to
+/// the recording bounds.
 B2_API void b2Replay_SeekFrame( b2Replay* player, int targetFrame );
 
 /// Get the number of steps replayed so far.

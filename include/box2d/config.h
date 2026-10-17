@@ -17,7 +17,7 @@
 // Large world mode. Stores world positions in double precision. Affects ABI.
 //#define BOX2D_DOUBLE_PRECISION
 
-// Build the scalar fallback instead of SSE2/NEON.
+// Build the scalar fallback instead of AVX2/SSE2/NEON.
 //#define BOX2D_DISABLE_SIMD
 
 // Enable internal validation in debug builds.

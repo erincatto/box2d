@@ -5,6 +5,13 @@
 
 #include "math_functions.h"
 
+/**
+ * @defgroup constants Constants
+ * Constants. Some can be configured. I try to include most internal constants here 
+ * for convenience and clarity. This is why they are not all configurable.
+ * @{
+ */
+
 /// Used to detect bad values. Positions greater than about 16km will have precision
 /// problems in single precision, so 100km as a limit should be fine in all cases.
 /// In large world mode the broad-phase starts to have excessive padding at 10,000km.
@@ -20,11 +27,11 @@
 /// Maximum number of tasks queued per world step. b2EnqueueTaskCallbackFcn will never be called
 /// more than this per world step. This is related to B2_MAX_WORKERS. With 32 workers,
 /// the maximum observed task count is 130. This allows an external task system to use a fixed
-/// size array for Box2D task, which may help with creating stable user task pointers.
+/// size array for Box2D tasks, which may help with creating stable user task pointers.
 #define B2_MAX_TASKS 256
 
 /// Maximum number of colors in the constraint graph. Constraints that cannot
-/// find a color are added to the overflow set which are solved single-threaded.
+/// find a color are added to the overflow set, which is solved single-threaded.
 /// The compound barrel benchmark has minor overflow with 24 colors
 #define B2_GRAPH_COLOR_COUNT 24
 
@@ -79,3 +86,5 @@
 
 /// The maximum number of restitution iterations. Needed to avoid a solver overflow.
 #define B2_MAX_RESTITUTION_ITERATIONS 63
+
+/** @} */

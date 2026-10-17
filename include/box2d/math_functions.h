@@ -27,10 +27,10 @@ B2_API bool b2IsValidRot( b2Rot q );
 /// Is this a valid transform? Not NaN or infinity. Rotation is normalized.
 B2_API bool b2IsValidTransform( b2Transform t );
 
-/// Is this a valid bounding box? Not Nan or infinity. Upper bound greater than or equal to lower bound.
+/// Is this a valid bounding box? Not NaN or infinity. Upper bound greater than or equal to lower bound.
 B2_API bool b2IsValidAABB( b2AABB aabb );
 
-/// Is this a valid plane? Normal is a unit vector. Not Nan or infinity.
+/// Is this a valid plane? Normal is a unit vector. Not NaN or infinity.
 B2_API bool b2IsValidPlane( b2Plane a );
 
 /// Is this a valid world position? Not NaN or infinity.
@@ -240,8 +240,7 @@ B2_INLINE float b2Distance( b2Vec2 a, b2Vec2 b )
 }
 
 /// Convert a vector into a unit vector if possible, otherwise returns the zero vector.
-/// todo MSVC is not inlining this function in several places per warning 4710
-B2_INLINE b2Vec2 b2Normalize( b2Vec2 a )
+B2_FORCE_INLINE b2Vec2 b2Normalize( b2Vec2 a )
 {
 	float lengthSquared = a.x * a.x + a.y * a.y;
 	if ( lengthSquared > 1000.0f * FLT_MIN )
@@ -363,7 +362,7 @@ B2_INLINE b2Rot b2NLerp( b2Rot q1, b2Rot q2, float t )
 	return qn;
 }
 
-/// Compute the angular velocity necessary to rotate between two rotations over a give time
+/// Compute the angular velocity necessary to rotate between two rotations over a given time
 /// @param q1 initial rotation
 /// @param q2 final rotation
 /// @param inv_h inverse time step
@@ -420,7 +419,7 @@ B2_INLINE b2Rot b2MulRot( b2Rot q, b2Rot r )
 /// This rotates a vector local in frame b into a vector local in frame a
 B2_INLINE b2Rot b2InvMulRot( b2Rot a, b2Rot b )
 {
-	// [ ac as] * [bc -bs] = [ac*bc+qs*bs -ac*bs+as*bc]
+	// [ ac as] * [bc -bs] = [ac*bc+as*bs -ac*bs+as*bc]
 	// [-as ac]   [bs  bc]   [-as*bc+ac*bs as*bs+ac*bc]
 	// s(a - b) = ac * bs - as * bc
 	// c(a - b) = ac * bc + as * bs
@@ -430,7 +429,7 @@ B2_INLINE b2Rot b2InvMulRot( b2Rot a, b2Rot b )
 	return r;
 }
 
-/// Relative angle between a and b.
+/// Relative angle between a and b. Radians.
 B2_INLINE float b2RelativeAngle( b2Rot a, b2Rot b )
 {
 	// sin(b - a) = bs * ac - bc * as
@@ -511,13 +510,13 @@ B2_INLINE b2Transform b2InvMulTransforms( b2Transform A, b2Transform B )
 	return C;
 }
 
-/// Convert a vector to a world position. no-op in single precision.
+/// Convert a vector to a world position. No-op in single precision.
 B2_INLINE b2Pos b2ToPos( b2Vec2 v )
 {
 	return B2_LITERAL( b2Pos ){ v.x, v.y };
 }
 
-/// Lossy conversion of a world position to a float vector. no-op in single precision.
+/// Lossy conversion of a world position to a float vector. No-op in single precision.
 B2_INLINE b2Vec2 b2ToVec2( b2Pos p )
 {
 	return B2_LITERAL( b2Vec2 ){ (float)p.x, (float)p.y };
@@ -772,8 +771,9 @@ BOX2D_EXPORT extern float b2_lengthUnitsPerMeter;
 /**
  * @defgroup math_cpp C++ Math
  * @brief Math operator overloads for C++
- *
  * See math_functions.h for details.
+ * These operators don't reach the published documentation because mixing C and C++ in
+ * Doxygen is awkward.
  * @{
  */
 

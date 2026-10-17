@@ -56,7 +56,7 @@ typedef struct b2ShapeId
 	uint16_t generation;
 } b2ShapeId;
 
-/// Chain id references a chain instances. This should be treated as an opaque handle.
+/// Chain id references a chain instance. This should be treated as an opaque handle.
 typedef struct b2ChainId
 {
 	int32_t index1;
@@ -72,7 +72,7 @@ typedef struct b2JointId
 	uint16_t generation;
 } b2JointId;
 
-/// Contact id references a contact instance. This should be treated as an opaque handled.
+/// Contact id references a contact instance. This should be treated as an opaque handle.
 typedef struct b2ContactId
 {
 	int32_t index1;

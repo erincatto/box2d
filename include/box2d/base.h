@@ -15,6 +15,7 @@
 #include "config.h"
 
 /// Used to indicate an unset or invalid index value.
+/// @ingroup base
 #define B2_NULL_INDEX ( -1 )
 
 // clang-format off

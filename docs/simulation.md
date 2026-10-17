@@ -161,7 +161,7 @@ This allows joints and contacts to respond with finer detail. The recommended
 sub-step count is 4. However, increasing the sub-step count may improve 
 accuracy. For example, long joint chains will stretch less with more sub-steps.
 
-The scissor lift sample shown [here](@ref samples) works better with more sub-steps
+The scissor lift sample shown [here](#samples_app) works better with more sub-steps
 and is configured to use 8 sub-steps. With a primary time step of 1/60 seconds,
 the scissor lift is taking sub-steps at 480Hz!
 
