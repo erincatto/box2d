@@ -428,7 +428,7 @@ B2_INLINE b2Rot b2InvMulRot( b2Rot a, b2Rot b )
 	return r;
 }
 
-/// Relative angle between a and b. Radians.
+/// The angle of rotation b relative to rotation a. Radians.
 B2_INLINE float b2RelativeAngle( b2Rot a, b2Rot b )
 {
 	// sin(b - a) = bs * ac - bc * as
@@ -767,13 +767,6 @@ BOX2D_EXPORT extern float b2_lengthUnitsPerMeter;
 
 /**@}*/
 
-/**
- * @defgroup math_cpp C++ Math
- * @brief Math operator overloads for C++ See math_functions.h for details. These operators don't
- * reach the published documentation because mixing C and C++ in Doxygen is awkward.
- * @{
- */
-
 #ifdef __cplusplus
 
 /// Unary add one vector to another
@@ -863,4 +856,3 @@ inline b2Vec2 operator-( b2Pos a, b2Pos b )
 
 #endif
 
-/**@}*/

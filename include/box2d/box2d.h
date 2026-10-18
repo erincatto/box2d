@@ -614,7 +614,7 @@ B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
 B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
 
 /// Set this body to be a bullet. A bullet does continuous collision detection against dynamic
-/// bodies (but not other bullets). This only works on dynamic bodies.
+/// and kinematic bodies (but not other bullets). This only works on dynamic bodies.
 B2_API void b2Body_SetBullet( b2BodyId bodyId, bool flag );
 
 /// Is this body a bullet?

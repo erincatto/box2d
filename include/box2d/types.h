@@ -1330,7 +1330,7 @@ typedef float b2CastResultCallbackFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 no
 									   float fraction, void* context );
 
 /// Used to collect collision planes for character movers. Return true to continue gathering planes.
-/// @ingroup world
+/// @ingroup character
 typedef bool b2PlaneResultCallbackFcn( b2ShapeId shapeId, const b2PlaneResult* plane,
 									   void* context );
 

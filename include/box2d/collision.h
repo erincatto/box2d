@@ -539,7 +539,6 @@ typedef struct b2ManifoldPoint
 	/// Location of the contact point relative to bodyA's center of mass in world space. This can be
 	/// converted to a world point using:
 	/// b2Pos worldPointA = b2OffsetPos(b2Body_GetWorldCenter(myBodyIdA), anchorA);
-	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
 	b2Vec2 anchorA;
 
 	/// Similar for body B.

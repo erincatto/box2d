@@ -3075,7 +3075,9 @@ void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackF
 	{
 		printf( "b2World_SetCustomFilterCallback: customFilter not supported while recording\n" );
 		B2_ASSERT( false && "customFilter callbacks are not supported while recording" );
+		return;
 	}
+
 	world->customFilterFcn = fcn;
 	world->customFilterContext = context;
 }
@@ -3088,6 +3090,7 @@ void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveCallbackFcn* preS
 	{
 		printf( "b2World_SetPreSolveCallback: preSolve not supported while recording\n" );
 		B2_ASSERT( false && "preSolve callbacks are not supported while recording" );
+		return;
 	}
 
 	world->preSolveFcn = preSolveFcn;

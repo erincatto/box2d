@@ -4,11 +4,13 @@ Box2D is a 2D physics engine for games.
 
 ![Box2D Logo](https://box2d.org/images/logo.svg)
 
-[![Box2D Version 3.0 Release Demo](https://img.youtube.com/vi/dAoM-xjOWtA/0.jpg)](https://www.youtube.com/watch?v=dAoM-xjOWtA)
+[![Box2D Version 3.0 Release
+Demo](https://img.youtube.com/vi/dAoM-xjOWtA/0.jpg)](https://www.youtube.com/watch?v=dAoM-xjOWtA)
 
 ## Build Status
 
-[![Build Status](https://github.com/erincatto/box2d/actions/workflows/build.yml/badge.svg)](https://github.com/erincatto/box2d/actions)
+[![Build
+Status](https://github.com/erincatto/box2d/actions/workflows/build.yml/badge.svg)](https://github.com/erincatto/box2d/actions)
 
 ## Features
 
@@ -27,10 +29,15 @@ Box2D is a 2D physics engine for games.
 - Robust _Soft Step_ rigid body solver
 - Continuous physics for fast translations and rotations
 - Island based sleep
-- Revolute, prismatic, distance, mouse joint, weld, and wheel joints
+- Revolute, prismatic, distance, motor, weld, and wheel joints
 - Joint limits, motors, springs, and friction
 - Joint and contact forces
 - Body movement events and sleep notification
+
+### Character movement
+
+- Geometric mover with robust plane solver
+- Dynamic mover with custom joint support
 
 ### System
 
@@ -38,6 +45,10 @@ Box2D is a 2D physics engine for games.
 - Written in portable C17
 - Extensive multithreading and SIMD
 - Optimized for large piles of bodies
+- Low cost double-precision support for large worlds
+- Recording and replay
+- Cross platform determinism
+- Snapshot and restore
 
 ### Samples
 
@@ -53,18 +64,23 @@ Box2D is a 2D physics engine for games.
 
 ## Building with CMake presets
 
-The presets in `CMakePresets.json` give one build flow on every platform and are picked up automatically by Visual Studio, VS Code, and CLion (open the folder and choose a preset). From the command line:
+The presets in `CMakePresets.json` give one build flow on every platform and are picked up
+automatically by Visual Studio, VS Code, and CLion (open the folder and choose a preset). From the
+command line:
 
 - Windows: `cmake --preset windows` then `cmake --build --preset windows-release`
 - Linux: `cmake --preset linux-release` then `cmake --build --preset linux-release`
 - macOS: `cmake --preset macos` then `cmake --build --preset macos-release`
 
-Use the `*-debug` build presets for a debug build (not recommended for the replay viewer). The presets use the default native toolchain (the installed Visual Studio on Windows, Make on Linux, Xcode on macOS), so no specific compiler version is required.
+Use the `*-debug` build presets for a debug build (not recommended for the replay viewer). The
+presets use the default native toolchain (the installed Visual Studio on Windows, Make on Linux,
+Xcode on macOS), so no specific compiler version is required.
 
 ## Building for Visual Studio
 
 - Install [Visual Studio](https://visualstudio.microsoft.com/)
-- Run `build_vs2026.bat` for Visual Studio 2026, or use the `windows` preset above for other versions
+- Run `build_vs2026.bat` for Visual Studio 2026, or use the `windows` preset above for other
+  versions
 - Open and build the generated solution in the `build` folder
 
 ## Building for Linux
@@ -89,7 +105,8 @@ Use the `*-debug` build presets for a debug build (not recommended for the repla
 - cmake --build . --config Release
 - cmake --install . (might need sudo)
 
-Installing also provides a pkg-config file, so `pkg-config --modversion box2d` reports the installed version and `pkg-config --cflags --libs box2d` gives the build flags.
+Installing also provides a pkg-config file, so `pkg-config --modversion box2d` reports the installed
+version and `pkg-config --cflags --libs box2d` gives the build flags.
 
 ## Building with zig
 
@@ -109,10 +126,13 @@ In Zig code, start using box2d
 ```zig
 const box2d = @import("box2d");
 
-pub fn main(init: std.process.Init) !void {
+pub fn main() void {
     var world_def = box2d.b2DefaultWorldDef();
-    world_def.gravity.y = 9.8;
+    world_def.gravity.y = -10.0;
     const world_id = box2d.b2CreateWorld(&world_def);
+    defer box2d.b2DestroyWorld(world_id);
+
+    box2d.b2World_Step(world_id, 1.0 / 60.0, 4);
 }
 ```
 
@@ -121,7 +141,7 @@ pub fn main(init: std.process.Init) !void {
 Add box2d as a dependency in your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/erincatto/box2d.git", from: "main")
+.package(url: "https://github.com/erincatto/box2d.git", branch: "main")
 ```
 
 And add the product to your target:
@@ -146,13 +166,16 @@ C structs are passed as `inout` arguments using `&`.
 
 ## Replay viewer
 
-The samples app doubles as a viewer for Box2D recordings (`.b2rec` files). Any preset above builds it. Pass a recording on the command line to open it directly:
+The samples app doubles as a viewer for Box2D recordings (`.b2rec` files). Any preset above builds
+it. Pass a recording on the command line to open it directly:
 
 - Windows: `build\bin\Release\samples.exe path\to\session.b2rec`
 - Linux: `build/bin/samples path/to/session.b2rec`
 - macOS: `build/bin/Release/samples path/to/session.b2rec`
 
-On Windows you can also drag a `.b2rec` file onto `samples.exe`. The viewer runs from any directory. Without an argument, open a recording from the **Replay** menu. See [docs/recording.md](docs/recording.md) for how to make a recording.
+On Windows you can also drag a `.b2rec` file onto `samples.exe`. The viewer runs from any directory.
+Without an argument, open a recording from the **Replay** menu. See
+[docs/recording.md](docs/recording.md) for how to make a recording.
 
 ## Compatibility
 
@@ -162,12 +185,13 @@ You will need a compiler that supports C17 to build the Box2D library.
 
 You will need a compiler that supports C++20 to build the samples.
 
-Box2D uses SSE2 and Neon (AArch64) SIMD math to improve performance. This can be disabled by defining `BOX2D_DISABLE_SIMD`.
+Box2D uses SSE2, AVX2, and Neon (AArch64) SIMD math to improve performance. This can be disabled by
+defining `BOX2D_DISABLE_SIMD`. SSE2 is automatically used as a fallback when the CPU doesn't support
+AVX2.
 
 ## Documentation
 
 - [Manual](https://box2d.org/documentation/)
-- [Migration Guide](https://github.com/erincatto/box2d/blob/main/docs/migration.md)
 
 ## Community
 
@@ -175,21 +199,25 @@ Box2D uses SSE2 and Neon (AArch64) SIMD math to improve performance. This can be
 
 ## Contributing
 
-Please do not submit pull requests. Instead, please file an issue for bugs or feature requests. For support, please visit the Discord server.
+Please do not submit pull requests. Instead, please file an issue for bugs or feature requests. For
+support, please visit the Discord server.
 
 ## Giving feedback
 
-Please file an issue or start a chat on discord. You can also use [GitHub Discussions](https://github.com/erincatto/box2d/discussions).
+Please file an issue or start a chat on discord. You can also use [GitHub
+Discussions](https://github.com/erincatto/box2d/discussions).
 
 ## License
 
-Box2D is developed by Erin Catto and uses the [MIT license](https://en.wikipedia.org/wiki/MIT_License).
+Box2D is developed by Erin Catto and uses the [MIT
+license](https://en.wikipedia.org/wiki/MIT_License).
 
 ## Sponsorship
 
 Support development of Box2D through [Github Sponsors](https://github.com/sponsors/erincatto).
 
-Please consider starring this repository and subscribing to my [YouTube channel](https://www.youtube.com/@erin_catto).
+Please consider starring this repository and subscribing to my [YouTube
+channel](https://www.youtube.com/@erin_catto).
 
 ## LLM Usage
 
@@ -202,7 +230,7 @@ LLMs are used in the following areas:
 - code reviews
 - benchmarking
 
-Elsewhere all code is developed and written by me. I take responsibility for every line of code in Box2D/3D.
+Elsewhere all code is developed and written by me.
 
 ## External ports, wrappers, and bindings (unsupported)
 
