@@ -141,7 +141,7 @@ bool b2PrismaticJoint_IsMotorEnabled( b2JointId jointId )
 	return joint->prismaticJoint.enableMotor;
 }
 
-void b2PrismaticJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
+void b2PrismaticJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
 
@@ -151,7 +151,7 @@ void b2PrismaticJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 	joint->prismaticJoint.motorSpeed = motorSpeed;
 }
 
-float b2PrismaticJoint_GetMotorSpeed( b2JointId jointId )
+float b2PrismaticJoint_GetTargetMotorSpeed( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
 	return joint->prismaticJoint.motorSpeed;

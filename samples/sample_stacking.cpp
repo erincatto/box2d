@@ -172,8 +172,8 @@ public:
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 
-			b2Segment segment = { { 10.0f, 0.0f }, { 10.0f, 20.0f } };
-			//b2CreateSegmentShape( groundId, &shapeDef, &segment );
+			b2Segment segment = { { 10.0f, 0.0f }, { 10.0f, 80.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
 
 			segment = { { -100.0f, 0.0f }, { 100.0f, 0.0f } };
 			b2CreateSegmentShape( groundId, &shapeDef, &segment );

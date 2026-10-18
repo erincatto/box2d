@@ -1839,7 +1839,7 @@ Using a prismatic joint is similar to using a revolute joint. Here are the relev
 float b2PrismaticJoint_GetCurrentTranslation(b2JointId jointId);
 float b2PrismaticJoint_GetCurrentSpeed(b2JointId jointId);
 float b2PrismaticJoint_GetCurrentMotorForce(b2JointId jointId);
-void b2PrismaticJoint_SetMotorSpeed(b2JointId jointId, float motorSpeed);
+void b2PrismaticJoint_SetTargetMotorSpeed(b2JointId jointId, float motorSpeed);
 void b2PrismaticJoint_SetMaxMotorForce(b2JointId jointId, float force);
 ```
 

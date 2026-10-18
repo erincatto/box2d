@@ -871,7 +871,7 @@ public:
 
 			if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -40.0f, 40.0f, "%.0f" ) )
 			{
-				b2PrismaticJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
+				b2PrismaticJoint_SetTargetMotorSpeed( m_jointId, m_motorSpeed );
 				b2Joint_WakeBodies( m_jointId );
 			}
 			ImGui::PopItemWidth();
@@ -1019,7 +1019,7 @@ public:
 
 			if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -20.0f, 20.0f, "%.0f" ) )
 			{
-				b2WheelJoint_SetMotorSpeed( m_jointId, m_motorSpeed );
+				b2WheelJoint_SetTargetMotorSpeed( m_jointId, m_motorSpeed );
 			}
 			ImGui::PopItemWidth();
 		}
@@ -1051,7 +1051,7 @@ public:
 	{
 		Sample::Step();
 
-		float torque = b2WheelJoint_GetMotorTorque( m_jointId );
+		float torque = b2WheelJoint_GetCurrentMotorTorque( m_jointId );
 		DrawScreenTextLine( "Motor Torque = %4.1f", torque );
 	}
 
@@ -2921,7 +2921,7 @@ public:
 
 		if ( ImGui::SliderFloat( "Speed", &m_motorSpeed, -0.3f, 0.3f, "%.2f" ) )
 		{
-			b2DistanceJoint_SetMotorSpeed( m_liftJointId, m_motorSpeed );
+			b2DistanceJoint_SetTargetMotorSpeed( m_liftJointId, m_motorSpeed );
 			b2Joint_WakeBodies( m_liftJointId );
 		}
 

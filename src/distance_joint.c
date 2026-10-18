@@ -205,7 +205,7 @@ bool b2DistanceJoint_IsMotorEnabled( b2JointId jointId )
 	return joint->distanceJoint.enableMotor;
 }
 
-void b2DistanceJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
+void b2DistanceJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
 
@@ -215,13 +215,13 @@ void b2DistanceJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed )
 	joint->distanceJoint.motorSpeed = motorSpeed;
 }
 
-float b2DistanceJoint_GetMotorSpeed( b2JointId jointId )
+float b2DistanceJoint_GetTargetMotorSpeed( b2JointId jointId )
 {
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	return joint->distanceJoint.motorSpeed;
 }
 
-float b2DistanceJoint_GetMotorForce( b2JointId jointId )
+float b2DistanceJoint_GetCurrentMotorForce( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );

@@ -583,7 +583,7 @@ typedef struct b2Profile
 /// @ingroup world
 typedef struct b2Counters
 {
-	int64_t byteCount;	  ///<
+	size_t byteCount;	  ///<
 	int bodyCount;		  ///<
 	int shapeCount;		  ///<
 	int contactCount;	  ///<

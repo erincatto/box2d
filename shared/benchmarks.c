@@ -960,7 +960,6 @@ static void CreateSleepPyramid( b2WorldId worldId, int baseCount, float extent, 
 	}
 }
 
-// Stress tests waking and sleeping.
 b2Capacity GetSleepCapacity( void )
 {
 	b2Capacity c = {
@@ -975,6 +974,7 @@ b2Capacity GetSleepCapacity( void )
 	return c;
 }
 
+// Stress tests waking and sleeping.
 void CreateSleep( b2WorldId worldId )
 {
 	g_sleepData = (SleepData){ 0 };
@@ -1026,8 +1026,6 @@ float StepSleep( b2WorldId worldId, int stepCount )
 	return 0.0f;
 }
 
-// Lifted from samples/sample_benchmark.cpp BenchmarkBarrel (e_compoundShape branch).
-// Each dynamic body is a compound of two triangular polygon shapes.
 b2Capacity GetCompoundsCapacity( void )
 {
 	b2Capacity c = {
@@ -1042,6 +1040,7 @@ b2Capacity GetCompoundsCapacity( void )
 	return c;
 }
 
+// Each dynamic body is a compound of two triangular polygon shapes.
 void CreateCompounds( b2WorldId worldId )
 {
 	{

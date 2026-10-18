@@ -2104,11 +2104,11 @@ public:
 		float x = b2PrismaticJoint_GetCurrentTranslation( m_jointId );
 		if ( x > 1.0f )
 		{
-			b2PrismaticJoint_SetMotorSpeed( m_jointId, -0.5f );
+			b2PrismaticJoint_SetTargetMotorSpeed( m_jointId, -0.5f );
 		}
 		else if ( x < -1.0f )
 		{
-			b2PrismaticJoint_SetMotorSpeed( m_jointId, 0.5f );
+			b2PrismaticJoint_SetTargetMotorSpeed( m_jointId, 0.5f );
 		}
 
 		Sample::Step();

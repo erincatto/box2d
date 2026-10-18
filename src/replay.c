@@ -1393,7 +1393,7 @@ static void b2RecDispatch_DistanceJointEnableMotor( const b2RecArgs_DistanceJoin
 
 static void b2RecDispatch_DistanceJointSetMotorSpeed( const b2RecArgs_DistanceJointSetMotorSpeed* a, b2RecReader* rdr )
 {
-	b2DistanceJoint_SetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
+	b2DistanceJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
 
 static void b2RecDispatch_DistanceJointSetMaxMotorForce( const b2RecArgs_DistanceJointSetMaxMotorForce* a, b2RecReader* rdr )
@@ -1523,7 +1523,7 @@ static void b2RecDispatch_PrismaticJointEnableMotor( const b2RecArgs_PrismaticJo
 
 static void b2RecDispatch_PrismaticJointSetMotorSpeed( const b2RecArgs_PrismaticJointSetMotorSpeed* a, b2RecReader* rdr )
 {
-	b2PrismaticJoint_SetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
+	b2PrismaticJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
 
 static void b2RecDispatch_PrismaticJointSetMaxMotorForce( const b2RecArgs_PrismaticJointSetMaxMotorForce* a, b2RecReader* rdr )
@@ -1635,7 +1635,7 @@ static void b2RecDispatch_WheelJointEnableMotor( const b2RecArgs_WheelJointEnabl
 
 static void b2RecDispatch_WheelJointSetMotorSpeed( const b2RecArgs_WheelJointSetMotorSpeed* a, b2RecReader* rdr )
 {
-	b2WheelJoint_SetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
+	b2WheelJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
 
 static void b2RecDispatch_WheelJointSetMaxMotorTorque( const b2RecArgs_WheelJointSetMaxMotorTorque* a, b2RecReader* rdr )

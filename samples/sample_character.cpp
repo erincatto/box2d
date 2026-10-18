@@ -856,7 +856,7 @@ public:
 			bodyDef.motionLocks.angularZ = true;
 
 			// Pre-solve must see a fresh manifold at every tile boundary.
-			bodyDef.enableContactRecycling = true;
+			bodyDef.enableContactRecycling = false;
 
 			m_playerIds[i] = b2CreateBody( m_worldId, &bodyDef );
 

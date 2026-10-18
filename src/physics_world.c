@@ -525,15 +525,9 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invMassB = bodySimB->invMass;
 			contactSim->invIB = bodySimB->invInertia;
 
-			// This is restrictive and I'm not sure this limitation is needed for Box2D.
-			// I would expect the worse case would be spinner, but it doesn't tunnel.
-			//bool isFast = ( ( bodySimA->flags | bodySimB->flags ) & b2_isFast ) != 0;
-
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such as PhysX.
 			// However, this allows larger relative motion and has fewer tuning parameters (just one).
-			//if ( isFast == false && recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
-			//	 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			if ( recycleDistance > 0.0f && ( contactSim->simFlags & b2_simRelativeTransformValid ) &&
 				 ( contactSim->simFlags & b2_contactRecycleFlag ) )
 			{
@@ -574,9 +568,7 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 						b2Vec2 rB = b2RotateVector( dqB, mp->anchorB );
 						b2Vec2 dp = b2Add( dc, b2Sub( rB, rA ) );
 						
-						//B2_UNUSED(dp, normal);
 						mp->separation = mp->baseSeparation + b2Dot( dp, normal );
-
 						mp->normalVelocity = 0.0f;
 						mp->persisted = true;
 					}

@@ -122,8 +122,8 @@ void Car::Despawn()
 
 void Car::SetSpeed( float speed )
 {
-	b2WheelJoint_SetMotorSpeed( m_rearAxleId, speed );
-	b2WheelJoint_SetMotorSpeed( m_frontAxleId, speed );
+	b2WheelJoint_SetTargetMotorSpeed( m_rearAxleId, speed );
+	b2WheelJoint_SetTargetMotorSpeed( m_frontAxleId, speed );
 	b2Joint_WakeBodies( m_rearAxleId );
 }
 
@@ -270,8 +270,8 @@ void Truck::Despawn()
 
 void Truck::SetSpeed( float speed )
 {
-	b2WheelJoint_SetMotorSpeed( m_rearAxleId, speed );
-	b2WheelJoint_SetMotorSpeed( m_frontAxleId, speed );
+	b2WheelJoint_SetTargetMotorSpeed( m_rearAxleId, speed );
+	b2WheelJoint_SetTargetMotorSpeed( m_frontAxleId, speed );
 	b2Joint_WakeBodies( m_rearAxleId );
 }
 

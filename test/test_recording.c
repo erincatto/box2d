@@ -397,7 +397,7 @@ int RecordingTest( void )
 	b2DistanceJoint_EnableLimit( distId, true );
 	b2DistanceJoint_SetLimits( distId, 0.5f, 2.0f );
 	b2DistanceJoint_EnableMotor( distId, true );
-	b2DistanceJoint_SetMotorSpeed( distId, 0.3f );
+	b2DistanceJoint_SetTargetMotorSpeed( distId, 0.3f );
 	b2DistanceJoint_SetMaxMotorForce( distId, 5.0f );
 
 	// Prismatic joint
@@ -412,7 +412,7 @@ int RecordingTest( void )
 	b2PrismaticJoint_EnableLimit( prisId, true );
 	b2PrismaticJoint_SetLimits( prisId, -1.0f, 1.0f );
 	b2PrismaticJoint_EnableMotor( prisId, true );
-	b2PrismaticJoint_SetMotorSpeed( prisId, 0.2f );
+	b2PrismaticJoint_SetTargetMotorSpeed( prisId, 0.2f );
 	b2PrismaticJoint_SetMaxMotorForce( prisId, 8.0f );
 
 	// Wheel joint
@@ -426,7 +426,7 @@ int RecordingTest( void )
 	b2WheelJoint_EnableLimit( wheelId, true );
 	b2WheelJoint_SetLimits( wheelId, -0.5f, 0.5f );
 	b2WheelJoint_EnableMotor( wheelId, true );
-	b2WheelJoint_SetMotorSpeed( wheelId, 1.0f );
+	b2WheelJoint_SetTargetMotorSpeed( wheelId, 1.0f );
 	b2WheelJoint_SetMaxMotorTorque( wheelId, 6.0f );
 
 	// Weld joint

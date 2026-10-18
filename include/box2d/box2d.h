@@ -1116,10 +1116,10 @@ B2_API void b2DistanceJoint_EnableMotor( b2JointId jointId, bool enableMotor );
 B2_API bool b2DistanceJoint_IsMotorEnabled( b2JointId jointId );
 
 /// Set the distance joint motor speed, usually in meters per second
-B2_API void b2DistanceJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed );
+B2_API void b2DistanceJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed );
 
 /// Get the distance joint motor speed, usually in meters per second
-B2_API float b2DistanceJoint_GetMotorSpeed( b2JointId jointId );
+B2_API float b2DistanceJoint_GetTargetMotorSpeed( b2JointId jointId );
 
 /// Set the distance joint maximum motor force, usually in newtons
 B2_API void b2DistanceJoint_SetMaxMotorForce( b2JointId jointId, float force );
@@ -1128,7 +1128,7 @@ B2_API void b2DistanceJoint_SetMaxMotorForce( b2JointId jointId, float force );
 B2_API float b2DistanceJoint_GetMaxMotorForce( b2JointId jointId );
 
 /// Get the distance joint current motor force, usually in newtons
-B2_API float b2DistanceJoint_GetMotorForce( b2JointId jointId );
+B2_API float b2DistanceJoint_GetCurrentMotorForce( b2JointId jointId );
 
 /** @} */
 
@@ -1353,10 +1353,10 @@ B2_API void b2PrismaticJoint_EnableMotor( b2JointId jointId, bool enableMotor );
 B2_API bool b2PrismaticJoint_IsMotorEnabled( b2JointId jointId );
 
 /// Set the prismatic joint motor speed, usually in meters per second
-B2_API void b2PrismaticJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed );
+B2_API void b2PrismaticJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed );
 
 /// Get the prismatic joint motor speed, usually in meters per second
-B2_API float b2PrismaticJoint_GetMotorSpeed( b2JointId jointId );
+B2_API float b2PrismaticJoint_GetTargetMotorSpeed( b2JointId jointId );
 
 /// Set the prismatic joint maximum motor force, usually in newtons
 B2_API void b2PrismaticJoint_SetMaxMotorForce( b2JointId jointId, float force );
@@ -1555,10 +1555,10 @@ B2_API void b2WheelJoint_EnableMotor( b2JointId jointId, bool enableMotor );
 B2_API bool b2WheelJoint_IsMotorEnabled( b2JointId jointId );
 
 /// Set the wheel joint motor speed in radians per second
-B2_API void b2WheelJoint_SetMotorSpeed( b2JointId jointId, float motorSpeed );
+B2_API void b2WheelJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed );
 
 /// Get the wheel joint motor speed in radians per second
-B2_API float b2WheelJoint_GetMotorSpeed( b2JointId jointId );
+B2_API float b2WheelJoint_GetTargetMotorSpeed( b2JointId jointId );
 
 /// Set the wheel joint maximum motor torque, usually in newton-meters
 B2_API void b2WheelJoint_SetMaxMotorTorque( b2JointId jointId, float torque );
@@ -1567,7 +1567,7 @@ B2_API void b2WheelJoint_SetMaxMotorTorque( b2JointId jointId, float torque );
 B2_API float b2WheelJoint_GetMaxMotorTorque( b2JointId jointId );
 
 /// Get the wheel joint current motor torque, usually in newton-meters
-B2_API float b2WheelJoint_GetMotorTorque( b2JointId jointId );
+B2_API float b2WheelJoint_GetCurrentMotorTorque( b2JointId jointId );
 
 /**@}*/
 

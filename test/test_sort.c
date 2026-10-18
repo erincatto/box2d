@@ -65,8 +65,7 @@ static int TestRandomFullWidth( void )
 
 static int TestShapePairKeys( void )
 {
-	//int count = 2000;
-	int count = 8;
+	int count = 2000;
 	for ( int i = 0; i < count; ++i )
 	{
 		uint64_t shapeA = NextRandom() % 300;

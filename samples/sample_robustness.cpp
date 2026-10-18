@@ -602,8 +602,8 @@ public:
 
 		bool changed = false;
 		ImGui::Text( "Multiple Prismatic" );
-		changed = changed || ImGui::SliderFloat( "Hertz##contact", &m_hertz, 0.0f, 480.0f, "%.f" );
-		changed = changed || ImGui::SliderFloat( "Damping Ratio##contact", &m_dampingRatio, 0.0f, 100.0f, "%.f" );
+		changed |= ImGui::SliderFloat( "Hertz##contact", &m_hertz, 0.0f, 480.0f, "%.f" );
+		changed |= ImGui::SliderFloat( "Damping Ratio##contact", &m_dampingRatio, 0.0f, 100.0f, "%.f" );
 
 		if ( changed )
 		{
