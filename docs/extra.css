@@ -113,6 +113,13 @@ td h2.groupheader {
 
 /* Reference members */
 
+/* Typedef types left aligned and free to wrap, so a long opaque struct typedef doesn't widen the
+   column, push the short callback return types right and squeeze the signatures */
+table.memberdecls:has(#header-typedef-members) td.memItemLeft {
+	text-align: left;
+	white-space: normal;
+}
+
 /* Member list and field table edges in the border gray instead of navy */
 .mdescLeft, .mdescRight, .memItemLeft, .memItemRight, .memTemplParams, td.ititle,
 tr.heading + tr[class^='memitem'] td.memItemLeft,
