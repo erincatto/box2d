@@ -40,7 +40,8 @@ default.
 world as the seed, so it works whether you call it before any bodies exist or deep into a running
 simulation. It has no effect if the world is already recording.
 
-> [!important] Recording doesn't work with pre-solve and custom filtering callbacks. If those are
+> [!important]
+> Recording doesn't work with pre-solve and custom filtering callbacks. If those are
 > installed no recording is generated.
 
 When you are done, save the buffer and free it. File I/O is yours to do. The convenience helper

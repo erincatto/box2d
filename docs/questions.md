@@ -10,7 +10,7 @@ charge. Credit should be included if possible. Support is
 [appreciated](https://github.com/sponsors/erincatto). You may use the Box2D
 [logo](https://box2d.org/images/logo.svg).
 
-## What platforms does Box2D support?
+## Platforms support
 
 Box2D is developed using C. Ports and bindings are likely available for most languages and
 platforms.
@@ -79,7 +79,7 @@ This [repo](https://github.com/erincatto/box2d-raylib) shows how to convert mete
 ### Why don't you use this awesome language?
 
 Box2D is designed to be portable and easy to wrap with other languages, so I decided to use C17. I
-used C17 to get support for atomics.
+used C17 to get support for atomics. But that didn't work out because MSVC is behind.
 
 ### Can I use Box2D in a DLL?
 
@@ -171,9 +171,9 @@ feature of Box2D. This assumes precision is not mixed (single versus double prec
 Some developers want rollback determinism. You can achieve this using the [snapshot](@ref snapshot)
 system.
 
-## What are the common mistakes made by new users?
+## Common mistakes
 
-* Using pixels for length instead of meters
+* Using pixels units without calling `b2SetLengthUnitsPerMeter()`
 * Expecting Box2D to give pixel perfect results
 * Testing their code in release mode
 * Not learning C before using Box2D

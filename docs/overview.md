@@ -23,7 +23,8 @@ Since Box2D is written in C, you are expected to be experienced in C programming
 be your first C programming project. You should be comfortable with compiling, linking, and
 debugging.
 
-> [!important] Box2D should not be your first C project. Please learn C programming, compiling,
+> [!important]
+> Box2D should not be your first C project. Please learn C programming, compiling,
 > linking, and debugging before working with Box2D. There are many resources for this online.
 
 ## Scope
@@ -34,7 +35,8 @@ at the Reference section and samples application included with Box2D to learn mo
 This manual is only updated with new releases. The latest version of Box2D may be out of sync with
 this manual.
 
-> [!note] This manual applies to the associated release and not necessarily the latest version on
+> [!note]
+> This manual applies to the associated release and not necessarily the latest version on
 > the main branch.
 
 ## Feedback and bugs
@@ -42,8 +44,8 @@ this manual.
 Please file bugs and feature requests here: [Box2D
 Issues](https://github.com/erincatto/box2d/issues)
 
-You can help to ensure your issue gets fixed if you provide sufficient detail. A [sample](@ref
-samples_app) that reproduces the problem is ideal. A [recording](@ref recording) is even better in
+You can help to ensure your issue gets fixed if you provide sufficient detail. A [sample](@ref samples_app)
+that reproduces the problem is ideal. A [recording](@ref recording) is even better in
 some cases.
 
 There is also a [Discord server](https://discord.gg/NKYgCBP) and a
@@ -182,7 +184,8 @@ Since Box2D is a 2D physics engine, it is tempting to use pixels as your units. 
 will lead to a poor simulation and possibly weird behavior. An object of length 200 pixels would be
 seen by Box2D as the size of a 45-story building.
 
-> [!IMPORTANT] Box2D is tuned for MKS units. Keep the size of moving objects larger than 1cm. You'll
+> [!IMPORTANT]
+> Box2D is tuned for MKS units. Keep the size of moving objects larger than 1cm. You'll
 > need to use some scaling system when you render your environment and actors. The Box2D samples
 > application does this by using an OpenGL viewport transform. Do not use pixel units unless you
 > understand the implications.
@@ -195,7 +198,8 @@ also account for flipped coordinate axes.
 Another limitation to consider is overall world size. If your world units become larger than 16
 kilometers or so, then the lost precision can affect stability.
 
-> [!IMPORTANT] Box2D works best with world sizes less than 16 kilometers. If you are careful with
+> [!IMPORTANT]
+> Box2D works best with world sizes less than 16 kilometers. If you are careful with
 > your simulation tuning, this can be pushed up to around 24 kilometers, which is much larger than
 > most game worlds.
 
@@ -205,7 +209,8 @@ using `BOX2D_DOUBLE_PRECISION`.
 Box2D uses radians for angles. The body rotation is stored as a complex number, so when you access
 the angle of a body, it will be between \f$-\pi\f$ and \f$\pi\f$ radians.
 
-> [!IMPORTANT] Box2D uses radians, not degrees.
+> [!IMPORTANT]
+> Box2D uses radians, not degrees.
 
 ## Changing the length units
 

@@ -610,15 +610,15 @@ typedef struct b2Counters
 /// @ingroup joint
 typedef enum b2JointType
 {
-	b2_distanceJoint,
-	b2_filterJoint,
-	b2_motorJoint,
-	b2_moverJoint,
-	b2_pogoJoint,
-	b2_prismaticJoint,
-	b2_revoluteJoint,
-	b2_weldJoint,
-	b2_wheelJoint,
+	b2_distanceJoint,  ///< constrain the distance between two points
+	b2_filterJoint,	   ///< filter collision between two bodies
+	b2_motorJoint,	   ///< fully control the movement of a body
+	b2_moverJoint,	   ///< control the movement of the dynamic character mover
+	b2_pogoJoint,	   ///< ground interaction for the dynamic character mover
+	b2_prismaticJoint, ///< slide along an axis
+	b2_revoluteJoint,  ///< rotate around a pivot
+	b2_weldJoint,	   ///< bring two bodies together with some flex
+	b2_wheelJoint,	   ///< wheel spins with shock absorber
 } b2JointType;
 
 /// Base joint definition used by all joint types. The local frames are measured from the body's

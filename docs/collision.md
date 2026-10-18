@@ -226,7 +226,8 @@ if (output.hit == true)
 }
 ```
 
-> [!note] Shape specific ray casts return a hit with fraction 0 if the origin is inside the shape.
+> [!note]
+> Shape specific ray casts return a hit with fraction 0 if the origin is inside the shape.
 
 ### Shape cast
 

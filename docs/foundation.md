@@ -157,9 +157,11 @@ simulating will lead to unpredictable behavior and this is never safe. It is als
 data from a Box2D world while it is simulating. Box2D may move data structures to improve cache
 performance. So it is very likely that you will read garbage data.
 
-> [!warning] Do not perform read or write operations on a Box2D world during `b2World_Step()`
+> [!warning]
+> Do not perform read or write operations on a Box2D world during `b2World_Step()`
 
-> [!warning] Do not write to the Box2D world from multiple threads
+> [!warning]
+> Do not write to the Box2D world from multiple threads
 
 It *is safe* to do ray-casts, shape-casts, and overlap tests from multiple threads outside of
 `b2World_Step()`. Generally, any read-only operation is safe to do multithreaded outside of

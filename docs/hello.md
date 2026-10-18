@@ -121,7 +121,8 @@ bodyDef.position = (b2Pos){0.0f, 4.0f};
 b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
 ```
 
-> [!caution]: You must set the body type to `b2_dynamicBody` if you want the body to move in
+> [!caution]:
+> You must set the body type to `b2_dynamicBody` if you want the body to move in
 > response to forces (such as gravity).
 
 Next I create and attach a polygon shape using a shape definition. First I create another box shape:
@@ -139,7 +140,8 @@ shapeDef.density = 1.0f;
 shapeDef.material.friction = 0.3f;
 ```
 
-> [!caution]: A dynamic body should have at least one shape with a non-zero density. Otherwise you
+> [!caution]:
+> A dynamic body should have at least one shape with a non-zero density. Otherwise you
 > will get strange behavior.
 
 Using the shape definition I can now create the shape. This automatically updates the mass of the

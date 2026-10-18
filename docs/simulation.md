@@ -108,8 +108,7 @@ You can also enable multithreading to improve performance:
 worldDef.workerCount = 4;
 ```
 
-Multithreading is not required but it can improve performance substantially. Read more [here](@ref
-multi).
+Multithreading is not required but it can improve performance substantially. Read more [here](@ref multi).
 
 ### World lifetime
 
@@ -185,7 +184,8 @@ kinematic body if you want a shape to be animated and not affected by forces or 
 dynamic body can collide with all body types. A dynamic body should always have finite, non-zero
 mass.
 
-> [!important] Avoid setting the transform on bodies after creation. Box2D treats this as a teleport
+> [!important]
+> Avoid setting the transform on bodies after creation. Box2D treats this as a teleport
 > and may result in undesirable behavior and/or performance problems.
 
 Bodies carry shapes and move them around in the world. Bodies are always rigid bodies in Box2D. That
@@ -233,7 +233,8 @@ bodyDef.type = b2_dynamicBody;
 You can initialize the body position and angle in the body definition. This has far better
 performance than creating the body at the world origin and then moving the body.
 
-> [!warning] Do not create a body at the origin and then move it. If you create several bodies at
+> [!warning]
+> Do not create a body at the origin and then move it. If you create several bodies at
 > the origin, then performance will suffer.
 
 A body has two main points of interest. The first point is the body's origin. Shapes and joints are
@@ -598,7 +599,8 @@ b2Body_ApplyForceToCenter(myBodyId, force, wake);
 b2Body_ApplyLinearImpulseToCenter(myBodyId, linearImpulse, wake);
 ```
 
-> [!warning]: Since Box2D uses sub-stepping, you should not apply a steady impulse for several
+> [!warning]:
+> Since Box2D uses sub-stepping, you should not apply a steady impulse for several
 > frames. Instead you should apply a force which Box2D will spread out evenly across the sub-steps,
 > resulting in smoother movement.
 
@@ -1167,7 +1169,8 @@ you avoid processing stale data.
 Sensor events are only enabled for shapes and sensors if b2ShapeDef::enableSensorEvents is set to
 true.
 
-> [!note] A shape cannot start or stop being a sensor. Such a feature would break sensor events,
+> [!note]
+> A shape cannot start or stop being a sensor. Such a feature would break sensor events,
 > potentially causing bugs in game logic.
 
 ## Contacts
@@ -1264,7 +1267,8 @@ specific bodies as needed.
 bodyDef.enableContactRecycling = false;
 ```
 
-> [!note] Recycled contacts skip friction and restitution updates. They also skip pre-solve
+> [!note]
+> Recycled contacts skip friction and restitution updates. They also skip pre-solve
 > callbacks.
 
 ### Contact data
@@ -1551,7 +1555,8 @@ is destroyed, all joints attached to that body are automatically destroyed. This
 be careful to avoid using joint ids when the attached body was destroyed. Box2D will assert if you
 use a dangling joint id.
 
-> [!important] Joints are destroyed when an attached body is destroyed.
+> [!important]
+> Joints are destroyed when an attached body is destroyed.
 
 Fortunately you can check if your joint id is valid.
 
@@ -2235,5 +2240,6 @@ minimal cost. So there is no advantage to attempting to disable determinism.
 I maintain a unit test for determinism that is run for every pull request. Determinism is easy to
 break, so it is important to have regular validation.
 
-> [!note] Box2D determinism does not mean your application will be deterministic. Consider using
+> [!note]
+> Box2D determinism does not mean your application will be deterministic. Consider using
 > similar strategies to make your application deterministic as I have used for Box2D.
