@@ -4,8 +4,8 @@ Box2D provides base functionality for hooks and vector math. The C interface all
 
 ## Assertions
 
-Box2D will assert on bad input. This includes things like sending in NaN or infinity for values. It will assert if
-you use negative values for things that should only be positive, such as density. When asserts are disabled, bad input will be rejected and a message will be logged.
+Box2D may assert on bad input. This includes things like sending in NaN or infinity for values. It may assert if
+you use negative values for things that should only be positive, such as density. When asserts are disabled, bad input may be rejected and a message may be logged.
 
 Box2D will also assert if an internal bug is detected. For this reason, it is advisable to build Box2D from source.
 The Box2D library compiles in about a second on my computer.
@@ -30,7 +30,7 @@ You can get logging from Box2D using `b2SetLogCallback()`. Logging in Box2D is b
 
 ## Version
 
-The b2Version structure holds the current version so you can query this
+The `b2Version` structure holds the current version so you can query this
 at run-time using `b2GetVersion()`.
 
 ```c
@@ -71,7 +71,7 @@ The math library is kept simple to make Box2D easy to port and maintain.
 
 ## Multithreading {#multi}
 
-Box2D has been highly optimized for multithreading. Multithreading is not required and by default Box2D will run single-threaded. If performance is important for your application, you should consider using the multithreading.
+Box2D has been highly optimized for multithreading. Multithreading is not required and by default Box2D will run single-threaded. If performance is important for your application, you should consider using multithreading.
 
 Box2D has a built-in task scheduler that creates threads. You can optionally connect your own task scheduler if you want more control.
 
@@ -81,7 +81,7 @@ You can change the worker count using `b2World_SetWorkerCount()`.
 
 ### Using the built-in task scheduler
 
-You can use the built in scheduler simply by setting the worker count.
+You can use the built-in scheduler simply by setting the worker count.
 
 ```c
 b2WorldDef def = b2DefaultWorldDef();
@@ -146,4 +146,5 @@ There are a few caveats:
 
 ## SIMD
 
-Box2D uses [SIMD](https://en.wikipedia.org/wiki/Single_instruction%2C_multiple_data) instructions to improve performance. On x64 CPUs it will use AVX2 if possible and otherwise fall back to SSE2. This decision is made at runtime using the [CPUID](https://en.wikipedia.org/wiki/CPUID). On ARM64 and Apple Silicon Box2D will use Neon instructions. You can completely disable SIMD using the preprocessor argument `BOX2D_DISABLE_SIMD`.
+Box2D uses [SIMD](https://en.wikipedia.org/wiki/Single_instruction%2C_multiple_data) instructions to improve performance. On x64 CPUs it will use AVX2 if possible and otherwise fall back to SSE2. This decision is made at runtime using the [CPUID](https://en.wikipedia.org/wiki/CPUID) instruction. On ARM64 and Apple Silicon Box2D will use Neon instructions. You can completely disable SIMD using the preprocessor argument `BOX2D_DISABLE_SIMD`.
+

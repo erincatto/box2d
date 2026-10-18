@@ -14,8 +14,6 @@ Box2D is written in portable C17. Most of the types defined in the
 engine begin with the b2 prefix. Hopefully this is sufficient to avoid
 name clashing with your application.
 
-[//]: # (This is a comment.)
-
 ## Prerequisites
 
 In this manual I'll assume you are familiar with basic physics
@@ -30,7 +28,7 @@ Since Box2D is written in C, you are expected to be experienced in C
 programming. Box2D should not be your first C programming project. You
 should be comfortable with compiling, linking, and debugging.
 
-> [!IMPORTANT]
+> [!important]
 > Box2D should not be your first C project. Please learn C
 > programming, compiling, linking, and debugging before working with
 > Box2D. There are many resources for this online.
@@ -54,8 +52,8 @@ Please file bugs and feature requests here:
 [Box2D Issues](https://github.com/erincatto/box2d/issues)
 
 You can help to ensure your issue gets fixed if you provide sufficient
-detail. A [sample](#samples_app) that reproduces the problem is ideal.
-A [recording](#recording) is even better in some cases.
+detail. A [sample](@ref samples_app) that reproduces the problem is ideal.
+A [recording](@ref recording) is even better in some cases.
 
 There is also a [Discord server](https://discord.gg/NKYgCBP) and a
 [subreddit](https://reddit.com/r/box2d) for Box2D. You may also use
@@ -158,6 +156,7 @@ the number of constraints.
 
 The solver advances bodies in time using discrete time steps. Without
 intervention this can lead to tunneling.
+
 ![Tunneling Effect](images/tunneling1.svg)
 
 Box2D contains specialized algorithms to deal with tunneling. First, the
@@ -203,10 +202,10 @@ Static shapes may be up to 50 meters long without trouble. If you have a
 large world, you should split it up into multiple static bodies. This will
 improve precision and simulation behavior.
 
-Being a 2D physics engine, it is tempting to use pixels as your units.
+Since Box2D is a 2D physics engine, it is tempting to use pixels as your units.
 Unfortunately this will lead to a poor simulation and possibly weird
 behavior. An object of length 200 pixels would be seen by Box2D as the
-size of a 45 story building.
+size of a 45-story building.
 
 > [!IMPORTANT] 
 > Box2D is tuned for MKS units. Keep the size of moving objects larger than 1cm.

@@ -50,7 +50,7 @@ Bodies are built using the following steps:
 
 For step 1 I create the ground body. For this I need a body
 definition. With the body definition I specify the initial position of
-the ground body. `b2Pos` is doubles when double precision is enabled,
+the ground body. `b2Pos` holds doubles when double precision is enabled,
 otherwise it aliases to `b2Vec2`.
 
 ```c
@@ -88,7 +88,7 @@ the limitations of floating point arithmetic, using Box2D to model the
 movement of glaciers or dust particles might not work well.
 
 I'll finish the ground body in step 4 by creating the shape. For this step
-I need to create a shape definition which works fine with the default value.
+I need to create a shape definition which works fine with the default values.
 
 ```c
 b2ShapeDef groundShapeDef = b2DefaultShapeDef();
@@ -132,7 +132,7 @@ bodyDef.position = (b2Pos){0.0f, 4.0f};
 b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
 ```
 
-> **Caution**:
+> [!caution]:
 > You must set the body type to `b2_dynamicBody` if you want the body to
 > move in response to forces (such as gravity).
 
@@ -153,7 +153,7 @@ shapeDef.density = 1.0f;
 shapeDef.material.friction = 0.3f;
 ```
 
-> **Caution**:
+> [!caution]:
 > A dynamic body should have at least one shape with a non-zero density.
 > Otherwise you will get strange behavior.
 
@@ -231,7 +231,7 @@ for a total of 1.5 seconds of simulated time.
 ```c
 for (int i = 0; i < 90; ++i)
 {
-	b2World_Step(worldId, timeStep, subStepCount);
+    b2World_Step(worldId, timeStep, subStepCount);
     b2Pos position = b2Body_GetPosition(bodyId);
     b2Rot rotation = b2Body_GetRotation(bodyId);
     printf("%4.2f %4.2f %4.2f\n", position.x, position.y, b2Rot_GetAngle(rotation));
@@ -243,7 +243,7 @@ Notice that the rotation of the body is returned in a `b2Rot` struct (short for 
 The output shows the box falling and landing on the ground box. Your
 output should look like this:
 
-```
+```text
 0.00 4.00 0.00
 0.00 3.99 0.00
 0.00 3.98 0.00

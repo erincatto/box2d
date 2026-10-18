@@ -111,7 +111,7 @@ table.doxtable tr:nth-child(even) td,
 
 /* Callouts share one panel with an accent edge.
 @note and > [!NOTE] give dl.note, @warning and > [!WARNING] give dl.warning,
-> [!CAUTION] gives dl.attention, a plain quote like > **Caution**: gives blockquote.doxtable */
+> [!CAUTION] gives dl.attention, a plain quote like > [!caution]: gives blockquote.doxtable */
 dl.note, dl.remark, dl.warning, dl.attention, dl.important,
 blockquote.doxtable {
 	background-color: #32363d;
