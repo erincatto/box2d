@@ -311,9 +311,9 @@ void DynamicMover::Update( float timeStep, float throttle )
 	// The pogo joint is rebuilt every solve because it may land on a different body
 	if ( b2Joint_IsValid( m_pogoJointId ) )
 	{
-		m_pogoLength = b2PogoJoint_GetLength( m_pogoJointId );
+		m_pogoLength = b2PogoJoint_GetCurrentLength( m_pogoJointId );
 		m_pogoImpulse = b2PogoJoint_GetImpulse( m_pogoJointId );
-		m_pogoVelocity = b2PogoJoint_GetVelocity( m_pogoJointId );
+		m_pogoVelocity = b2PogoJoint_GetCurrentSpeed( m_pogoJointId );
 
 		b2DestroyJoint( m_pogoJointId );
 		m_pogoJointId = b2_nullJointId;

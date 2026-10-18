@@ -176,6 +176,7 @@ public:
 	uint64_t m_profileWriteIndex;
 
 	bool m_didStep;
+	bool m_stepWhilePaused;
 };
 
 typedef Sample* SampleCreateFcn( SampleContext* context );

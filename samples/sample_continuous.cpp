@@ -1681,13 +1681,13 @@ public:
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_A ) == GLFW_PRESS )
 		{
-			b2RevoluteJoint_SetMotorSpeed( m_leftJointId, 20.0f );
-			b2RevoluteJoint_SetMotorSpeed( m_rightJointId, -20.0f );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_leftJointId, 20.0f );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_rightJointId, -20.0f );
 		}
 		else
 		{
-			b2RevoluteJoint_SetMotorSpeed( m_leftJointId, -10.0f );
-			b2RevoluteJoint_SetMotorSpeed( m_rightJointId, 10.0f );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_leftJointId, -10.0f );
+			b2RevoluteJoint_SetTargetMotorSpeed( m_rightJointId, 10.0f );
 		}
 	}
 

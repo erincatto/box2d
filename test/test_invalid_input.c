@@ -32,14 +32,14 @@ static int SilentAssertFcn( const char* condition, const char* fileName, int lin
 static void BeginRejectCount( void )
 {
 	logCount = 0;
-	b2SetLogFcn( CountingLogFcn );
-	b2SetAssertFcn( SilentAssertFcn );
+	b2SetLogCallback( CountingLogFcn );
+	b2SetAssertCallback( SilentAssertFcn );
 }
 
 static void EndRejectCount( void )
 {
-	b2SetAssertFcn( TestAssertFcn );
-	b2SetLogFcn( TestLogFcn );
+	b2SetAssertCallback( TestAssertFcn );
+	b2SetLogCallback( TestLogFcn );
 }
 
 #define REJECTS( CALL )                                                                                                          \
@@ -72,7 +72,7 @@ static const float badValues[] = { NAN, INFINITY, -INFINITY };
 
 static bool IsBodyFinite( b2BodyId bodyId )
 {
-	return b2IsValidPosition( b2Body_GetPosition( bodyId ) ) && b2IsValidRotation( b2Body_GetRotation( bodyId ) ) &&
+	return b2IsValidPos( b2Body_GetPosition( bodyId ) ) && b2IsValidRot( b2Body_GetRotation( bodyId ) ) &&
 		   b2IsValidVec2( b2Body_GetLinearVelocity( bodyId ) ) && b2IsValidFloat( b2Body_GetAngularVelocity( bodyId ) );
 }
 
@@ -85,7 +85,7 @@ static int WorldInputTest( void )
 	float restitutionThreshold = b2World_GetRestitutionThreshold( worldId );
 	float hitEventThreshold = b2World_GetHitEventThreshold( worldId );
 	float recycleDistance = b2World_GetContactRecycleDistance( worldId );
-	float maximumLinearSpeed = b2World_GetMaximumLinearSpeed( worldId );
+	float maximumLinearSpeed = b2World_GetMaxLinearSpeed( worldId );
 	int restitutionIterations = b2World_GetRestitutionIterations( worldId );
 
 	BeginRejectCount();
@@ -99,7 +99,7 @@ static int WorldInputTest( void )
 		REJECTS( b2World_SetRestitutionThreshold( worldId, bad ) );
 		REJECTS( b2World_SetHitEventThreshold( worldId, bad ) );
 		REJECTS( b2World_SetContactRecycleDistance( worldId, bad ) );
-		REJECTS( b2World_SetMaximumLinearSpeed( worldId, bad ) );
+		REJECTS( b2World_SetMaxLinearSpeed( worldId, bad ) );
 		REJECTS( b2World_SetContactTuning( worldId, bad, 10.0f, 3.0f ) );
 		REJECTS( b2World_SetContactTuning( worldId, 30.0f, bad, 3.0f ) );
 		REJECTS( b2World_SetContactTuning( worldId, 30.0f, 10.0f, bad ) );
@@ -116,7 +116,7 @@ static int WorldInputTest( void )
 	ENSURE( b2World_GetRestitutionThreshold( worldId ) == restitutionThreshold );
 	ENSURE( b2World_GetHitEventThreshold( worldId ) == hitEventThreshold );
 	ENSURE( b2World_GetContactRecycleDistance( worldId ) == recycleDistance );
-	ENSURE( b2World_GetMaximumLinearSpeed( worldId ) == maximumLinearSpeed );
+	ENSURE( b2World_GetMaxLinearSpeed( worldId ) == maximumLinearSpeed );
 	ENSURE( b2World_GetRestitutionIterations( worldId ) == restitutionIterations );
 
 	b2DestroyWorld( worldId );
@@ -255,7 +255,7 @@ static int ShapeInputTest( void )
 
 	// The rejected geometry never reached the shape, so the proxy is still the original box
 	ENSURE( b2Shape_GetType( shapeId ) == b2_polygonShape );
-	ENSURE( b2IsValidAABB( b2Shape_GetAABB( shapeId ) ) );
+	ENSURE( b2IsValidAABB( b2Shape_GetBounds( shapeId ) ) );
 	ENSURE( b2IsValidAABB( b2World_GetBounds( worldId ) ) );
 	ENSURE( b2Shape_GetDensity( shapeId ) == density );
 	ENSURE( b2Shape_GetFriction( shapeId ) == 0.4f && friction == friction );
@@ -306,11 +306,11 @@ static int JointInputTest( void )
 		REJECTS( b2RevoluteJoint_SetTargetAngle( jointId, bad ) );
 		REJECTS( b2RevoluteJoint_SetLimits( jointId, bad, 1.0f ) );
 		REJECTS( b2RevoluteJoint_SetLimits( jointId, -1.0f, bad ) );
-		REJECTS( b2RevoluteJoint_SetMotorSpeed( jointId, bad ) );
+		REJECTS( b2RevoluteJoint_SetTargetMotorSpeed( jointId, bad ) );
 		REJECTS( b2RevoluteJoint_SetMaxMotorTorque( jointId, bad ) );
 	}
 
-	ACCEPTS( b2RevoluteJoint_SetMotorSpeed( jointId, 2.0f ) );
+	ACCEPTS( b2RevoluteJoint_SetTargetMotorSpeed( jointId, 2.0f ) );
 
 	for ( int i = 0; i < 30; ++i )
 	{
@@ -460,8 +460,8 @@ static int RecordReplayTest( void )
 	const uint8_t* data = b2Recording_GetData( recording );
 	int size = b2Recording_GetSize( recording );
 	ENSURE( size > 0 );
-	ENSURE( b2ValidateReplay( data, size, 0 ) );
-	ENSURE( b2ValidateReplay( data, size, 4 ) );
+	ENSURE( b2ValidateRecording( data, size, 0 ) );
+	ENSURE( b2ValidateRecording( data, size, 4 ) );
 
 	EndRejectCount();
 

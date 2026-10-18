@@ -9,10 +9,9 @@
 
 /**
  * @defgroup id Ids
- * These ids serve as handles to internal Box2D objects.
- * These should be considered opaque data and passed by value.
- * Include this header if you need the id types and not the whole Box2D API.
- * All ids are considered null if initialized to zero.
+ * These ids serve as handles to internal Box2D objects. These should be considered opaque data and
+ * passed by value. Include this header if you need the id types and not the whole Box2D API. All
+ * ids are considered null if initialized to zero.
  *
  * For example in C++:
  *
@@ -28,8 +27,10 @@
  *
  * These are both considered null.
  *
- * @warning Do not use the internals of these ids. They are subject to change. Ids should be treated as opaque objects.
- * @warning You should use ids to access objects in Box2D. Do not access files within the src folder. Such usage is unsupported.
+ * @warning Do not use the internals of these ids. They are subject to change. Ids should be treated
+ * as opaque objects.
+ * @warning You should use ids to access objects in Box2D. Do not access files within the src
+ * folder. Such usage is unsupported.
  * @{
  */
 
@@ -56,7 +57,7 @@ typedef struct b2ShapeId
 	uint16_t generation;
 } b2ShapeId;
 
-/// Chain id references a chain instances. This should be treated as an opaque handle.
+/// Chain id references a chain instance. This should be treated as an opaque handle.
 typedef struct b2ChainId
 {
 	int32_t index1;
@@ -72,7 +73,7 @@ typedef struct b2JointId
 	uint16_t generation;
 } b2JointId;
 
-/// Contact id references a contact instance. This should be treated as an opaque handled.
+/// Contact id references a contact instance. This should be treated as an opaque handle.
 typedef struct b2ContactId
 {
 	int32_t index1;
@@ -95,8 +96,7 @@ typedef struct b2ContactId
 #endif
 // clang-format on
 
-/// Use these to make your identifiers null.
-/// You may also use zero initialization to get null.
+/// Use these to make your identifiers null. You may also use zero initialization to get null.
 static const b2WorldId b2_nullWorldId = B2_NULL_ID;
 static const b2BodyId b2_nullBodyId = B2_NULL_ID;
 static const b2ShapeId b2_nullShapeId = B2_NULL_ID;
@@ -111,8 +111,9 @@ static const b2ContactId b2_nullContactId = B2_NULL_ID;
 #define B2_IS_NON_NULL( id ) ( ( id ).index1 != 0 )
 
 /// Compare two ids for equality. Doesn't work for b2WorldId. Don't mix types.
-#define B2_ID_EQUALS( id1, id2 )                                                                                                 \
-	( ( id1 ).index1 == ( id2 ).index1 && ( id1 ).world0 == ( id2 ).world0 && ( id1 ).generation == ( id2 ).generation )
+#define B2_ID_EQUALS( id1, id2 )                                                                   \
+	( ( id1 ).index1 == ( id2 ).index1 && ( id1 ).world0 == ( id2 ).world0 &&                      \
+	  ( id1 ).generation == ( id2 ).generation )
 
 /// Store a world id into a uint32_t.
 B2_ID_INLINE uint32_t b2StoreWorldId( b2WorldId id )
@@ -179,7 +180,7 @@ B2_ID_INLINE b2JointId b2LoadJointId( uint64_t x )
 	return id;
 }
 
-/// Store a contact id into 16 bytes
+/// Store a contact id.
 B2_ID_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
 {
 	values[0] = (uint32_t)id.index1;
@@ -187,7 +188,7 @@ B2_ID_INLINE void b2StoreContactId( b2ContactId id, uint32_t values[3] )
 	values[2] = (uint32_t)id.generation;
 }
 
-/// Load a two uint64_t into a contact id.
+/// Load a contact id.
 B2_ID_INLINE b2ContactId b2LoadContactId( uint32_t values[3] )
 {
 	b2ContactId id;

@@ -24,7 +24,7 @@ enum b2SchedulerTaskStatus
 
 typedef struct b2SchedulerTask
 {
-	b2TaskCallback* callback;
+	b2TaskCallbackFcn* callback;
 	void* taskContext;
 	b2AtomicInt status;
 } b2SchedulerTask;
@@ -223,7 +223,7 @@ void b2ResetScheduler( b2Scheduler* scheduler )
 	b2AtomicStoreInt( &scheduler->nextSlot, 0 );
 }
 
-void* b2SchedulerEnqueueTask( b2TaskCallback* task, void* taskContext, void* userContext )
+void* b2SchedulerEnqueueTask( b2TaskCallbackFcn* task, void* taskContext, void* userContext )
 {
 	b2Scheduler* scheduler = userContext;
 

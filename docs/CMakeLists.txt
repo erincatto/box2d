@@ -1,4 +1,7 @@
-find_package(Doxygen REQUIRED dot)
+# https://www.doxygen.nl/manual/markdown.html#markdown_extra
+# https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+
+find_package(Doxygen REQUIRED)
 
 set(DOXYGEN_PROJECT_NAME "Box2D")
 set(DOXYGEN_GENERATE_HTML YES)
@@ -31,15 +34,24 @@ set(DOXYGEN_DISABLE_INDEX YES)
 set(DOXYGEN_GENERATE_TREEVIEW YES)
 set(DOXYGEN_FULL_SIDEBAR NO)
 
+# Only the ## sections in the tree, deeper headings made the manual pages expand into long lists
+set(DOXYGEN_TOC_INCLUDE_HEADINGS 2)
+
 # No per-page outline panel on the right
 set(DOXYGEN_PAGE_OUTLINE_PANEL NO)
 
-# Dark theme baked by doxygen, extra.css only adds the Box2D accent
+# Dark theme baked by doxygen, extra.css restyles it in the Box2D grays and accent
 set(DOXYGEN_HTML_COLORSTYLE DARK)
 
 # this tells doxygen to label structs as structs instead of classes
 set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
 set(DOXYGEN_WARN_IF_INCOMPLETE_DOC NO)
+
+# Keep enum values out of the summary tables, b2HexColor alone has over a hundred
+set(DOXYGEN_ENUM_VALUES_PER_LINE 0)
+
+# No Graphviz diagrams, the struct collaboration graphs only repeat the field types
+set(DOXYGEN_HAVE_DOT NO)
 
 doxygen_add_docs(doc
                 "${CMAKE_SOURCE_DIR}/include/box2d"
@@ -55,8 +67,13 @@ doxygen_add_docs(doc
                 "character.md"
                 "reading.md"
                 "questions.md"
-                "migration.md"
-                "release_notes_v310.md"
+                "release_notes_v320.md"
                 ALL
                 COMMENT "Generate HTML documentation")
                 
+
+# Jump to anchors instead of doxygen's animated scroll
+add_custom_command(TARGET doc POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -DNAVTREE=${CMAKE_CURRENT_BINARY_DIR}/html/navtree.js
+                        -P ${CMAKE_CURRENT_SOURCE_DIR}/instant_scroll.cmake
+                VERBATIM)

@@ -75,6 +75,17 @@
 	}                                                                                                                            \
 	while ( 0 )
 
+#define b2Array_Grow( a, n )                                                                                                     \
+	do                                                                                                                           \
+	{                                                                                                                            \
+		if ( ( a ).capacity < ( n ) )                                                                                            \
+		{                                                                                                                        \
+			int newCapacity = 2 * ( a ).capacity > ( n ) ? 2 * ( a ).capacity : ( n );                                           \
+			b2Array_Reserve( a, newCapacity );                                                                                   \
+		}                                                                                                                        \
+	}                                                                                                                            \
+	while ( 0 )
+
 #define b2Array_Resize( a, n )                                                                                                   \
 	do                                                                                                                           \
 	{                                                                                                                            \

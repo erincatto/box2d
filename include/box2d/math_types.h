@@ -9,16 +9,14 @@
  * @{
  */
 
-/// 2D vector
-/// This can be used to represent a point or free vector
+/// 2D vector This can be used to represent a point or free vector
 typedef struct b2Vec2
 {
 	/// coordinates
 	float x, y;
 } b2Vec2;
 
-/// Cosine and sine pair
-/// This uses a custom implementation designed for cross-platform determinism
+/// Cosine and sine pair This uses a custom implementation designed for cross-platform determinism
 typedef struct b2CosSin
 {
 	/// cosine and sine
@@ -26,8 +24,7 @@ typedef struct b2CosSin
 	float sine;
 } b2CosSin;
 
-/// 2D rotation
-/// This is similar to using a complex number for rotation
+/// 2D rotation This is similar to using a complex number for rotation
 typedef struct b2Rot
 {
 	/// cosine and sine
@@ -43,15 +40,15 @@ typedef struct b2Transform
 
 #if defined( BOX2D_DOUBLE_PRECISION )
 
-/// A world position. Double precision in large world mode so coordinates stay accurate far
-/// from the origin.
+/// A world position. Double precision in large world mode so coordinates stay accurate far from the
+/// origin.
 typedef struct b2Pos
 {
 	double x, y;
 } b2Pos;
 
-/// A world transform with double precision translation and float rotation. Rotation is frame
-/// local and never needs the extra range, the same split as Jolt's DMat44.
+/// A world transform with double precision translation and float rotation. Rotation is frame local
+/// and never needs the extra range, the same split as Jolt's DMat44.
 typedef struct b2WorldTransform
 {
 	b2Pos p;

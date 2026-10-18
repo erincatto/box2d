@@ -152,7 +152,7 @@ public:
 	void RollBack( int index )
 	{
 		const Snapshot& snapshot = m_snapshots[index];
-		b2World_Restore( m_worldId, snapshot.image, snapshot.size );
+		b2World_RestoreFromSnapshot( m_worldId, snapshot.image, snapshot.size );
 
 		m_data.stepCount = snapshot.step;
 		m_data.sleepStep = -1;

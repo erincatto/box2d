@@ -297,7 +297,7 @@ static OriginQueryData RunOriginQueries( b2Pos base )
 	data.insidePoint = b2Shape_TestPoint( shapeId, base );
 
 	b2WorldCastOutput rayOutput =
-		b2Shape_RayCast( shapeId, b2OffsetPos( base, (b2Vec2){ -5.0f, 0.0f } ), (b2Vec2){ 10.0f, 0.0f } );
+		b2Shape_CastRay( shapeId, b2OffsetPos( base, (b2Vec2){ -5.0f, 0.0f } ), (b2Vec2){ 10.0f, 0.0f } );
 	data.shapeRayHit = rayOutput.hit;
 	data.shapeRayPoint = rayOutput.point;
 
@@ -418,8 +418,8 @@ static int LargeWorldRecordingTest( void )
 
 	// Replay at the recorded worker count and a different one. A demoted op stream position would
 	// diverge the state hash; the double precision wire format reproduces the run exactly.
-	ENSURE( b2ValidateReplay( data, size, 0 ) );
-	ENSURE( b2ValidateReplay( data, size, 4 ) );
+	ENSURE( b2ValidateRecording( data, size, 0 ) );
+	ENSURE( b2ValidateRecording( data, size, 4 ) );
 
 	b2DestroyRecording( rec );
 	return 0;

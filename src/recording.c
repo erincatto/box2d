@@ -825,7 +825,7 @@ void b2StopRecordingInternal( b2World* world )
 // Convenience file I/O. The library never opens files while recording. These let a host persist
 // or reload a recording buffer without writing its own I/O. fopen precedent: b2World_DumpMemoryStats.
 
-bool b2SaveRecordingToFile( const b2Recording* recording, const char* path )
+bool b2Recording_SaveToFile( const b2Recording* recording, const char* path )
 {
 	if ( recording == NULL || path == NULL )
 	{
@@ -843,7 +843,7 @@ bool b2SaveRecordingToFile( const b2Recording* recording, const char* path )
 	return (int)written == recording->buffer.size;
 }
 
-b2Recording* b2LoadRecordingFromFile( const char* path )
+b2Recording* b2CreateRecordingFromFile( const char* path )
 {
 	if ( path == NULL )
 	{

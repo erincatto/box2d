@@ -1834,7 +1834,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 		int colorIndex = joint->colorIndex;
 		if ( colorIndex != B2_NULL_INDEX )
 		{
-			b2Pos p = b2LerpPosition( pA, pB, 0.5f );
+			b2Pos p = b2LerpPos( pA, pB, 0.5f );
 			draw->DrawPointFcn( p, 5.0f, b2GetGraphColor( colorIndex ), draw->context );
 		}
 	}
@@ -1843,7 +1843,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 	{
 		b2Vec2 force = b2GetJointConstraintForce( world, joint );
 		float torque = b2GetJointConstraintTorque( world, joint );
-		b2Pos p = b2LerpPosition( pA, pB, 0.5f );
+		b2Pos p = b2LerpPos( pA, pB, 0.5f );
 
 		draw->DrawLineFcn( p, b2OffsetPos( p, b2MulSV( 0.001f, force ) ), b2_colorAzure, draw->context );
 

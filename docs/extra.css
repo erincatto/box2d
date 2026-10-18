@@ -1,61 +1,41 @@
 /*
-Box2D accents on top of doxygen's built-in dark theme (HTML_COLORSTYLE DARK).
-Doxygen 1.17 bakes a complete dark palette, so this only restores the Box2D
-cyan accent and backs the transparent SVG diagrams. Loaded after doxygen.css,
+Box2D look on top of doxygen's built-in dark theme (HTML_COLORSTYLE DARK).
+Restores the Box2D cyan accent and grays, backs the transparent SVG diagrams,
+and styles screenshots, prose width, and callouts. Loaded after doxygen.css,
 so plain overrides win by order.
 */
 
-/* Box2D cyan for links, symbol cross references, and section headings */
-a, a:link, a:visited,
-.contents a:visited,
-a.el, a.el:visited, a.code, a.code:visited, a.line, a.line:visited,
-a.codeRef, a.codeRef:visited, a.lineRef, a.lineRef:visited {
-	color: #67d8ef;
+/* Doxygen's DARK style bakes its colors, so these only feed the overrides below */
+:root {
+	--b2-page: #292a2d;
+	--b2-panel: #32363d;
+	--b2-edge: #3c4048;
+	--b2-edge-hover: #5f6670;
+	--b2-text: #D8D8D8;
+	--b2-muted: #9aa0a6;
+	--b2-accent: #67d8ef;
+	--b2-warm: #e5b567;
+	--b2-plate: #CCCCCC;
 }
 
-h2.groupheader,
-.memtitle {
-	color: #67d8ef;
-}
+/* Page */
 
-h1.glow, h2.glow, h3.glow, h4.glow, h5.glow, h6.glow {
-	text-shadow: 0 0 15px #67d8ef;
-}
-
-/* SVG diagrams are transparent, so back them with a light plate to stay legible on a dark page */
-.image {
-	background-color: #CCCCCC;
-	border: 10px solid #CCCCCC;
-}
-
-img.inline {
-	background-color: #CCCCCC;
-	border: 10px solid #CCCCCC;
-	margin: 0px;
-}
-
-/* Caption sits on the light plate */
-.caption {
-	padding-top: 10px;
-	color: black;
-}
-
-/* Cap line length for readability */
-div.contents {
-	max-width: 1000px;
-}
-
-/* Soften contrast. doxygen 1.17's dark is near black, restore the Box2D grays */
+/* Soften contrast. Doxygen's dark is near black, restore the Box2D grays */
 body {
-	background-color: #292a2d;
-	color: #D8D8D8;
+	background-color: var(--b2-page);
+	color: var(--b2-text);
 }
 
 #titlearea,
 div.header,
 #side-nav,
 #nav-tree {
-	background-color: #292a2d;
+	background-color: var(--b2-page);
+}
+
+#titlearea,
+div.header {
+	border-bottom-color: var(--b2-edge);
 }
 
 /* Panels and selection sit one step lighter than the page */
@@ -69,17 +49,364 @@ table.doxtable th, .fieldtable th,
 th.markdownTableHeadLeft, th.markdownTableHeadRight, th.markdownTableHeadCenter, th.markdownTableHeadNone,
 table.doxtable tr:nth-child(even) td,
 .directory tr.even {
-	background-color: #32363d;
+	background-color: var(--b2-panel);
 }
 
 .directory tr.odd {
-	background-color: #292a2d;
+	background-color: var(--b2-page);
 }
 
-/* Caution callouts, filled olive box with a full border and real padding */
+/* Cap line length for readability */
+div.contents {
+	max-width: 1000px;
+}
+
+/* Prose reads best near 75 characters, the reference tables keep the wider cap */
+.textblock {
+	max-width: 820px;
+}
+
+/* Links and headings */
+
+/* Box2D cyan for links, symbol cross references, and section headings */
+a, a:link, a:visited,
+.contents a:visited,
+a.el, a.el:visited, a.code, a.code:visited, a.line, a.line:visited,
+a.codeRef, a.codeRef:visited, a.lineRef, a.lineRef:visited {
+	color: var(--b2-accent);
+}
+
+/* Doxygen bolds internal links only, so prose would mix two link weights */
+.textblock a.el {
+	font-weight: normal;
+}
+
+.contents a:hover {
+	text-decoration: underline;
+}
+
+h2.groupheader,
+.memtitle {
+	color: var(--b2-accent);
+}
+
+h1.glow, h2.glow, h3.glow, h4.glow, h5.glow, h6.glow {
+	text-shadow: 0 0 15px var(--b2-accent);
+}
+
+/* A page's # heading is the title and its ## headings render as h1 at 200% bold,
+so the title has to outrank them */
+div.headertitle .title {
+	font-size: 240%;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+/* Doxygen draws the group underline with side shadows filled in its black page color */
+h2.groupheader {
+	box-shadow: 12px 0 var(--b2-page), -12px 0 var(--b2-page), 12px 1px var(--b2-edge), -12px 1px var(--b2-edge);
+}
+
+td h2.groupheader {
+	box-shadow: 13px 0 var(--b2-page), -13px 0 var(--b2-page), 13px 1px var(--b2-edge), -13px 1px var(--b2-edge);
+}
+
+/* Reference members */
+
+/* Member list and field table edges in the border gray instead of navy */
+.mdescLeft, .mdescRight, .memItemLeft, .memItemRight, .memTemplParams, td.ititle,
+tr.heading + tr[class^='memitem'] td.memItemLeft,
+tr.groupHeader + tr[class^='memitem'] td.memItemLeft,
+tr.inherit_header + tr[class^='memitem'] td.memItemLeft,
+tr.heading + tr[class^='memitem'] td.memItemRight,
+tr.groupHeader + tr[class^='memitem'] td.memItemRight,
+tr.inherit_header + tr[class^='memitem'] td.memItemRight,
+tr.heading + tr[class^='memitem'] td.memTemplParams,
+tr.heading + tr td.ititle,
+tr.groupHeader + tr[class^='memitem'] td.memTemplParams,
+tr.groupHeader + tr td.ititle,
+tr.inherit_header + tr[class^='memitem'] td.memTemplParams,
+table.fieldtable, table.memberdecls-inline,
+.fieldtable td.fieldtype, .fieldtable td.fieldname, .fieldtable td.fieldinit, .fieldtable td.fielddoc,
+.memberdecls-inline th, .fieldtable th {
+	border-color: var(--b2-edge);
+}
+
+/* The member tab joins its box with a shadow and a strip, both in doxygen's navy */
+.memtitle {
+	box-shadow: 0 10px 0 -1px var(--b2-panel), 0 2px 8px 0 rgba(0, 0, 0, 0.075);
+}
+
+.memtitle:after {
+	background: var(--b2-panel);
+}
+
+.memtitle, .memproto, dl.reflist dt, .memdoc, dl.reflist dd {
+	border-color: var(--b2-edge);
+}
+
+.memberdecls-inline th, .fieldtable th {
+	background-color: var(--b2-panel);
+	color: var(--b2-text);
+}
+
+/* Images */
+
+/* Doxygen embeds SVG with object. The diagrams are transparent, so back them with a light plate
+to stay legible on a dark page */
+.image:has(object) {
+	background-color: var(--b2-plate);
+	border: 10px solid var(--b2-plate);
+}
+
+/* Raster images are screenshots, already opaque, so no plate */
+.image:has(img) img {
+	border: 1px solid var(--b2-edge);
+	border-radius: 6px;
+}
+
+/* Fit wide images to the page, a link around a screenshot opens it full size */
+.image img,
+.image object {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Caption sits on the light plate */
+.caption {
+	padding-top: 10px;
+	color: black;
+}
+
+.image:has(img) .caption {
+	color: var(--b2-muted);
+	font-weight: normal;
+	font-size: 90%;
+}
+
+/* Callouts */
+
+/* Callouts share one panel with an accent edge.
+@note and > [!NOTE] give dl.note, @warning and > [!WARNING] give dl.warning,
+> [!CAUTION] gives dl.attention, a plain quote like > [!caution]: gives blockquote.doxtable */
+dl.note, dl.remark, dl.warning, dl.attention, dl.important,
 blockquote.doxtable {
-	background-color: #456114;
-	border: 1px solid #000000;
-	padding: 12px 16px;
-	margin: 10px 24px 10px 4px;
+	background-color: var(--b2-panel);
+	color: var(--b2-text);
+	border: none;
+	border-left: 4px solid var(--b2-accent);
+	border-radius: 4px;
+	padding: 10px 16px;
+	margin: 12px 0;
+}
+
+dl.warning, dl.attention, dl.important,
+blockquote.doxtable {
+	border-left-color: var(--b2-warm);
+}
+
+dl.note dt, dl.remark dt {
+	color: var(--b2-accent);
+}
+
+dl.warning dt, dl.attention dt, dl.important dt,
+blockquote.doxtable b:first-child {
+	color: var(--b2-warm);
+}
+
+blockquote.doxtable p {
+	margin: 0;
+}
+
+/* Doxygen titles > [!CAUTION] as Attention, overlay the GitHub title in the same font */
+dl.attention dt {
+	visibility: hidden;
+	position: relative;
+}
+
+dl.attention dt::after {
+	content: "Caution";
+	visibility: visible;
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+/* Search */
+
+/* Search box on the panel gray with the cyan accent on focus, in place of the black field and blue edge */
+#MSearchBox {
+	background-color: var(--b2-panel);
+	border: 1px solid var(--b2-edge);
+	border-radius: 6px;
+	padding: 2px 6px 2px 2px;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+#MSearchBox:hover {
+	border-color: var(--b2-edge-hover);
+}
+
+#MSearchBox.MSearchBoxActive,
+#MSearchBox:focus-within {
+	border-color: var(--b2-accent);
+	box-shadow: 0 0 0 2px rgba(103, 216, 239, 0.2);
+}
+
+#MSearchField {
+	width: 12em;
+	background-color: transparent;
+	color: var(--b2-text);
+	font-family: inherit;
+	font-size: 14px;
+}
+
+#MSearchField::placeholder {
+	color: var(--b2-muted);
+}
+
+/* The lens circle is filled to hide the handle behind it, so it must match the box */
+.search-icon::before {
+	background: var(--b2-panel);
+	border-color: var(--b2-muted);
+}
+
+.search-icon::after {
+	border-color: var(--b2-muted);
+}
+
+.search-icon-dropdown {
+	border-top-color: var(--b2-muted);
+}
+
+#MSearchSelectWindow,
+#MSearchResultsWindow {
+	background-color: var(--b2-page);
+	border: 1px solid var(--b2-edge);
+	border-radius: 6px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+a.SelectItem {
+	color: var(--b2-text);
+}
+
+a.SelectItem:hover {
+	color: var(--b2-text);
+	background-color: var(--b2-panel);
+}
+
+/* Tree */
+
+/* Plain text so the tree doesn't compete with the page's links, cyan only on hover.
+Doxygen sets its own small font here */
+#nav-tree .label {
+	font: 13px system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+	line-height: 22px;
+}
+
+#nav-tree a {
+	color: var(--b2-text);
+}
+
+#nav-tree a:hover {
+	color: var(--b2-accent);
+}
+
+/* Doxygen dims the current page, mark it bright with an accent edge instead */
+#nav-tree .selected {
+	box-shadow: inset 3px 0 var(--b2-accent);
+}
+
+#nav-tree .selected a {
+	color: white;
+}
+
+span.arrowhead {
+	border-right-color: var(--b2-muted);
+	border-bottom-color: var(--b2-muted);
+}
+
+.selected span.arrowhead {
+	border-right-color: var(--b2-text);
+	border-bottom-color: var(--b2-text);
+}
+
+/* Tree sync toggle in the panel grays with the cyan accent on hover */
+div.nav-sync-icon {
+	background-color: var(--b2-panel);
+	border: 1px solid var(--b2-edge);
+	border-radius: 3px;
+}
+
+div.nav-sync-icon:hover {
+	background-color: var(--b2-edge);
+}
+
+div.nav-sync-icon.active:after {
+	background-color: var(--b2-panel);
+	border-top-color: var(--b2-muted);
+}
+
+div.nav-sync-icon.active:hover:after {
+	border-top-color: var(--b2-accent);
+}
+
+span.sync-icon-left {
+	border-left-color: var(--b2-muted);
+	border-top-color: var(--b2-muted);
+}
+
+span.sync-icon-right {
+	border-right-color: var(--b2-muted);
+	border-bottom-color: var(--b2-muted);
+}
+
+div.nav-sync-icon:hover span.sync-icon-left {
+	border-left-color: var(--b2-accent);
+	border-top-color: var(--b2-accent);
+}
+
+div.nav-sync-icon:hover span.sync-icon-right {
+	border-right-color: var(--b2-accent);
+	border-bottom-color: var(--b2-accent);
+}
+
+/* Tree resize handle, shown on hover */
+.ui-resizable-e {
+	background-color: var(--b2-edge);
+}
+
+.ui-resizable-e:after {
+	border-left-color: var(--b2-muted);
+	border-right-color: var(--b2-muted);
+}
+
+/* Footer */
+
+/* Footer bar on the page gray, doxygen fills it black. The directory pages put a breadcrumb in it */
+#nav-path ul {
+	background: var(--b2-page);
+	border-top: 1px solid var(--b2-edge);
+	border-bottom: none;
+	color: var(--b2-muted);
+}
+
+.navpath li,
+.navpath li.footer {
+	color: var(--b2-muted);
+}
+
+.navpath li.navelem a {
+	color: var(--b2-accent);
+}
+
+#nav-path li.navelem:after {
+	background: var(--b2-page);
+	box-shadow: 2px -2px 0 2px var(--b2-edge);
+}
+
+#nav-path li.navelem:hover,
+#nav-path li.navelem:hover:after {
+	background-color: var(--b2-panel);
 }

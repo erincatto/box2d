@@ -12,5 +12,5 @@ Make sure these boxes are checked before submitting your issue - thank you!
 
 Use these to create a recording.
 ```c
-b2CreateRecording, b2World_StartRecording, b2World_StopRecording, b2SaveRecordingToFile
+b2CreateRecording, b2World_StartRecording, b2World_StopRecording, b2Recording_SaveToFile
 ```

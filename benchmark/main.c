@@ -26,6 +26,7 @@
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 #define MAYBE_UNUSED( x ) ( (void)( x ) )
 
+typedef b2Capacity CapacityFcn( void );
 typedef void CreateFcn( b2WorldId worldId );
 typedef float StepFcn( b2WorldId worldId, int stepCount );
 typedef void DestroyFcn( void );
@@ -33,6 +34,9 @@ typedef void DestroyFcn( void );
 typedef struct Benchmark
 {
 	const char* name;
+
+	// Optional initial world capacity to avoid array growth while the scene is built and the first steps run
+	CapacityFcn* capacityFcn;
 	CreateFcn* createFcn;
 	StepFcn* stepFcn;
 	int totalStepCount;
@@ -151,20 +155,20 @@ int main( int argc, char** argv )
 #endif
 
 	Benchmark benchmarks[] = {
-		{ "compounds", CreateCompounds, NULL, 500 },
-		{ "joint_grid", CreateJointGrid, NULL, 500 },
-		{ "junkyard", CreateJunkyard, StepJunkyard, 800 },
-		{ "large_pyramid", CreateLargePyramid, NULL, 500 },
-		{ "many_pyramids", CreateManyPyramids, NULL, 200 },
-		{ "rain", CreateRain, StepRain, 1000 },
-		{ "smash", CreateSmash, NULL, 300 },
-		{ "spinner", CreateSpinner, StepSpinner, 500 },
-		{ "tumbler", CreateTumbler, NULL, 750 },
-		{ "washer", CreateWasher, NULL, 500 },
-		{ "queries", CreateQueries, StepQueries, 200 },
-		{ "tree_cast", CreateTreeCast, StepTreeCast, 200, DestroyTreeCast },
-		{ "tile_world", CreateTileWorld, StepTileWorld, 300, DestroyTileWorld },
-		{ "sleep", CreateSleep, StepSleep, 300 },
+		{ "compounds", GetCompoundsCapacity, CreateCompounds, NULL, 500 },
+		{ "joint_grid", GetJointGridCapacity, CreateJointGrid, NULL, 500 },
+		{ "junkyard", GetJunkyardCapacity, CreateJunkyard, StepJunkyard, 800 },
+		{ "large_pyramid", GetLargePyramidCapacity, CreateLargePyramid, NULL, 500 },
+		{ "many_pyramids", GetManyPyramidsCapacity, CreateManyPyramids, NULL, 200 },
+		{ "rain", GetRainCapacity, CreateRain, StepRain, 1000 },
+		{ "smash", GetSmashCapacity, CreateSmash, NULL, 300 },
+		{ "spinner", GetSpinnerCapacity, CreateSpinner, StepSpinner, 500 },
+		{ "tumbler", GetTumblerCapacity, CreateTumbler, NULL, 750 },
+		{ "washer", GetWasherCapacity, CreateWasher, NULL, 500 },
+		{ "queries", GetQueriesCapacity, CreateQueries, StepQueries, 200 },
+		{ "tree_cast", NULL, CreateTreeCast, StepTreeCast, 200, DestroyTreeCast },
+		{ "tile_world", GetTileWorldCapacity, CreateTileWorld, StepTileWorld, 300, DestroyTileWorld },
+		{ "sleep", GetSleepCapacity, CreateSleep, StepSleep, 300 },
 	};
 
 	int benchmarkCount = ARRAY_COUNT( benchmarks );
@@ -364,6 +368,12 @@ int main( int argc, char** argv )
 				b2WorldDef worldDef = b2DefaultWorldDef();
 				worldDef.enableContinuous = enableContinuous;
 				worldDef.workerCount = threadCount;
+
+				if ( benchmark->capacityFcn != NULL )
+				{
+					worldDef.capacity = benchmark->capacityFcn();
+				}
+
 				b2WorldId worldId = b2CreateWorld( &worldDef );
 				b2World_EnableSSE2Fallback( worldId, sse2Fallback );
 

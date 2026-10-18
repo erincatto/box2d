@@ -1,8 +1,8 @@
 # Simulation
 
-Rigid body simulation is the primary feature of Box2D. It is the most complex part of
-Box2D and is the part you will likely interact with the most. Simulation sits on top of
-the foundation and collision layers, so you should be somewhat familiar with those by now.
+Rigid body simulation is the primary feature of Box2D. It is the most complex part of Box2D and is
+the part you will likely interact with the most. Simulation sits on top of the foundation and
+collision layers, so you should be somewhat familiar with those by now.
 
 Rigid body simulation contains:
 
@@ -13,34 +13,34 @@ Rigid body simulation contains:
 - joints
 - events
 
-There are many dependencies between these objects so it is difficult to
-describe one without referring to another. In the following, you
-may see some references to objects that have not been described yet.
-Therefore, you may want to quickly skim this section before reading it
-closely.
+There are many dependencies between these objects so it is difficult to describe one without
+referring to another. In the following, you may see some references to objects that have not been
+described yet. Therefore, you may want to quickly skim this section before reading it closely.
 
 ## Ids
 
 Box2D has a C interface. Typically in a C/C++ library when you create an object with a long lifetime
 you will keep a pointer (or smart pointer) to the object.
 
-Box2D works differently. Instead of pointers, you are given an *id* when you create an object.
-This *id* acts as a [handle](https://en.wikipedia.org/wiki/Handle_(computing)) which helps avoid
-problems with [dangling pointers](https://en.wikipedia.org/wiki/Dangling_pointer).
+Box2D works differently. Instead of pointers, you are given an *id* when you create an object. This
+*id* acts as a [handle](https://en.wikipedia.org/wiki/Handle_(computing)) which helps avoid problems
+with [dangling pointers](https://en.wikipedia.org/wiki/Dangling_pointer).
 
-This also allows Box2D to use [data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design) internally.
-This helps to reduce cache misses drastically and also allows for [SIMD](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data) optimizations.
+This also allows Box2D to use [data-oriented
+design](https://en.wikipedia.org/wiki/Data-oriented_design) internally. This helps to reduce cache
+misses drastically and also allows for
+[SIMD](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data) optimizations.
 
 So you will be dealing with `b2WorldId`, `b2BodyId`, etc. These are small opaque structures that you
-will pass around by value, just like pointers. Box2D creation functions return an id. Functions
-that operate on Box2D objects take ids.
+will pass around by value, just like pointers. Box2D creation functions return an id. Functions that
+operate on Box2D objects take ids.
 
 ```c
 b2BodyId myBodyId = b2CreateBody(myWorldId, &myBodyDef);
 ```
 
-There are functions to check if an id is valid. Box2D functions will assert if you use an invalid id.
-This makes debugging easier than using dangling pointers.
+There are functions to check if an id is valid. Box2D functions will assert if you use an invalid
+id. This makes debugging easier than using dangling pointers.
 
 ```c
 if (b2Body_IsValid(myBodyId) == false)
@@ -49,7 +49,8 @@ if (b2Body_IsValid(myBodyId) == false)
 }
 ```
 
-Null ids can be established in a couple ways. You can use predefined constants or zero initialization.
+Null ids can be established in a couple of ways. You can use predefined constants or zero
+initialization.
 
 ```c
 b2BodyId myNullBodyId = b2_nullBodyId;
@@ -74,22 +75,22 @@ if (B2_IS_NON_NULL(myShapeId))
 
 ## World
 
-The Box2D world contains the bodies and joints. It manages all aspects
-of the simulation and allows for asynchronous queries (like AABB queries
-and ray-casts). Much of your interactions with Box2D will be with a
-world object, using `b2WorldId`.
+The Box2D world contains the bodies and joints. It manages all aspects of the simulation and allows
+for asynchronous queries (like AABB queries and ray-casts). Many of your interactions with Box2D
+will be with a world object, using `b2WorldId`.
 
-### World Definition
+### World definition
 
-Worlds are created using a *definition* structure. This is temporary structure that
-you can use to configure options for world creation. You **must** initialize the world definition
-using `b2DefaultWorldDef()`.
+Worlds are created using a *definition* structure. This is a temporary structure that you can use to
+configure options for world creation. You **must** initialize the world definition using
+`b2DefaultWorldDef()`.
 
 ```c
 b2WorldDef worldDef = b2DefaultWorldDef();
 ```
 
-The world definition has lots of options, but for most you will use the defaults. You may want to set the gravity:
+The world definition has lots of options, but for most you will use the defaults. You may want to
+set the gravity:
 
 ```c
 worldDef.gravity = (b2Vec2){0.0f, -10.0f};
@@ -101,18 +102,15 @@ If your game doesn't need sleep, you can get a performance boost by completely d
 worldDef.enableSleep = false;
 ```
 
-You can also configure multithreading to improve performance:
+You can also enable multithreading to improve performance:
 
 ```c
 worldDef.workerCount = 4;
-worldDef.enqueueTask = myAddTaskFunction;
-worldDef.finishTask = myFinishTaskFunction;
-worldDef.userTaskContext = &myTaskSystem;
 ```
 
-Multithreading is not required but it can improve performance substantially. Read more [here](#multi).
+Multithreading is not required but it can improve performance substantially. Read more [here](@ref multi).
 
-### World Lifetime
+### World lifetime
 
 Creating a world is done using a world definition.
 
@@ -129,13 +127,13 @@ myWorldId = b2_nullWorldId;
 
 You can create up to 128 worlds. These worlds do not interact and may be simulated in parallel.
 
-When you destroy a world, every body, shape, and joint is also destroyed. This is much faster
-than destroying individual objects.
+When you destroy a world, every body, shape, and joint is also destroyed. This is much faster than
+destroying individual objects.
 
 ### Simulation
 
-The world is used to drive the simulation. You specify a time step
-and a sub-step count. For example:
+The world is used to drive the simulation. You specify a time step and a sub-step count. For
+example:
 
 ```c
 float timeStep = 1.0f / 60.f;
@@ -143,83 +141,70 @@ int32_t subSteps = 4;
 b2World_Step(myWorldId, timeStep, subSteps);
 ```
 
-After the time step you can examine your bodies and joints for
-information. Most likely you will grab the position off the bodies so
-that you can update your game objects and render them. Or more optimally, you
-will use `b2World_GetBodyEvents()`.
+After the time step you can examine your bodies and joints for information. Most likely you will
+grab the position off the bodies so that you can update your game objects and render them. Or more
+optimally, you will use `b2World_GetBodyEvents()`.
 
-You can perform the time step anywhere in your game loop, but you should be aware of the
-order of things. For example, you must create bodies before the time
-step if you want to get collision results for the new bodies in that
-frame.
+You can perform the time step anywhere in your game loop, but you should be aware of the order of
+things. For example, you must create bodies before the time step if you want to get collision
+results for the new bodies in that frame.
 
-As I discussed in the [HelloWorld tutorial](#hello), you should use a fixed
-time step. By using a larger time step you can improve performance in
-low frame rate scenarios. But generally you should use a time steps 1/30 seconds (30Hz) or smaller.
-A time step of 1/60 seconds (60Hz) will usually deliver a high quality simulation.
+As I discussed in the [HelloWorld tutorial](@ref hello), you should use a fixed time step. By using
+a larger time step you can improve performance in low frame rate scenarios. But generally you should
+use a time step of 1/30 seconds (30Hz) or smaller. A time step of 1/60 seconds (60Hz) will usually
+deliver a high quality simulation.
 
-The sub-step count is used to increase accuracy. By sub-stepping the solver
-divides up time into small increments and the bodies move by a small amount.
-This allows joints and contacts to respond with finer detail. The recommended
-sub-step count is 4. However, increasing the sub-step count may improve 
-accuracy. For example, long joint chains will stretch less with more sub-steps.
+The sub-step count is used to increase accuracy. By sub-stepping the solver divides up time into
+small increments and the bodies move by a small amount. This allows joints and contacts to respond
+with finer detail. The recommended sub-step count is 4. However, increasing the sub-step count may
+improve accuracy. For example, long joint chains will stretch less with more sub-steps.
 
-The scissor lift sample shown [here](#samples) works better with more sub-steps
-and is configured to use 8 sub-steps. With a primary time step of 1/60 seconds,
-the scissor lift is taking sub-steps at 480Hz!
+The scissor lift sample shown [here](@ref samples_app) works better with more sub-steps and is
+configured to use 8 sub-steps. With a primary time step of 1/60 seconds, the scissor lift is taking
+sub-steps at 480Hz!
 
-## Rigid Bodies
+## Rigid bodies
 
-Rigid bodies, or just *bodies* have position and velocity. You can apply forces, torques,
-and impulses to bodies. Bodies can be static, kinematic, or dynamic. Here
-are the body type definitions:
+Rigid bodies, or just *bodies*, have position and velocity. You can apply forces, torques, and
+impulses to bodies. Bodies can be static, kinematic, or dynamic. Here are the body type definitions:
 
 ### Body types
 
-#b2_staticBody:
-A static body does not move under simulation and behaves as if it has infinite mass.
-Internally, Box2D stores zero for the mass and the inverse mass. A static body has zero
+`b2_staticBody`: A static body does not move under simulation and behaves as if it has infinite
+mass. Internally, Box2D stores zero for the mass and the inverse mass. A static body has zero
 velocity. Static bodies do not collide with other static or kinematic bodies.
 
-#b2_kinematicBody:
-A kinematic body moves under simulation according to its velocity.
-Kinematic bodies do not respond to forces. A kinematic body is moved by setting its
-velocity. A kinematic body behaves as if it has infinite mass, however,
-Box2D stores zero for the mass and the inverse mass. Kinematic bodies do
-not collide with other kinematic or static bodies. Generally you should use
-a kinematic body if you want a shape to be animated and not affected by
-forces or collisions.
+`b2_kinematicBody`: A kinematic body moves under simulation according to its velocity. Kinematic
+bodies do not respond to forces. A kinematic body is moved by setting its velocity. A kinematic body
+behaves as if it has infinite mass, however, Box2D stores zero for the mass and the inverse mass.
+Kinematic bodies do not collide with other kinematic or static bodies. Generally you should use a
+kinematic body if you want a shape to be animated and not affected by forces or collisions.
 
-#b2_dynamicBody:
-A dynamic body is fully simulated and moves according to forces and torques.
-A dynamic body can collide with all body types. A dynamic body always has
-finite, non-zero mass.
+`b2_dynamicBody`: A dynamic body is fully simulated and moves according to forces and torques. A
+dynamic body can collide with all body types. A dynamic body should always have finite, non-zero
+mass.
 
-> **Caution**:
-> Generally you should not set the transform on bodies after creation.
-> Box2D treats this as a teleport and may result in undesirable behavior and/or performance problems.
+> [!important]
+> Avoid setting the transform on bodies after creation. Box2D treats this as a teleport
+> and may result in undesirable behavior and/or performance problems.
 
-Bodies carry shapes and moves them around in the world. Bodies are always
-rigid bodies in Box2D. That means that two shapes attached to the same rigid body never move
-relative to each other and shapes attached to the same body don't collide.
+Bodies carry shapes and move them around in the world. Bodies are always rigid bodies in Box2D. That
+means that two shapes attached to the same rigid body never move relative to each other and shapes
+attached to the same body don't collide.
 
-Shapes have collision geometry and density. Normally, bodies acquire
-their mass properties from the shapes. However, you can override the
-mass properties after a body is constructed.
+Shapes have collision geometry and density. Normally, bodies acquire their mass properties from the
+shapes. However, you can override the mass properties after a body is constructed.
 
-You usually keep ids to all the bodies you create. This way you can
-query the body positions to update the positions of your graphical
-entities. You should also keep body ids so you can destroy them
-when you are done with them.
+You usually keep ids to all the bodies you create. This way you can query the body positions to
+update the positions of your graphical entities. You should also keep body ids so you can destroy
+them when you are done with them.
 
-### Body Definition
+### Body definition
 
-Before a body is created you must create a body definition (`b2BodyDef`).
-The body definition holds the data needed to create and initialize a
-body correctly.
+Before a body is created you must create a body definition (`b2BodyDef`). The body definition holds
+the data needed to create and initialize a body correctly.
 
-Because Box2D uses a C API, a function is provided to create a default
-body definition.
+Because Box2D uses a C API, a function is provided to create a default body definition.
 
 ```c
 b2BodyDef myBodyDef = b2DefaultBodyDef();
@@ -227,49 +212,44 @@ b2BodyDef myBodyDef = b2DefaultBodyDef();
 
 This ensures the body definition is valid and this initialization is **mandatory**.
 
-Box2D copies the data out of the body definition; it does not keep a
-pointer to the body definition. This means you can recycle a body
-definition to create multiple bodies.
+Box2D copies the data out of the body definition; it does not keep a pointer to the body definition.
+This means you can recycle a body definition to create multiple bodies.
 
 Let's go over some of the key members of the body definition.
 
-### Body Type
+### Body type
 
-As discussed previously, there are three different
-body types: static, kinematic, and dynamic. b2_staticBody is the default.
-You should establish the body type at creation because changing the body type
-later is expensive.
+As discussed previously, there are three different body types: static, kinematic, and dynamic.
+b2_staticBody is the default. You should establish the body type at creation because changing the
+body type later is expensive.
 
 ```c
-b2BodyDef bodyDef;
+b2BodyDef bodyDef = b2DefaultBodyDef();
 bodyDef.type = b2_dynamicBody;
 ```
 
-### Position and Angle
+### Position and angle
 
-You can initialize the body position and angle in the body definition. This has far
-better performance than creating the body at the world origin and then moving the body.
+You can initialize the body position and angle in the body definition. This has far better
+performance than creating the body at the world origin and then moving the body.
 
-> **Caution**:
-> Do not create a body at the origin and then move it. If you create
-> several bodies at the origin, then performance will suffer.
+> [!warning]
+> Do not create a body at the origin and then move it. If you create several bodies at
+> the origin, then performance will suffer.
 
-A body has two main points of interest. The first point is the body's
-origin. Shapes and joints are attached relative to the body's origin.
-The second point of interest is the center of mass. The center of mass
-is determined from the mass distribution of the attached shapes or is
-explicitly set using `b2MassData`. Much of Box2D's internal computations
-use the center of mass position. For example the body stores the linear
-velocity for the center of mass, not the body origin.
+A body has two main points of interest. The first point is the body's origin. Shapes and joints are
+attached relative to the body's origin. The second point of interest is the center of mass. The
+center of mass is determined from the mass distribution of the attached shapes or is explicitly set
+using `b2MassData`. Many of Box2D's internal computations use the center of mass position. For
+example the body stores the linear velocity for the center of mass, not the body origin.
 
 ![Body Origin and Center of Mass](images/center_of_mass.svg)
 
-When you are building the body definition, you may not know where the
-center of mass is located. Therefore you specify the position of the
-body's origin. You may also specify the body's rotation. If you later
-change the mass properties of the body, then the center of mass may move
-on the body, but the origin position and body rotation does not change and the attached
-shapes and joints do not move.
+When you are building the body definition, you may not know where the center of mass is located.
+Therefore you specify the position of the body's origin. You may also specify the body's rotation.
+If you later change the mass properties of the body, then the center of mass may move on the body,
+but the origin position and body rotation do not change and the attached shapes and joints do not
+move.
 
 ```c
 b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -277,79 +257,63 @@ bodyDef.position = b2ToPos((b2Vec2){0.0f, 2.0f});
 bodyDef.rotation = b2MakeRot(0.25f * B2_PI);
 ```
 
-A rigid body is a frame of reference. You can define shapes and
-joints in that frame. Those shapes and joint anchors never move in the
-local frame of the body.
+A rigid body is a frame of reference. You can define shapes and joints in that frame. Those shapes
+and joint anchors never move in the local frame of the body.
 
 ### Damping
 
-Damping is used to reduce the world velocity of bodies. Damping is
-different than friction because friction only occurs with contact.
-Damping is not a replacement for friction and the two effects are
+Damping is used to reduce the world velocity of bodies. Damping is different than friction because
+friction only occurs with contact. Damping is not a replacement for friction and the two effects are
 used together.
 
-Damping parameter are non-negative. Normally you will use a
-damping value between 0 and 1. I generally do not use linear damping
-because it makes bodies look like they are floating.
+Damping parameters are non-negative. Normally you will use a damping value between 0 and 1. I
+generally do not use linear damping because it makes bodies look like they are floating.
 
 ```c
 bodyDef.linearDamping = 0.0f;
 bodyDef.angularDamping = 0.1f;
 ```
 
-Damping is approximated to improve performance. At small damping
-values the damping effect is mostly independent of the time step. At
-larger damping values, the damping effect will vary with the time step.
-This is not an issue if you use a fixed time step (recommended).
+Damping is approximated to improve performance. At small damping values the damping effect is mostly
+independent of the time step. At larger damping values, the damping effect will vary with the time
+step. This is not an issue if you use a fixed time step (recommended).
 
 Here's some math for the curious. A first-order differential equation for velocity damping is:
 
-\f[
-\frac{dv}{dt} + c v = 0
-\f]
+\f[ \frac{dv}{dt} + c v = 0 \f]
 
-The solution with initial velocity \f$v_0\f$ is
-\f[
-v = v_0 e^{-c t}
-\f]
+The solution with initial velocity \f$v_0\f$ is \f[ v = v_0 e^{-c t} \f]
 
-Across a single time step \f$h\f$ the velocity evolves like so
-\f[
-v(t + h) = v_0 e^{-c (t + h)} = v_0 e^{-c t} e^{-c h} = v(t) e^{-c h}
-\f]
+Across a single time step \f$h\f$ the velocity evolves like so \f[ v(t + h) = v_0 e^{-c (t + h)} =
+v_0 e^{-c t} e^{-c h} = v(t) e^{-c h} \f]
 
-Using the [Pade approximation](https://en.wikipedia.org/wiki/Pad%C3%A9_table) for the
-exponential function gives the update formula:
-\f[
-v(t + h) \approx \frac{1}{1 + c h} v(t)
-\f]
+Using the [Pade approximation](https://en.wikipedia.org/wiki/Pad%C3%A9_table) for the exponential
+function gives the update formula: \f[ v(t + h) \approx \frac{1}{1 + c h} v(t) \f]
 
 This is the formula used in the Box2D solver.
 
-### Gravity Scale
+### Gravity scale
 
-You can use the gravity scale to adjust the gravity on a single body. Be
-careful though, a large gravity magnitude can decrease stability.
+You can use the gravity scale to adjust the gravity on a single body. Be careful though, a large
+gravity magnitude can decrease stability.
 
 ```c
 // Set the gravity scale to zero so this body will float
 bodyDef.gravityScale = 0.0f;
 ```
 
-### Sleep Parameters
+### Sleep parameters
 
-What does sleep mean? Well it is expensive to simulate bodies, so the
-less we have to simulate the better. When a body comes to rest we would
-like to stop simulating it.
+What does sleep mean? Well it is expensive to simulate bodies, so the less we have to simulate the
+better. When a body comes to rest we would like to stop simulating it.
 
-When Box2D determines that a body (or group of bodies) has come to rest,
-the body enters a sleep state which has very little CPU overhead. If a
-body is awake and collides with a sleeping body, then the sleeping body
-wakes up. Bodies will also wake up if a joint or contact attached to
-them is destroyed. You can also wake a body manually.
+When Box2D determines that a body (or group of bodies) has come to rest, the body enters a sleep
+state which has very little CPU overhead. If a body is awake and collides with a sleeping body, then
+the sleeping body wakes up. Bodies will also wake up if a joint or contact attached to them is
+destroyed. You can also wake a body manually.
 
-The body definition lets you specify whether a body can sleep and
-whether a body is created sleeping.
+The body definition lets you specify whether a body can sleep and whether a body is created
+sleeping.
 
 ```c
 bodyDef.enableSleep = true;
@@ -358,45 +322,45 @@ bodyDef.isAwake = true;
 
 The `isAwake` flag is ignored if `enableSleep` is false.
 
-### Fixed Rotation
+### Motion locks
 
-You may want a rigid body, such as a character, to have a fixed
-rotation. Such a body does not rotate, even under load. You can use
-the fixed rotation setting to achieve this:
+You may want a rigid body, such as a character, to have a fixed rotation. Such a body does not
+rotate, even under load. You can make the body have fixed rotation by locking z-axis rotation:
 
 ```c
-bodyDef.fixedRotation = true;
+bodyDef.motionLocks.angularZ = true;
 ```
 
-The fixed rotation flag causes the rotational inertia and its inverse to
-be set to zero.
+The `angularZ` flag causes the rotational inertia and its inverse to be set to zero.
+
+You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For technical
+reasons these only restrict translation but the linear velocity may momentarily violate the
+restriction. I'm not a fan of restricting translation this way. I tried using an inverse mass of
+zero along an axis and that causes the solver to blow up because it ends up dividing by very small
+numbers.
+
+It is best to think of the motion locks as constraints that are not fully satisfied, like all other
+constraints in Box2D.
 
 ### Bullets {#bullets}
 
-Game simulation usually generates a sequence of transforms that are played
-at some frame rate. This is called discrete simulation. In discrete
-simulation, rigid bodies can move by a large amount in one time step. If
-a physics engine doesn't account for the large motion, you may see some
-objects incorrectly pass through each other. This effect is called
-*tunneling*.
+Game simulation usually generates a sequence of transforms that are played at some frame rate. This
+is called discrete simulation. In discrete simulation, rigid bodies can move by a large amount in
+one time step. If a physics engine doesn't account for the large motion, you may see some objects
+incorrectly pass through each other. This effect is called *tunneling*.
 
-By default, Box2D uses continuous collision detection (CCD) to prevent
-dynamic bodies from tunneling through static bodies. This is done by
-sweeping shapes from their old position to their new positions. The
-engine looks for new collisions during the sweep and computes the time
-of impact (TOI) for these collisions. Bodies are moved to their first
-TOI at the end of the time step.
+By default, Box2D uses continuous collision detection (CCD) to prevent dynamic bodies from tunneling
+through static bodies. This is done by sweeping shapes from their old position to their new
+positions. The engine looks for new collisions during the sweep and computes the time of impact
+(TOI) for these collisions. Bodies are moved to their first TOI at the end of the time step.
 
-Normally CCD is not used between dynamic bodies. This is done to keep
-performance reasonable. In some game scenarios you need dynamic bodies
-to use CCD. For example, you may want to shoot a high speed bullet at a
-stack of dynamic bricks. Without CCD, the bullet might tunnel through
-the bricks.
+Normally CCD is not used between dynamic bodies. This is done to keep performance reasonable. In
+some game scenarios you need dynamic bodies to use CCD. For example, you may want to shoot a high
+speed bullet at a stack of dynamic bricks. Without CCD, the bullet might tunnel through the bricks.
 
-Fast moving objects in Box2D can be configured as *bullets*. Bullets will
-perform CCD with all body types, but **not** other bullets. You should decide what
-bodies should be bullets based on your game design. If you decide a body
-should be treated as a bullet, use the following setting.
+Fast moving objects in Box2D can be configured as *bullets*. Bullets will perform CCD with all body
+types, but **not** other bullets. You should decide what bodies should be bullets based on your game
+design. If you decide a body should be treated as a bullet, use the following setting.
 
 ```c
 bodyDef.isBullet = true;
@@ -404,13 +368,26 @@ bodyDef.isBullet = true;
 
 The bullet flag only affects dynamic bodies. I recommend using bullets sparingly.
 
+### Safety factor
+
+Box2D speeds up continuous collision detection (CCD) by skipping expensive work when shapes are
+moving slowly and have no risk of tunneling. In some cases you may wish a body to use CCD even when
+moving slowly. Or perhaps you want a body to never use CCD. You can achieve both of these using the
+non-dimensional safety factor:
+
+```c
+// Engage CCD when movement is a hundred times slower than the tunneling speed.
+bodyDef.safetyFactor = 0.01f;
+
+// Effectively disable CCD using a large safety factor.
+bodyDef.safetyFactor = 1000.0f;
+```
+
 ### Disabling
 
-You may wish a body to be created but not participate in collision or
-simulation. This state is similar to sleeping except the body will not be
-woken by other bodies and the body's shapes will not collide with anything.
-This means the body will not participate in collisions, ray
-casts, etc.
+You may wish a body to be created but not participate in collision or simulation. This state is
+similar to sleeping except the body will not be woken by other bodies and the body's shapes will not
+collide with anything. This means the body will not participate in collisions, ray casts, etc.
 
 You can create a body as disabled and later enable it.
 
@@ -421,34 +398,31 @@ bodyDef.isEnabled = false;
 b2Body_Enable(myBodyId);
 ```
 
-Joints may be connected to disabled bodies. These joints will not be
-simulated. You should be careful when you enable a body that its
-joints are not distorted.
+Joints may be connected to disabled bodies. These joints will not be simulated. You should be
+careful when you enable a body that its joints are not distorted.
 
-Note that enabling a body is almost as expensive as creating the body
-from scratch. So you should not use body disabling for streaming worlds. Instead, use
-creation/destruction for streaming worlds to save memory.
+Note that enabling a body is almost as expensive as creating the body from scratch. So you should
+not use body disabling for streaming worlds. Instead, use creation/destruction for streaming worlds
+to save memory.
 
 Body disabling is a convenience and is generally not good for performance.
 
-### User Data
+### User data
 
-User data is a void pointer. This gives you a hook to link your
-application objects to bodies. You should be consistent to use the same
-object type for all body user data.
+User data is a void pointer. This gives you a hook to link your application objects to bodies. You
+should be consistent and use the same object type for all body user data.
 
 ```c
 bodyDef.userData = &myGameObject;
 ```
 
-This is useful when you receive results from a query such as a ray-cast
-or event and you want to get back to your game object. You can acquire the
-use data from a body using `b2Body_GetUserData()`.
+This is useful when you receive results from a query such as a ray-cast or event and you want to get
+back to your game object. You can acquire the user data from a body using `b2Body_GetUserData()`.
 
-### Body Lifetime
+### Body lifetime
 
-Bodies are created and destroyed using a world id. This lets the world create
-the body with an efficient allocator and add the body to the world data structure.
+Bodies are created and destroyed using a world id. This lets the world create the body with an
+efficient allocator and add the body to the world data structure.
 
 ```c
 b2BodyId myBodyId = b2CreateBody(myWorldId, &bodyDef);
@@ -461,36 +435,32 @@ b2DestroyBody(myBodyId);
 myBodyId = b2_nullBodyId;
 ```
 
-Box2D does not keep a reference to the body definition or any of the
-data it holds (except user data pointers). So you can create temporary
-body definitions and reuse the same body definitions.
+Box2D does not keep a reference to the body definition or any of the data it holds (except user data
+pointers). So you can create temporary body definitions and reuse the same body definitions.
 
-Box2D allows you to avoid destroying bodies by destroying the world
-directly using `b2DestroyWorld()`, which does all the cleanup work for you.
-However, you should be mindful to nullify body ids that you keep in your application.
+Box2D allows you to avoid destroying bodies by destroying the world directly using
+`b2DestroyWorld()`, which does all the cleanup work for you. However, you should be mindful to
+nullify body ids that you keep in your application.
 
-When you destroy a body, the attached shapes and joints are
-automatically destroyed. This has important implications for how you
-manage shape and joint ids. You should nullify these ids after destroying
-a body.
+When you destroy a body, the attached shapes and joints are automatically destroyed. This has
+important implications for how you manage shape and joint ids. You should nullify these ids after
+destroying a body.
 
-### Using a Body
+### Using a body
 
-After creating a body, there are many operations you can perform on the
-body. These include setting mass properties, accessing position and
-velocity, applying forces, and transforming points and vectors.
+After creating a body, there are many operations you can perform on the body. These include setting
+mass properties, accessing position and velocity, applying forces, and transforming points and
+vectors.
 
-### Mass Data
+### Mass data
 
-A body has mass (scalar), center of mass (2-vector), and rotational
-inertia (scalar). For static bodies, the mass and rotational inertia are
-set to zero. When a body has fixed rotation, its rotational inertia is
-zero.
+A body has mass (scalar), center of mass (2-vector), and rotational inertia (scalar). For static
+bodies, the mass and rotational inertia are set to zero. When a body has fixed rotation, its
+rotational inertia is zero.
 
-Normally the mass properties of a body are established automatically
-when shapes are added to the body. You can also adjust the mass of a
-body at run-time. This is usually done when you have special game
-scenarios that require altering the mass.
+Normally the mass properties of a body are established automatically when shapes are added to the
+body. You can also adjust the mass of a body at run-time. This is usually done when you have special
+game scenarios that require altering the mass.
 
 ```c
 b2MassData myMassData;
@@ -500,8 +470,8 @@ myMassData.rotationalInertia = 100.0f;
 b2Body_SetMassData(myBodyId, myMassData);
 ```
 
-After setting a body's mass directly, you may wish to revert to the 
-mass determined by the shapes. You can do this with:
+After setting a body's mass directly, you may wish to revert to the mass determined by the shapes.
+You can do this with:
 
 ```c
 b2Body_UpdateMassFromShapes(myBodyId);
@@ -512,22 +482,38 @@ The body's mass data is available through the following functions:
 ```c
 float mass = b2Body_GetMass(myBodyId);
 float inertia = b2Body_GetRotationalInertia(myBodyId);
-b2Vec2 localCenter b2Body_GetLocalCenter(myBodyId);
+b2Vec2 localCenter = b2Body_GetLocalCenter(myBodyId);
 b2MassData massData = b2Body_GetMassData(myBodyId);
 ```
 
-### State Information
+Computing the mass data can become expensive if a body has many shapes. In that case you can defer
+mass computation so it is done all at once after all shapes have been created:
 
-There are many aspects to the body's state. You can access this state
-data through the following functions:
+```c
+b2ShapeDef shapeDef = b2DefaultShapeDef();
+shapeDef.updateBodyMass = false;
+for (int i = 0; i < 100; ++i)
+{
+    b2Circle circle = {.center = {2.0f * i, 0.0f}, .radius = 0.5f};
+    b2CreateCircleShape(myBodyId, &shapeDef, &circle);
+}
+b2Body_UpdateMassFromShapes(myBodyId);
+```
+
+This turns an O(N^2) computation into an O(N) computation.
+
+### State information
+
+There are many aspects to the body's state. You can access this state data through the following
+functions:
 
 ```c
 b2Body_SetType(myBodyId, b2_kinematicBody);
 b2BodyType bodyType = b2Body_GetType(myBodyId);
 b2Body_SetBullet(myBodyId, true);
 bool isBullet = b2Body_IsBullet(myBodyId);
-b2Body_EnableSleep(myBodyId, false);
-bool isSleepEnabled = b2Body_IsSleepEnabled(myBodyId);
+b2Body_EnableSleeping(myBodyId, false);
+bool isSleepingEnabled = b2Body_IsSleepingEnabled(myBodyId);
 b2Body_SetAwake(myBodyId, true);
 bool isAwake = b2Body_IsAwake(myBodyId);
 b2Body_Disable(myBodyId);
@@ -540,12 +526,11 @@ locks = b2Body_GetMotionLocks(myBodyId);
 
 Please see the comments on these functions for more details.
 
-### Position and Velocity
+### Position and velocity
 
-You can access the position and rotation of a body. This is common when
-rendering your associated game object. You can also set the position and angle,
-although this is less common since you will normally use Box2D to
-simulate movement.
+You can access the position and rotation of a body. This is common when rendering your associated
+game object. You can also set the position and angle, although this is less common since you will
+normally use Box2D to simulate movement.
 
 Keep in mind that the Box2D interface uses *radians*.
 
@@ -557,26 +542,24 @@ b2Rot rotation = b2Body_GetRotation(myBodyId);
 float angleInRadians = b2Rot_GetAngle(rotation);
 ```
 
-World positions use `b2Pos` and world transforms use `b2WorldTransform`. In the default
-build these are aliases for `b2Vec2` and `b2Transform`. They become double precision types in
-[large world mode](#large-worlds).
+World positions use `b2Pos` and world transforms use `b2WorldTransform`. In the default build these
+are aliases for `b2Vec2` and `b2Transform`. They become double precision types in [large world
+mode](@ref large-worlds).
 
-You can access the center of mass position in local and world
-coordinates. Much of the internal simulation in Box2D uses the center of
-mass. However, you should normally not need to access it. Instead you
-will usually work with the body transform. For example, you may have a
-body that is square. The body origin might be a corner of the square,
-while the center of mass is located at the center of the square.
+You can access the center of mass position in local and world coordinates. Much of the internal
+simulation in Box2D uses the center of mass. However, you should normally not need to access it.
+Instead you will usually work with the body transform. For example, you may have a body that is
+square. The body origin might be a corner of the square, while the center of mass is located at the
+center of the square.
 
 ```c
 b2Pos worldCenter = b2Body_GetWorldCenter(myBodyId);
 b2Vec2 localCenter = b2Body_GetLocalCenter(myBodyId);
 ```
 
-You can access the linear and angular velocity. The linear velocity is
-for the center of mass. Therefore, the linear velocity may change if the
-mass properties change. Since Box2D uses radians, the angular velocity is
-in radians per second.
+You can access the linear and angular velocity. The linear velocity is for the center of mass.
+Therefore, the linear velocity may change if the mass properties change. Since Box2D uses radians,
+the angular velocity is in radians per second.
 
 ```c
 b2Vec2 linearVelocity = b2Body_GetLinearVelocity(myBodyId);
@@ -593,11 +576,11 @@ float timeStep = 1.0f / 60.0f;
 b2Body_SetTargetTransform(myBodyId, target, timeStep, true);
 ```
 
-### Forces and Impulses
+### Forces and impulses
 
-You can apply forces, torques, and impulses to a body. When you apply a
-force or an impulse, you can provide a world point where the load is
-applied. This often results in a torque about the center of mass.
+You can apply forces, torques, and impulses to a body. When you apply a force or an impulse, you can
+provide a world point where the load is applied. This often results in a torque about the center of
+mass.
 
 ```c
 b2Body_ApplyForce(myBodyId, force, worldPoint, wake);
@@ -606,8 +589,8 @@ b2Body_ApplyLinearImpulse(myBodyId, linearImpulse, worldPoint, wake);
 b2Body_ApplyAngularImpulse(myBodyId, angularImpulse, wake);
 ```
 
-Applying a force, torque, or impulse optionally wakes the body. If you don't
-wake the body and it is asleep, then the force or impulse will be ignored.
+Applying a force, torque, or impulse optionally wakes the body. If you don't wake the body and it is
+asleep, then the force or impulse will be ignored.
 
 You can also apply a force and linear impulse to the center of mass to avoid rotation.
 
@@ -616,17 +599,22 @@ b2Body_ApplyForceToCenter(myBodyId, force, wake);
 b2Body_ApplyLinearImpulseToCenter(myBodyId, linearImpulse, wake);
 ```
 
-> **Caution**:
-> Since Box2D uses sub-stepping, you should not apply a steady impulse
-> for several frames. Instead you should apply a force which Box2D will
-> spread out evenly across the sub-steps, resulting in smoother movement.
+> [!warning]:
+> Since Box2D uses sub-stepping, you should not apply a steady impulse for several
+> frames. Instead you should apply a force which Box2D will spread out evenly across the sub-steps,
+> resulting in smoother movement.
 
-### Coordinate Transformations
+You can also apply wind using `b2Shape_ApplyWind()`. This considers the geometry of the shape, such
+as the projected area. It also generates a lift force for flutter.
 
-The body has some utility functions to help you transform points
-and vectors between local and world space. If you don't understand
-these concepts, I recommend reading \"Essential Mathematics for Games and
-Interactive Applications\" by Jim Van Verth and Lars Bishop.
+`b2World_Explode()` efficiently applies an explosion in a circular area and also uses the shape's
+projected area.
+
+### Coordinate transformations
+
+The body has some utility functions to help you transform points and vectors between local and world
+space. If you don't understand these concepts, I recommend reading \"Essential Mathematics for Games
+and Interactive Applications\" by Jim Van Verth and Lars Bishop.
 
 ```c
 b2Pos worldPoint = b2Body_GetWorldPoint(myBodyId, localPoint);
@@ -635,7 +623,7 @@ b2Vec2 localPoint = b2Body_GetLocalPoint(myBodyId, worldPoint);
 b2Vec2 localVector = b2Body_GetLocalVector(myBodyId, worldVector);
 ```
 
-### Accessing Shapes and Joints
+### Accessing shapes and joints
 
 You can access the shapes on a body. You can get the number of shapes first.
 
@@ -643,8 +631,8 @@ You can access the shapes on a body. You can get the number of shapes first.
 int shapeCount = b2Body_GetShapeCount(myBodyId);
 ```
 
-If you have bodies with many shapes, you can allocate an array or if you
-know the number is limited you can use a fixed size array.
+If you have bodies with many shapes, you can allocate an array or if you know the number is limited
+you can use a fixed size array.
 
 ```c
 b2ShapeId shapeIds[10];
@@ -660,14 +648,14 @@ for (int i = 0; i < returnCount; ++i)
 
 You can similarly get an array of the joints on a body.
 
-### Body Events
+### Body events
 
 While you can gather transforms from all your bodies after every time step, this is inefficient.
-Many bodies may not have moved because they are sleeping. Also iterating across many bodies
-will have lots of cache misses.
+Many bodies may not have moved because they are sleeping. Also iterating across many bodies will
+have lots of cache misses.
 
-Box2D provides `b2BodyEvents` that you can access after every call to `b2World_Step()` to get
-an array of body movement events. Since this data is contiguous, it is cache friendly.
+Box2D provides `b2BodyEvents` that you can access after every call to `b2World_Step()` to get an
+array of body movement events. Since this data is contiguous, it is cache friendly.
 
 ```c
 b2BodyEvents events = b2World_GetBodyEvents(myWorldId);
@@ -688,24 +676,24 @@ optimize your application.
 
 ## Shapes
 
-A body may have zero or more shapes. A body with multiple shapes is sometimes
-called a *compound body.*
+A body may have zero or more shapes. A body with multiple shapes is sometimes called a *compound
+shape* or *aggregate*.
 
 Shapes hold the following:
 
-- a shape primitive
-- density, friction, and restitution
+- geometry
+- density, friction, restitution, rolling resistance
+- user material id
+- tangent speed
 - collision filtering flags
 - parent body id
 - user data
 - sensor flag
 
-These are described in the following sections.
+### Shape creation and geometry
 
-### Shape Lifetime
-
-Shapes are created by initializing a shape definition and a shape primitive.
-These are passed to a creation function specific to each shape type.
+Shapes are created by initializing a shape definition and a shape primitive. These are passed to a
+creation function specific to each shape type.
 
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -716,56 +704,68 @@ b2Polygon box = b2MakeBox(0.5f, 1.0f);
 b2ShapeId myShapeId = b2CreatePolygonShape(myBodyId, &shapeDef, &box);
 ```
 
-This creates a polygon and attaches it to the body. You do not need to
-store the shape id since the shape will automatically be
-destroyed when the parent body is destroyed. However, you may wish to store the shape id if you plan
-to change properties on it later.
+This creates a polygon and attaches it to the body. You do not need to store the shape id since the
+shape will automatically be destroyed when the parent body is destroyed. However, you may wish to
+store the shape id if you plan to change properties on it later.
 
-You can create multiple shapes on a single body. They all can contribute
-to the mass properties of the body. These shapes never collide with each other and may overlap.
+You can create multiple shapes on a single body. They all can contribute to the mass properties of
+the body. These shapes never collide with each other and may overlap.
 
-You can destroy a shape on the parent body. You may do this to model a
-breakable object. Otherwise you can just leave the shape alone and let
-the body destruction take care of destroying the attached shapes.
+You can destroy a shape on the parent body. You may do this to model a breakable object. Otherwise
+you can just leave the shape alone and let the body destruction take care of destroying the attached
+shapes.
 
 ```c
-b2DestroyShape(myShapeId);
+bool updateBodyMass = false;
+b2DestroyShape(myShapeId, updateBodyMass);
 ```
 
-Material properties such as density, friction, and restitution are associated with shapes
-instead of bodies. Since you can attach multiple shapes to a body, this allows for more
-possible setups. For example, you can make a car that is heavier in the back.
+Material properties such as density, friction, and restitution are associated with shapes instead of
+bodies. Since you can attach multiple shapes to a body, this allows for more possible setups. For
+example, you can make a car that is heavier in the back.
 
 ### Density
 
-The shape density is used to compute the mass properties of the parent
-body. The density can be zero or positive. You should generally use
-similar densities for all your shapes. This will improve stacking
-stability.
+The shape density is used to compute the mass properties of the parent body. The density can be zero
+or positive. You should generally use similar densities for all your shapes. This will improve
+stacking stability.
 
-The mass of a body is not adjusted when you set the density. You must
-call `b2Body_UpdateMassFromShapes()` for this to occur. Generally you should establish
-the shape density in `b2ShapeDef` and avoid modifying it later because this
-can be expensive, especially on a compound body.
+Usually you should set the density in the shape definition.
 
 ```c
-b2Shape_SetDensity(myShapeId, 5.0f);
-b2Body_UpdateMassFromShapes(myBodyId);
+b2ShapeDef shapeDef = b2DefaultShapeDef();
+shapeDef.density = 33.0f;
+```
+
+You can change the density after creation and optionally update the body mass properties
+immediately. Keep in mind that body mass property computation has a cost that grows proportional to
+the number of shapes on the body.
+
+```c
+bool updateBodyMass = true;
+b2Shape_SetDensity(myShapeId, 5.0f, updateBodyMass);
+```
+
+### Surface material
+
+Surface properties are combined in a `b2SurfaceMaterial` structure. This is mainly a convenience
+because game editing environments tend to bundle material properties.
+
+```c
+b2SurfaceMaterial myMaterial = b2DefaultSurfaceMaterial();
+myMaterial.restitution = 0.4f;
 ```
 
 ### Friction
 
-Friction is used to make objects slide along each other realistically.
-Box2D supports static and dynamic friction, but uses the same parameter
-for both. Box2D attempts to simulate friction accurately and the friction
-strength is proportional to the normal force. This is called [Coulomb
-friction](https://en.wikipedia.org/wiki/Friction). The friction parameter
-is usually set between 0 and 1, but
-can be any non-negative value. A friction value of 0 turns off friction
-and a value of 1 makes the friction strong. When the friction force is
-computed between two shapes, Box2D must combine the friction parameters
-of the two parent shapes. This is done with the
-[geometric mean](https://en.wikipedia.org/wiki/Geometric_mean):
+Friction is used to make objects slide along each other realistically. Box2D supports static and
+dynamic friction, but uses the same parameter for both. Box2D attempts to simulate friction
+accurately and the friction strength is proportional to the normal force. This is called [Coulomb
+friction](https://en.wikipedia.org/wiki/Friction). The friction parameter is usually set between 0
+and 1, but can be any non-negative value. A friction value of 0 turns off friction and a value of 1
+makes the friction strong. When the friction force is computed between two shapes, Box2D must
+combine the friction parameters of the two parent shapes. This is done with the [geometric
+mean](https://en.wikipedia.org/wiki/Geometric_mean):
 
 ```c
 float mixedFriction = sqrtf(b2Shape_GetFriction(shapeIdA) * b2Shape_GetFriction(shapeIdB));
@@ -775,34 +775,86 @@ If one shape has zero friction then the mixed friction will be zero.
 
 ### Restitution
 
-[Restitution](https://en.wikipedia.org/wiki/Coefficient_of_restitution) is used to make
-objects bounce. The restitution value is
-usually set to be between 0 and 1. Consider dropping a ball on a table.
-A value of zero means the ball won't bounce. This is called an
-*inelastic* collision. A value of one means the ball's velocity will be
-exactly reflected. This is called a *perfectly elastic* collision.
-Restitution is combined using the following formula.
+[Restitution](https://en.wikipedia.org/wiki/Coefficient_of_restitution) is used to make objects
+bounce. The restitution value is usually set to be between 0 and 1. Consider dropping a ball on a
+table. A value of zero means the ball won't bounce. This is called an *inelastic* collision. A value
+of one means the ball's velocity will be exactly reflected. This is called a *perfectly elastic*
+collision. Restitution is combined using the following formula.
 
 ```c
-float mixedRestitution = b2MaxFloat(b2Shape_GetRestitution(shapeIdA), b2Shape_GetRestitution(shapeIdB));
+float restitutionA = b2Shape_GetRestitution(shapeIdA);
+float restitutionB = b2Shape_GetRestitution(shapeIdB);
+float mixedRestitution = b2MaxFloat(restitutionA, restitutionB);
 ```
 
-Restitution is combined this way so that you can have a bouncy super
-ball without having a bouncy floor.
+Restitution is combined this way so that you can have a bouncy super ball without having a bouncy
+floor.
 
-When a shape develops multiple contacts, restitution is simulated
-approximately. This is because Box2D uses a sequential solver. Box2D
-also uses inelastic collisions when the collision velocity is small.
-This is done to prevent jitter. See `b2WorldDef::restitutionThreshold`.
+When a shape develops multiple contacts, restitution is simulated approximately. This is because
+Box2D uses a sequential solver. Box2D also uses inelastic collisions when the collision velocity is
+small. This is done to prevent jitter. See `b2WorldDef::restitutionThreshold`.
+
+Restitution is solved after the main solver pass using the pre-solve approach velocity. It uses an
+iterative loop across all awake bodies. You can control the number of iterations in the world
+definition.
+
+```c
+// Number of restitution iterations. A higher number can improve accuracy.
+worldDef.restitutionIterations = 2;
+```
+
+### Rolling resistance
+
+Normally in a physics engine a circle or sphere will seem to roll forever on a flat plane. There can
+be friction, but without slipping this doesn't remove energy, so the circle keeps rolling.
+
+Realistic rolling involves some flattening of the contact patch. This leads to rolling resistance
+that makes round shapes slow down. The slow down is proportional to the relative size of the contact
+patch, which in turn is proportional to the vertical force.
+
+Box2D simulates rolling resistance using a non-dimensional parameter. The maximum torque is computed
+using that parameter, the shape radius, and the contact normal forces.
+
+```c
+max_torque = rolling_resistance * radius * normal_force
+```
+
+Then rolling resistance applies a constraint to drive the relative angular velocity to zero, but the
+effort is capped by the maximum torque computed above.
+
+This means a circle can stop rolling, even when on an inclined surface.
+
+### User material id
+
+Shapes hold a user material id. This number can be used for whatever you like. Typically it is used
+to identify surface type, such as rock, sand, or wood. Then collision queries and events can be used
+to play the appropriate sounds.
+
+The material is set during shape creation:
+
+```c
+shapeDef.material.userMaterialId = 24;
+```
+
+Later you can retrieve that material id. For example you can get the value from a ray cast:
+
+```c
+b2RayResult result = b2World_CastRayClosest( myWorldId, origin, translation, b2DefaultQueryFilter() );
+if (result.hit == true)
+{
+    uint64_t surfaceType = b2Shape_GetUserMaterial(result.shapeId);
+    MyPlaySound(result.point, surfaceType);
+}
+```
 
 ### Friction and restitution callbacks
 
-Advanced users can override friction and restitution mixing using b2FrictionCallback
-and b2RestitutionCallback. These should be very light weight functions because they
-are called frequently. See the API reference for details.
+Advanced users can override friction and restitution mixing using b2FrictionCallbackFcn and
+b2RestitutionCallbackFcn. These should be very lightweight functions because they are called
+frequently. See the API reference for details.
 
 ```c
-float MyFrictionCallback(float frictionA, int userMaterialIdA, float frictionB, int userMaterialIdB)
+float MyFrictionCallback(float frictionA, uint64_t userMaterialIdA, float frictionB, uint64_t userMaterialIdB)
 {
     if (userMaterialIdA > userMaterialIdB)
     {
@@ -816,24 +868,32 @@ b2WorldDef worldDef = b2DefaultWorldDef();
 worldDef.frictionCallback = MyFrictionCallback;
 ```
 
+### Tangent speed
+
+You can assign a tangent speed to a shape. This allows you to use a shape as a conveyor belt. This
+effect is basically free in the solver and can be useful in some cases.
+
+```c
+conveyorBeltShapeDef.material.tangentSpeed = 10.0f;
+```
+
+See the `ConveyorBelt` sample for details.
+
 ### Filtering {#filtering}
 
-Collision filtering allows you to efficiently prevent collision between shapes.
-For example, say you make a character that rides a bicycle. You want the
-bicycle to collide with the terrain and the character to collide with
-the terrain, but you don't want the character to collide with the
-bicycle (because they must overlap). Box2D supports such collision
-filtering using categories, masks, and groups.
+Collision filtering allows you to efficiently prevent collision between shapes. For example, say you
+make a character that rides a bicycle. You want the bicycle to collide with the terrain and the
+character to collide with the terrain, but you don't want the character to collide with the bicycle
+(because they must overlap). Box2D supports such collision filtering using categories, masks, and
+groups.
 
-Box2D supports 64 collision categories. For each shape you can specify
-which category it belongs to. You can also specify what other categories
-this shape can collide with. For example, you could specify in a
-multiplayer game that players don't collide with each other. Rather
-than identifying all the situations where things should not collide, I recommend
-identifying all the situations where things should collide. This way you
-don't get into situations where you are using 
-[double negatives](https://en.wikipedia.org/wiki/Double_negative).
-You can specify which things can collide using mask bits. For example:
+Box2D supports 64 collision categories. For each shape you can specify which category it belongs to.
+You can also specify what other categories this shape can collide with. For example, you could
+specify in a multiplayer game that players don't collide with each other. Rather than identifying
+all the situations where things should not collide, I recommend identifying all the situations where
+things should collide. This way you don't get into situations where you are using [double
+negatives](https://en.wikipedia.org/wiki/Double_negative). You can specify which things can collide
+using mask bits. For example:
 
 ```c
 enum MyCategories
@@ -868,13 +928,11 @@ if ((catA & maskB) != 0 && (catB & maskA) != 0)
 }
 ```
 
-Another filtering feature is *collision group*.
-Collision groups let you specify a group index. You can have
-all shapes with the same group index always collide (positive index)
-or never collide (negative index). Group indices are usually used for
-things that are somehow related, like the parts of a bicycle. In the
-following example, shape1 and shape2 always collide, but shape3
-and shape4 never collide.
+Another filtering feature is *collision group*. Collision groups let you specify a group index. You
+can have all shapes with the same group index always collide (positive index) or never collide
+(negative index). Group indices are usually used for things that are somehow related, like the parts
+of a bicycle. In the following example, shape1 and shape2 always collide, but shape3 and shape4
+never collide.
 
 ```c
 shape1Def.filter.groupIndex = 2;
@@ -883,36 +941,31 @@ shape3Def.filter.groupIndex = -8;
 shape4Def.filter.groupIndex = -8;
 ```
 
-Collisions between shapes of different group indices are filtered
-according the category and mask bits. If two shapes have the
-same non-zero group index, then this overrides the category and mask.
+Collisions between shapes of different group indices are filtered according to the category and mask
+bits. If two shapes have the same non-zero group index, then this overrides the category and mask.
 Collision groups have a higher priority than categories and masks.
 
-Note that additional collision filtering occurs automatically in Box2D. Here is a
-list:
+Note that additional collision filtering occurs automatically in Box2D. Here is a list:
 
 - A shape on a static body can only collide with a dynamic body.
 - A shape on a kinematic body can only collide with a dynamic body.
 - Shapes on the same body never collide with each other.
 - You can optionally enable/disable collision between bodies connected by a joint.
 
-Sometimes you might need to change collision filtering after a shape
-has already been created. You can get and set the `b2Filter` structure on
-an existing shape using `b2Shape_GetFilter()` and
-`b2Shape_SetFilter()`. Changing the filter is expensive because
-it causes contacts to be destroyed.
+Sometimes you might need to change collision filtering after a shape has already been created. You
+can get and set the `b2Filter` structure on an existing shape using `b2Shape_GetFilter()` and
+`b2Shape_SetFilter()`. Changing the filter is expensive because it causes contacts to be destroyed.
 
-### Chain Shapes
+### Chain shapes
 
-The chain shape provides an efficient way to connect many line segments together
-to construct your static game worlds. Chain shapes automatically
-eliminate ghost collisions and provide one-sided collision.
+The chain shape provides an efficient way to connect many line segments together to construct your
+static game worlds. Chain shapes automatically eliminate ghost collisions and provide one-sided
+collision.
 
-If you don't care about ghost collisions, you can create a bunch of
-two-sided segment shapes. The performance is similar.
+If you don't care about ghost collisions, you can create a bunch of two-sided segment shapes. The
+performance is similar.
 
-The simplest way to use chain shapes is to create loops. Simply provide an
-array of vertices.
+The simplest way to use chain shapes is to create loops. Simply provide an array of vertices.
 
 ```c
 b2Vec2 points[4] = {
@@ -935,33 +988,60 @@ b2DestroyChain(myChainId);
 myChainId = b2_nullChainId;
 ```
 
-The segment normal depends on the winding order. A counter-clockwise winding order orients the normal outwards and a clockwise winding order orients the normal inwards.
+The segment normal depends on the winding order. A counter-clockwise winding order orients the
+normal outwards and a clockwise winding order orients the normal inwards.
 
 ![Chain Shape Outwards Loop](images/chain_loop_outwards.svg)
 
 ![Chain Shape Inwards Loop](images/chain_loop_inwards.svg)
 
-You may have a scrolling game world and would like to connect several chains together.
-You can connect chains together using ghost points. See the sample `ChainLink` for details.
+You may have a scrolling game world and would like to connect several chains together. You can
+connect chains together using ghost points. For example:
+
+```c
+b2Vec2 points[18];
+float x = 9.0f;
+for ( int i = 0; i < 18; ++i )
+{
+    points[i] = (b2Vec2){ x, 0.0f };
+    x -= 1.0f;
+}
+
+b2ChainDef chainDef = b2DefaultChainDef();
+chainDef.points = points;
+chainDef.pointCount = 18;
+chainDef.ghost1 = (b2Vec2){ 10.0f, 0.0f };
+chainDef.ghost2 = (b2Vec2){ -9.0f, 0.0f };
+chainDef.isLoop = false;
+
+b2CreateChain( groundId, &chainDef );
+```
+
+Presumably you would create additional open chains with overlapping ghost regions for a fully ghost
+collision reducing surface.
 
 ![Chain Shape](images/chain_shape.svg)
 
-Self-intersection of chain shapes is not supported. It might work, it
-might not. The code that prevents ghost collisions assumes there are no
-self-intersections of the chain. Also, very close vertices can cause
-problems. Make sure all your points are more than than about a centimeter apart.
+Self-intersection of chain shapes is not supported. It might work, it might not. The code that
+prevents ghost collisions assumes there are no self-intersections of the chain. Also, very close
+vertices can cause problems. Make sure all your points are more than about a centimeter apart.
 
 ![Self Intersection is Bad](images/self_intersect.svg)
 
-Each segment in the chain is created as a `b2ChainSegment` shape on the body. If you have the
-shape id for a chain segment shape, you can get the owning chain id. This will return `b2_nullChainId`
-if the shape is not a chain segment.
+Each segment in the chain is created as a `b2ChainSegment` shape on the body. If you have the shape
+id for a chain segment shape, you can get the owning chain id. This will return `b2_nullChainId` if
+the shape is not a chain segment.
 
 ```c
 b2ChainId chainId = b2Shape_GetParentChain(myShapeId);
 ```
 
-You can create an orphaned chain segment directly via `b2CreateChainSegmentShape`. This is useful for streaming or destructible terrain, per-segment lifetime control, or any case where you already manage your own continuity data. The caller is responsible for supplying correct ghost vertices that maintain smooth contact normals across adjacent segments. You can also update an orphaned segment (or convert any shape to one) using `b2Shape_SetChainSegment`. However, this function cannot mutate a segment that is owned by a `b2ChainShape`.
+You can create an orphaned chain segment directly via `b2CreateChainSegmentShape`. This is useful
+for streaming or destructible terrain, per-segment lifetime control, or any case where you already
+manage your own continuity data. The caller is responsible for supplying correct ghost vertices that
+maintain smooth contact normals across adjacent segments. You can also update an orphaned segment
+(or convert any shape to one) using `b2Shape_SetChainSegment`. However, this function cannot mutate
+a segment that is owned by a chain shape.
 
 ```c
 // Chain segments are one-sided. The collision normal points to the right of
@@ -984,34 +1064,33 @@ b2Shape_SetChainSegment( shapeId, &chainSegment );
 
 ### Sensors
 
-Sometimes game logic needs to know when two shapes overlap yet there
-should be no collision response. This is done by using sensors. A sensor
-is a shape that detects overlap but does not produce a response.
+Sometimes game logic needs to know when two shapes overlap yet there should be no collision
+response. This is done by using sensors. A sensor is a shape that detects overlap but does not
+produce a response.
 
-You can flag any shape as being a sensor. Sensors may be static,
-kinematic, or dynamic. Remember that you may have multiple shapes per
-body and you can have any mix of sensors and solid shapes. Sensors can also
-detect other sensors. Sensor shapes have mass like regular shapes. You can set
-the density to zero if you don't want a sensor to have mass.
+You can flag any shape as being a sensor. Sensors may be static, kinematic, or dynamic. Remember
+that you may have multiple shapes per body and you can have any mix of sensors and solid shapes.
+Sensors can also detect other sensors. Sensor shapes have mass like regular shapes. You can set the
+density to zero if you don't want a sensor to have mass.
 
 ```c
 b2ShapeDef shapeDef = b2DefaultShapeDef();
 shapeDef.isSensor = true;
 ```
 
-For both sensors and non-sensors, sensor events must also be enabled. There is a
-performance cost to generate sensor events, so they are disabled by default.
+For both sensors and non-sensors, sensor events must also be enabled. There is a performance cost to
+generate sensor events, so they are disabled by default.
 
 ```c
 shapeDef.enableSensorEvents = true;
 ```
 
-Both shape involved must have this flag set to true. This allows a game to disable a
-specific sensor using `b2Shape_EnableSensorEvents`.
+Both shapes involved must have this flag set to true. This allows a game to disable a specific
+sensor using `b2Shape_EnableSensorEvents`.
 
-Sensors are processed at the end of the world step and generate begin and end
-events without delay. User operations may cause overlaps to begin or end. These
-are processed the next time step. Such operations include:
+Sensors are processed at the end of the world step and generate begin and end events without delay.
+User operations may cause overlaps to begin or end. These are processed the next time step. Such
+operations include:
 
 - destroying a body or shape
 - changing a shape filter
@@ -1019,10 +1098,9 @@ are processed the next time step. Such operations include:
 - setting a body transform
 - disabling or enabling sensor events on a shape
 
-Sensors do not detect objects that pass through the sensor shape within 
-one time step. So sensors do not have continuous collision detection.
-If you have fast moving object and/or small sensors then you should use a
-ray or shape cast to detect these events.
+Fast shapes passing through a static sensor can be detected by sensors. This is only reliable for
+non-moving sensors. If you need reliable events for fast moving shapes versus fast moving sensors, I
+recommend using a ray or shape cast.
 
 You can access the current sensor overlaps from the previous world step. Be careful because some
 shape ids may be invalid due to a shape being destroyed. Use `b2Shape_IsValid` to ensure an
@@ -1054,11 +1132,11 @@ for ( int i = 0; i < count; ++i )
 
 Sensor overlap can also be determined using events, which are described below.
 
-### Sensor Events
+### Sensor events
 
-Sensor events are available after every call to `b2World_Step()`.
-Sensor events are the best way to get information about sensors overlaps. There are
-events for when a shape begins to overlap with a sensor.
+Sensor events are available after every call to `b2World_Step()`. Sensor events are the best way to
+get information about sensor overlaps. There are events for when a shape begins to overlap with a
+sensor.
 
 ```c
 b2SensorEvents sensorEvents = b2World_GetSensorEvents(myWorldId);
@@ -1070,9 +1148,8 @@ for (int i = 0; i < sensorEvents.beginCount; ++i)
 }
 ```
 
-And there are events when a shape stops overlapping with a sensor. Be careful with end
-touch events because they may be generated when shapes are destroyed. Test the shape
-ids with `b2Shape_IsValid`.
+And there are events when a shape stops overlapping with a sensor. Be careful with end touch events
+because they may be generated when shapes are destroyed. Test the shape ids with `b2Shape_IsValid`.
 
 ```c
 for (int i = 0; i < sensorEvents.endCount; ++i)
@@ -1086,111 +1163,134 @@ for (int i = 0; i < sensorEvents.endCount; ++i)
 }
 ```
 
-Sensor events should be processed after the world step and before other game logic. This should
-help you avoid processing stale data.
+Sensor events should be processed after the world step and before other game logic. This should help
+you avoid processing stale data.
 
-Sensor events are only enabled for shapes and sensors if b2ShapeDef::enableSensorEvents is set to true.
+Sensor events are only enabled for shapes and sensors if b2ShapeDef::enableSensorEvents is set to
+true.
 
-> **Note**:
-> A shape cannot start or stop being a sensor. Such a feature would break
-> sensor events, potentially causing bugs in game logic.
+> [!note]
+> A shape cannot start or stop being a sensor. Such a feature would break sensor events,
+> potentially causing bugs in game logic.
 
 ## Contacts
 
-Contacts are internal objects created by Box2D to manage collision between pairs of
-shapes. They are fundamental to rigid body simulation in games.
+Contacts are internal objects created by Box2D to manage collision between pairs of shapes. They are
+fundamental to rigid body simulation in games.
 
 ### Terminology
 
-Contacts have a fair bit of terminology that are important to review.
+Contacts have a fair bit of terminology that is important to review.
 
 #### contact point
 
-A contact point is a point where two shapes touch. Box2D approximates
-contact with a small number of points. Specifically, contact between
-two shapes has 0, 1, or 2 points. This is possible because Box2D uses
-convex shapes.
+A contact point is a point where two shapes touch. Box2D approximates contact with a small number of
+points. Specifically, contact between two shapes has 0, 1, or 2 points. This is possible because
+Box2D uses convex shapes.
 
 #### contact normal
 
-A contact normal is a unit vector that points from one shape to another.
-By convention, the normal points from shapeA to shapeB.
+A contact normal is a unit vector that points from one shape to another. By convention, the normal
+points from shapeA to shapeB.
 
 #### contact separation
 
-Separation is the opposite of penetration. Separation is negative when
-shapes overlap.
+Separation is the opposite of penetration. Separation is negative when shapes overlap.
 
 #### contact manifold
 
-Contact between two convex polygons may generate up to 2 contact points.
-Both of these points use the same normal, so they are grouped into a
-contact manifold, which is an approximation of a continuous region of
-contact.
+Contact between two convex polygons may generate up to 2 contact points. Both of these points use
+the same normal, so they are grouped into a contact manifold, which is an approximation of a
+continuous region of contact.
 
 #### normal impulse
 
-The normal force is the force applied at a contact point to prevent the
-shapes from penetrating. For convenience, Box2D uses impulses. The
-normal impulse is just the normal force multiplied by the time step. Since
-Box2D uses sub-stepping, this is the sub-step time step.
+The normal force is the force applied at a contact point to prevent the shapes from penetrating. For
+convenience, Box2D uses impulses. The normal impulse is just the normal force multiplied by the time
+step. Since Box2D uses sub-stepping, this is the sub-step time step.
 
 #### tangent impulse
 
-The tangent force is generated at a contact point to simulate friction.
-For convenience, this is stored as an impulse.
+The tangent force is generated at a contact point to simulate friction. For convenience, this is
+stored as an impulse.
 
 #### contact point id
 
-Box2D tries to re-use the contact impulse results from a time step as the
-initial guess for the next time step. Box2D uses contact point ids to match
-contact points across time steps. The ids contain geometric feature
-indices that help to distinguish one contact point from another.
+Box2D tries to re-use the contact impulse results from a time step as the initial guess for the next
+time step. Box2D uses contact point ids to match contact points across time steps. The ids contain
+geometric feature indices that help to distinguish one contact point from another.
 
 #### speculative contact
 
-When two shapes are close together, Box2D will create up to two contact
-points even if the shapes are not touching. This lets Box2D anticipate
-collision to improve behavior. Speculative contact points have positive
-separation.
+When two shapes are close together, Box2D will create up to two contact points even if the shapes
+are not touching. This lets Box2D anticipate collision to improve behavior. Speculative contact
+points have positive separation.
 
-### Contact Lifetime
+### Contact lifetime
 
-Contacts are created when two shape's AABBs (bounding boxes) begin to overlap. Sometimes
-collision filtering will prevent the creation of contacts. Contacts are
-destroyed with the AABBs cease to overlap.
+Contacts are created when two shapes' AABBs (bounding boxes) begin to overlap. Sometimes collision
+filtering will prevent the creation of contacts. Contacts are destroyed when the AABBs cease to
+overlap.
 
-So you might gather that there may be contacts created for shapes that
-are not touching (just their AABBs). Well, this is correct. It's a
-\"chicken or egg\" problem. We don't know if we need a contact object
-until one is created to analyze the collision. We could delete the
-contact right away if the shapes are not touching, or we can just wait
-until the AABBs stop overlapping. Box2D takes the latter approach
-because it lets the system cache information to improve performance.
+So you might gather that there may be contacts created for shapes that are not touching (just their
+AABBs). Well, this is correct. It's a \"chicken or egg\" problem. We don't know if we need a contact
+object until one is created to analyze the collision. We could delete the contact right away if the
+shapes are not touching, or we can just wait until the AABBs stop overlapping. Box2D takes the
+latter approach because it lets the system cache information to improve performance.
 
-### Contact Data
+### Contact recycling
 
-As mentioned before, the contact is created and destroyed by
-Box2D automatically. Contact data is not created by the user. However, you are
-able to access the contact data.
+Performance is improved by recycling contact data across time steps. This is called _contact
+recycling_. It has a large impact on performance and also improves stacking stability.
 
-You can get contact data from shapes or bodies. The contact data
-on a shape is a sub-set of the contact data on a body. The contact
-data is only returned for touching contacts. Contacts that are not
-touching provide no meaningful information for an application.
+Contact recycling considers the relative movement between shapes and adjusts the contact point
+separation to account for the movement. If the relative movement is larger than the _contact
+recycling distance_ then contact points are computed from scratch.
 
-Contact data is returned in arrays. So first you can ask a shape or
-body how much space you'll need in your array. This number is conservative
-and the actual number of contacts you'll receive may be less than
-this number, but never more.
+Sometimes stacks of objects can become too stable. You can adjust the recycling distance to tune
+stability:
+
+```c
+// Set the recycling distance to 1 centimeter.
+b2World_SetContactRecycleDistance(myWorldId, 0.01f);
+```
+
+The default is 5 centimeters. This value makes a good trade-off between performance and realistic
+simulation.
+
+You can completely disable contact recycling by setting it to zero. I don't recommend this.
+Performance and stability will drop significantly. A better option is to disable recycling on
+specific bodies as needed.
+
+```c
+// Disable contact recycling for a single body.
+bodyDef.enableContactRecycling = false;
+```
+
+> [!note]
+> Recycled contacts skip friction and restitution updates. They also skip pre-solve
+> callbacks.
+
+### Contact data
+
+As mentioned before, the contact is created and destroyed by Box2D automatically. Contact data is
+not created by the user. However, you are able to access the contact data.
+
+You can get contact data from shapes or bodies. The contact data on a shape is a subset of the
+contact data on a body. The contact data is only returned for touching contacts. Contacts that are
+not touching provide no meaningful information for an application.
+
+Contact data is returned in arrays. So first you can ask a shape or body how much space you'll need
+in your array. This number is conservative and the actual number of contacts you'll receive may be
+less than this number, but never more.
 
 ```c
 int shapeContactCapacity = b2Shape_GetContactCapacity(myShapeId);
 int bodyContactCapacity = b2Body_GetContactCapacity(myBodyId);
 ```
 
-You could allocate array space to get all the contact data in all cases, or you could use a fixed size
-array and get a limited number of results.
+You could allocate array space to get all the contact data in all cases, or you could use a fixed
+size array and get a limited number of results.
 
 ```c
 b2ContactData contactData[10];
@@ -1208,34 +1308,48 @@ for (int i = 0; i < bodyContactCount; ++i)
 }
 ```
 
-Getting contact data off shapes and bodies is not the most efficient
-way to handle contact data. Instead you should use contact events.
+Getting contact data off shapes and bodies is not the most efficient way to handle contact data.
+Instead you should use contact events.
 
-### Contact Events
+Contact data also contains a `b2ContactId` you can use to track a contact over time.
 
-Contact events are available after each world step. Like sensor events these should be
-retrieved and processed before performing other game logic. Otherwise
-you may be accessing orphaned/invalid data.
+```c
+// Store a contact id.
+b2ContactId myContactId = contactData[0].contactId;
 
-You can access all contact events in a single data structure. This is much more efficient
-than using functions like `b2Body_GetContactData()`.
+// At some later time step.
+if (b2Contact_IsValid( myContactId ))
+{
+    b2ContactData data = b2Contact_GetData( myContactId );
+    // do stuff with data
+}
+```
+
+### Contact events
+
+Contact events are available after each world step. Like sensor events these should be retrieved and
+processed before performing other game logic. Otherwise you may be accessing orphaned/invalid data.
+
+You can access all contact events in a single data structure. This is much more efficient than using
+functions like `b2Body_GetContactData()`.
 
 ```c
 b2ContactEvents contactEvents = b2World_GetContactEvents(myWorldId);
 ```
 
-None of this data applies to sensors because they are handled separately. All events involve
-at least one dynamic body.
+None of this data applies to sensors because they are handled separately. All events involve at
+least one dynamic body.
 
 There are three kinds of contact events:
+
 1. Begin touch events
 2. End touch events
 3. Hit events
 
-#### Contact Touch Event
+#### Contact touch event
 
-`b2ContactBeginTouchEvent` is recorded when two shapes begin touching. These only
-contain the two shape ids.
+`b2ContactBeginTouchEvent` is recorded when two shapes begin touching. These contain the two shape
+ids and the contact id.
 
 ```c
 for (int i = 0; i < contactEvents.beginCount; ++i)
@@ -1245,10 +1359,9 @@ for (int i = 0; i < contactEvents.beginCount; ++i)
 }
 ```
 
-`b2ContactEndTouchEvent` is recorded when two shapes stop touching. These only
-contain the two shape ids.
-
-
+`b2ContactEndTouchEvent` is recorded when two shapes stop touching. These contain the two shape ids
+and the contact id. The contact has likely been destroyed, so make sure the contact id is valid
+before using it to get contact data.
 
 ```c
 for (int i = 0; i < contactEvents.endCount; ++i)
@@ -1263,15 +1376,17 @@ for (int i = 0; i < contactEvents.endCount; ++i)
 }
 ```
 
-Similar to `b2SensorEndTouchEvent`, `b2ContactEndTouchEvent` may be generated due to a user operation,
-such as destroying a body or shape. These events are included with simulation events after the next `b2World_Step`.
+Similar to `b2SensorEndTouchEvent`, `b2ContactEndTouchEvent` may be generated due to a user
+operation, such as destroying a body or shape. These events are included with simulation events
+after the next `b2World_Step`.
 
 Shapes only generate begin and end touch events if `b2ShapeDef::enableContactEvents` is true.
 
-#### Hit Events
-Typically in games you are mainly concerned about getting contact events for when
-two shapes collide at a significant speed so you can play a sound and/or particle effect. Hit
-events are the answer for this.
+#### Hit events
+
+Typically in games you are mainly concerned about getting contact events for when two shapes collide
+at a significant speed so you can play a sound and/or particle effect. Hit events are the answer for
+this.
 
 ```c
 for (int i = 0; i < contactEvents.hitCount; ++i)
@@ -1284,27 +1399,25 @@ for (int i = 0; i < contactEvents.hitCount; ++i)
 }
 ```
 
-Shapes only generate hit events if `b2ShapeDef::enableHitEvents` is true.
-I recommend you only enable this for shapes that need hit events because
-it creates some overhead. Box2D also only reports hit events that have an
-approach speed larger than `b2WorldDef::hitEventThreshold`.
+Shapes only generate hit events if `b2ShapeDef::enableHitEvents` is true. I recommend you only
+enable this for shapes that need hit events because it creates some overhead. Box2D also only
+reports hit events that have an approach speed larger than `b2WorldDef::hitEventThreshold`.
 
-### Contact Filtering
+### Contact filtering
 
-Often in a game you don't want all objects to collide. For example, you
-may want to create a door that only certain characters can pass through.
-This is called contact filtering, because some interactions are filtered
-out.
+Often in a game you don't want all objects to collide. For example, you may want to create a door
+that only certain characters can pass through. This is called contact filtering, because some
+interactions are filtered out.
 
-Contact filtering is setup on shapes and is covered [here](#filtering).
+Contact filtering is set up on shapes and is covered [here](@ref filtering).
 
-### Advanced Contact Handling
+### Advanced contact handling
 
-#### Custom Filtering Callback
+#### Custom filtering callback
 
-For the best performance, use the contact filtering provided by `b2Filter`.
-However, in some cases you may need custom filtering. You can do
-this by registering a custom filter callback that implements `b2CustomFilterFcn()`.
+For the best performance, use the contact filtering provided by `b2Filter`. However, in some cases
+you may need custom filtering. You can do this by registering a custom filter callback that
+implements `b2CustomFilterCallbackFcn()`.
 
 ```c
 bool MyCustomFilter(b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context)
@@ -1315,92 +1428,108 @@ bool MyCustomFilter(b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* context)
 
 // Elsewhere
 b2World_SetCustomFilterCallback(myWorldId, MyCustomFilter, myGame);
+
+// At shape creation
+myShapeDef.enableCustomFiltering = true;
 ```
 
-This function must be [thread-safe](https://en.wikipedia.org/wiki/Thread_safety) and must not read from or write to the Box2D world. Otherwise you will get a [race condition](https://en.wikipedia.org/wiki/Race_condition). 
+This function must be [thread-safe](https://en.wikipedia.org/wiki/Thread_safety) and must not read
+from or write to the Box2D world. Otherwise you will get a [race
+condition](https://en.wikipedia.org/wiki/Race_condition). See the `CustomFilter` sample for details.
 
-#### Pre-Solve Callback
+#### Pre-solve callback
 
-This is called after collision detection, but before collision
-resolution. This gives you a chance to disable the contact based on the contact geometry. For example, you can implement a one-sided platform using this callback.
-
-The contact will be re-enabled each time through collision processing,
-so you will need to disable the contact every time-step. This function must be thread-safe
-and must not read from or write to the Box2D world.
+This is called after collision detection, but before collision resolution. This gives you a chance
+to disable or modify the contact manifold. For example, you can implement a one-sided platform using
+this callback.
 
 ```c
-bool MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context)
+void MyPreSolve(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context)
 {
-    MyGame* myGame = context;
+    MyGame* myGame = (MyGame*)context;
 
-    if (myGame->IsHittingBelowPlatform(shapeIdA, shapeIdB, point, normal))
+    if (myGame->IsHittingBelowPlatform(shapeIdA, shapeIdB, manifold))
+    {
+        // Disable collision by setting the point count to zero.
+        manifold->pointCount = 0;
+    }
+}
+```
+
+You can also implement a pre-solve callback to disable continuous collision. Box2D doesn't use
+contact manifolds for continuous collision, so this callback just provides the shapes, a point, and
+normal.
+
+```c
+bool MyPreSolveContinuous(b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal, void* context)
+{
+    MyGame* myGame = (MyGame*)context;
+
+    if (myGame->AllowContinuous(shapeIdA, shapeIdB, point, normal) == false)
     {
         return false;
     }
 
-    return true;
+    return true;  
 }
-
-// Elsewhere
-b2World_SetPreSolveCallback(myWorldId, MyPreSolve, myGame);
 ```
 
-Note this currently does not work with high speed collisions, so you may see a
-pause in those situations.
+Register these callbacks before simulation. Either can be null.
 
-See the `Platformer` sample for more details.
+```c
+// Elsewhere
+b2World_SetPreSolveCallback(myWorldId, MyPreSolve, MyPreSolveContinuous, myGame);
+```
+
+The contact will be re-enabled each time through collision processing (unless recycled), so you will
+need to disable the contact every time-step. This function must be thread-safe and must not read
+from or write to the Box2D world. It is safe to read data on the shapes and bodies involved, but
+don't modify them.
+
+See `GhostCulling` sample for more details.
 
 ## Joints
 
-Joints are used to constrain bodies to the world or to each other.
-Typical examples in games include ragdolls, teeters, and pulleys. Joints
-can be combined in many different ways to create interesting motions.
+Joints are used to constrain bodies to the world or to each other. Typical examples in games include
+ragdolls, teeters, and pulleys. Joints can be combined in many different ways to create interesting
+motions.
 
-Some joints provide limits so you can control the range of motion. Some
-joints provide motors which can be used to drive the joint at a
-prescribed speed until a prescribed force/torque is exceeded. And some
-joints provide springs with damping.
+Some joints provide limits so you can control the range of motion. Some joints provide motors which
+can be used to drive the joint at a prescribed speed until a prescribed force/torque is exceeded.
+And some joints provide springs with damping.
 
-Joint motors can be used in many ways. You can use motors to control
-position by specifying a joint velocity that is proportional to the
-difference between the actual and desired position. You can also use
-motors to simulate joint friction: set the joint velocity to zero and
-provide a small, but significant maximum motor force/torque. Then the
-motor will attempt to keep the joint from moving until the load becomes
-too strong.
+Joint motors can be used in many ways. You can use motors to control position by specifying a joint
+velocity that is proportional to the difference between the actual and desired position. You can
+also use motors to simulate joint friction: set the joint velocity to zero and provide a small, but
+significant maximum motor force/torque. Then the motor will attempt to keep the joint from moving
+until the load becomes too strong.
 
-### Joint Definition
+### Joint definition
 
-Each joint type has an associated joint definition. All
-joints are connected between two different bodies. One body may be static.
-Joints between static and/or kinematic bodies are allowed, but have no
-effect and use some processing time.
+Each joint type has an associated joint definition. All  joints are connected between two different
+bodies. One body may be static. Joints between static and/or kinematic bodies are allowed, but have
+no effect.
 
-If a joint is connected to a disabled body, that joint is effectively disabled.
-When the both bodies on a joint become enabled, the joint will automatically
-be enabled as well. In other words, you do not need to explicitly enable
-or disable a joint.
+If a joint is connected to a disabled body, that joint is effectively disabled. When both bodies on
+a joint become enabled, the joint will automatically be enabled as well. In other words, you do not
+need to explicitly enable or disable a joint.
 
-You can specify user data for any joint type and you can provide a flag
-to prevent the attached bodies from colliding with each other. This is
-the default behavior and you must set the `collideConnected`
-Boolean to allow collision between two connected bodies.
+You can specify user data for any joint type and you can provide a flag to prevent the attached
+bodies from colliding with each other. This is the default behavior and you must set the
+`collideConnected` Boolean to allow collision between two connected bodies.
 
-Many joint definitions require that you provide some geometric data.
-A joint is defined by two local frames, one fixed in each attached body
-(`base.localFrameA` and `base.localFrameB`). The frame origin is the
-anchor point and the frame rotation orients the joint axis or reference
-angle. Box2D requires these frames to be specified in local coordinates.
-This way the joint can be specified even when the current body
-transforms violate the joint constraint.
+Many joint definitions require that you provide some geometric data. A joint is defined by two local
+frames, one fixed in each attached body (`base.localFrameA` and `base.localFrameB`). The frame
+origin is the anchor point and the frame rotation orients the joint axis or reference angle. Box2D
+requires these frames to be specified in local coordinates. This way the joint can be specified even
+when the current body transforms violate the joint constraint.
 
-The rest of the joint definition data depends on the joint type. I
-cover these below.
+The rest of the joint definition data depends on the joint type. I cover these below.
 
-### Joint Lifetime
+### Joint lifetime
 
-Joints are created using creation functions supplied for each joint type. They are destroyed
-with a shared function. All joint types share a single id type `b2JointId`.
+Joints are created using creation functions supplied for each joint type. They are destroyed with a
+shared function. All joint types share a single id type `b2JointId`.
 
 Here's an example of the lifetime of a revolute joint:
 
@@ -1421,12 +1550,12 @@ myJointId = b2_nullJointId;
 
 It is always good to nullify your ids after they are destroyed. 
 
-Joint lifetime is related to body lifetime. Joints cannot exist detached from a body. 
-So when a body is destroyed, all joints attached to that body are automatically destroyed.
-This means you need to be careful to avoid using joint ids when the attached body was
-destroyed. Box2D will assert if you use a dangling joint id.
+Joint lifetime is related to body lifetime. Joints cannot exist detached from a body. So when a body
+is destroyed, all joints attached to that body are automatically destroyed. This means you need to
+be careful to avoid using joint ids when the attached body was destroyed. Box2D will assert if you
+use a dangling joint id.
 
-> **Caution**:
+> [!important]
 > Joints are destroyed when an attached body is destroyed.
 
 Fortunately you can check if your joint id is valid.
@@ -1438,18 +1567,15 @@ if (b2Joint_IsValid(myJointId) == false)
 }
 ```
 
-This is certainly useful, but should not be overused because if you are creating
-and destroying many joints, this may eventually alias to a different joint. All ids have
-a limit of 64k generations.
+This is certainly useful, but should not be overused because if you are creating and destroying many
+joints, this may eventually alias to a different joint. Joint ids have a limit of 64k generations.
 
-### Using Joints
+### Using joints
 
-Many simulations create the joints and don't access them again until
-they are destroyed. However, there is a lot of useful data contained in
-joints that you can use to create a rich simulation.
+Many simulations create the joints and don't access them again until they are destroyed. However,
+there is a lot of useful data contained in joints that you can use to create a rich simulation.
 
-First of all, you can get the type, bodies, local frames, and user data from
-a joint.
+First of all, you can get the type, bodies, local frames, and user data from a joint.
 
 ```c
 b2JointType jointType = b2Joint_GetType(myJointId);
@@ -1460,12 +1586,11 @@ b2Transform localFrameB = b2Joint_GetLocalFrameB(myJointId);
 void* myUserData = b2Joint_GetUserData(myJointId);
 ```
 
-All joints have a reaction force and torque. Reaction forces are
-related to the [free body diagram](https://en.wikipedia.org/wiki/Free_body_diagram).
-The Box2D convention is that the reaction force
-is applied to body B at the anchor point. You can use reaction forces to
-break joints or trigger other game events. These functions may do some
-computations, so don't call them if you don't need the result.
+All joints have a reaction force and torque. Reaction forces are related to the [free body
+diagram](https://en.wikipedia.org/wiki/Free_body_diagram). The Box2D convention is that the reaction
+force is applied to body B at the anchor point. You can use reaction forces to break joints or
+trigger other game events. These functions may do some computations, so don't call them if you don't
+need the result.
 
 ```c
 b2Vec2 force = b2Joint_GetConstraintForce(myJointId);
@@ -1474,19 +1599,45 @@ float torque = b2Joint_GetConstraintTorque(myJointId);
 
 See the sample `BreakableJoint` for more details.
 
-### Distance Joint
+### Joint events
 
-One of the simplest joints is a distance joint which says that the
-distance between two points on two bodies must be constant. When you
-specify a distance joint the two bodies should already be in place. Then
-you specify the two anchor points in local coordinates. The first anchor
-point is connected to body A, and the second anchor point is connected
-to body B. These points imply the length of the distance constraint.
+You can use joint force and torque thresholds to get joint events when those thresholds are
+exceeded. This can be more convenient than polling.
+
+```c
+jointDef.base.forceThreshold = forceThreshold;
+jointDef.base.torqueThreshold = torqueThreshold;
+```
+
+Then after calling `b2World_Step` you can process the joint events. For example, you can destroy the
+joints that exceeded the threshold.
+
+```c
+b2JointEvents events = b2World_GetJointEvents( myWorldId );
+for ( int i = 0; i < events.count; ++i )
+{
+    const b2JointEvent* event = events.jointEvents + i;
+    if ( b2Joint_IsValid( event->jointId ) )
+    {
+        b2DestroyJoint( event->jointId );
+    }
+}
+```
+
+See the `JointEvent` sample for more details.
+
+### Distance joint
+
+One of the simplest joints is a distance joint which says that the distance between two points on
+two bodies must be constant. When you specify a distance joint the two bodies should already be in
+place. Then you specify the two anchor points in local coordinates. The first anchor point is
+connected to body A, and the second anchor point is connected to body B. These points imply the
+length of the distance constraint.
 
 ![Distance Joint](images/distance_joint.svg)
 
-Here is an example of a distance joint definition. In this case I
-decided to allow the bodies to collide.
+Here is an example of a distance joint definition. In this case I decided to allow the bodies to
+collide.
 
 ```c
 b2DistanceJointDef jointDef = b2DefaultDistanceJointDef();
@@ -1502,9 +1653,8 @@ jointDef.base.collideConnected = true;
 b2JointId myJointId = b2CreateDistanceJoint(myWorldId, &jointDef);
 ```
 
-The distance joint can also be made soft, like a spring-damper
-connection. Softness is achieved by enabling the spring and tuning two values in the definition:
-Hertz and damping ratio.
+The distance joint can also be made soft, like a spring-damper connection. Softness is achieved by
+enabling the spring and tuning two values in the definition: Hertz and damping ratio.
 
 ```c
 jointDef.enableSpring = true;
@@ -1512,30 +1662,46 @@ jointDef.hertz = 2.0f;
 jointDef.dampingRatio = 0.5f;
 ```
 
-The hertz is the frequency of a [harmonic oscillator](https://en.wikipedia.org/wiki/Harmonic_oscillator) (like a
-guitar string). Typically the frequency
-should be less than a half the frequency of the time step. So if you are using
-a 60Hz time step, the frequency of the distance joint should be less than 30Hz.
-The reason is related to the [Nyquist frequency](https://en.wikipedia.org/wiki/Nyquist_frequency).
+The hertz is the frequency of a [harmonic
+oscillator](https://en.wikipedia.org/wiki/Harmonic_oscillator) (like a guitar string). Typically the
+frequency should be less than half the frequency of the time step. So if you are using a 60Hz time
+step, the frequency of the distance joint should be less than 30Hz. The reason is related to the
+[Nyquist frequency](https://en.wikipedia.org/wiki/Nyquist_frequency).
 
-The damping ratio controls how fast the oscillations dissipate. A damping
-ratio of one is [critical damping](https://en.wikipedia.org/wiki/Damping) and prevents
-oscillation.
+The damping ratio controls how fast the oscillations dissipate. A damping ratio of one is [critical
+damping](https://en.wikipedia.org/wiki/Damping) and prevents oscillation.
 
-It is also possible to define a minimum and maximum length for the distance joint.
-You can even motorize the distance joint to adjust its length dynamically.
-See `b2DistanceJointDef` and the `DistanceJoint` sample for details.
+It is also possible to define a minimum and maximum length for the distance joint. You can even
+motorize the distance joint to adjust its length dynamically. See `b2DistanceJointDef` and the
+`DistanceJoint` sample for details.
 
-### Revolute Joint
+### Filter joint
 
-A revolute joint forces two bodies to share a common anchor point, often
-called a hinge point or pivot. The revolute joint has a single degree of freedom:
-the relative rotation of the two bodies. This is called the joint angle.
+Sometimes you want to prevent collision between two specific bodies and `b2Filter` is too broad.
+This is common in ragdolls where shapes can overlap even when not connected by other types of
+joints. The filter joint solves this problem. It applies no constraint, but uses the ability of all
+joint types to disable collision between connected bodies.
+
+The filter joint doesn't have any per-step computation, so it is essentially free. The main cost is
+memory.
+
+```c
+b2FilterJointDef jointDef = b2DefaultFilterJointDef();
+jointDef.base.bodyIdA = bodyId1;
+jointDef.base.bodyIdB = bodyId2;
+b2CreateFilterJoint(myWorldId, &jointDef);
+```
+
+### Revolute joint
+
+A revolute joint forces two bodies to share a common anchor point, often called a hinge point or
+pivot. The revolute joint has a single degree of freedom: the relative rotation of the two bodies.
+This is called the joint angle.
 
 ![Revolute Joint](images/revolute_joint.svg)
 
-Like all joints, the anchor points are specified in local coordinates.
-However, you can use the body utility functions to simplify this.
+Like all joints, the anchor points are specified in local coordinates. However, you can use the body
+utility functions to simplify this.
 
 ```c
 b2Pos worldPivot = b2ToPos((b2Vec2){10.0f, -4.0f});
@@ -1548,42 +1714,33 @@ jointDef.base.localFrameB.p = b2Body_GetLocalPoint(myBodyIdB, worldPivot);
 b2JointId myJointId = b2CreateRevoluteJoint(myWorldId, &jointDef);
 ```
 
-The revolute joint angle is positive when bodyB rotates counter-clockwise
-about the
-anchor point. Like all angles in Box2D, the revolute angle is measured in
-radians. By convention the revolute joint angle is zero when the two joint
-frames have equal world rotations. You can offset this by rotating one of
-the local frames.
+The revolute joint angle is positive when bodyB rotates counter-clockwise about the anchor point.
+Like all angles in Box2D, the revolute angle is measured in radians. By convention the revolute
+joint angle is zero when the two joint frames have equal world rotations. You can offset this by
+rotating one of the local frames.
 
-In some cases you might wish to control the joint angle. For this, the
-revolute joint can simulate a joint limit and/or a motor.
+In some cases you might wish to control the joint angle. For this, the revolute joint can simulate a
+joint limit and/or a motor.
 
-A joint limit forces the joint angle to remain between a lower and upper
-angle. The limit will apply as much torque as needed to make this
-happen. The limit range should include zero, otherwise the joint will
-lurch when the simulation begins. The lower and upper limit are relative to
-the reference angle.
+A joint limit forces the joint angle to remain between a lower and upper angle. The limit will apply
+as much torque as needed to make this happen. The lower and upper limit are defined in the joint
+frame of body A and control the relative rotation of the joint frame of body B.
 
-A joint motor allows you to specify the joint speed. The speed can be negative or
-positive. A motor can have infinite force, but this is usually not desirable. Recall the eternal
-question:
+A joint motor allows you to specify the joint speed. The speed can be negative or positive. A motor
+can have infinite force, but this is usually not desirable. Recall the eternal question:
 
 > *What happens when an irresistible force meets an immovable object?*
 
-I can tell you it's not pretty. So you can provide a maximum torque for
-the joint motor. The joint motor will maintain the specified speed
-unless the required torque exceeds the specified maximum. When the
-maximum torque is exceeded, the joint will slow down and can even
-reverse.
+I can tell you it's not pretty. So you can provide a maximum torque for the joint motor. The joint
+motor will maintain the specified speed unless the required torque exceeds the specified maximum.
+When the maximum torque is exceeded, the joint will slow down and can even reverse.
 
-You can use a joint motor to simulate joint friction. Just set the joint
-speed to zero, and set the maximum torque to some small, but significant
-value. The motor will try to prevent the joint from rotating, but will
-yield to a significant load.
+You can use a joint motor to simulate joint friction. Just set the joint speed to zero, and set the
+maximum torque to some small, but significant value. The motor will try to prevent the joint from
+rotating, but will yield to a significant load.
 
-Here's a revision of the revolute joint definition above; this time the
-joint has a limit and a motor enabled. The motor is setup to simulate
-joint friction.
+Here's a revision of the revolute joint definition above; this time the joint has a limit and a
+motor enabled. The motor is set up to simulate joint friction.
 
 ```c
 b2Pos worldPivot = b2ToPos((b2Vec2){10.0f, -4.0f});
@@ -1600,29 +1757,28 @@ jointDef.motorSpeed = 0.0f;
 jointDef.enableMotor = true;
 ```
 
-You can access a revolute joint's angle, speed, and motor torque.
+You can access a revolute joint's current angle, speed, and motor torque.
 
 ```c
-float angleInRadians = b2RevoluteJoint_GetAngle(myJointId);
-float speed = b2RevoluteJoint_GetMotorSpeed(myJointId);
-float currentTorque = b2RevoluteJoint_GetMotorTorque(myJointId);
+float angleInRadians = b2RevoluteJoint_GetCurrentAngle(myJointId);
+float speed = b2RevoluteJoint_GetCurrentSpeed(myJointId);
+float currentTorque = b2RevoluteJoint_GetCurrentMotorTorque(myJointId);
 ```
 
-You also update the motor parameters each step.
+You can also update the motor parameters each step.
 
 ```c
-b2RevoluteJoint_SetMotorSpeed(myJointId, 20.0f);
+b2RevoluteJoint_SetTargetMotorSpeed(myJointId, 20.0f);
 b2RevoluteJoint_SetMaxMotorTorque(myJointId, 100.0f);
 ```
 
-Joint motors have some interesting abilities. You can update the joint
-speed every time step so you can make the joint move back-and-forth like
-a sine-wave or according to whatever function you want.
+Joint motors have some interesting abilities. You can update the joint speed every time step so you
+can make the joint move back-and-forth like a sine-wave or according to whatever function you want.
 
 ```c
 // ... Game Loop Begin ...
 
-b2RevoluteJoint_SetMotorSpeed(myJointId, cosf(0.5f * time));
+b2RevoluteJoint_SetTargetMotorSpeed(myJointId, cosf(0.5f * time));
 
 // ... Game Loop End ...
 ```
@@ -1632,28 +1788,25 @@ You can also use joint motors to track a desired joint angle. For example:
 ```c
 // ... Game Loop Begin ...
 
-float angleError = b2RevoluteJoint_GetAngle(myJointId) - angleTarget;
+float angleError = b2RevoluteJoint_GetCurrentAngle(myJointId) - angleTarget;
 float gain = 0.1f;
-b2RevoluteJoint_SetMotorSpeed(myJointId, -gain * angleError);
+b2RevoluteJoint_SetTargetMotorSpeed(myJointId, -gain * angleError);
 
 // ... Game Loop End ...
 ```
 
-Generally your gain parameter should not be too large. Otherwise your
-joint may become unstable.
+Generally your gain parameter should not be too large. Otherwise your joint may become unstable.
 
-### Prismatic Joint
+### Prismatic joint
 
-A prismatic joint allows for relative translation of two bodies along a
-local axis. A prismatic joint prevents relative rotation. Therefore,
-a prismatic joint has a single degree of freedom.
+A prismatic joint allows for relative translation of two bodies along a local axis. A prismatic
+joint prevents relative rotation. Therefore, a prismatic joint has a single degree of freedom.
 
 ![Prismatic Joint](images/prismatic_joint.svg)
 
-The prismatic joint definition is similar to the revolute joint
-description; just substitute translation for angle and force for torque.
-Using this analogy provides an example prismatic joint definition with a
-joint limit and a friction motor:
+The prismatic joint definition is similar to the revolute joint description; just substitute
+translation for angle and force for torque. Using this analogy provides an example prismatic joint
+definition with a joint limit and a friction motor:
 
 ```c
 b2Pos worldPivot = b2ToPos((b2Vec2){10.0f, -4.0f});
@@ -1673,102 +1826,104 @@ jointDef.motorSpeed = 0.0f;
 jointDef.enableMotor = true;
 ```
 
-The revolute joint has an implicit axis coming out of the screen. The
-prismatic joint needs an explicit axis parallel to the screen. This axis
-is the x-axis of local frame A.
+The revolute joint has an implicit axis coming out of the screen. The prismatic joint needs an
+explicit axis parallel to the screen. This axis is the x-axis of local frame A.
 
-The prismatic joint translation is zero when the local frame origins coincide.
-I recommend to have the prismatic anchor points close to the center of mass of
-the two bodies. This will improve joint stiffness.
+The prismatic joint translation is zero when the local frame origins coincide. I recommend having
+the prismatic anchor points close to the center of mass of the two bodies. This will improve joint
+stiffness.
 
-Using a prismatic joint is similar to using a revolute joint. Here are
-the relevant functions:
+Using a prismatic joint is similar to using a revolute joint. Here are the relevant functions:
 
 ```c
-float b2PrismaticJoint_GetTranslation(b2JointId jointId);
-float b2PrismaticJoint_GetSpeed(b2JointId jointId);
-float b2PrismaticJoint_GetMotorForce(b2JointId jointId);
-void b2PrismaticJoint_SetMotorSpeed(b2JointId jointId, float motorSpeed);
+float b2PrismaticJoint_GetCurrentTranslation(b2JointId jointId);
+float b2PrismaticJoint_GetCurrentSpeed(b2JointId jointId);
+float b2PrismaticJoint_GetCurrentMotorForce(b2JointId jointId);
+void b2PrismaticJoint_SetTargetMotorSpeed(b2JointId jointId, float motorSpeed);
 void b2PrismaticJoint_SetMaxMotorForce(b2JointId jointId, float force);
 ```
 
-### Mouse Dragging
+### Weld joint
 
-There is no dedicated mouse joint. The samples drag bodies by creating a
-kinematic body at the cursor and attaching a motor joint with a linear spring
-between the kinematic body and the picked body. Each frame the kinematic body
-is driven to the cursor with `b2Body_SetTargetTransform()` and the motor
-spring pulls the picked body along. The maximum motor force limits violent
-reactions when multiple dynamic bodies interact. See `Sample::MouseDown()` in
-the samples for the details.
+The weld joint attempts to constrain all relative motion between two bodies. See the `Cantilever`
+sample to see how the weld joint behaves.
 
-### Weld Joint
+![Weld Joint](images/weld_joint.svg)
 
-The weld joint attempts to constrain all relative motion between two
-bodies. See the `Cantilever` sample to see how the weld joint
-behaves.
+It is tempting to use the weld joint to define breakable structures. However, the Box2D solver is
+approximate so the joints can be soft in some cases regardless of the joint settings. So chains of
+bodies connected by weld joints may flex.
 
-It is tempting to use the weld joint to define breakable structures.
-However, the Box2D solver is approximate so the joints can be soft in some
-cases regardless of the joint settings. So chains of bodies connected by weld
-joints may flex.
+See the `ContactEvent` sample for an example of how to merge and split bodies without using the weld
+joint.
 
-See the `ContactEvent` sample for an example of how to merge and split bodies
-without using the weld joint.
+### Motor joint
 
-### Motor Joint
+A motor joint lets you control the motion of a body using a linear and angular spring. You can set
+the maximum spring force and torque that will be applied to reach the target position and rotation.
+If the body is blocked, it will stop and the contact forces will be proportional to the maximum
+motor force and torque.
 
-A motor joint lets you control the motion of a body by specifying target
-position and rotation offsets. You can set the maximum motor force and
-torque that will be applied to reach the target position and rotation.
-If the body is blocked, it will stop and the contact forces will be
-proportional the maximum motor force and torque. See `b2MotorJointDef` and
-the `MotorJoint` sample for details.
+My preferred way of achieving movement control is to connect a dynamic body to a kinematic body
+using a motor joint. Then drive the kinematic body using `b2Body_SetTargetTransform`. This way no
+transforms or joint frames are set directly, which lets the simulation smooth out the forces.
 
-### Wheel Joint
+You can also use the motor joint to control the velocity of a body. This is useful in cases where
+you don't care about the precise position or rotation. For example, when the player is applying
+input to move a body you can use a motor joint with a specified velocity and maximum force to move
+the body according to the player's goals while still respecting collision.
 
-The wheel joint restricts a point on bodyB to a line on bodyA. The wheel
-joint also provides a suspension spring and a motor. See the `Driving` sample
-for details.
+See `b2MotorJointDef` and the `MotorJoint` sample for details.
+
+#### Mouse dragging
+
+There is no dedicated mouse joint. The samples drag bodies by creating a kinematic body at the
+cursor and attaching a motor joint with a linear spring between the kinematic body and the picked
+body. Each frame the kinematic body is driven to the cursor with `b2Body_SetTargetTransform()` and
+the motor spring pulls the picked body along. The maximum spring force limits violent reactions when
+multiple dynamic bodies interact. See `Sample::MouseDown()` in the samples for the details.
+
+### Wheel joint
+
+The wheel joint restricts a point on bodyB to the x-axis of the joint frame in bodyA. The wheel
+joint also provides a suspension spring and a motor. See the `Driving` sample for details.
 
 ![Wheel Joint](images/wheel_joint.svg)
 
-The wheel joint is designed specifically for vehicles. It provides a translation
-and rotation. The translation has a spring and damper to simulate the vehicle
-suspension. The rotation allows the wheel to rotate. You can specify an rotational
-motor to drive the wheel and to apply braking. See `b2WheelJointDef` and the `Drive`
-sample for details.
+The wheel joint is designed specifically for vehicles. It provides a translation and rotation. The
+translation has a spring and damper to simulate the vehicle suspension. The rotation allows the
+wheel to rotate. You can specify a rotational motor to drive the wheel and to apply braking. See
+`b2WheelJointDef` and the `Driving` sample for details.
 
-You may also use the wheel joint where you want free rotation and translation along
-an axis. See the `ScissorLift` sample for details.
+You may also use the wheel joint where you want free rotation and translation along an axis. See the
+`ScissorLift` sample for details.
 
-## Spatial Queries {#spatial}
+## Spatial queries {#spatial}
 
-Spatial queries allow you to inspect the world geometrically. There are overlap queries,
-ray-casts, and shape-casts. These allow you to do things like:
+Spatial queries allow you to inspect the world geometrically. There are overlap queries, ray-casts,
+and shape-casts. These allow you to do things like:
 
 - find a treasure chest near the player
 - shoot a laser beam and destroy all asteroids in the path
 - throw a grenade that is represented as a circle moving along a parabolic path
 
-### Overlap Queries
+### Overlap queries
 
-Sometimes you want to determine all the shapes in a region. The world has a fast
-log(N) method for this using the broad-phase data structure. Box2D provides these
-overlap tests:
+Sometimes you want to determine all the shapes in a region. The world has a fast log(N) method for
+this using the broad-phase data structure. Box2D provides these overlap tests:
 
-- axis-aligned bound box (AABB) overlap
+- axis-aligned bounding box (AABB) overlap
 - shape proxy overlap
 
-#### Query Filtering
+#### Query filtering
 
-A basic understanding of query filtering is needed before considering the specific queries.
-Shape versus shape filtering was discussed [here](#filtering). A similar setup is used
-for queries. This lets your queries only consider certain categories of shapes, it also
-lets your shapes ignore certain queries.
+A basic understanding of query filtering is needed before considering the specific queries. Shape
+versus shape filtering was discussed [here](@ref filtering). A similar setup is used for queries.
+This lets your queries only consider certain categories of shapes, it also lets your shapes ignore
+certain queries.
 
-Just like shapes, queries themselves can have a category. For example, you can have a `CAMERA`
-or `PROJECTILE` category.
+Just like shapes, queries themselves can have a category. For example, you can have a `CAMERA` or
+`PROJECTILE` category.
 
 ```c
 enum MyCategories
@@ -1793,16 +1948,14 @@ viewFilter.categoryBits = CAMERA;
 viewFilter.maskBits = STATIC | PLAYER | MONSTER;
 ```
 
-If you want to query everything you can use `b2DefaultQueryFilter()`;
+If you want to query everything you can use `b2DefaultQueryFilter()`.
 
-#### AABB Overlap
+#### AABB overlap
 
-You provide an AABB in world coordinates and an
-implementation of `b2OverlapResultFcn()`. The world calls your function with each
-shape whose AABB overlaps the query AABB. Return true to continue the
-query, otherwise return false. For example, the following code finds all
-the shapes that potentially intersect a specified AABB and wakes up
-all of the associated bodies.
+You provide an AABB in world coordinates and an implementation of `b2OverlapResultCallbackFcn()`.
+The world calls your function with each shape whose AABB overlaps the query AABB. Return true to
+continue the query, otherwise return false. For example, the following code finds all the shapes
+that potentially intersect a specified AABB and wakes up all of the associated bodies.
 
 ```c
 bool MyOverlapCallback(b2ShapeId shapeId, void* context)
@@ -1815,7 +1968,6 @@ bool MyOverlapCallback(b2ShapeId shapeId, void* context)
 }
 
 // Elsewhere ...
-MyOverlapCallback callback;
 b2AABB aabb;
 aabb.lowerBound = (b2Vec2){-1.0f, -1.0f};
 aabb.upperBound = (b2Vec2){1.0f, 1.0f};
@@ -1823,27 +1975,25 @@ b2QueryFilter filter = b2DefaultQueryFilter();
 b2World_OverlapAABB(myWorldId, b2Pos_zero, aabb, filter, MyOverlapCallback, &myGame);
 ```
 
-The query geometry is relative to the `b2Pos` origin. Near the world origin pass
-`b2Pos_zero` and world coordinates, as here. The origin matters for
-[large worlds](#large-worlds), where it keeps distant queries precise.
+The query geometry is relative to the `b2Pos` origin. Near the world origin pass `b2Pos_zero` and
+world coordinates, as here. The origin matters for [large worlds](@ref large-worlds), where it keeps
+distant queries precise.
 
-Do not make any assumptions about the order of the callback. The order shapes
-are returned to your callback may seem arbitrary.
+Do not make any assumptions about the order of the callback. The order shapes are returned to your
+callback may seem arbitrary.
 
-#### Shape Overlap
+#### Shape overlap
 
-The AABB overlap is very fast but not very accurate because it only considers
-the shape bounding box. If you want an accurate overlap test, you can use a shape
-overlap query.
+The AABB overlap is very fast but not very accurate because it only considers the shape bounding
+box. If you want an accurate overlap test, you can use a shape overlap query.
 
-The overlap function uses a `b2ShapeProxy` which is an abstract shape consisting
-of some points and a radius. You can think of it as a cloud of circles that has been
-_shrink wrapped_. This can represent a point, a circle, a line segment, a capsule, a polygon,
-a rounded rectangle, and so on. The helper function `b2MakeProxy` takes an array of points
-and a radius.
+The overlap function uses a `b2ShapeProxy` which is an abstract shape consisting of some points and
+a radius. You can think of it as a cloud of circles that has been _shrink wrapped_. This can
+represent a point, a circle, a line segment, a capsule, a polygon, a rounded rectangle, and so on.
+The helper function `b2MakeProxy` takes an array of points and a radius.
 
 In this example, I'm creating a shape proxy from a circle and then calling `b2World_OverlapShape()`.
-This takes a `b2OverlapResultFcn()` to receive results and control the search progress.
+This takes a `b2OverlapResultCallbackFcn()` to receive results and control the search progress.
 
 ```c
 b2Circle circle = {b2Vec2_zero, 0.2f};
@@ -1853,38 +2003,33 @@ b2World_OverlapShape(myWorldId, b2Pos_zero, &proxy, grenadeFilter, MyOverlapCall
 
 ### Ray-casts
 
-You can use ray-casts to do line-of-sight checks, fire guns, etc. You
-perform a ray-cast by implementing the `b2CastResultFcn()` callback
-function and providing the
-origin point and translation. The world calls your function with each shape
-hit by the ray. Your callback is provided with the shape, the point of
-intersection, the unit normal vector, and the fractional distance along
-the ray. You cannot make any assumptions about the order of the points
-sent to the callback. The callback may receive points that are further away
-before receiving points that are closer.
+You can use ray-casts to do line-of-sight checks, fire guns, etc. You perform a ray-cast by
+implementing the `b2CastResultCallbackFcn()` callback function and providing the origin point and
+translation. The world calls your function with each shape hit by the ray. Your callback is provided
+with the shape, the point of intersection, the unit normal vector, and the fractional distance along
+the ray. You cannot make any assumptions about the order of the points sent to the callback. The
+callback may receive points that are further away before receiving points that are closer.
 
-You control the continuation of the ray-cast by returning a fraction.
-Returning a fraction of zero indicates the ray-cast should be
-terminated. A fraction of one indicates the ray-cast should continue as
-if no hit occurred. If you return the fraction from the argument list,
-the ray will be clipped to the current intersection point. So you can
-ray-cast any shape, ray-cast all shapes, or ray-cast the closest shape
-by returning the appropriate fraction.
+You control the continuation of the ray-cast by returning a fraction. Returning a fraction of zero
+indicates the ray-cast should be terminated. A fraction of one indicates the ray-cast should
+continue as if no hit occurred. If you return the fraction from the argument list, the ray will be
+clipped to the current intersection point. So you can ray-cast any shape, ray-cast all shapes, or
+ray-cast the closest shape by returning the appropriate fraction.
 
-You may also return of fraction of -1 to filter the shape. Then the
-ray-cast will proceed as if the shape does not exist.
+You may also return a fraction of -1 to filter the shape. Then the ray-cast will proceed as if the
+shape does not exist.
 
 Here is an example:
 
 ```c
 // This struct captures the closest hit shape
-struct MyRayCastContext
+typedef struct MyRayCastContext
 {
     b2ShapeId shapeId;
     b2Pos point;
     b2Vec2 normal;
     float fraction;
-};
+} MyRayCastContext;
 
 float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
@@ -1904,23 +2049,25 @@ b2Vec2 translation = b2Sub(end, origin);
 b2World_CastRay(myWorldId, b2ToPos(origin), translation, viewFilter, MyCastCallback, &context);
 ```
 
-Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want to sort them according to the hit fraction. See the `CastWorld` sample for details.
+Ray-cast results may be delivered in an arbitrary order. This doesn't affect the result for closest
+point ray-casts (except in ties). When you are collecting multiple hits along the ray, you may want
+to sort them according to the hit fraction. See the `CastWorld` sample for details.
 
 ### Shape-casts
 
-Shape-casts are similar to ray-casts. You can view a ray-cast as tracing a point along a line. A shape-cast
-allows you to trace a shape along a line. Like the shape overlap query, the shape cast uses a `b2ShapeProxy`
-to represent an arbitrary shape.
+Shape-casts are similar to ray-casts. You can view a ray-cast as tracing a point along a line. A
+shape-cast allows you to trace a shape along a line. Like the shape overlap query, the shape cast
+uses a `b2ShapeProxy` to represent an arbitrary shape.
 
 ```c
 // This struct captures the closest hit shape
-struct MyRayCastContext
+typedef struct MyRayCastContext
 {
     b2ShapeId shapeId;
     b2Pos point;
     b2Vec2 normal;
     float fraction;
-};
+} MyRayCastContext;
 
 float MyCastCallback(b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context)
 {
@@ -1940,12 +2087,13 @@ b2Vec2 translation = {10.0f, -5.0f};
 b2World_CastShape(myWorldId, b2Pos_zero, &proxy, translation, grenadeFilter, MyCastCallback, &context);
 ```
 
-Otherwise, shape-casts are setup similarly to ray-casts. You can expect shape-casts to generally be slower
-than ray-casts. So only use a shape-cast if a ray-cast won't do.
+Otherwise, shape-casts are set up similarly to ray-casts. You can expect shape-casts to generally be
+slower than ray-casts. So only use a shape-cast if a ray-cast won't do.
 
-Just like ray-casts, shape-casts results may be sent to the callback in any order. If you need multiple sorted results, you will need to write some code to collect and sort the results.
+Just like ray-casts, shape-cast results may be sent to the callback in any order. If you need
+multiple sorted results, you will need to write some code to collect and sort the results.
 
-## Simulation Loop
+## Simulation loop
 
 ![Simulation Loop](images/simulation_loop.svg)
 
@@ -1964,9 +2112,10 @@ The game starts the simulation by calling `b2World_Step` supplying the time step
 
 ### find pairs
 
-Box2D maintains a record of every shape that has moved. For each of these shapes the broad-phase
-(BVH) is queried for overlaps. New overlaps are recorded for processing in the next step. I avoid reporting
-existing overlaps by using a hash table that records all existing shape pairs. This operation is a parallel-for.
+Box2D flags a portion of the broad-phase collision tree for every shape that has moved. Each step
+these portions of the tree are collided to detect new overlaps. New overlaps are recorded for
+processing in the next stage. I avoid recording existing overlaps by using a hash table that records
+all existing shape pairs. This operation is a parallel-for.
 
 ### create contacts
 
@@ -1976,29 +2125,29 @@ manifolds. This operation is single-threaded but most of the work is done in `fi
 
 ### rebuild BVH
 
-After the new shape pairs are known the BVH is not considered until later in the time step. Therefore the BVH
-for dynamic and kinematic shapes may be optimized. This involves identifying the part of the collision tree that
-is stale from refitting and then performing a rebuild of that sub-tree. This is a single-single threaded operation
-that is done concurrently with other work.
+After the new shape pairs are known the BVH is not considered until later in the time step.
+Therefore the BVH for dynamic and kinematic shapes may be optimized. This involves identifying the
+part of the collision tree that is stale from refitting and then performing a rebuild of that
+sub-tree. This is a single threaded operation that is done concurrently with other work.
 
 ### narrow phase
 
-This is where the contact manifolds and points are computed. Each active contact pair is confirmed as touching
-or non-touching. If the touching state changes then contact begin and end events are generated. This is a
-parallel-for operation.
+This is where the contact manifolds and points are computed. Each active contact pair is confirmed
+as touching or non-touching. If the touching state changes then contact begin and end events are
+generated. This is a parallel-for operation.
 
-Notice that contact points are computed at the beginning of the time step, before bodies have moved and before impulses
-are known. This is necessary for obtaining good simulation results efficiently. If contacts were computed at the end
-of the time step then new contact points would not be known to the constraint solver and shapes would sink into each
-other.
+Notice that contact points are computed at the beginning of the time step, before bodies have moved
+and before impulses are known. This is necessary for obtaining good simulation results efficiently.
+If contacts were computed at the end of the time step then new contact points would not be known to
+the constraint solver and shapes would sink into each other.
 
-The `b2PreSolveFcn` is called within the parallel-for so it should be efficient and thread-safe. This is only called for
-shapes that have `enablePreSolveEvents == true`.
+The `b2PreSolveCallbackFcn` is called within the parallel-for so it should be efficient and
+thread-safe. This is only called for shapes that have `enablePreSolveEvents == true`.
 
 ### merge islands
 
-Simulation islands are merged when shapes begin touching. Existing islands that have shapes that stop touching
-are flagged as candidates for splitting. This stage is single-threaded.
+Simulation islands are merged when shapes begin touching. Existing islands that have shapes that
+stop touching are flagged as candidates for splitting. This stage is single-threaded.
 
 ### split island
 
@@ -2006,13 +2155,15 @@ A split island task may be generated if:
 
 - there is an island that has shapes that stopped touching
 - this island has a body that is moving slow enough to sleep
-Splitting an island may result in several new islands being created.
-Only a single island will be split per time step because it is expensive. Delaying the split may delay some
-bodies from sleeping. This is a single-single threaded operation that is done concurrently with other work.
+
+Splitting an island may result in several new islands being created. Only a single island will be
+split per time step because it is expensive. Delaying the split may delay some bodies from sleeping.
+This is a single threaded operation that is done concurrently with other work.
 
 ### solve constraints
 
-This solves contact and joint constraints and applies restitution. This a parallel-for with multiple internal stages.
+This solves contact and joint constraints and applies restitution. This is a parallel-for with
+multiple internal stages.
 
 ### update transforms
 
@@ -2025,53 +2176,70 @@ This stage does several tasks:
 - resets forces and torques
 - updates shape bounding boxes
 - performs continuous collision between dynamic and static bodies
+
 This stage is parallel-for.
 
-Note that continuous collision does not generate events. Instead they are generated the next time step. However, continuous collision will issue a `b2PreSolveFcn` callback.
+Note that continuous collision does not generate events. Instead they are generated the next time
+step. However, continuous collision will issue a `b2PreContinuousCallbackFcn` callback.
 
 ### hit events
 
-Active contacts are scanned for fast approach velocities and added to a buffer. This considers contact points that
-have an impulse. This includes touching contacts and speculative contacts that generated an impulse (they are confirmed).
-So you may get hit events for contact points that have a positive separation. This is a single-threaded operation.
+Active contacts are scanned for fast approach velocities and added to a buffer. This considers
+contact points that have an impulse. This includes touching contacts and speculative contacts that
+generated an impulse (they are confirmed). So you may get hit events for contact points that have a
+positive separation. This is a single-threaded operation.
 
 ### refit BVH
 
-This updates the BVH for shapes that have moved significantly. This is done by enlarging the shapes bounding box and all ancestor bounding boxes in the BVH. This is a single-threaded operation.
+This updates the BVH for shapes that have moved significantly. This is done by enlarging the shape's
+bounding box and all ancestor bounding boxes in the BVH. This is a single-threaded operation.
+However, it is done very efficiently by keeping the tree in depth first order, so it is a linear
+backwards node walk.
 
-This can result in an inefficient BVH. This is the reason for the `rebuild BVH` stage. Refitting is faster than rebuilding the
-BVH but is necessary to ensure the BVH is valid for subsequent queries, such as ray casts.
+This can result in an inefficient BVH. This is the reason for the `rebuild BVH` stage. Refitting is
+faster than rebuilding the BVH but is necessary to ensure the BVH is valid for subsequent queries,
+such as ray casts.
 
 ### bullets
 
-This is where bullets are processed. Note that this comes after hit events because continuous collision in Box2D does not
-generate events until the next time step.
+This is where bullets are processed. Note that this comes after hit events because continuous
+collision in Box2D does not generate events until the next time step.
 
 ### island sleep
 
-When an island goes to sleep the simulation data associated with that island is moved to separate stored. This keeps the active simulation data contiguous and cache friendly.
+When an island goes to sleep the simulation data associated with that island is moved to separate
+storage. This keeps the active simulation data contiguous and cache friendly.
 
 ### sensors
 
-Sensor overlaps are checked in the final stage. The overlap state reflects the final body transform. Sensors do not consider sleep so they may react to the user setting a body transform or creating a sleeping body. This is a parallel-for operation. The cost is roughly proportional to the number of sensors.
+Sensor overlaps are checked in the final stage. The overlap state reflects the final body transform.
+Sensors do not consider sleep so they may react to the user setting a body transform or creating a
+sleeping body. This is a parallel-for operation. The cost is roughly proportional to the number of
+sensors.
 
 ## Determinism
 
-Box2D is designed to be deterministic across thread counts and platforms. I believe this is important for debugging and game design.
+Box2D is designed to be deterministic across thread counts and platforms. I believe this is
+important for debugging and game design.
 
-Multithreaded determinism is achieved by basing simulation order on creation order. This includes bodies, shapes, and joint creation order. Determinism includes results reported to users (events). These events must be in deterministic order.
+Multithreaded determinism is achieved by basing simulation order on creation order. This includes
+bodies, shapes, and joint creation order. Determinism includes results reported to users (events).
+These events must be in deterministic order.
 
-Cross-platform determinism is achieved on 64-bit platforms by using compiler flags and by avoiding non-deterministic library functions.
+Cross-platform determinism is achieved on 64-bit platforms by using compiler flags and by avoiding
+non-deterministic library functions.
 
 - precise math is used on MSVC
 - floating point contraction is disabled on clang and GCC
 - Box2D has custom implementations of atan2, cosine, and sine.
 
-Determinism is on by default and there is no explicit option to disable it. However, you can break determinism by choosing different compiler flags. Box2D was designed to provide determinism with minimal cost. So there is no advantage to attempting
-to disable determinism.
+Determinism is on by default and there is no explicit option to disable it. However, you can break
+determinism by choosing different compiler flags. Box2D was designed to provide determinism with
+minimal cost. So there is no advantage to attempting to disable determinism.
 
-I maintain a unit test for determinism that is run for every pull request. Determinism is easy to break, so it is important to have regular validation.
+I maintain a unit test for determinism that is run for every pull request. Determinism is easy to
+break, so it is important to have regular validation.
 
-> **Caution**:
-> Box2D determinism does not mean your application will be deterministic. Consider using similar strategies to make your
-> application deterministic as I have used for Box2D.
+> [!note]
+> Box2D determinism does not mean your application will be deterministic. Consider using
+> similar strategies to make your application deterministic as I have used for Box2D.

@@ -1658,6 +1658,7 @@ void B2_WIDE( b2PushContacts_Wide )( b2SolverBlock block, b2StepContext* context
 	b2FloatW inv_h = b2SplatW( context->inv_h );
 	b2FloatW contactSpeed = b2SplatW( -context->world->contactSpeed );
 	b2FloatW oneW = b2SplatW( 1.0f );
+	b2FloatW zeroW = b2ZeroW();
 
 	b2FloatW dynamicBiasRate = b2SplatW( context->contactSoftness.massScale * context->contactSoftness.biasRate );
 	b2FloatW dynamicMassScale = b2SplatW( context->contactSoftness.massScale );
@@ -1678,26 +1679,23 @@ void B2_WIDE( b2PushContacts_Wide )( b2SolverBlock block, b2StepContext* context
 		b2FloatW massScale = b2BlendW( dynamicMassScale, staticMassScale, softMask );
 		b2FloatW impulseScale = b2BlendW( dynamicImpulseScale, staticImpulseScale, softMask );
 
+		b2Vec2W normal = c->normal;
 		b2Vec2W dp = { b2SubW( bB.dp.X, bA.dp.X ), b2SubW( bB.dp.Y, bA.dp.Y ) };
 
-		// point1 non-penetration constraint
+		b2FloatW velocityBias1, massScale1, impulseScale1;
 		{
-			// Fixed anchors for impulses
-			b2Vec2W rA = c->anchorA1;
-			b2Vec2W rB = c->anchorB1;
-
 			// Moving anchors for current separation
-			b2Vec2W rsA = b2RotateVectorW( bA.dq, rA );
-			b2Vec2W rsB = b2RotateVectorW( bB.dq, rB );
+			b2Vec2W rsA = b2RotateVectorW( bA.dq, c->anchorA1 );
+			b2Vec2W rsB = b2RotateVectorW( bB.dq, c->anchorB1 );
 
 			// compute current separation
 			// this is subject to round-off error if the anchor is far from the body center of mass
 			b2Vec2W ds = { b2AddW( dp.X, b2SubW( rsB.X, rsA.X ) ), b2AddW( dp.Y, b2SubW( rsB.Y, rsA.Y ) ) };
-			b2FloatW s = b2AddW( b2DotW( c->normal, ds ), c->baseSeparation1 );
+			b2FloatW s = b2AddW( b2DotW( normal, ds ), c->baseSeparation1 );
 
 			// Apply speculative bias if separation is greater than zero, otherwise apply soft constraint bias
 			// The contactSpeed is meant to limit stiffness, not increase it.
-			b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
+			b2FloatW separated = b2GreaterThanW( s, zeroW );
 
 			// Speculative bias - positive
 			b2FloatW specBias = b2MulW( s, inv_h );
@@ -1706,89 +1704,68 @@ void B2_WIDE( b2PushContacts_Wide )( b2SolverBlock block, b2StepContext* context
 			b2FloatW overlapBias = b2MaxW( b2MulW( biasRate, s ), contactSpeed );
 
 			// velocity bias = s > 0 ? spec : overlap
-			b2FloatW velocityBias = b2BlendW( overlapBias, specBias, separated );
+			velocityBias1 = b2BlendW( overlapBias, specBias, separated );
 
-			b2FloatW pointMassScale = b2BlendW( massScale, oneW, separated );
-			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), separated );
-
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
-
-			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass1, b2AddW( b2MulW( pointMassScale, vn ), velocityBias ) ),
-										  b2MulW( pointImpulseScale, c->normalImpulse1 ) );
-
-			// Clamp the accumulated impulse
-			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
-			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse1 );
-			c->normalImpulse1 = newImpulse;
-			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, impulse );
-
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, c->normal.X );
-			b2FloatW Py = b2MulW( impulse, c->normal.Y );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
+			massScale1 = b2BlendW( massScale, oneW, separated );
+			impulseScale1 = b2BlendW( impulseScale, zeroW, separated );
 		}
 
-		// second point non-penetration constraint
+		b2FloatW velocityBias2, massScale2, impulseScale2;
 		{
-			// moving anchors for current separation
 			b2Vec2W rsA = b2RotateVectorW( bA.dq, c->anchorA2 );
 			b2Vec2W rsB = b2RotateVectorW( bB.dq, c->anchorB2 );
 
-			// compute current separation
 			b2Vec2W ds = { b2AddW( dp.X, b2SubW( rsB.X, rsA.X ) ), b2AddW( dp.Y, b2SubW( rsB.Y, rsA.Y ) ) };
-			b2FloatW s = b2AddW( b2DotW( c->normal, ds ), c->baseSeparation2 );
+			b2FloatW s = b2AddW( b2DotW( normal, ds ), c->baseSeparation2 );
 
-			b2FloatW separated = b2GreaterThanW( s, b2ZeroW() );
-
+			b2FloatW separated = b2GreaterThanW( s, zeroW );
 			b2FloatW specBias = b2MulW( s, inv_h );
 			b2FloatW overlapBias = b2MaxW( b2MulW( biasRate, s ), contactSpeed );
-			b2FloatW velocityBias = b2BlendW( overlapBias, specBias, separated );
+			velocityBias2 = b2BlendW( overlapBias, specBias, separated );
 
-			b2FloatW pointMassScale = b2BlendW( massScale, oneW, separated );
-			b2FloatW pointImpulseScale = b2BlendW( impulseScale, b2ZeroW(), separated );
-
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA2;
-			b2Vec2W rB = c->anchorB2;
-
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
-
-			// Compute normal impulse
-			b2FloatW negImpulse = b2AddW( b2MulW( c->normalMass2, b2AddW( b2MulW( pointMassScale, vn ), velocityBias ) ),
-										  b2MulW( pointImpulseScale, c->normalImpulse2 ) );
-
-			// Clamp the accumulated impulse
-			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
-			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse2 );
-			c->normalImpulse2 = newImpulse;
-			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, impulse );
-
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, c->normal.X );
-			b2FloatW Py = b2MulW( impulse, c->normal.Y );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
+			massScale2 = b2BlendW( massScale, oneW, separated );
+			impulseScale2 = b2BlendW( impulseScale, zeroW, separated );
 		}
+
+		b2FloatW rnA1 = b2CrossW( c->anchorA1, normal );
+		b2FloatW rnB1 = b2CrossW( c->anchorB1, normal );
+		b2FloatW rnA2 = b2CrossW( c->anchorA2, normal );
+		b2FloatW rnB2 = b2CrossW( c->anchorB2, normal );
+
+		b2FloatW k21 = b2AddW( b2AddW( c->invMassA, c->invMassB ),
+							   b2AddW( b2MulW( b2MulW( c->invIA, rnA1 ), rnA2 ), b2MulW( b2MulW( c->invIB, rnB1 ), rnB2 ) ) );
+
+		b2FloatW dn = b2DotW( b2SubVW( bB.v, bA.v ), normal );
+		b2FloatW vn1 = b2AddW( dn, b2SubW( b2MulW( bB.w, rnB1 ), b2MulW( bA.w, rnA1 ) ) );
+		b2FloatW vn2 = b2AddW( dn, b2SubW( b2MulW( bB.w, rnB2 ), b2MulW( bA.w, rnA2 ) ) );
+
+		b2FloatW negImpulse1 = b2AddW( b2MulW( c->normalMass1, b2AddW( b2MulW( massScale1, vn1 ), velocityBias1 ) ),
+									   b2MulW( impulseScale1, c->normalImpulse1 ) );
+		b2FloatW impulse1 = b2MaxW( b2NegW( negImpulse1 ), b2NegW( c->normalImpulse1 ) );
+		c->normalImpulse1 = b2AddW( c->normalImpulse1, impulse1 );
+		c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, impulse1 );
+
+		vn2 = b2MulAddW( vn2, k21, impulse1 );
+
+		b2FloatW negImpulse2 = b2AddW( b2MulW( c->normalMass2, b2AddW( b2MulW( massScale2, vn2 ), velocityBias2 ) ),
+									   b2MulW( impulseScale2, c->normalImpulse2 ) );
+		b2FloatW impulse2 = b2MaxW( b2NegW( negImpulse2 ), b2NegW( c->normalImpulse2 ) );
+		c->normalImpulse2 = b2AddW( c->normalImpulse2, impulse2 );
+		c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, impulse2 );
+
+		b2FloatW impulse = b2AddW( impulse1, impulse2 );
+		b2FloatW Px = b2MulW( impulse, normal.X );
+		b2FloatW Py = b2MulW( impulse, normal.Y );
+		b2FloatW angularA = b2AddW( b2MulW( impulse1, rnA1 ), b2MulW( impulse2, rnA2 ) );
+		b2FloatW angularB = b2AddW( b2MulW( impulse1, rnB1 ), b2MulW( impulse2, rnB2 ) );
+
+		bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+		bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
+		bA.w = b2MulSubW( bA.w, c->invIA, angularA );
+
+		bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+		bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
+		bB.w = b2MulAddW( bB.w, c->invIB, angularB );
 
 		b2ScatterBodies( states, c->indexA, &bA );
 		b2ScatterBodies( states, c->indexB, &bB );
@@ -1806,6 +1783,7 @@ void B2_WIDE( b2SolveContacts_Wide )( b2SolverBlock block, b2StepContext* contex
 	b2GraphColor* color = context->graph->colors + block.colorIndex;
 	b2ContactConstraintWide* constraints = color->wideConstraints;
 	b2FloatW inv_h = b2SplatW( context->inv_h );
+	b2FloatW zeroW = b2ZeroW();
 
 	for ( int wideIndex = block.startIndex; wideIndex < block.startIndex + block.count; ++wideIndex )
 	{
@@ -1814,8 +1792,8 @@ void B2_WIDE( b2SolveContacts_Wide )( b2SolverBlock block, b2StepContext* contex
 		b2BodyStateW bA = b2GatherBodies( states, c->indexA );
 		b2BodyStateW bB = b2GatherBodies( states, c->indexB );
 
-		b2FloatW totalNormalImpulse = b2ZeroW();
-
+		b2Vec2W normal = c->normal;
+		b2Vec2W tangent = b2RightPerpW( normal );
 		b2Vec2W dp = { b2SubW( bB.dp.X, bA.dp.X ), b2SubW( bB.dp.Y, bA.dp.Y ) };
 
 		b2FloatW velocityBias1, velocityBias2;
@@ -1827,10 +1805,10 @@ void B2_WIDE( b2SolveContacts_Wide )( b2SolverBlock block, b2StepContext* contex
 			// compute current separation
 			// this is subject to round-off error if the anchor is far from the body center of mass
 			b2Vec2W ds = { b2AddW( dp.X, b2SubW( rsB.X, rsA.X ) ), b2AddW( dp.Y, b2SubW( rsB.Y, rsA.Y ) ) };
-			b2FloatW s = b2AddW( b2DotW( c->normal, ds ), c->baseSeparation1 );
+			b2FloatW s = b2AddW( b2DotW( normal, ds ), c->baseSeparation1 );
 
 			// Speculative bias, positive if separated and zero if overlapped
-			velocityBias1 = b2MaxW( b2ZeroW(), b2MulW( s, inv_h ) );
+			velocityBias1 = b2MaxW( zeroW, b2MulW( s, inv_h ) );
 		}
 
 		{
@@ -1838,172 +1816,113 @@ void B2_WIDE( b2SolveContacts_Wide )( b2SolverBlock block, b2StepContext* contex
 			b2Vec2W rsB = b2RotateVectorW( bB.dq, c->anchorB2 );
 
 			b2Vec2W ds = { b2AddW( dp.X, b2SubW( rsB.X, rsA.X ) ), b2AddW( dp.Y, b2SubW( rsB.Y, rsA.Y ) ) };
-			b2FloatW s = b2AddW( b2DotW( c->normal, ds ), c->baseSeparation2 );
+			b2FloatW s = b2AddW( b2DotW( normal, ds ), c->baseSeparation2 );
 
-			velocityBias2 = b2MaxW( b2ZeroW(), b2MulW( s, inv_h ) );
+			velocityBias2 = b2MaxW( zeroW, b2MulW( s, inv_h ) );
 		}
 
-		// point1 non-penetration constraint
-		{
-			// Fixed anchors for impulses
-			b2Vec2W rA = c->anchorA1;
-			b2Vec2W rB = c->anchorB1;
+		b2FloatW rnA1 = b2CrossW( c->anchorA1, normal );
+		b2FloatW rnB1 = b2CrossW( c->anchorB1, normal );
+		b2FloatW rnA2 = b2CrossW( c->anchorA2, normal );
+		b2FloatW rnB2 = b2CrossW( c->anchorB2, normal );
+		b2FloatW rtA1 = b2CrossW( c->anchorA1, tangent );
+		b2FloatW rtB1 = b2CrossW( c->anchorB1, tangent );
+		b2FloatW rtA2 = b2CrossW( c->anchorA2, tangent );
+		b2FloatW rtB2 = b2CrossW( c->anchorB2, tangent );
 
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
+		b2FloatW wnA1 = b2MulW( c->invIA, rnA1 );
+		b2FloatW wnB1 = b2MulW( c->invIB, rnB1 );
+		b2FloatW wnA2 = b2MulW( c->invIA, rnA2 );
+		b2FloatW wnB2 = b2MulW( c->invIB, rnB2 );
+		b2FloatW wtA1 = b2MulW( c->invIA, rtA1 );
+		b2FloatW wtB1 = b2MulW( c->invIB, rtB1 );
 
-			// Compute normal impulse
-			b2FloatW negImpulse = b2MulW( c->normalMass1, b2AddW( vn, velocityBias1 ) );
+		b2FloatW invMass = b2AddW( c->invMassA, c->invMassB );
+		b2FloatW k21 = b2AddW( invMass, b2AddW( b2MulW( wnA1, rnA2 ), b2MulW( wnB1, rnB2 ) ) );
+		b2FloatW k31 = b2AddW( b2MulW( wnA1, rtA1 ), b2MulW( wnB1, rtB1 ) );
+		b2FloatW k32 = b2AddW( b2MulW( wnA2, rtA1 ), b2MulW( wnB2, rtB1 ) );
+		b2FloatW k41 = b2AddW( b2MulW( wnA1, rtA2 ), b2MulW( wnB1, rtB2 ) );
+		b2FloatW k42 = b2AddW( b2MulW( wnA2, rtA2 ), b2MulW( wnB2, rtB2 ) );
+		b2FloatW k43 = b2AddW( invMass, b2AddW( b2MulW( wtA1, rtA2 ), b2MulW( wtB1, rtB2 ) ) );
 
-			// Clamp the accumulated impulse
-			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse1, negImpulse ), b2ZeroW() );
-			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse1 );
-			c->normalImpulse1 = newImpulse;
-			c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, impulse );
+		b2Vec2W dv = b2SubVW( bB.v, bA.v );
+		b2FloatW dn = b2DotW( dv, normal );
+		b2FloatW dt = b2SubW( b2DotW( dv, tangent ), c->tangentSpeed );
 
-			totalNormalImpulse = b2AddW( totalNormalImpulse, newImpulse );
+		b2FloatW vn1 = b2AddW( dn, b2SubW( b2MulW( bB.w, rnB1 ), b2MulW( bA.w, rnA1 ) ) );
+		b2FloatW vn2 = b2AddW( dn, b2SubW( b2MulW( bB.w, rnB2 ), b2MulW( bA.w, rnA2 ) ) );
+		b2FloatW vt1 = b2AddW( dt, b2SubW( b2MulW( bB.w, rtB1 ), b2MulW( bA.w, rtA1 ) ) );
+		b2FloatW vt2 = b2AddW( dt, b2SubW( b2MulW( bB.w, rtB2 ), b2MulW( bA.w, rtA2 ) ) );
 
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, c->normal.X );
-			b2FloatW Py = b2MulW( impulse, c->normal.Y );
+		b2FloatW normalImpulse1 = b2MaxW( b2NegW( b2MulW( c->normalMass1, b2AddW( vn1, velocityBias1 ) ) ),
+										  b2NegW( c->normalImpulse1 ) );
+		c->normalImpulse1 = b2AddW( c->normalImpulse1, normalImpulse1 );
+		c->totalNormalImpulse1 = b2AddW( c->totalNormalImpulse1, normalImpulse1 );
 
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
+		vn2 = b2MulAddW( vn2, k21, normalImpulse1 );
 
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
+		b2FloatW normalImpulse2 = b2MaxW( b2NegW( b2MulW( c->normalMass2, b2AddW( vn2, velocityBias2 ) ) ),
+										  b2NegW( c->normalImpulse2 ) );
+		c->normalImpulse2 = b2AddW( c->normalImpulse2, normalImpulse2 );
+		c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, normalImpulse2 );
 
-		// second point non-penetration constraint
-		{
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA2;
-			b2Vec2W rB = c->anchorB2;
+		vt1 = b2MulAddW( b2MulAddW( vt1, k31, normalImpulse1 ), k32, normalImpulse2 );
+		vt2 = b2MulAddW( b2MulAddW( vt2, k41, normalImpulse1 ), k42, normalImpulse2 );
 
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vn = b2AddW( b2MulW( dvx, c->normal.X ), b2MulW( dvy, c->normal.Y ) );
-
-			// Compute normal impulse
-			b2FloatW negImpulse = b2MulW( c->normalMass2, b2AddW( vn, velocityBias2 ) );
-
-			// Clamp the accumulated impulse
-			b2FloatW newImpulse = b2MaxW( b2SubW( c->normalImpulse2, negImpulse ), b2ZeroW() );
-			b2FloatW impulse = b2SubW( newImpulse, c->normalImpulse2 );
-			c->normalImpulse2 = newImpulse;
-			c->totalNormalImpulse2 = b2AddW( c->totalNormalImpulse2, impulse );
-
-			totalNormalImpulse = b2AddW( totalNormalImpulse, newImpulse );
-
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, c->normal.X );
-			b2FloatW Py = b2MulW( impulse, c->normal.Y );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
+		b2FloatW angularA = b2AddW( b2MulW( normalImpulse1, rnA1 ), b2MulW( normalImpulse2, rnA2 ) );
+		b2FloatW angularB = b2AddW( b2MulW( normalImpulse1, rnB1 ), b2MulW( normalImpulse2, rnB2 ) );
 
 		// Rolling resistance
 		if ( b2AllZeroW( c->rollingResistance ) == false )
 		{
+			b2FloatW relativeW = b2SubW( b2SubW( bA.w, bB.w ), b2AddW( b2MulW( b2AddW( wnA1, wnB1 ), normalImpulse1 ),
+																	  b2MulW( b2AddW( wnA2, wnB2 ), normalImpulse2 ) ) );
 			b2FloatW k = b2AddW( c->invIA, c->invIB );
-			b2FloatW mask = b2GreaterThanW( k, b2ZeroW() );
-			b2FloatW deltaLambda = b2BlendW( b2ZeroW(), b2DivW( b2SubW( bA.w, bB.w ), k ), mask );
+			b2FloatW mask = b2GreaterThanW( k, zeroW );
+			b2FloatW deltaLambda = b2BlendW( zeroW, b2DivW( relativeW, k ), mask );
 			b2FloatW lambda = c->rollingImpulse;
-			b2FloatW maxLambda = b2MulW( c->rollingResistance, totalNormalImpulse );
+			b2FloatW maxLambda = b2MulW( c->rollingResistance, b2AddW( c->normalImpulse1, c->normalImpulse2 ) );
 			c->rollingImpulse = b2SymClampW( b2AddW( lambda, deltaLambda ), maxLambda );
 			deltaLambda = b2SubW( c->rollingImpulse, lambda );
 
-			bA.w = b2MulSubW( bA.w, c->invIA, deltaLambda );
-			bB.w = b2MulAddW( bB.w, c->invIB, deltaLambda );
+			b2FloatW wtA2 = b2MulW( c->invIA, rtA2 );
+			b2FloatW wtB2 = b2MulW( c->invIB, rtB2 );
+			vt1 = b2MulAddW( vt1, b2AddW( wtA1, wtB1 ), deltaLambda );
+			vt2 = b2MulAddW( vt2, b2AddW( wtA2, wtB2 ), deltaLambda );
+
+			angularA = b2AddW( angularA, deltaLambda );
+			angularB = b2AddW( angularB, deltaLambda );
 		}
 
-		b2FloatW tangentX = c->normal.Y;
-		b2FloatW tangentY = b2SubW( b2ZeroW(), c->normal.X );
+		b2FloatW maxFriction1 = b2MulW( c->friction, c->normalImpulse1 );
+		b2FloatW tangentImpulse1 = b2NegW( b2MulW( c->tangentMass1, vt1 ) );
+		tangentImpulse1 = b2MaxW( b2SubW( b2NegW( maxFriction1 ), c->tangentImpulse1 ),
+								  b2MinW( tangentImpulse1, b2SubW( maxFriction1, c->tangentImpulse1 ) ) );
+		c->tangentImpulse1 = b2AddW( c->tangentImpulse1, tangentImpulse1 );
 
-		// point 1 friction constraint
-		{
-			// Fixed anchor points for applying impulses
-			b2Vec2W rA = c->anchorA1;
-			b2Vec2W rB = c->anchorB1;
+		vt2 = b2MulAddW( vt2, k43, tangentImpulse1 );
 
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
+		b2FloatW maxFriction2 = b2MulW( c->friction, c->normalImpulse2 );
+		b2FloatW tangentImpulse2 = b2NegW( b2MulW( c->tangentMass2, vt2 ) );
+		tangentImpulse2 = b2MaxW( b2SubW( b2NegW( maxFriction2 ), c->tangentImpulse2 ),
+								  b2MinW( tangentImpulse2, b2SubW( maxFriction2, c->tangentImpulse2 ) ) );
+		c->tangentImpulse2 = b2AddW( c->tangentImpulse2, tangentImpulse2 );
 
-			// Tangent speed (conveyor belt)
-			vt = b2SubW( vt, c->tangentSpeed );
+		angularA = b2AddW( angularA, b2AddW( b2MulW( tangentImpulse1, rtA1 ), b2MulW( tangentImpulse2, rtA2 ) ) );
+		angularB = b2AddW( angularB, b2AddW( b2MulW( tangentImpulse1, rtB1 ), b2MulW( tangentImpulse2, rtB2 ) ) );
 
-			// Compute tangent force
-			b2FloatW negImpulse = b2MulW( c->tangentMass1, vt );
+		b2FloatW normalImpulse = b2AddW( normalImpulse1, normalImpulse2 );
+		b2FloatW tangentImpulse = b2AddW( tangentImpulse1, tangentImpulse2 );
+		b2FloatW Px = b2AddW( b2MulW( normalImpulse, normal.X ), b2MulW( tangentImpulse, tangent.X ) );
+		b2FloatW Py = b2AddW( b2MulW( normalImpulse, normal.Y ), b2MulW( tangentImpulse, tangent.Y ) );
 
-			// Clamp the accumulated force
-			b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse1 );
-			b2FloatW newImpulse = b2SubW( c->tangentImpulse1, negImpulse );
-			newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
-			b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse1 );
-			c->tangentImpulse1 = newImpulse;
+		bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
+		bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
+		bA.w = b2MulSubW( bA.w, c->invIA, angularA );
 
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, tangentX );
-			b2FloatW Py = b2MulW( impulse, tangentY );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
-
-		// second point friction constraint
-		{
-			// fixed anchors for Jacobians
-			b2Vec2W rA = c->anchorA2;
-			b2Vec2W rB = c->anchorB2;
-
-			// Relative velocity at contact
-			b2FloatW dvx = b2SubW( b2SubW( bB.v.X, b2MulW( bB.w, rB.Y ) ), b2SubW( bA.v.X, b2MulW( bA.w, rA.Y ) ) );
-			b2FloatW dvy = b2SubW( b2AddW( bB.v.Y, b2MulW( bB.w, rB.X ) ), b2AddW( bA.v.Y, b2MulW( bA.w, rA.X ) ) );
-			b2FloatW vt = b2AddW( b2MulW( dvx, tangentX ), b2MulW( dvy, tangentY ) );
-
-			// Tangent speed (conveyor belt)
-			vt = b2SubW( vt, c->tangentSpeed );
-
-			// Compute tangent force
-			b2FloatW negImpulse = b2MulW( c->tangentMass2, vt );
-
-			// Clamp the accumulated force
-			b2FloatW maxFriction = b2MulW( c->friction, c->normalImpulse2 );
-			b2FloatW newImpulse = b2SubW( c->tangentImpulse2, negImpulse );
-			newImpulse = b2MaxW( b2SubW( b2ZeroW(), maxFriction ), b2MinW( newImpulse, maxFriction ) );
-			b2FloatW impulse = b2SubW( newImpulse, c->tangentImpulse2 );
-			c->tangentImpulse2 = newImpulse;
-
-			// Apply contact impulse
-			b2FloatW Px = b2MulW( impulse, tangentX );
-			b2FloatW Py = b2MulW( impulse, tangentY );
-
-			bA.v.X = b2MulSubW( bA.v.X, c->invMassA, Px );
-			bA.v.Y = b2MulSubW( bA.v.Y, c->invMassA, Py );
-			bA.w = b2MulSubW( bA.w, c->invIA, b2SubW( b2MulW( rA.X, Py ), b2MulW( rA.Y, Px ) ) );
-
-			bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
-			bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
-			bB.w = b2MulAddW( bB.w, c->invIB, b2SubW( b2MulW( rB.X, Py ), b2MulW( rB.Y, Px ) ) );
-		}
+		bB.v.X = b2MulAddW( bB.v.X, c->invMassB, Px );
+		bB.v.Y = b2MulAddW( bB.v.Y, c->invMassB, Py );
+		bB.w = b2MulAddW( bB.w, c->invIB, angularB );
 
 		b2ScatterBodies( states, c->indexA, &bA );
 		b2ScatterBodies( states, c->indexB, &bB );

@@ -344,7 +344,7 @@ static int TreeQueryTest( void )
 	b2AABB queryA = { .lowerBound = { -2.0f, -2.0f }, .upperBound = { 2.0f, 2.0f } };
 
 	int foundFlags[32] = { 0 };
-	b2TreeStats stats = b2DynamicTree_Query( &tree, queryA, 0xFFFFFFFFull, QueryCollectCallback, foundFlags );
+	b2TreeStats stats = b2DynamicTree_OverlapAABB( &tree, queryA, 0xFFFFFFFFull, QueryCollectCallback, foundFlags );
 
 	// We expect at least the middle proxy to be visited.
 	ENSURE( foundFlags[id2] == 1 );
@@ -352,7 +352,7 @@ static int TreeQueryTest( void )
 
 	// Test QueryAll using list collector
 	int list[16] = { 0 }; // list[0] holds count, following entries are ids
-	b2TreeStats allStats = b2DynamicTree_QueryAll( &tree, queryA, QueryCollectListCallback, list );
+	b2TreeStats allStats = b2DynamicTree_OverlapAABBAll( &tree, queryA, QueryCollectListCallback, list );
 	ENSURE( list[0] >= 1 ); // at least one proxy should be collected
 	ENSURE( allStats.leafVisits >= 1 );
 
@@ -372,7 +372,7 @@ static int TreeMoveAndEnlargeTest( void )
 	b2AABB moved = { .lowerBound = { 10.0f, 10.0f }, .upperBound = { 11.0f, 11.0f } };
 	b2DynamicTree_MoveProxyInternal( &tree, id, moved, 0 );
 
-	b2AABB got = b2DynamicTree_GetAABB( &tree, id );
+	b2AABB got = b2DynamicTree_GetProxyBounds( &tree, id );
 	ENSURE( got.lowerBound.x == moved.lowerBound.x );
 	ENSURE( got.lowerBound.y == moved.lowerBound.y );
 	ENSURE( got.upperBound.x == moved.upperBound.x );
@@ -382,7 +382,7 @@ static int TreeMoveAndEnlargeTest( void )
 	b2AABB enlarge = { .lowerBound = { 9.5f, 9.5f }, .upperBound = { 11.5f, 11.5f } };
 	b2DynamicTree_EnlargeProxy( &tree, id, enlarge );
 
-	b2AABB got2 = b2DynamicTree_GetAABB( &tree, id );
+	b2AABB got2 = b2DynamicTree_GetProxyBounds( &tree, id );
 	ENSURE( got2.lowerBound.x <= enlarge.lowerBound.x + 1e-6f );
 	ENSURE( got2.upperBound.x >= enlarge.upperBound.x - 1e-6f );
 
@@ -493,7 +493,7 @@ static int TreeGridMovementTest( void )
 	{
 		for (int j = 0; j < GRID_COUNT; ++j)
 		{
-			b2AABB a = b2DynamicTree_GetAABB( &tree, proxyIds[index] );
+			b2AABB a = b2DynamicTree_GetProxyBounds( &tree, proxyIds[index] );
 			a.lowerBound = b2Add( a.lowerBound, offset );
 			a.upperBound = b2Add( a.upperBound, offset );
 			b2DynamicTree_MoveProxyInternal( &tree, proxyIds[index], a, 0 );
@@ -574,14 +574,14 @@ static bool CollectHitCallback( int proxyId, uint64_t userData, void* context )
 static int CompareQuery( const b2DynamicTree* tree, const int* proxyIds, int proxyCount, b2AABB box )
 {
 	TreeHitSet hits = { 0 };
-	b2DynamicTree_Query( tree, box, B2_DEFAULT_MASK_BITS, CollectHitCallback, &hits );
+	b2DynamicTree_OverlapAABB( tree, box, B2_DEFAULT_MASK_BITS, CollectHitCallback, &hits );
 	ENSURE( hits.bad == false );
 
 	int expectedCount = 0;
 	for ( int i = 0; i < proxyCount; ++i )
 	{
 		int proxyId = proxyIds[i];
-		bool overlaps = b2AABB_Overlaps( b2DynamicTree_GetAABB( tree, proxyId ), box );
+		bool overlaps = b2AABB_Overlaps( b2DynamicTree_GetProxyBounds( tree, proxyId ), box );
 		ENSURE( hits.hit[proxyId] == overlaps );
 		expectedCount += overlaps ? 1 : 0;
 	}
@@ -618,7 +618,7 @@ static float ClosestRayCallback( const b2RayCastInput* input, int proxyId, uint6
 {
 	(void)userData;
 	TreeCastHit* hit = context;
-	float fraction = RayBoxFraction( b2DynamicTree_GetAABB( hit->tree, proxyId ), input->origin, input->translation );
+	float fraction = RayBoxFraction( b2DynamicTree_GetProxyBounds( hit->tree, proxyId ), input->origin, input->translation );
 	if ( fraction < 0.0f )
 	{
 		return -1.0f;
@@ -637,7 +637,7 @@ static float ClosestBoxCallback( const b2BoxCastInput* input, int proxyId, uint6
 {
 	(void)userData;
 	TreeCastHit* hit = context;
-	float fraction = BoxCastFraction( b2DynamicTree_GetAABB( hit->tree, proxyId ), input );
+	float fraction = BoxCastFraction( b2DynamicTree_GetProxyBounds( hit->tree, proxyId ), input );
 	if ( fraction < 0.0f )
 	{
 		return -1.0f;
@@ -665,7 +665,7 @@ static int CompareRayCast( const b2DynamicTree* tree, const int* proxyIds, int p
 	for ( int i = 0; i < proxyCount; ++i )
 	{
 		int proxyId = proxyIds[i];
-		float fraction = RayBoxFraction( b2DynamicTree_GetAABB( tree, proxyId ), origin, translation );
+		float fraction = RayBoxFraction( b2DynamicTree_GetProxyBounds( tree, proxyId ), origin, translation );
 		if ( fraction < 0.0f )
 		{
 			continue;
@@ -704,7 +704,7 @@ static int CompareBoxCast( const b2DynamicTree* tree, const int* proxyIds, int p
 	for ( int i = 0; i < proxyCount; ++i )
 	{
 		int proxyId = proxyIds[i];
-		float fraction = BoxCastFraction( b2DynamicTree_GetAABB( tree, proxyId ), &input );
+		float fraction = BoxCastFraction( b2DynamicTree_GetProxyBounds( tree, proxyId ), &input );
 		if ( fraction < 0.0f )
 		{
 			continue;
@@ -808,7 +808,7 @@ static int TreeOneProxyTest( void )
 	ENSURE( b2DynamicTree_GetHeight( &tree ) == 0 );
 	ENSURE( b2DynamicTree_GetUserData( &tree, proxyId ) == 7 );
 	ENSURE( b2DynamicTree_GetCategoryBits( &tree, proxyId ) == 1 );
-	ENSURE( BoxEquals( b2DynamicTree_GetAABB( &tree, proxyId ), box ) );
+	ENSURE( BoxEquals( b2DynamicTree_GetProxyBounds( &tree, proxyId ), box ) );
 	ENSURE( BoxEquals( b2DynamicTree_GetRootBounds( &tree ), box ) );
 
 	b2AABB inside = { { 0.4f, 0.4f }, { 0.6f, 0.6f } };
@@ -844,7 +844,7 @@ static int TreeOneProxyTest( void )
 	ENSURE( RootMarked( &tree ) );
 	b2DynamicTree_Refit( &tree );
 	b2DynamicTree_Validate( &tree );
-	ENSURE( BoxEquals( b2DynamicTree_GetAABB( &tree, proxyId ), enlarged ) );
+	ENSURE( BoxEquals( b2DynamicTree_GetProxyBounds( &tree, proxyId ), enlarged ) );
 	ENSURE( BoxEquals( b2DynamicTree_GetRootBounds( &tree ), enlarged ) );
 	ENSURE( b2DynamicTree_Rebuild( &tree, false ) == 1 );
 	ENSURE( RootMarked( &tree ) == false );
@@ -1024,7 +1024,7 @@ static int TreeMarkAndRefitTest( void )
 	for ( int i = 0; i < TREE_TEST_PROXY_COUNT; i += 3 )
 	{
 		int proxyId = proxyIds[i];
-		enlarged[proxyId] = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, proxyId ), 0.5f );
+		enlarged[proxyId] = EnlargeTreeBox( b2DynamicTree_GetProxyBounds( &tree, proxyId ), 0.5f );
 		b2DynamicTree_MarkProxyMoved( &tree, proxyId, enlarged[proxyId] );
 		marked[proxyId] = true;
 	}
@@ -1039,7 +1039,7 @@ static int TreeMarkAndRefitTest( void )
 	{
 		if ( marked[i] )
 		{
-			ENSURE( BoxEquals( b2DynamicTree_GetAABB( &tree, i ), enlarged[i] ) );
+			ENSURE( BoxEquals( b2DynamicTree_GetProxyBounds( &tree, i ), enlarged[i] ) );
 		}
 	}
 
@@ -1072,7 +1072,7 @@ static int TreeMarkAndRefitTest( void )
 
 	// A single deep leaf still marks the whole path to the root
 	int loneId = proxyIds[TREE_TEST_PROXY_COUNT / 2];
-	enlarged[loneId] = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, loneId ), 0.5f );
+	enlarged[loneId] = EnlargeTreeBox( b2DynamicTree_GetProxyBounds( &tree, loneId ), 0.5f );
 	b2DynamicTree_MarkProxyMoved( &tree, loneId, enlarged[loneId] );
 	marked[loneId] = true;
 	ENSURE( CheckMarks( &tree, B2_ROOT_NODE, marked, &markedBelow ) == 0 );
@@ -1130,7 +1130,7 @@ static int TreeDfsOrderTest( void )
 	ENSURE( tree.pairFreeList != B2_NULL_INDEX );
 	b2DynamicTree_Validate( &tree );
 
-	b2AABB enlarged = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, proxyIds[10] ), 0.5f );
+	b2AABB enlarged = EnlargeTreeBox( b2DynamicTree_GetProxyBounds( &tree, proxyIds[10] ), 0.5f );
 	b2DynamicTree_MarkProxyMoved( &tree, proxyIds[10], enlarged );
 	ENSURE( RootMarked( &tree ) );
 	b2DynamicTree_Refit( &tree );
@@ -1159,7 +1159,7 @@ static int TreeDfsOrderTest( void )
 	b2DynamicTree_Validate( &tree );
 
 	// The refit falls back to a descent on an unordered array
-	enlarged = EnlargeTreeBox( b2DynamicTree_GetAABB( &tree, proxyIds[10] ), 0.5f );
+	enlarged = EnlargeTreeBox( b2DynamicTree_GetProxyBounds( &tree, proxyIds[10] ), 0.5f );
 	b2DynamicTree_MarkProxyMoved( &tree, proxyIds[10], enlarged );
 	b2DynamicTree_Refit( &tree );
 	b2DynamicTree_Validate( &tree );

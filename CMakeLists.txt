@@ -1,5 +1,4 @@
 ﻿cmake_minimum_required(VERSION 3.22)
-include(CMakeDependentOption)
 
 project(box2d
 	VERSION 3.2.0
@@ -66,10 +65,6 @@ option(BOX2D_DISABLE_SIMD "Disable SIMD math (slower)" OFF)
 option(BOX2D_COMPILE_WARNING_AS_ERROR "Compile warnings as errors" OFF)
 option(BOX2D_DOUBLE_PRECISION "Enable double precision for large worlds" OFF)
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-	cmake_dependent_option(BOX2D_AVX2 "Compile AVX2 kernels, selected at runtime on x86 CPUs that support them" ON "NOT BOX2D_DISABLE_SIMD" OFF)
-endif()
-
 # core.h selects the SIMD path from these definitions and dynamic_tree.h carries inline
 # SIMD code, so the unit tests, which include the src headers, must compile with the same
 # definitions and instruction set flags as the library. Selected once here for both.
@@ -81,9 +76,6 @@ if (BOX2D_DISABLE_SIMD)
 elseif (EMSCRIPTEN)
 	# core.h maps wasm onto the SSE2 path, the intrinsics only compile with simd128 enabled
 	set(BOX2D_SIMD_OPTIONS -msimd128 -msse2)
-elseif (NOT BOX2D_AVX2)
-	message(STATUS "Box2D AVX2 disabled")
-	set(BOX2D_SIMD_DEFINITIONS BOX2D_DISABLE_AVX2)
 endif()
 
 # These are read by the library build, so they must precede add_subdirectory(src),

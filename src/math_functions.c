@@ -37,7 +37,7 @@ bool b2IsValidVec2( b2Vec2 v )
 	return true;
 }
 
-bool b2IsValidRotation( b2Rot q )
+bool b2IsValidRot( b2Rot q )
 {
 	if ( isnan( q.s ) || isnan( q.c ) )
 	{
@@ -59,7 +59,7 @@ bool b2IsValidTransform(b2Transform t)
 		return false;
 	}
 
-	return b2IsValidRotation( t.q );
+	return b2IsValidRot( t.q );
 }
 
 bool b2IsValidPlane( b2Plane a )
@@ -67,7 +67,7 @@ bool b2IsValidPlane( b2Plane a )
 	return b2IsValidVec2( a.normal ) && b2IsNormalized( a.normal ) && b2IsValidFloat( a.offset );
 }
 
-bool b2IsValidPosition( b2Pos p )
+bool b2IsValidPos( b2Pos p )
 {
 	if ( isnan( p.x ) || isnan( p.y ) )
 	{
@@ -84,12 +84,12 @@ bool b2IsValidPosition( b2Pos p )
 
 bool b2IsValidWorldTransform( b2WorldTransform t )
 {
-	if ( b2IsValidPosition( t.p ) == false )
+	if ( b2IsValidPos( t.p ) == false )
 	{
 		return false;
 	}
 
-	return b2IsValidRotation( t.q );
+	return b2IsValidRot( t.q );
 }
 
 // https://stackoverflow.com/questions/46210708/atan2-approximation-with-11bits-in-mantissa-on-x86with-sse2-and-armwith-vfpv4

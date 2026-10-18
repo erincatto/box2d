@@ -173,8 +173,8 @@ static void b2DestroyBodyContacts( b2World* world, b2Body* body )
 b2BodyId b2CreateBody( b2WorldId worldId, const b2BodyDef* def )
 {
 	B2_CHECK_DEF( def );
-	B2_CHECK_INPUT_RETURN( b2IsValidPosition( def->position ), b2_nullBodyId );
-	B2_CHECK_INPUT_RETURN( b2IsValidRotation( def->rotation ), b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidPos( def->position ), b2_nullBodyId );
+	B2_CHECK_INPUT_RETURN( b2IsValidRot( def->rotation ), b2_nullBodyId );
 	B2_CHECK_INPUT_RETURN( b2IsValidVec2( def->linearVelocity ), b2_nullBodyId );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->angularVelocity ), b2_nullBodyId );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->linearDamping ) && def->linearDamping >= 0.0f, b2_nullBodyId );
@@ -495,7 +495,7 @@ int b2Body_GetContactData( b2BodyId bodyId, b2ContactData* contactData, int capa
 	return index;
 }
 
-b2AABB b2Body_ComputeAABB( b2BodyId bodyId )
+b2AABB b2Body_ComputeBounds( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -729,8 +729,8 @@ b2Vec2 b2Body_GetWorldVector( b2BodyId bodyId, b2Vec2 localVector )
 
 void b2Body_SetTransform( b2BodyId bodyId, b2Pos position, b2Rot rotation )
 {
-	B2_CHECK_INPUT( b2IsValidPosition( position ) );
-	B2_CHECK_INPUT( b2IsValidRotation( rotation ) );
+	B2_CHECK_INPUT( b2IsValidPos( position ) );
+	B2_CHECK_INPUT( b2IsValidRot( rotation ) );
 	B2_ASSERT( b2Body_IsValid( bodyId ) );
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_ASSERT( world->locked == false );
@@ -960,7 +960,7 @@ b2Vec2 b2Body_GetWorldPointVelocity( b2BodyId bodyId, b2Pos worldPoint )
 void b2Body_ApplyForce( b2BodyId bodyId, b2Vec2 force, b2Pos point, bool wake )
 {
 	B2_CHECK_INPUT( b2IsValidVec2( force ) );
-	B2_CHECK_INPUT( b2IsValidPosition( point ) );
+	B2_CHECK_INPUT( b2IsValidPos( point ) );
 
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyForce, bodyId, force, point, wake );
@@ -1047,7 +1047,7 @@ void b2Body_ClearForces( b2BodyId bodyId )
 void b2Body_ApplyLinearImpulse( b2BodyId bodyId, b2Vec2 impulse, b2Pos point, bool wake )
 {
 	B2_CHECK_INPUT( b2IsValidVec2( impulse ) );
-	B2_CHECK_INPUT( b2IsValidPosition( point ) );
+	B2_CHECK_INPUT( b2IsValidPos( point ) );
 
 	b2World* world = b2GetWorld( bodyId.world0 );
 	B2_REC( world, BodyApplyLinearImpulse, bodyId, impulse, point, wake );
@@ -1680,7 +1680,7 @@ bool b2Body_IsEnabled( b2BodyId bodyId )
 	return body->setIndex != b2_disabledSet;
 }
 
-bool b2Body_IsSleepEnabled( b2BodyId bodyId )
+bool b2Body_IsSleepingEnabled( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
@@ -1730,7 +1730,7 @@ float b2Body_GetSafetyFactor( b2BodyId bodyId )
 	return body->safetyFactor;
 }
 
-void b2Body_EnableSleep( b2BodyId bodyId, bool enableSleep )
+void b2Body_EnableSleeping( b2BodyId bodyId, bool enableSleep )
 {
 	b2World* world = b2GetWorldLocked( bodyId.world0 );
 	if ( world == NULL )
@@ -2190,7 +2190,7 @@ float b2Body_GetMaxExtent( b2BodyId bodyId )
 	return bodySim->maxExtent;
 }
 
-float b2Body_GetMaxExtentOrigin( b2BodyId bodyId )
+float b2Body_GetMaxExtentFromOrigin( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );

@@ -135,7 +135,7 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 
 	// Shape_RayCast against the ground shape, ray starting above the ground
 	b2Pos rayStart = b2OffsetPos( base, (b2Vec2){ -baseOffset.x, 5.0f - baseOffset.y } );
-	b2Shape_RayCast( groundShapeId, rayStart, (b2Vec2){ 0.0f, -20.0f } );
+	b2Shape_CastRay( groundShapeId, rayStart, (b2Vec2){ 0.0f, -20.0f } );
 }
 
 // Safety factor of the named body in a replay world, or -1 if the body is not in the list
@@ -293,7 +293,7 @@ int RecordingTest( void )
 	b2Body_SetGravityScale( bodyId, 0.9f );
 	b2Body_SetSleepThreshold( bodyId, 0.02f );
 	b2Body_SetSafetyFactor( disableId, 0.25f );
-	b2Body_EnableSleep( bodyId, false );
+	b2Body_EnableSleeping( bodyId, false );
 	b2Body_SetBullet( bodyId, true );
 	b2Body_EnableContactRecycling( bodyId, false );
 	b2Body_EnableContactEvents( bodyId, true );
@@ -369,7 +369,7 @@ int RecordingTest( void )
 	b2RevoluteJoint_EnableLimit( revId, true );
 	b2RevoluteJoint_SetLimits( revId, -1.0f, 1.0f );
 	b2RevoluteJoint_EnableMotor( revId, true );
-	b2RevoluteJoint_SetMotorSpeed( revId, 0.5f );
+	b2RevoluteJoint_SetTargetMotorSpeed( revId, 0.5f );
 	b2RevoluteJoint_SetMaxMotorTorque( revId, 10.0f );
 	b2RevoluteJoint_EnableSpring( revId, true );
 	b2RevoluteJoint_SetSpringHertz( revId, 2.0f );
@@ -389,15 +389,15 @@ int RecordingTest( void )
 	distDef.base.bodyIdB = jb[2];
 	distDef.length = 1.0f;
 	b2JointId distId = b2CreateDistanceJoint( worldId, &distDef );
-	b2DistanceJoint_SetLength( distId, 1.2f );
+	b2DistanceJoint_SetRestLength( distId, 1.2f );
 	b2DistanceJoint_EnableSpring( distId, true );
 	b2DistanceJoint_SetSpringHertz( distId, 3.0f );
 	b2DistanceJoint_SetSpringDampingRatio( distId, 0.4f );
 	b2DistanceJoint_SetSpringForceRange( distId, -50.0f, 50.0f );
 	b2DistanceJoint_EnableLimit( distId, true );
-	b2DistanceJoint_SetLengthRange( distId, 0.5f, 2.0f );
+	b2DistanceJoint_SetLimits( distId, 0.5f, 2.0f );
 	b2DistanceJoint_EnableMotor( distId, true );
-	b2DistanceJoint_SetMotorSpeed( distId, 0.3f );
+	b2DistanceJoint_SetTargetMotorSpeed( distId, 0.3f );
 	b2DistanceJoint_SetMaxMotorForce( distId, 5.0f );
 
 	// Prismatic joint
@@ -412,7 +412,7 @@ int RecordingTest( void )
 	b2PrismaticJoint_EnableLimit( prisId, true );
 	b2PrismaticJoint_SetLimits( prisId, -1.0f, 1.0f );
 	b2PrismaticJoint_EnableMotor( prisId, true );
-	b2PrismaticJoint_SetMotorSpeed( prisId, 0.2f );
+	b2PrismaticJoint_SetTargetMotorSpeed( prisId, 0.2f );
 	b2PrismaticJoint_SetMaxMotorForce( prisId, 8.0f );
 
 	// Wheel joint
@@ -426,7 +426,7 @@ int RecordingTest( void )
 	b2WheelJoint_EnableLimit( wheelId, true );
 	b2WheelJoint_SetLimits( wheelId, -0.5f, 0.5f );
 	b2WheelJoint_EnableMotor( wheelId, true );
-	b2WheelJoint_SetMotorSpeed( wheelId, 1.0f );
+	b2WheelJoint_SetTargetMotorSpeed( wheelId, 1.0f );
 	b2WheelJoint_SetMaxMotorTorque( wheelId, 6.0f );
 
 	// Weld joint
@@ -480,7 +480,7 @@ int RecordingTest( void )
 	b2World_SetHitEventThreshold( worldId, 2.0f );
 	b2World_SetContactTuning( worldId, 30.0f, 10.0f, 3.0f );
 	b2World_SetContactRecycleDistance( worldId, 0.05f );
-	b2World_SetMaximumLinearSpeed( worldId, 100.0f );
+	b2World_SetMaxLinearSpeed( worldId, 100.0f );
 	b2World_RebuildStaticTree( worldId );
 	b2ExplosionDef explosion = b2DefaultExplosionDef();
 	explosion.position = (b2Pos){ 0.0f, 4.0f };
@@ -523,10 +523,10 @@ int RecordingTest( void )
 	ENSURE( recSize > 0 );
 
 	// Replay from the buffer with the recorded worker count
-	ENSURE( b2ValidateReplay( recData, recSize, 0 ) );
+	ENSURE( b2ValidateRecording( recData, recSize, 0 ) );
 
 	// Replay with a different worker count to prove cross-thread determinism
-	ENSURE( b2ValidateReplay( recData, recSize, 4 ) );
+	ENSURE( b2ValidateRecording( recData, recSize, 4 ) );
 
 	// The reserved header bytes (offsets 8 and 16, formerly buildHash and simdWidth) must stay
 	// ignored on read. Guards a future change that starts validating them or shrinks the header.
@@ -538,21 +538,21 @@ int RecordingTest( void )
 		patched[10] = 0xEF;
 		patched[11] = 0x12;
 		patched[16] = 0x34;
-		ENSURE( b2ValidateReplay( patched, recSize, 0 ) );
+		ENSURE( b2ValidateRecording( patched, recSize, 0 ) );
 		b2Free( patched, recSize );
 	}
 
 	// File round-trip: save the buffer, load it back, and replay the loaded copy
-	ENSURE( b2SaveRecordingToFile( rec, s_recPath ) );
-	b2Recording* loaded = b2LoadRecordingFromFile( s_recPath );
+	ENSURE( b2Recording_SaveToFile( rec, s_recPath ) );
+	b2Recording* loaded = b2CreateRecordingFromFile( s_recPath );
 	ENSURE( loaded != NULL );
 	ENSURE( b2Recording_GetSize( loaded ) == recSize );
-	ENSURE( b2ValidateReplay( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 0 ) );
-	ENSURE( b2ValidateReplay( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 4 ) );
+	ENSURE( b2ValidateRecording( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 0 ) );
+	ENSURE( b2ValidateRecording( b2Recording_GetData( loaded ), b2Recording_GetSize( loaded ), 4 ) );
 	b2DestroyRecording( loaded );
 
 	// Drive the incremental player directly. It underpins the viewer and exercises
-	// per-frame stepping, restart, and the getters beyond what b2ValidateReplay covers.
+	// per-frame stepping, restart, and the getters beyond what b2ValidateRecording covers.
 	{
 		b2Replay* player = b2CreateReplay( recData, recSize, 0 );
 		ENSURE( player != NULL );
@@ -1043,7 +1043,7 @@ int RecordingQueryScrubTest( void )
 int ReplayFileScrubDiag( void )
 {
 	const char* path = "diverge.b2rec";
-	b2Recording* rec = b2LoadRecordingFromFile( path );
+	b2Recording* rec = b2CreateRecordingFromFile( path );
 	if ( rec == NULL )
 	{
 		printf( "  ReplayFileScrubDiag: drop a recording at %s to scrub it for the first divergent frame\n", path );
@@ -1089,7 +1089,7 @@ static int RestepRaceStress( void ( *build )( b2WorldId ), const char* name, int
 	int result = 0;
 	for ( int rep = 0; rep < reps && result == 0; ++rep )
 	{
-		ENSURE( b2World_Restore( cloneId, image, size ) );
+		ENSURE( b2World_RestoreFromSnapshot( cloneId, image, size ) );
 		for ( int s = 0; s < restepCount; ++s )
 		{
 			b2World_Step( cloneId, dt, subSteps );
@@ -1128,7 +1128,7 @@ int ReStepRaceTest( void )
 static int ValidateReplayAtWidth( const b2Recording* rec, int width )
 {
 	b2SetSIMDWidth( width );
-	bool valid = b2ValidateReplay( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 1 );
+	bool valid = b2ValidateRecording( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 1 );
 	b2SetSIMDWidth( 0 );
 	return valid ? 0 : 1;
 }

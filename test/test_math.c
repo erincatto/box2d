@@ -187,8 +187,8 @@ int MathTest( void )
 		b2Vec2 r = b2ToVec2( base );
 		ENSURE( r.x == 10.0f && r.y == -20.0f );
 
-		ENSURE( b2IsValidPosition( p ) );
-		ENSURE( b2IsValidPosition( b2Pos_zero ) );
+		ENSURE( b2IsValidPos( p ) );
+		ENSURE( b2IsValidPos( b2Pos_zero ) );
 		ENSURE( b2IsValidWorldTransform( b2WorldTransform_identity ) );
 
 		b2WorldTransform wt = { (b2Pos){ 3.0f, -4.0f }, b2MakeRot( 0.7f ) };

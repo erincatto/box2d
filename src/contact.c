@@ -617,6 +617,12 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		// Keep these current.
 		pointCount = contactSim->manifold.pointCount;
 		touching = pointCount > 0;
+
+		// Mark recycling dirty.
+		if ( touching == false )
+		{
+			contactSim->simFlags &= ~b2_simRelativeTransformValid;
+		}
 	}
 
 	if ( touching && ( shapeA->enableHitEvents || shapeB->enableHitEvents ) )

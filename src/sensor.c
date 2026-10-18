@@ -80,7 +80,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	// Custom user filter
 	if ( sensorShape->enableCustomFiltering || otherShape->enableCustomFiltering )
 	{
-		b2CustomFilterFcn* customFilterFcn = queryContext->world->customFilterFcn;
+		b2CustomFilterCallbackFcn* customFilterFcn = queryContext->world->customFilterFcn;
 		if ( customFilterFcn != NULL )
 		{
 			b2ShapeId idA = { sensorShapeId + 1, world->worldId, sensorShape->generation };
@@ -102,7 +102,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	input.transform = b2InvMulWorldTransforms( queryContext->transform, otherTransform );
 	input.useRadii = true;
 	b2SimplexCache cache = { 0 };
-	b2DistanceOutput output = b2ShapeDistance( &input, &cache, NULL, 0 );
+	b2DistanceOutput output = b2ComputeShapeDistance( &input, &cache, NULL, 0 );
 
 	bool overlaps = output.distance < 10.0f * FLT_EPSILON;
 	if ( overlaps == false )
@@ -188,9 +188,9 @@ static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* c
 		b2AABB queryBounds = sensorShape->aabb;
 
 		// Query all trees
-		b2DynamicTree_Query( trees + 0, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
-		b2DynamicTree_Query( trees + 1, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
-		b2DynamicTree_Query( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
+		b2DynamicTree_OverlapAABB( trees + 0, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
+		b2DynamicTree_OverlapAABB( trees + 1, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
+		b2DynamicTree_OverlapAABB( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
 
 		// Sort the overlaps to enable finding begin and end events.
 		qsort( sensor->overlaps2.data, sensor->overlaps2.count, sizeof( b2Visitor ), b2CompareVisitors );
