@@ -48,7 +48,7 @@ typedef struct b2World b2World;
 // Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
 // changes that keep the 32 byte header shape.
 #define B2_REC_VERSION_MAJOR 3
-#define B2_REC_VERSION_MINOR 12 // post solve restitution
+#define B2_REC_VERSION_MINOR 13 // shape queries not recorded
 
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
@@ -211,7 +211,6 @@ void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v );
 void b2RecW_AABB( b2RecBuffer* buf, b2AABB v );
 void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v );
 void b2RecW_SHAPEPROXY( b2RecBuffer* buf, b2ShapeProxy v );
-void b2RecW_WORLDCASTOUTPUT( b2RecBuffer* buf, b2WorldCastOutput v );
 void b2RecW_RAYRESULT( b2RecBuffer* buf, b2RayResult v );
 void b2RecW_PLANERESULT( b2RecBuffer* buf, b2PlaneResult v );
 void b2RecW_TREESTATS( b2RecBuffer* buf, b2TreeStats v );

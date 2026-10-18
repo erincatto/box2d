@@ -602,17 +602,6 @@ b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr )
 	return p;
 }
 
-b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr )
-{
-	b2WorldCastOutput v;
-	v.normal = b2RecR_VEC2( rdr );
-	v.point = b2RecR_POSITION( rdr );
-	v.fraction = b2RecR_F32( rdr );
-	v.iterations = b2RecR_I32( rdr );
-	v.hit = b2RecR_BOOL( rdr );
-	return v;
-}
-
 b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr )
 {
 	b2RayResult v;
@@ -1966,52 +1955,6 @@ static void b2RecDispatch_QueryCastMover( const b2RecArgs_QueryCastMover* a, b2R
 	}
 }
 
-// ShapeTestPoint dispatcher
-
-static void b2RecDispatch_ShapeTestPoint( const b2RecArgs_ShapeTestPoint* a, b2RecReader* rdr )
-{
-	bool rec = b2RecR_BOOL( rdr );
-	if ( !rdr->ok )
-		return;
-	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
-	bool got = b2Shape_TestPoint( id, a->point );
-	if ( got != rec )
-		rdr->diverged = true;
-	if ( rdr->owner )
-	{
-		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_TEST_POINT, NULL, 0 );
-		q->shape = id;
-		q->origin = a->point;
-		q->boolResult = rec;
-	}
-}
-
-// ShapeRayCast dispatcher
-
-static void b2RecDispatch_ShapeRayCast( const b2RecArgs_ShapeRayCast* a, b2RecReader* rdr )
-{
-	b2WorldCastOutput rec = b2RecR_WORLDCASTOUTPUT( rdr );
-	if ( !rdr->ok )
-		return;
-	b2ShapeId id = b2RecMakeShapeId( rdr, a->shape );
-	b2WorldCastOutput got = b2Shape_CastRay( id, a->origin, a->translation );
-	if ( got.hit != rec.hit || ( got.hit && ( b2RecVec2Differs( got.normal, rec.normal ) ||
-											  b2RecVec2Differs( b2SubPos( got.point, rec.point ), b2Vec2_zero ) ||
-											  b2RecF32Differs( got.fraction, rec.fraction ) ) ) )
-	{
-		rdr->diverged = true;
-	}
-	if ( rdr->owner )
-	{
-		b2RecDrawQuery* q = b2RecStashQueryBegin( rdr->owner, B2_RECQ_SHAPE_RAY_CAST, NULL, 0 );
-		q->shape = id;
-		// The ray starts at the origin
-		q->origin = a->origin;
-		q->translation = a->translation;
-		q->castOut = rec;
-	}
-}
-
 static void b2RecDispatch_StateHash( const b2RecArgs_StateHash* a, b2RecReader* rdr )
 {
 	b2World* world = b2GetWorldFromId( rdr->replayWorldId );
@@ -2813,29 +2756,6 @@ void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int queryIn
 				}
 				break;
 			}
-			case B2_RECQ_SHAPE_TEST_POINT:
-			{
-				b2HexColor c = q->boolResult ? b2_colorAqua : b2_colorRed;
-				if ( draw->DrawPointFcn )
-				{
-					draw->DrawPointFcn( q->origin, 6.0f, c, draw->context );
-				}
-				break;
-			}
-			case B2_RECQ_SHAPE_RAY_CAST:
-			{
-				b2Pos origin = q->origin;
-				b2Pos end = b2OffsetPos( origin, q->translation );
-				if ( draw->DrawLineFcn )
-				{
-					draw->DrawLineFcn( origin, end, b2_colorViolet, draw->context );
-				}
-				if ( q->castOut.hit && draw->DrawPointFcn )
-				{
-					draw->DrawPointFcn( q->castOut.point, 4.0f, b2_colorViolet, draw->context );
-				}
-				break;
-			}
 			default:
 				break;
 		}
@@ -2845,7 +2765,7 @@ void b2Replay_DrawFrameQueries( b2Replay* player, b2DebugDraw* draw, int queryIn
 // Public query inspection. The internal b2RecQueryKind values match the public b2ReplayQueryType, so
 // the kind copies across as a plain cast. Pin the first and last kinds to catch enum drift.
 _Static_assert( b2_replayQueryOverlapAABB == 0 && B2_RECQ_OVERLAP_AABB == 0, "query type enum drift" );
-_Static_assert( b2_replayQueryShapeCastRay == 8 && B2_RECQ_SHAPE_RAY_CAST == 8, "query type enum drift" );
+_Static_assert( b2_replayQueryCastMover == 6 && B2_RECQ_CAST_MOVER == 6, "query type enum drift" );
 
 int b2Replay_GetFrameQueryCount( const b2Replay* player )
 {
@@ -2866,7 +2786,6 @@ b2ReplayQueryInfo b2Replay_GetFrameQuery( const b2Replay* player, int index )
 	info.aabb = q->aabb;
 	info.origin = q->origin;
 	info.translation = q->translation;
-	info.shapeId = q->shape;
 	info.hitCount = q->hitCount;
 	return info;
 }

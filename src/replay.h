@@ -31,9 +31,7 @@ typedef enum b2RecQueryKind
 	B2_RECQ_CAST_SHAPE,
 	B2_RECQ_COLLIDE_MOVER,
 	B2_RECQ_CAST_RAY_CLOSEST,
-	B2_RECQ_CAST_MOVER,
-	B2_RECQ_SHAPE_TEST_POINT,
-	B2_RECQ_SHAPE_RAY_CAST
+	B2_RECQ_CAST_MOVER
 } b2RecQueryKind;
 
 typedef struct b2RecDrawQuery
@@ -45,10 +43,7 @@ typedef struct b2RecDrawQuery
 	b2Capsule mover;
 	b2Pos origin;
 	b2Vec2 translation;
-	bool boolResult;
 	float castFraction;
-	b2WorldCastOutput castOut;
-	b2ShapeId shape;
 	int hitStart;
 	int hitCount;
 } b2RecDrawQuery;
@@ -192,7 +187,6 @@ b2WheelJointDef b2RecR_WHEELJOINTDEF( b2RecReader* rdr );
 b2AABB b2RecR_AABB( b2RecReader* rdr );
 b2QueryFilter b2RecR_QUERYFILTER( b2RecReader* rdr );
 b2ShapeProxy b2RecR_SHAPEPROXY( b2RecReader* rdr );
-b2WorldCastOutput b2RecR_WORLDCASTOUTPUT( b2RecReader* rdr );
 b2RayResult b2RecR_RAYRESULT( b2RecReader* rdr );
 b2PlaneResult b2RecR_PLANERESULT( b2RecReader* rdr );
 b2TreeStats b2RecR_TREESTATS( b2RecReader* rdr );

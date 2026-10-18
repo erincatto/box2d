@@ -128,6 +128,8 @@ static void IssueAllQueries( b2WorldId worldId, b2ShapeId groundShapeId )
 	b2Vec2 moverTranslation = { 0.0f, -5.0f };
 	b2World_CastMover( worldId, base, &moverCap, moverTranslation, filter );
 
+	// Shape queries are not recorded, they run here to show they leave the replay unaffected
+
 	// Shape_TestPoint: test inside (0,0 local, well inside the r=10 ground circle at y=-10)
 	// and outside
 	b2Shape_TestPoint( groundShapeId, (b2Pos){ 0.0f, -10.0f } ); // inside center of ground

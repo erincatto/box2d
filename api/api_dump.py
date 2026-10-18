@@ -199,6 +199,12 @@ def eval_int(expr, names):
 
 def parse_function(md):
     name = md.findtext("name", "").strip()
+    brief = text_of(md.find("briefdescription"))
+    if not brief:
+        # A function documented only by @return still gets a brief
+        returns = md.find("detaileddescription//simplesect[@kind='return']")
+        if returns is not None:
+            brief = "Returns " + text_of(returns)
     return {
         "name": name,
         "symbol": name,
@@ -213,7 +219,7 @@ def parse_function(md):
             if clean_type(text_of(p.find("type"))) != "void" or p.findtext("declname")
         ],
         "header": header_of(md),
-        "brief": text_of(md.find("briefdescription")),
+        "brief": brief,
         "details": text_of(md.find("detaileddescription")),
     }
 

@@ -1825,18 +1825,6 @@
           "value": 6,
           "expr": "",
           "brief": ""
-        },
-        {
-          "name": "b2_replayQueryShapeTestPoint",
-          "value": 7,
-          "expr": "",
-          "brief": ""
-        },
-        {
-          "name": "b2_replayQueryShapeCastRay",
-          "value": 8,
-          "expr": "",
-          "brief": ""
         }
       ],
       "header": "types.h",
@@ -4473,7 +4461,7 @@
           "name": "filter",
           "type": "b2QueryFilter",
           "args": "",
-          "brief": "zeroed for the shape local query types"
+          "brief": "the query filter"
         },
         {
           "name": "aabb",
@@ -4492,12 +4480,6 @@
           "type": "b2Vec2",
           "args": "",
           "brief": "ray and cast translation"
-        },
-        {
-          "name": "shapeId",
-          "type": "b2ShapeId",
-          "args": "",
-          "brief": "target shape for the shape local query types"
         },
         {
           "name": "hitCount",
@@ -5704,7 +5686,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns the absolute value of a float",
       "details": "the absolute value of a float"
     },
     {
@@ -5719,7 +5701,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns the absolute value of an integer",
       "details": "the absolute value of an integer"
     },
     {
@@ -6627,7 +6609,7 @@
         }
       ],
       "header": "box2d.h",
-      "brief": "",
+      "brief": "Returns true if this body is awake",
       "details": "true if this body is awake"
     },
     {
@@ -7413,7 +7395,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns a float clamped between a lower and upper bound",
       "details": "a float clamped between a lower and upper bound"
     },
     {
@@ -7436,7 +7418,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns an integer clamped between a lower and upper bound",
       "details": "an integer clamped between a lower and upper bound"
     },
     {
@@ -9684,7 +9666,7 @@
       "return_type": "size_t",
       "params": [],
       "header": "base.h",
-      "brief": "",
+      "brief": "Returns the total bytes allocated by Box2D",
       "details": "the total bytes allocated by Box2D"
     },
     {
@@ -9930,7 +9912,7 @@
       "return_type": "bool",
       "params": [],
       "header": "base.h",
-      "brief": "",
+      "brief": "Returns true if the current CPU has the AVX2 instruction set.",
       "details": "true if the current CPU has the AVX2 instruction set."
     },
     {
@@ -9940,7 +9922,7 @@
       "return_type": "bool",
       "params": [],
       "header": "base.h",
-      "brief": "",
+      "brief": "Returns true if the library was built with BOX2D_DOUBLE_PRECISION (large world mode)",
       "details": "true if the library was built with BOX2D_DOUBLE_PRECISION (large world mode)"
     },
     {
@@ -11030,7 +11012,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns the maximum of two floats",
       "details": "the maximum of two floats"
     },
     {
@@ -11049,7 +11031,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns the maximum of two integers",
       "details": "the maximum of two integers"
     },
     {
@@ -11087,7 +11069,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns the minimum of two floats",
       "details": "the minimum of two floats"
     },
     {
@@ -11106,7 +11088,7 @@
         }
       ],
       "header": "math_functions.h",
-      "brief": "",
+      "brief": "Returns the minimum of two integers",
       "details": "the minimum of two integers"
     },
     {

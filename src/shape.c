@@ -1235,16 +1235,6 @@ bool b2Shape_TestPoint( b2ShapeId shapeId, b2Pos point )
 			break;
 	}
 
-	if ( world->recording != NULL )
-	{
-		b2RecBuffer recBuf = { 0 };
-		b2RecW_SHAPEID( &recBuf, shapeId );
-		b2RecW_POSITION( &recBuf, point );
-		b2RecW_BOOL( &recBuf, result );
-		b2RecCommitRecord( world->recording, 0xE7, recBuf.data, recBuf.size );
-		b2RecBufFree( &recBuf );
-	}
-
 	return result;
 }
 
@@ -1270,17 +1260,6 @@ b2WorldCastOutput b2Shape_CastRay( b2ShapeId shapeId, b2Pos origin, b2Vec2 trans
 	output.fraction = local.fraction;
 	output.iterations = local.iterations;
 	output.hit = local.hit;
-
-	if ( world->recording != NULL )
-	{
-		b2RecBuffer recBuf = { 0 };
-		b2RecW_SHAPEID( &recBuf, shapeId );
-		b2RecW_POSITION( &recBuf, origin );
-		b2RecW_VEC2( &recBuf, translation );
-		b2RecW_WORLDCASTOUTPUT( &recBuf, output );
-		b2RecCommitRecord( world->recording, 0xE8, recBuf.data, recBuf.size );
-		b2RecBufFree( &recBuf );
-	}
 
 	return output;
 }
