@@ -4,6 +4,7 @@
 #pragma once
 
 #include "core.h"
+#include "dynamic_tree.h"
 
 #include "box2d/collision.h"
 #include "box2d/math_functions.h"

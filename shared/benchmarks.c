@@ -1412,7 +1412,7 @@ void GetQueryBenchmarkRay( int index, b2Pos* origin, b2Vec2* translation )
 
 typedef struct TreeCastBenchmark
 {
-	b2DynamicTree tree;
+	b2DynamicTree* tree;
 	b2AABB* tightBoxes;
 	int proxyCount;
 	int proxyCapacity;
@@ -1545,7 +1545,7 @@ static void TreeCastAddBox( b2Vec2 center, float hx, float hy, uint64_t category
 	int index = data->proxyCount;
 	data->tightBoxes[index] = tight;
 	data->proxyCount += 1;
-	b2CreateTreeProxy( &data->tree, fat, categoryBits, (uint64_t)index );
+	b2CreateTreeProxy( data->tree, fat, categoryBits, (uint64_t)index );
 }
 
 void DestroyTreeCast( void )
@@ -1553,7 +1553,7 @@ void DestroyTreeCast( void )
 	TreeCastBenchmark* data = &g_treeCast;
 	if ( data->created )
 	{
-		b2DestroyDynamicTree( &data->tree );
+		b2DestroyDynamicTree( data->tree );
 		free( data->tightBoxes );
 	}
 
@@ -1655,7 +1655,7 @@ float StepTreeCast( b2WorldId worldId, int stepCount )
 	(void)stepCount;
 
 	TreeCastBenchmark* data = &g_treeCast;
-	const b2DynamicTree* tree = &data->tree;
+	const b2DynamicTree* tree = data->tree;
 	uint64_t masks[2] = { B2_DEFAULT_MASK_BITS, 1 };
 	int rayCount = TREE_CAST_RAY_COUNT;
 	b2TreeStats stats = { 0 };

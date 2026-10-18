@@ -358,12 +358,12 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 
 	// Free what the shell or a live world holds, rebuild scratch included. Destroy zeroes the
 	// struct, which covers every field the image does not carry.
-	b2DestroyDynamicTree( tree );
+	b2DestroyDynamicTreeInternal( tree );
 
 	if ( !r->ok )
 	{
 		// Leave a valid empty tree so the shell can still be destroyed
-		*tree = b2CreateDynamicTree( 0 );
+		b2CreateDynamicTreeInternal( tree, 0 );
 		return;
 	}
 

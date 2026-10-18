@@ -1,5 +1,4 @@
 build/
-api/
 imgui.ini
 settings.ini
 .vscode/
@@ -15,3 +14,4 @@ CMakeUserPresets.json
 zig-out/
 .zig-cache/
 zig-pkg
+__pycache__
