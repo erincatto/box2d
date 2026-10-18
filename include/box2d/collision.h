@@ -259,16 +259,16 @@ B2_API b2MassData b2ComputeCapsuleMass( const b2Capsule* shape, float density );
 B2_API b2MassData b2ComputePolygonMass( const b2Polygon* shape, float density );
 
 /// Compute the bounding box of a transformed circle
-B2_API b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2WorldTransform transform );
+B2_API b2AABB b2ComputeCircleBounds( const b2Circle* shape, b2WorldTransform transform );
 
 /// Compute the bounding box of a transformed capsule
-B2_API b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2WorldTransform transform );
+B2_API b2AABB b2ComputeCapsuleBounds( const b2Capsule* shape, b2WorldTransform transform );
 
 /// Compute the bounding box of a transformed polygon
-B2_API b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2WorldTransform transform );
+B2_API b2AABB b2ComputePolygonBounds( const b2Polygon* shape, b2WorldTransform transform );
 
 /// Compute the bounding box of a transformed line segment
-B2_API b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2WorldTransform transform );
+B2_API b2AABB b2ComputeSegmentBounds( const b2Segment* shape, b2WorldTransform transform );
 
 /// Test a point for overlap with a circle in local space
 B2_API bool b2PointInCircle( const b2Circle* shape, b2Vec2 point );

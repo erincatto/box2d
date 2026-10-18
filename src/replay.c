@@ -818,7 +818,7 @@ static void b2RecDispatch_WorldSetContactRecycleDistance( const b2RecArgs_WorldS
 	b2World_SetContactRecycleDistance( rdr->replayWorldId, a->recycleDistance );
 }
 
-static void b2RecDispatch_WorldSetMaximumLinearSpeed( const b2RecArgs_WorldSetMaximumLinearSpeed* a, b2RecReader* rdr )
+static void b2RecDispatch_WorldSetMaxLinearSpeed( const b2RecArgs_WorldSetMaxLinearSpeed* a, b2RecReader* rdr )
 {
 	b2World_SetMaxLinearSpeed( rdr->replayWorldId, a->maximumLinearSpeed );
 }
@@ -1008,7 +1008,7 @@ static void b2RecDispatch_BodyWakeTouching( const b2RecArgs_BodyWakeTouching* a,
 	b2Body_WakeTouching( b2RecMakeBodyId( rdr, a->body ) );
 }
 
-static void b2RecDispatch_BodyEnableSleep( const b2RecArgs_BodyEnableSleep* a, b2RecReader* rdr )
+static void b2RecDispatch_BodyEnableSleeping( const b2RecArgs_BodyEnableSleeping* a, b2RecReader* rdr )
 {
 	b2Body_EnableSleeping( b2RecMakeBodyId( rdr, a->body ), a->flag );
 }
@@ -1338,7 +1338,7 @@ static void b2RecDispatch_JointSetTorqueThreshold( const b2RecArgs_JointSetTorqu
 
 // Distance joint
 
-static void b2RecDispatch_DistanceJointSetLength( const b2RecArgs_DistanceJointSetLength* a, b2RecReader* rdr )
+static void b2RecDispatch_DistanceJointSetRestLength( const b2RecArgs_DistanceJointSetRestLength* a, b2RecReader* rdr )
 {
 	b2DistanceJoint_SetRestLength( b2RecMakeJointId( rdr, a->joint ), a->length );
 }
@@ -1370,7 +1370,7 @@ static void b2RecDispatch_DistanceJointEnableLimit( const b2RecArgs_DistanceJoin
 	b2DistanceJoint_EnableLimit( b2RecMakeJointId( rdr, a->joint ), a->enableLimit );
 }
 
-static void b2RecDispatch_DistanceJointSetLengthRange( const b2RecArgs_DistanceJointSetLengthRange* a, b2RecReader* rdr )
+static void b2RecDispatch_DistanceJointSetLimits( const b2RecArgs_DistanceJointSetLimits* a, b2RecReader* rdr )
 {
 	b2DistanceJoint_SetLimits( b2RecMakeJointId( rdr, a->joint ), a->minLength, a->maxLength );
 }
@@ -1380,7 +1380,7 @@ static void b2RecDispatch_DistanceJointEnableMotor( const b2RecArgs_DistanceJoin
 	b2DistanceJoint_EnableMotor( b2RecMakeJointId( rdr, a->joint ), a->enableMotor );
 }
 
-static void b2RecDispatch_DistanceJointSetMotorSpeed( const b2RecArgs_DistanceJointSetMotorSpeed* a, b2RecReader* rdr )
+static void b2RecDispatch_DistanceJointSetTargetMotorSpeed( const b2RecArgs_DistanceJointSetTargetMotorSpeed* a, b2RecReader* rdr )
 {
 	b2DistanceJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
@@ -1510,7 +1510,7 @@ static void b2RecDispatch_PrismaticJointEnableMotor( const b2RecArgs_PrismaticJo
 	b2PrismaticJoint_EnableMotor( b2RecMakeJointId( rdr, a->joint ), a->enableMotor );
 }
 
-static void b2RecDispatch_PrismaticJointSetMotorSpeed( const b2RecArgs_PrismaticJointSetMotorSpeed* a, b2RecReader* rdr )
+static void b2RecDispatch_PrismaticJointSetTargetMotorSpeed( const b2RecArgs_PrismaticJointSetTargetMotorSpeed* a, b2RecReader* rdr )
 {
 	b2PrismaticJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
@@ -1558,7 +1558,7 @@ static void b2RecDispatch_RevoluteJointEnableMotor( const b2RecArgs_RevoluteJoin
 	b2RevoluteJoint_EnableMotor( b2RecMakeJointId( rdr, a->joint ), a->enableMotor );
 }
 
-static void b2RecDispatch_RevoluteJointSetMotorSpeed( const b2RecArgs_RevoluteJointSetMotorSpeed* a, b2RecReader* rdr )
+static void b2RecDispatch_RevoluteJointSetTargetMotorSpeed( const b2RecArgs_RevoluteJointSetTargetMotorSpeed* a, b2RecReader* rdr )
 {
 	b2RevoluteJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }
@@ -1622,7 +1622,7 @@ static void b2RecDispatch_WheelJointEnableMotor( const b2RecArgs_WheelJointEnabl
 	b2WheelJoint_EnableMotor( b2RecMakeJointId( rdr, a->joint ), a->enableMotor );
 }
 
-static void b2RecDispatch_WheelJointSetMotorSpeed( const b2RecArgs_WheelJointSetMotorSpeed* a, b2RecReader* rdr )
+static void b2RecDispatch_WheelJointSetTargetMotorSpeed( const b2RecArgs_WheelJointSetTargetMotorSpeed* a, b2RecReader* rdr )
 {
 	b2WheelJoint_SetTargetMotorSpeed( b2RecMakeJointId( rdr, a->joint ), a->motorSpeed );
 }

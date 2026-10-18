@@ -781,15 +781,15 @@ b2AABB b2ComputeShapeAABB( const b2Shape* shape, b2WorldTransform xf )
 	switch ( shape->type )
 	{
 		case b2_capsuleShape:
-			return b2ComputeCapsuleAABB( &shape->capsule, xf );
+			return b2ComputeCapsuleBounds( &shape->capsule, xf );
 		case b2_circleShape:
-			return b2ComputeCircleAABB( &shape->circle, xf );
+			return b2ComputeCircleBounds( &shape->circle, xf );
 		case b2_polygonShape:
-			return b2ComputePolygonAABB( &shape->polygon, xf );
+			return b2ComputePolygonBounds( &shape->polygon, xf );
 		case b2_segmentShape:
-			return b2ComputeSegmentAABB( &shape->segment, xf );
+			return b2ComputeSegmentBounds( &shape->segment, xf );
 		case b2_chainSegmentShape:
-			return b2ComputeSegmentAABB( &shape->chainSegment.segment, xf );
+			return b2ComputeSegmentBounds( &shape->chainSegment.segment, xf );
 		default:
 		{
 			B2_ASSERT( false );

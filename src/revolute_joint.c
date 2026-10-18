@@ -169,7 +169,7 @@ void b2RevoluteJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed )
 	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, RevoluteJointSetMotorSpeed, jointId, motorSpeed );
+	B2_REC( world, RevoluteJointSetTargetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
 	joint->revoluteJoint.motorSpeed = motorSpeed;
 }

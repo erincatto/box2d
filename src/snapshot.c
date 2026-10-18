@@ -969,6 +969,7 @@ bool b2World_RestoreFromSnapshot( b2WorldId worldId, const uint8_t* image, int s
 
 	if ( world->recording != NULL )
 	{
+		b2Log( "b2World_RestoreFromSnapshot: not supported while recording\n" );
 		return false;
 	}
 

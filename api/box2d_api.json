@@ -63,6 +63,14 @@
       "brief": "Maximum number of colors in the constraint graph."
     },
     {
+      "name": "B2_HASH_INIT",
+      "params": [],
+      "function_like": false,
+      "value": "5381",
+      "header": "base.h",
+      "brief": "Starting hash value."
+    },
+    {
       "name": "B2_HUGE",
       "params": [],
       "function_like": false,
@@ -7698,8 +7706,8 @@
       "details": "q1 initial rotation q2 final rotation inv_h inverse time step"
     },
     {
-      "name": "b2ComputeCapsuleAABB",
-      "symbol": "b2ComputeCapsuleAABB",
+      "name": "b2ComputeCapsuleBounds",
+      "symbol": "b2ComputeCapsuleBounds",
       "inline": false,
       "return_type": "b2AABB",
       "params": [
@@ -7736,8 +7744,8 @@
       "details": ""
     },
     {
-      "name": "b2ComputeCircleAABB",
-      "symbol": "b2ComputeCircleAABB",
+      "name": "b2ComputeCircleBounds",
+      "symbol": "b2ComputeCircleBounds",
       "inline": false,
       "return_type": "b2AABB",
       "params": [
@@ -7808,8 +7816,8 @@
       "details": "Returns an empty hull if it fails. Some failure cases: all points very close together all points on a line less than 3 points more than B2_MAX_POLYGON_VERTICES points This welds close points and removes collinear points. Do not modify a hull once it has been computed"
     },
     {
-      "name": "b2ComputePolygonAABB",
-      "symbol": "b2ComputePolygonAABB",
+      "name": "b2ComputePolygonBounds",
+      "symbol": "b2ComputePolygonBounds",
       "inline": false,
       "return_type": "b2AABB",
       "params": [
@@ -7865,8 +7873,8 @@
       "details": ""
     },
     {
-      "name": "b2ComputeSegmentAABB",
-      "symbol": "b2ComputeSegmentAABB",
+      "name": "b2ComputeSegmentBounds",
+      "symbol": "b2ComputeSegmentBounds",
       "inline": false,
       "return_type": "b2AABB",
       "params": [
@@ -9675,6 +9683,36 @@
       "details": ""
     },
     {
+      "name": "b2GetMilliseconds",
+      "symbol": "b2GetMilliseconds",
+      "inline": false,
+      "return_type": "float",
+      "params": [
+        {
+          "name": "ticks",
+          "type": "uint64_t"
+        }
+      ],
+      "header": "base.h",
+      "brief": "Get the milliseconds passed from an initial tick value.",
+      "details": ""
+    },
+    {
+      "name": "b2GetMillisecondsAndReset",
+      "symbol": "b2GetMillisecondsAndReset",
+      "inline": false,
+      "return_type": "float",
+      "params": [
+        {
+          "name": "ticks",
+          "type": "uint64_t *"
+        }
+      ],
+      "header": "base.h",
+      "brief": "Get the milliseconds passed from an initial tick value.",
+      "details": "Resets the passed in value to the current tick value."
+    },
+    {
       "name": "b2GetSweepTransform",
       "symbol": "b2GetSweepTransform",
       "inline": false,
@@ -9694,6 +9732,16 @@
       "details": ""
     },
     {
+      "name": "b2GetTicks",
+      "symbol": "b2GetTicks",
+      "inline": false,
+      "return_type": "uint64_t",
+      "params": [],
+      "header": "base.h",
+      "brief": "Get the absolute number of system ticks. The value is platform specific.",
+      "details": ""
+    },
+    {
       "name": "b2GetVersion",
       "symbol": "b2GetVersion",
       "inline": false,
@@ -9701,6 +9749,29 @@
       "params": [],
       "header": "base.h",
       "brief": "Get the current version of Box2D.",
+      "details": ""
+    },
+    {
+      "name": "b2Hash",
+      "symbol": "b2Hash",
+      "inline": false,
+      "return_type": "uint32_t",
+      "params": [
+        {
+          "name": "hash",
+          "type": "uint32_t"
+        },
+        {
+          "name": "data",
+          "type": "const uint8_t *"
+        },
+        {
+          "name": "count",
+          "type": "int"
+        }
+      ],
+      "header": "base.h",
+      "brief": "Simple djb2 hash function for determinism testing.",
       "details": ""
     },
     {
@@ -16015,6 +16086,16 @@
       "header": "box2d.h",
       "brief": "Stop recording.",
       "details": "The recording buffer keeps its bytes. Save and destroy it yourself. worldId The world being recorded"
+    },
+    {
+      "name": "b2Yield",
+      "symbol": "b2Yield",
+      "inline": false,
+      "return_type": "void",
+      "params": [],
+      "header": "base.h",
+      "brief": "Yield to be used in a busy loop.",
+      "details": ""
     }
   ]
 }

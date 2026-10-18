@@ -21,7 +21,7 @@ void b2DistanceJoint_SetRestLength( b2JointId jointId, float length )
 	B2_CHECK_INPUT( b2IsValidFloat( length ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, DistanceJointSetLength, jointId, length );
+	B2_REC( world, DistanceJointSetRestLength, jointId, length );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
@@ -59,7 +59,7 @@ void b2DistanceJoint_SetLimits( b2JointId jointId, float minLength, float maxLen
 	B2_CHECK_INPUT( b2IsValidFloat( maxLength ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, DistanceJointSetLengthRange, jointId, minLength, maxLength );
+	B2_REC( world, DistanceJointSetLimits, jointId, minLength, maxLength );
 	b2JointSim* base = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	b2DistanceJoint* joint = &base->distanceJoint;
 
@@ -210,7 +210,7 @@ void b2DistanceJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed )
 	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, DistanceJointSetMotorSpeed, jointId, motorSpeed );
+	B2_REC( world, DistanceJointSetTargetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_distanceJoint );
 	joint->distanceJoint.motorSpeed = motorSpeed;
 }

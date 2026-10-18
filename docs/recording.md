@@ -64,6 +64,8 @@ with another `b2World_StartRecording`.
 
 ## Snapshots {#snapshot}
 
+[//]: # (TODO32 Missing: say snapshots are experimental, the API and the image format will change in future versions)
+
 A recording starts with a snapshot. It is a serialized image of a world's simulation state between
 world steps. It captures everything the engine needs to continue the simulation: bodies, shapes,
 joints, contacts with their warm-start impulses, the island and sleep partition, the broad-phase

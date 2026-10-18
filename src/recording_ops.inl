@@ -35,7 +35,7 @@ B2_REC_OP( 0x07, WorldExplode, RET_NONE, ARG( WORLDID, world ) ARG( EXPLOSIONDEF
 B2_REC_OP( 0x08, WorldSetContactTuning, RET_NONE,
 		   ARG( WORLDID, world ) ARG( F32, hertz ) ARG( F32, dampingRatio ) ARG( F32, pushSpeed ) )
 B2_REC_OP( 0x09, WorldSetContactRecycleDistance, RET_NONE, ARG( WORLDID, world ) ARG( F32, recycleDistance ) )
-B2_REC_OP( 0x0A, WorldSetMaximumLinearSpeed, RET_NONE, ARG( WORLDID, world ) ARG( F32, maximumLinearSpeed ) )
+B2_REC_OP( 0x0A, WorldSetMaxLinearSpeed, RET_NONE, ARG( WORLDID, world ) ARG( F32, maximumLinearSpeed ) )
 B2_REC_OP( 0x0B, WorldEnableWarmStarting, RET_NONE, ARG( WORLDID, world ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x0C, WorldRebuildStaticTree, RET_NONE, ARG( WORLDID, world ) )
 B2_REC_OP( 0x0D, WorldSetRestitutionIterations, RET_NONE, ARG( WORLDID, world ) ARG( I32, iterations ) )
@@ -64,7 +64,7 @@ B2_REC_OP( 0x30, BodySetAngularDamping, RET_NONE, ARG( BODYID, body ) ARG( F32, 
 B2_REC_OP( 0x31, BodySetGravityScale, RET_NONE, ARG( BODYID, body ) ARG( F32, scale ) )
 B2_REC_OP( 0x32, BodySetAwake, RET_NONE, ARG( BODYID, body ) ARG( BOOL, awake ) )
 B2_REC_OP( 0x33, BodyWakeTouching, RET_NONE, ARG( BODYID, body ) )
-B2_REC_OP( 0x34, BodyEnableSleep, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
+B2_REC_OP( 0x34, BodyEnableSleeping, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x35, BodySetSleepThreshold, RET_NONE, ARG( BODYID, body ) ARG( F32, threshold ) )
 B2_REC_OP( 0x36, BodyDisable, RET_NONE, ARG( BODYID, body ) )
 B2_REC_OP( 0x37, BodyEnable, RET_NONE, ARG( BODYID, body ) )
@@ -122,15 +122,15 @@ B2_REC_OP( 0x97, JointSetTorqueThreshold, RET_NONE, ARG( JOINTID, joint ) ARG( F
 
 // Distance joint
 B2_REC_OP( 0x98, CreateDistanceJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( DISTANCEJOINTDEF, def ) )
-B2_REC_OP( 0x99, DistanceJointSetLength, RET_NONE, ARG( JOINTID, joint ) ARG( F32, length ) )
+B2_REC_OP( 0x99, DistanceJointSetRestLength, RET_NONE, ARG( JOINTID, joint ) ARG( F32, length ) )
 B2_REC_OP( 0x9A, DistanceJointEnableSpring, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableSpring ) )
 B2_REC_OP( 0x9B, DistanceJointSetSpringForceRange, RET_NONE, ARG( JOINTID, joint ) ARG( F32, lowerForce ) ARG( F32, upperForce ) )
 B2_REC_OP( 0x9C, DistanceJointSetSpringHertz, RET_NONE, ARG( JOINTID, joint ) ARG( F32, hertz ) )
 B2_REC_OP( 0x9D, DistanceJointSetSpringDampingRatio, RET_NONE, ARG( JOINTID, joint ) ARG( F32, dampingRatio ) )
 B2_REC_OP( 0x9E, DistanceJointEnableLimit, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableLimit ) )
-B2_REC_OP( 0x9F, DistanceJointSetLengthRange, RET_NONE, ARG( JOINTID, joint ) ARG( F32, minLength ) ARG( F32, maxLength ) )
+B2_REC_OP( 0x9F, DistanceJointSetLimits, RET_NONE, ARG( JOINTID, joint ) ARG( F32, minLength ) ARG( F32, maxLength ) )
 B2_REC_OP( 0xA0, DistanceJointEnableMotor, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableMotor ) )
-B2_REC_OP( 0xA1, DistanceJointSetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
+B2_REC_OP( 0xA1, DistanceJointSetTargetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
 B2_REC_OP( 0xA2, DistanceJointSetMaxMotorForce, RET_NONE, ARG( JOINTID, joint ) ARG( F32, force ) )
 
 // Filter joint
@@ -169,7 +169,7 @@ B2_REC_OP( 0xBA, PrismaticJointSetTargetTranslation, RET_NONE, ARG( JOINTID, joi
 B2_REC_OP( 0xBB, PrismaticJointEnableLimit, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableLimit ) )
 B2_REC_OP( 0xBC, PrismaticJointSetLimits, RET_NONE, ARG( JOINTID, joint ) ARG( F32, lower ) ARG( F32, upper ) )
 B2_REC_OP( 0xBD, PrismaticJointEnableMotor, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableMotor ) )
-B2_REC_OP( 0xBE, PrismaticJointSetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
+B2_REC_OP( 0xBE, PrismaticJointSetTargetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
 B2_REC_OP( 0xBF, PrismaticJointSetMaxMotorForce, RET_NONE, ARG( JOINTID, joint ) ARG( F32, force ) )
 
 // Revolute joint
@@ -181,7 +181,7 @@ B2_REC_OP( 0xC4, RevoluteJointSetTargetAngle, RET_NONE, ARG( JOINTID, joint ) AR
 B2_REC_OP( 0xC5, RevoluteJointEnableLimit, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableLimit ) )
 B2_REC_OP( 0xC6, RevoluteJointSetLimits, RET_NONE, ARG( JOINTID, joint ) ARG( F32, lower ) ARG( F32, upper ) )
 B2_REC_OP( 0xC7, RevoluteJointEnableMotor, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableMotor ) )
-B2_REC_OP( 0xC8, RevoluteJointSetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
+B2_REC_OP( 0xC8, RevoluteJointSetTargetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
 B2_REC_OP( 0xC9, RevoluteJointSetMaxMotorTorque, RET_NONE, ARG( JOINTID, joint ) ARG( F32, torque ) )
 
 // Weld joint
@@ -199,7 +199,7 @@ B2_REC_OP( 0xD2, WheelJointSetSpringDampingRatio, RET_NONE, ARG( JOINTID, joint 
 B2_REC_OP( 0xD3, WheelJointEnableLimit, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableLimit ) )
 B2_REC_OP( 0xD4, WheelJointSetLimits, RET_NONE, ARG( JOINTID, joint ) ARG( F32, lower ) ARG( F32, upper ) )
 B2_REC_OP( 0xD5, WheelJointEnableMotor, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableMotor ) )
-B2_REC_OP( 0xD6, WheelJointSetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
+B2_REC_OP( 0xD6, WheelJointSetTargetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
 B2_REC_OP( 0xD7, WheelJointSetMaxMotorTorque, RET_NONE, ARG( JOINTID, joint ) ARG( F32, torque ) )
 
 // Spatial queries. Inputs through the manifest (reader side). Hit tail / results hand-written.

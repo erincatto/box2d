@@ -66,15 +66,8 @@ SKIP_MACROS = {
     "B2_ENABLE_VALIDATION",
 }
 
-# Exported utilities that base.h keeps out of the documented API with @cond
-HIDDEN_EXPORTS = {
-    "b2GetMilliseconds",
-    "b2GetMillisecondsAndReset",
-    "b2GetTicks",
-    "b2Hash",
-    "b2InternalAssert",
-    "b2Yield",
-}
+# Exported for the assert macro, base.h keeps it out of the documented API with @cond
+HIDDEN_EXPORTS = {"b2InternalAssert"}
 
 
 def text_of(el):

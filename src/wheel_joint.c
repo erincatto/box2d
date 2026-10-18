@@ -131,7 +131,7 @@ void b2WheelJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed )
 	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, WheelJointSetMotorSpeed, jointId, motorSpeed );
+	B2_REC( world, WheelJointSetTargetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_wheelJoint );
 	joint->wheelJoint.motorSpeed = motorSpeed;
 }

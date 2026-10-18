@@ -1986,7 +1986,7 @@ void b2World_SetMaxLinearSpeed( b2WorldId worldId, float maximumLinearSpeed )
 		return;
 	}
 
-	B2_REC( world, WorldSetMaximumLinearSpeed, worldId, maximumLinearSpeed );
+	B2_REC( world, WorldSetMaxLinearSpeed, worldId, maximumLinearSpeed );
 
 	world->maxLinearSpeed = maximumLinearSpeed;
 }

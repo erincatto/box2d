@@ -13,7 +13,7 @@
 ## New features
 
 - Large worlds with optional double precision (`BOX2D_DOUBLE_PRECISION`).
-- Recording, replay and world snapshots.
+- Recording and replay, plus world snapshots (experimental).
 - Contact recycling for better stability and performance.
 - Dynamic character mover with new mover and pogo joints (experimental).
 - Joint events for breakable joints (force and torque thresholds).
@@ -71,7 +71,7 @@ Renamed and changed functions:
 - Chain: open chains require `ghost1` and `ghost2`, and every segment of an open chain collides. `b2ChainDef::count` is now `pointCount`, and `materialCount` must be 1 or the segment count. The chain friction, restitution and material functions are replaced by `b2Chain_SetSurfaceMaterial` and `b2Chain_SetAllSurfaceMaterials`.
 - World: `b2WorldDef::maxContactPushSpeed` is now `contactSpeed`. `b2World_EnableSpeculative` is removed. `b2World_SetMaximumLinearSpeed` and `b2World_GetMaximumLinearSpeed` are now `b2World_SetMaxLinearSpeed` and `b2World_GetMaxLinearSpeed`. `b2World_GetContactTuning` is new.
 - Contacts: `b2ManifoldPoint::point` and `b2ContactBeginTouchEvent::manifold` are removed. Use the contact id with `b2Contact_GetData`.
-- Collision: the shape comes first in `b2PointIn*`, `b2CastRay*` and `b2CastShape*`. `b2Collide*` take one relative transform and return a `b2LocalManifold`. `b2DistanceInput` and `b2ShapeCastPairInput` take one relative `transform`.
+- Collision: the shape comes first in `b2PointIn*`, `b2CastRay*` and `b2CastShape*`. `b2Collide*` take one relative transform and return a `b2LocalManifold`. `b2DistanceInput` and `b2ShapeCastPairInput` take one relative `transform`. `b2ComputeCapsuleAABB`, `b2ComputeCircleAABB`, `b2ComputePolygonAABB` and `b2ComputeSegmentAABB` are now `b2Compute*Bounds`, matching `b2Shape_GetBounds` and `b2Body_ComputeBounds`.
 - Dynamic tree: `b2CreateDynamicTree`, `b2DestroyDynamicTree`, `b2CreateTreeProxy` and `b2DestroyTreeProxy` replace the `b2DynamicTree_` versions. `b2DynamicTree` is opaque, `b2CreateDynamicTree` returns a pointer, and `b2TreeNode` and `b2TreeProxy` are no longer public. `b2DynamicTree_RayCast` is now `b2DynamicTree_CastRay`, and `b2DynamicTree_ShapeCast` is now `b2DynamicTree_CastBox`, which sweeps an AABB. `EnlargeProxy`, `Rebuild` and `ValidateNoEnlarged` are removed. `b2DynamicTree_Query` is now `b2DynamicTree_OverlapAABB` and `b2DynamicTree_GetAABB` is now `b2DynamicTree_GetProxyBounds`.
 - Distance joint: `b2DistanceJoint_SetLength` and `GetLength` are now `SetRestLength` and `GetRestLength`. `SetLengthRange`, `GetMinLength` and `GetMaxLength` are now `SetLimits`, `GetLowerLimit` and `GetUpperLimit`, matching the other joints.
 - Current joint values say so: `b2RevoluteJoint_GetAngle` is now `b2RevoluteJoint_GetCurrentAngle`, and `b2PrismaticJoint_GetTranslation` and `b2PrismaticJoint_GetSpeed` are now `b2PrismaticJoint_GetCurrentTranslation` and `b2PrismaticJoint_GetCurrentSpeed`. `b2RevoluteJoint_GetMotorTorque` and `b2PrismaticJoint_GetMotorForce` are now `b2RevoluteJoint_GetCurrentMotorTorque` and `b2PrismaticJoint_GetCurrentMotorForce`.
