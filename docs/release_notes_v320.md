@@ -22,6 +22,7 @@
 - Wind and drag on shapes.
 - Distance joint spring force limits.
 - Loose chain segments.
+- Continuous sensor events. Fast shapes are swept against static sensors, and bullets against all non-bullet sensors.
 - Runtime AVX2 dispatch with SSE2 fallback.
 
 ## Improvements
@@ -29,6 +30,9 @@
 - Many optimizations.
 - Faster broad-phase and ray casts. Much less single threaded work.
 - Faster island merging and splitting.
+- Kinematic bodies are cheaper. Graph coloring treats them like static bodies.
+- More stable prismatic joint under stress.
+- More accurate rotational inertia for shapes far from the body origin.
 - Invalid input is now rejected and logged in release builds.
 - Various SIMD optimizations.
 
@@ -36,7 +40,8 @@
 
 - pkg-config support.
 - Swift and Zig builds in CI.
-- MinGW and clang-cl builds.
+- MinGW, clang-cl and Windows ARM64 builds.
+- JSON descriptions of the public API in `api/` for binding generators, one per precision.
 - CMake presets.
 - Revised samples UI and many new samples.
 
@@ -56,6 +61,10 @@ These compile but behave differently:
 - Contact point normal velocity is only computed if needed for hit events or restitution.
 - `b2CreateSegmentShape` and `b2CreateCapsuleShape` return `b2_nullShapeId` for a degenerate segment or capsule.
 - Fields were reordered in `b2BodyMoveEvent`, `b2PrismaticJointDef` and `b2DebugDraw`. A positional initializer can still compile and fill the wrong fields.
+- A joint between two bodies that are not dynamic is not simulated.
+- World shape casts ignore chain segments approached from the back side.
+- Contact push speed no longer depends on the contact hertz and damping ratio.
+- `b2ManifoldPoint::totalNormalImpulse` now includes the warm starting impulse.
 
 Renamed and changed functions:
 
