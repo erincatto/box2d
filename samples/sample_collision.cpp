@@ -480,7 +480,7 @@ public:
 
 		m_rowCount = m_isDebug ? 100 : 1000;
 		m_columnCount = m_isDebug ? 100 : 1000;
-		memset( &m_tree, 0, sizeof( m_tree ) );
+		m_tree = nullptr;
 		BuildTree();
 		m_timeStamp = 0;
 
@@ -495,12 +495,12 @@ public:
 	{
 		free( m_proxies );
 		free( m_moveBuffer );
-		b2DestroyDynamicTree( &m_tree );
+		b2DestroyDynamicTree( m_tree );
 	}
 
 	void BuildTree()
 	{
-		b2DestroyDynamicTree( &m_tree );
+		b2DestroyDynamicTree( m_tree );
 		free( m_proxies );
 		free( m_moveBuffer );
 
@@ -548,7 +548,7 @@ public:
 					p->fatBox.lowerBound = b2Sub( p->box.lowerBound, aabbMargin );
 					p->fatBox.upperBound = b2Add( p->box.upperBound, aabbMargin );
 
-					p->proxyId = b2CreateTreeProxy( &m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount );
+					p->proxyId = b2CreateTreeProxy( m_tree, p->fatBox, B2_DEFAULT_CATEGORY_BITS, m_proxyCount );
 					p->rayStamp = -1;
 					p->queryStamp = -1;
 					p->moved = false;
@@ -656,7 +656,7 @@ public:
 			b2Vec2 p1 = b2ToVec2( m_startPoint );
 			b2Vec2 p2 = b2ToVec2( m_endPoint );
 			b2AABB box = { b2Min( p1, p2 ), b2Max( p1, p2 ) };
-			b2DynamicTree_OverlapAABB( &m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
+			b2DynamicTree_OverlapAABB( m_tree, box, B2_DEFAULT_MASK_BITS, QueryCallback, this );
 
 			DrawBounds( m_draw, box, b2_colorWhite );
 		}
@@ -664,7 +664,7 @@ public:
 		if ( m_rayDrag )
 		{
 			b2RayCastInput input = { b2ToVec2( m_startPoint ), m_endPoint - m_startPoint, 1.0f };
-			b2TreeStats result = b2DynamicTree_CastRay( &m_tree, &input, B2_DEFAULT_MASK_BITS, RayCallback, this );
+			b2TreeStats result = b2DynamicTree_CastRay( m_tree, &input, B2_DEFAULT_MASK_BITS, RayCallback, this );
 
 			DrawLine( m_draw, m_startPoint, m_endPoint, b2_colorWhite );
 			DrawPoint( m_draw, m_startPoint, 5.0f, b2_colorGreen );
@@ -729,20 +729,20 @@ public:
 				Proxy* p = m_proxies + i;
 				if ( p->moved )
 				{
-					b2DynamicTree_MoveProxy( &m_tree, p->proxyId, p->fatBox );
+					b2DynamicTree_MoveProxy( m_tree, p->proxyId, p->fatBox );
 				}
 			}
 			float ms = b2GetMilliseconds( ticks );
 			DrawScreenTextLine( "incremental : %.3f ms", ms );
 		}
 
-		int height = b2DynamicTree_GetHeight( &m_tree );
-		float areaRatio = b2DynamicTree_GetAreaRatio( &m_tree );
+		int height = b2DynamicTree_GetHeight( m_tree );
+		float areaRatio = b2DynamicTree_GetAreaRatio( m_tree );
 
 		int hmin = (int)( ceilf( logf( (float)m_proxyCount ) / logf( 2.0f ) - 1.0f ) );
 		DrawScreenTextLine( "proxies = %d, height = %d, hmin = %d, area ratio = %.1f", m_proxyCount, height, hmin, areaRatio );
 
-		b2DynamicTree_Validate( &m_tree );
+		b2DynamicTree_Validate( m_tree );
 
 		m_timeStamp += 1;
 	}
@@ -752,7 +752,7 @@ public:
 		return new DynamicTree( context );
 	}
 
-	b2DynamicTree m_tree;
+	b2DynamicTree* m_tree;
 	int m_rowCount, m_columnCount;
 	Proxy* m_proxies;
 	int* m_moveBuffer;

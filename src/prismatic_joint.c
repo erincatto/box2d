@@ -146,7 +146,7 @@ void b2PrismaticJoint_SetTargetMotorSpeed( b2JointId jointId, float motorSpeed )
 	B2_CHECK_INPUT( b2IsValidFloat( motorSpeed ) );
 
 	b2World* world = b2GetWorld( jointId.world0 );
-	B2_REC( world, PrismaticJointSetMotorSpeed, jointId, motorSpeed );
+	B2_REC( world, PrismaticJointSetTargetMotorSpeed, jointId, motorSpeed );
 	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_prismaticJoint );
 	joint->prismaticJoint.motorSpeed = motorSpeed;
 }

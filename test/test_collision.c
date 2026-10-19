@@ -246,7 +246,7 @@ static int LargeWorldAABBTest( void )
 	// Rounded box: 0.5 half extents plus 0.1 radius, so the tight extent is 0.6 each way
 	b2Polygon box = b2MakeRoundedBox( 0.5f, 0.5f, 0.1f );
 
-	b2AABB aabbOrigin = b2ComputePolygonAABB( &box, b2WorldTransform_identity );
+	b2AABB aabbOrigin = b2ComputePolygonBounds( &box, b2WorldTransform_identity );
 	ENSURE_SMALL( aabbOrigin.lowerBound.x + 0.6f, FLT_EPSILON );
 	ENSURE_SMALL( aabbOrigin.lowerBound.y + 0.6f, FLT_EPSILON );
 	ENSURE_SMALL( aabbOrigin.upperBound.x - 0.6f, FLT_EPSILON );
@@ -257,7 +257,7 @@ static int LargeWorldAABBTest( void )
 	b2WorldTransform xfLarge = { { d, d }, b2Rot_identity };
 
 	// Tight world AABB still contains the 0.6 m extent
-	b2AABB tight = b2ComputePolygonAABB( &box, xfLarge );
+	b2AABB tight = b2ComputePolygonBounds( &box, xfLarge );
 	ENSURE( (double)tight.lowerBound.x <= d - 0.6 );
 	ENSURE( (double)tight.lowerBound.y <= d - 0.6 );
 	ENSURE( (double)tight.upperBound.x >= d + 0.6 );

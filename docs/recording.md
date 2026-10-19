@@ -101,6 +101,9 @@ useful for determining if rollback is needed in client prediction scenarios.
 Like recording, snapshots are worker-count independent: a world snapshotted single-threaded restores
 and continues with any worker count.
 
+> [!note]
+> Snapshots are considered experimental and may change in the future as the system is optimized.
+
 ## Viewing a recording
 
 The samples app has a **Replay** menu you can use to open a recording.

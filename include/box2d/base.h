@@ -179,6 +179,8 @@ B2_API int b2InternalAssert( const char* condition, const char* fileName, int li
 #define B2_VALIDATE( ... ) ( (void)0 )
 #endif
 
+//! @endcond
+
 /// Get the absolute number of system ticks. The value is platform specific.
 B2_API uint64_t b2GetTicks( void );
 
@@ -192,8 +194,8 @@ B2_API float b2GetMillisecondsAndReset( uint64_t* ticks );
 /// Yield to be used in a busy loop.
 B2_API void b2Yield( void );
 
-/// Simple djb2 hash function for determinism testing
+/// Starting hash value.
 #define B2_HASH_INIT 5381
-B2_API uint32_t b2Hash( uint32_t hash, const uint8_t* data, int count );
 
-//! @endcond
+/// Simple djb2 hash function for determinism testing
+B2_API uint32_t b2Hash( uint32_t hash, const uint8_t* data, int count );

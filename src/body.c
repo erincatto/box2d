@@ -1738,7 +1738,7 @@ void b2Body_EnableSleeping( b2BodyId bodyId, bool enableSleep )
 		return;
 	}
 
-	B2_REC( world, BodyEnableSleep, bodyId, enableSleep );
+	B2_REC( world, BodyEnableSleeping, bodyId, enableSleep );
 
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 

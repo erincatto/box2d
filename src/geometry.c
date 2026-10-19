@@ -462,22 +462,22 @@ static b2AABB b2ComputeSegmentFatAABB( const b2Segment* shape, b2WorldTransform 
 	return aabb;
 }
 
-b2AABB b2ComputeCircleAABB( const b2Circle* shape, b2WorldTransform xf )
+b2AABB b2ComputeCircleBounds( const b2Circle* shape, b2WorldTransform xf )
 {
 	return b2ComputeCircleFatAABB( shape, xf, 0.0f );
 }
 
-b2AABB b2ComputeCapsuleAABB( const b2Capsule* shape, b2WorldTransform xf )
+b2AABB b2ComputeCapsuleBounds( const b2Capsule* shape, b2WorldTransform xf )
 {
 	return b2ComputeCapsuleFatAABB( shape, xf, 0.0f );
 }
 
-b2AABB b2ComputePolygonAABB( const b2Polygon* shape, b2WorldTransform xf )
+b2AABB b2ComputePolygonBounds( const b2Polygon* shape, b2WorldTransform xf )
 {
 	return b2ComputePolygonFatAABB( shape, xf, 0.0f );
 }
 
-b2AABB b2ComputeSegmentAABB( const b2Segment* shape, b2WorldTransform xf )
+b2AABB b2ComputeSegmentBounds( const b2Segment* shape, b2WorldTransform xf )
 {
 	return b2ComputeSegmentFatAABB( shape, xf, 0.0f );
 }

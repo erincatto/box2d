@@ -90,10 +90,6 @@ static const char* ReplayQueryTypeName( b2ReplayQueryType type )
 			return "cast ray closest";
 		case b2_replayQueryCastMover:
 			return "cast mover";
-		case b2_replayQueryShapeTestPoint:
-			return "shape test point";
-		case b2_replayQueryShapeCastRay:
-			return "shape ray cast";
 		default:
 			return "?";
 	}
@@ -1099,16 +1095,8 @@ public:
 		}
 
 		ImGui::Text( "type     %s", ReplayQueryTypeName( q.type ) );
-		bool shapeLocal = q.type == b2_replayQueryShapeTestPoint || q.type == b2_replayQueryShapeCastRay;
-		if ( shapeLocal == false )
-		{
-			ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );
-			ImGui::Text( "mask     0x%016llx", (unsigned long long)q.filter.maskBits );
-		}
-		else
-		{
-			ImGui::Text( "shape    %d", q.shapeId.index1 );
-		}
+		ImGui::Text( "category 0x%016llx", (unsigned long long)q.filter.categoryBits );
+		ImGui::Text( "mask     0x%016llx", (unsigned long long)q.filter.maskBits );
 		ImGui::Text( "hits     %d", q.hitCount );
 
 		// Hits as one wrapped id list, so a 50-hit query stays compact

@@ -35,7 +35,7 @@
 #define B2_SNAP_VERSION 13u // extend b2Capacity
 
 // Header flag bits
-#define B2_SNAP_FLAG_VALIDATION 0x1u	   // image was built with validation, only used for diagnostics
+#define B2_SNAP_FLAG_VALIDATION 0x1u // image was built with validation, only used for diagnostics
 #define B2_SNAP_FLAG_DOUBLE_PRECISION 0x2u // image was built with double precision world positions
 
 // Layout hash seeds from all structs we memcpy, plus key constants.
@@ -45,8 +45,8 @@ static uint32_t b2ComputeLayoutHash( void )
 {
 	// FNV-1a hash
 	uint32_t h = 2166136261u;
-#define MIX( x )                                                                                                                 \
-	h ^= (uint32_t)( x );                                                                                                        \
+#define MIX( x )                                                                                   \
+	h ^= (uint32_t)( x );                                                                          \
 	h *= 16777619u;
 	MIX( sizeof( b2Body ) )
 	MIX( sizeof( b2BodySim ) )
@@ -87,13 +87,16 @@ typedef struct b2SnapHeader
 	uint32_t flags; // B2_SNAP_FLAG_*, keeps 16-byte alignment
 } b2SnapHeader;
 
-// Compile-time tripwires for the structs serialized field-by-field. If one fires, a field was added or
-// reordered: resync the matching code in b2SerializeWorld / b2DeserializeIntoShell and bump
+// Compile-time tripwires for the structs serialized field-by-field. If one fires, a field was added
+// or reordered: resync the matching code in b2SerializeWorld / b2DeserializeIntoShell and bump
 // B2_SNAP_VERSION.
 #if INTPTR_MAX == INT64_MAX
-_Static_assert( sizeof( b2ChainShape ) == 32, "b2ChainShape layout changed; resync snapshot chain serialization" );
-_Static_assert( sizeof( b2Sensor ) == 56, "b2Sensor layout changed; resync snapshot sensor serialization" );
-_Static_assert( sizeof( b2Island ) == 64, "b2Island layout changed; resync snapshot island serialization" );
+_Static_assert( sizeof( b2ChainShape ) == 32,
+				"b2ChainShape layout changed; resync snapshot chain serialization" );
+_Static_assert( sizeof( b2Sensor ) == 56,
+				"b2Sensor layout changed; resync snapshot sensor serialization" );
+_Static_assert( sizeof( b2Island ) == 64,
+				"b2Island layout changed; resync snapshot island serialization" );
 #endif
 
 // Bounds-checked read cursor, mirrors b2RecReader discipline
@@ -155,8 +158,8 @@ static void b2SnapW_Bytes( b2RecBuffer* buf, const void* src, int n )
 }
 
 // Reject a count read from the image before it reaches an allocation or memset. count must be non
-// negative, its in-memory footprint must fit in int, and the stream must hold at least minStreamBytes
-// per element. A corrupt or truncated image then fails.
+// negative, its in-memory footprint must fit in int, and the stream must hold at least
+// minStreamBytes per element. A corrupt or truncated image then fails.
 static bool b2SnapCheckCount( const b2SnapReader* r, int count, int memSize, int minStreamBytes )
 {
 	if ( count < 0 || memSize < 0 || minStreamBytes < 0 )
@@ -172,53 +175,53 @@ static bool b2SnapCheckCount( const b2SnapReader* r, int count, int memSize, int
 }
 
 // Serialize a POD array: count then raw bytes
-#define b2SerPodArray( buf, arr )                                                                                                \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		b2SnapW_I32( buf, ( arr ).count );                                                                                       \
-		if ( ( arr ).count > 0 )                                                                                                 \
-		{                                                                                                                        \
-			b2SnapW_Bytes( buf, ( arr ).data, ( arr ).count * (int)sizeof( *( arr ).data ) );                                    \
-		}                                                                                                                        \
-	}                                                                                                                            \
+#define b2SerPodArray( buf, arr )                                                                  \
+	do                                                                                             \
+	{                                                                                              \
+		b2SnapW_I32( buf, ( arr ).count );                                                         \
+		if ( ( arr ).count > 0 )                                                                   \
+		{                                                                                          \
+			b2SnapW_Bytes( buf, ( arr ).data, ( arr ).count * (int)sizeof( *( arr ).data ) );      \
+		}                                                                                          \
+	}                                                                                              \
 	while ( 0 )
 
 // Serialize a sparse struct array whose element carries a host userData pointer. userData is host
-// wiring, not simulation state, so write it as NULL: images stay reproducible and never persist host
-// addresses across a save. On restore the field reads back NULL.
-#define b2SerSimArray( buf, arr, type )                                                                                          \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		b2SnapW_I32( buf, ( arr ).count );                                                                                       \
-		for ( int slot = 0; slot < ( arr ).count; ++slot )                                                                       \
-		{                                                                                                                        \
-			type elem = ( arr ).data[slot];                                                                                      \
-			elem.userData = NULL;                                                                                                \
-			b2SnapW_Bytes( buf, &elem, (int)sizeof( type ) );                                                                    \
-		}                                                                                                                        \
-	}                                                                                                                            \
+// wiring, not simulation state, so write it as NULL: images stay reproducible and never persist
+// host addresses across a save. On restore the field reads back NULL.
+#define b2SerSimArray( buf, arr, type )                                                            \
+	do                                                                                             \
+	{                                                                                              \
+		b2SnapW_I32( buf, ( arr ).count );                                                         \
+		for ( int slot = 0; slot < ( arr ).count; ++slot )                                         \
+		{                                                                                          \
+			type elem = ( arr ).data[slot];                                                        \
+			elem.userData = NULL;                                                                  \
+			b2SnapW_Bytes( buf, &elem, (int)sizeof( type ) );                                      \
+		}                                                                                          \
+	}                                                                                              \
 	while ( 0 )
 
 // Deserialize a POD array: validate count, resize, then memcpy
-#define b2DesPodArray( r, arr )                                                                                                  \
-	do                                                                                                                           \
-	{                                                                                                                            \
-		int cnt = b2SnapR_I32( r );                                                                                              \
-		int elemSize = (int)sizeof( *( arr ).data );                                                                             \
-		if ( ( r )->ok && b2SnapCheckCount( r, cnt, elemSize, elemSize ) == false )                                              \
-		{                                                                                                                        \
-			( r )->ok = false;                                                                                                   \
-		}                                                                                                                        \
-		if ( ( r )->ok && cnt > 0 )                                                                                              \
-		{                                                                                                                        \
-			b2Array_Resize( arr, cnt );                                                                                          \
-			b2SnapR_Bytes( r, ( arr ).data, cnt * elemSize );                                                                    \
-		}                                                                                                                        \
-		else if ( ( r )->ok )                                                                                                    \
-		{                                                                                                                        \
-			( arr ).count = 0;                                                                                                   \
-		}                                                                                                                        \
-	}                                                                                                                            \
+#define b2DesPodArray( r, arr )                                                                    \
+	do                                                                                             \
+	{                                                                                              \
+		int cnt = b2SnapR_I32( r );                                                                \
+		int elemSize = (int)sizeof( *( arr ).data );                                               \
+		if ( ( r )->ok && b2SnapCheckCount( r, cnt, elemSize, elemSize ) == false )                \
+		{                                                                                          \
+			( r )->ok = false;                                                                     \
+		}                                                                                          \
+		if ( ( r )->ok && cnt > 0 )                                                                \
+		{                                                                                          \
+			b2Array_Resize( arr, cnt );                                                            \
+			b2SnapR_Bytes( r, ( arr ).data, cnt * elemSize );                                      \
+		}                                                                                          \
+		else if ( ( r )->ok )                                                                      \
+		{                                                                                          \
+			( arr ).count = 0;                                                                     \
+		}                                                                                          \
+	}                                                                                              \
 	while ( 0 )
 
 // Id pool: nextIndex + freeArray
@@ -250,7 +253,8 @@ static void b2SerBitSet( b2RecBuffer* buf, const b2BitSet* bs )
 static void b2DesBitSet( b2SnapReader* r, b2BitSet* bs )
 {
 	uint32_t blockCount = b2SnapR_U32( r );
-	if ( r->ok && b2SnapCheckCount( r, (int)blockCount, (int)sizeof( uint64_t ), (int)sizeof( uint64_t ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, (int)blockCount, (int)sizeof( uint64_t ),
+									(int)sizeof( uint64_t ) ) == false )
 	{
 		r->ok = false;
 	}
@@ -287,8 +291,9 @@ static void b2DesHashSet( b2SnapReader* r, b2HashSet* hs )
 	uint32_t cnt = b2SnapR_U32( r );
 	// Probing masks with capacity-1, so capacity must be a power of two and count can't exceed it.
 	// (cap & (cap-1)) == 0 also accepts 0, which the empty branch handles.
-	bool valid = b2SnapCheckCount( r, (int)cap, (int)sizeof( b2SetItem ), (int)sizeof( b2SetItem ) ) && ( cap & ( cap - 1 ) ) == 0 &&
-				 cnt <= cap;
+	bool valid =
+		b2SnapCheckCount( r, (int)cap, (int)sizeof( b2SetItem ), (int)sizeof( b2SetItem ) ) &&
+		( cap & ( cap - 1 ) ) == 0 && cnt <= cap;
 	if ( r->ok && valid == false )
 	{
 		r->ok = false;
@@ -339,31 +344,33 @@ static void b2DesTree( b2SnapReader* r, b2DynamicTree* tree )
 	int proxyFreeList = b2SnapR_I32( r );
 	int ordered = b2SnapR_I32( r );
 
-	if ( r->ok && ( nodeEnd < 2 || ( nodeEnd & 1 ) != 0 || nodeCapacity < nodeEnd || proxyCount < 0 || proxyCapacity < 1 ||
-					proxyCapacity < proxyCount ) )
+	if ( r->ok && ( nodeEnd < 2 || ( nodeEnd & 1 ) != 0 || nodeCapacity < nodeEnd ||
+					proxyCount < 0 || proxyCapacity < 1 || proxyCapacity < proxyCount ) )
 	{
 		r->ok = false;
 	}
 
 	// Stream bounds against what is actually written
-	if ( r->ok && b2SnapCheckCount( r, nodeEnd, (int)sizeof( b2TreeNode ), (int)sizeof( b2TreeNode ) + (int)sizeof( int32_t ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, nodeEnd, (int)sizeof( b2TreeNode ),
+									(int)sizeof( b2TreeNode ) + (int)sizeof( int32_t ) ) == false )
 	{
 		r->ok = false;
 	}
 
-	if ( r->ok && b2SnapCheckCount( r, proxyCapacity, (int)sizeof( b2TreeProxy ), (int)sizeof( b2TreeProxy ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, proxyCapacity, (int)sizeof( b2TreeProxy ),
+									(int)sizeof( b2TreeProxy ) ) == false )
 	{
 		r->ok = false;
 	}
 
 	// Free what the shell or a live world holds, rebuild scratch included. Destroy zeroes the
 	// struct, which covers every field the image does not carry.
-	b2DestroyDynamicTree( tree );
+	b2DestroyDynamicTreeInternal( tree );
 
 	if ( !r->ok )
 	{
 		// Leave a valid empty tree so the shell can still be destroyed
-		*tree = b2CreateDynamicTree( 0 );
+		b2CreateDynamicTreeInternal( tree, 0 );
 		return;
 	}
 
@@ -523,8 +530,8 @@ void b2SerializeWorld( b2World* world, b2RecBuffer* buf )
 		b2SerSolverSet( buf, world->solverSets.data + i );
 	}
 
-	// Sparse arrays. Bodies, shapes and joints carry a host userData pointer scrubbed to NULL on write.
-	// Contacts have no userData, so they go out as raw POD.
+	// Sparse arrays. Bodies, shapes and joints carry a host userData pointer scrubbed to NULL on
+	// write. Contacts have no userData, so they go out as raw POD.
 	b2SerSimArray( buf, world->bodies, b2Body );
 	b2SerSimArray( buf, world->shapes, b2Shape );
 	b2SerPodArray( buf, world->fatAABBs );
@@ -634,7 +641,8 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 	// Step 1: world scalars
 	b2DesWorldConfig( r, world );
 
-	// Step 2: 7 id pools (overwrite entirely, including solverSetIdPool from the 3 pre-created sets)
+	// Step 2: 7 id pools (overwrite entirely, including solverSetIdPool from the 3 pre-created
+	// sets)
 	b2DesIdPool( r, &world->bodyIdPool );
 	b2DesIdPool( r, &world->shapeIdPool );
 	b2DesIdPool( r, &world->chainIdPool );
@@ -658,7 +666,8 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 
 	// Each set writes at least setIndex plus 5 array counts
 	int setCount = b2SnapR_I32( r );
-	if ( r->ok && b2SnapCheckCount( r, setCount, (int)sizeof( b2SolverSet ), 6 * (int)sizeof( int ) ) == false )
+	if ( r->ok && b2SnapCheckCount( r, setCount, (int)sizeof( b2SolverSet ),
+									6 * (int)sizeof( int ) ) == false )
 	{
 		r->ok = false;
 	}
@@ -675,8 +684,8 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 		}
 	}
 
-	// Step 4: sparse arrays. userData was written as NULL by the serializer, so a plain copy restores
-	// it cleanly with no host pointers to scrub here.
+	// Step 4: sparse arrays. userData was written as NULL by the serializer, so a plain copy
+	// restores it cleanly with no host pointers to scrub here.
 	b2DesPodArray( r, world->bodies );
 	b2DesPodArray( r, world->shapes );
 	b2DesPodArray( r, world->fatAABBs );
@@ -691,7 +700,9 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 
 		// Each chain writes 4 ints plus a uint16 generation
 		int chainCount = b2SnapR_I32( r );
-		if ( r->ok && b2SnapCheckCount( r, chainCount, (int)sizeof( b2ChainShape ), 4 * (int)sizeof( int ) + (int)sizeof( uint16_t ) ) == false )
+		if ( r->ok &&
+			 b2SnapCheckCount( r, chainCount, (int)sizeof( b2ChainShape ),
+							   4 * (int)sizeof( int ) + (int)sizeof( uint16_t ) ) == false )
 		{
 			r->ok = false;
 		}
@@ -710,10 +721,12 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 			chain->nextChainId = b2SnapR_I32( r );
 			chain->segmentCount = b2SnapR_I32( r );
 			b2SnapR_Bytes( r, &chain->generation, sizeof( uint16_t ) );
-			// A partial read leaves id as 0, which is a valid slot value, so gate the live branch on r->ok
+			// A partial read leaves id as 0, which is a valid slot value, so gate the live branch
+			// on r->ok
 			if ( r->ok && chain->id != B2_NULL_INDEX )
 			{
-				if ( b2SnapCheckCount( r, chain->segmentCount, (int)sizeof( int ), (int)sizeof( int ) ) == false )
+				if ( b2SnapCheckCount( r, chain->segmentCount, (int)sizeof( int ),
+									   (int)sizeof( int ) ) == false )
 				{
 					r->ok = false;
 					break;
@@ -738,7 +751,8 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 
 		// Each sensor writes shapeId plus 3 array counts
 		int sensorCount = b2SnapR_I32( r );
-		if ( r->ok && b2SnapCheckCount( r, sensorCount, (int)sizeof( b2Sensor ), 4 * (int)sizeof( int ) ) == false )
+		if ( r->ok && b2SnapCheckCount( r, sensorCount, (int)sizeof( b2Sensor ),
+										4 * (int)sizeof( int ) ) == false )
 		{
 			r->ok = false;
 		}
@@ -771,7 +785,8 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 
 		// Each island writes 4 ints plus 3 array counts
 		int islandCount = b2SnapR_I32( r );
-		if ( r->ok && b2SnapCheckCount( r, islandCount, (int)sizeof( b2Island ), 7 * (int)sizeof( int ) ) == false )
+		if ( r->ok && b2SnapCheckCount( r, islandCount, (int)sizeof( b2Island ),
+										7 * (int)sizeof( int ) ) == false )
 		{
 			r->ok = false;
 		}
@@ -837,10 +852,10 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 	return r->ok;
 }
 
-// Validate a snapshot image header and arm the reader just past it. Returns false on a rejected image
-// (too small, bad magic, wrong version, layout mismatch), leaving the caller's world untouched. A
-// layout mismatch caused purely by differing validation builds is called out, since the validation
-// gated fields change struct sizes and such images can never share a layout.
+// Validate a snapshot image header and arm the reader just past it. Returns false on a rejected
+// image (too small, bad magic, wrong version, layout mismatch), leaving the caller's world
+// untouched. A layout mismatch caused purely by differing validation builds is called out, since
+// the validation gated fields change struct sizes and such images can never share a layout.
 static bool b2OpenSnapshotImage( const uint8_t* image, int size, b2SnapReader* r )
 {
 	if ( image == NULL || size < (int)sizeof( b2SnapHeader ) )
@@ -855,14 +870,15 @@ static bool b2OpenSnapshotImage( const uint8_t* image, int size, b2SnapReader* r
 		return false;
 	}
 
-	// World positions are stored at the build precision, so the layout differs irreconcilably across
-	// modes. Called out before the layout hash so the cause is clear rather than a generic mismatch.
+	// World positions are stored at the build precision, so the layout differs irreconcilably
+	// across modes. Called out before the layout hash so the cause is clear rather than a generic
+	// mismatch.
 	bool imageDouble = ( hdr.flags & B2_SNAP_FLAG_DOUBLE_PRECISION ) != 0;
 	bool buildDouble = b2IsDoublePrecision();
 	if ( imageDouble != buildDouble )
 	{
-		b2Log( "snapshot precision mismatch: image %s, this build %s\n", imageDouble ? "double" : "float",
-			   buildDouble ? "double" : "float" );
+		b2Log( "snapshot precision mismatch: image %s, this build %s\n",
+			   imageDouble ? "double" : "float", buildDouble ? "double" : "float" );
 		return false;
 	}
 
@@ -871,8 +887,8 @@ static bool b2OpenSnapshotImage( const uint8_t* image, int size, b2SnapReader* r
 		bool imageValidation = ( hdr.flags & B2_SNAP_FLAG_VALIDATION ) != 0;
 		if ( imageValidation != (bool)B2_ENABLE_VALIDATION )
 		{
-			b2Log( "snapshot layout mismatch: image built with validation %s, this build %s\n", imageValidation ? "on" : "off",
-				   B2_ENABLE_VALIDATION ? "on" : "off" );
+			b2Log( "snapshot layout mismatch: image built with validation %s, this build %s\n",
+				   imageValidation ? "on" : "off", B2_ENABLE_VALIDATION ? "on" : "off" );
 		}
 		else
 		{
@@ -948,6 +964,12 @@ bool b2World_RestoreFromSnapshot( b2WorldId worldId, const uint8_t* image, int s
 	B2_ASSERT( world->locked == false );
 	if ( world->locked )
 	{
+		return false;
+	}
+
+	if ( world->recording != NULL )
+	{
+		b2Log( "b2World_RestoreFromSnapshot: not supported while recording\n" );
 		return false;
 	}
 
@@ -1047,7 +1069,8 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 		hash = b2FnvMixInt( hash, body->localIndex );
 	}
 
-	// Contacts: sparse array, skip free slots (colorIndex == B2_NULL_INDEX and setIndex == B2_NULL_INDEX for free)
+	// Contacts: sparse array, skip free slots (colorIndex == B2_NULL_INDEX and setIndex ==
+	// B2_NULL_INDEX for free)
 	int contactCount = world->contacts.count;
 	for ( int i = 0; i < contactCount; ++i )
 	{
@@ -1127,7 +1150,8 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 					hash = b2FnvMixFloat( hash, sim->prismaticJoint.upperImpulse );
 					break;
 				case b2_revoluteJoint:
-					hash = b2FnvMixBytes( hash, &sim->revoluteJoint.linearImpulse, sizeof( b2Vec2 ) );
+					hash =
+						b2FnvMixBytes( hash, &sim->revoluteJoint.linearImpulse, sizeof( b2Vec2 ) );
 					hash = b2FnvMixFloat( hash, sim->revoluteJoint.springImpulse );
 					hash = b2FnvMixFloat( hash, sim->revoluteJoint.motorImpulse );
 					hash = b2FnvMixFloat( hash, sim->revoluteJoint.lowerImpulse );

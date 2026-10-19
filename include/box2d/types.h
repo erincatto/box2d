@@ -1630,8 +1630,6 @@ typedef enum b2ReplayQueryType
 	b2_replayQueryCollideMover,
 	b2_replayQueryCastRayClosest,
 	b2_replayQueryCastMover,
-	b2_replayQueryShapeTestPoint,
-	b2_replayQueryShapeCastRay,
 } b2ReplayQueryType;
 
 /// A spatial query recorded during a replayed frame, exposed for inspection.
@@ -1639,11 +1637,10 @@ typedef enum b2ReplayQueryType
 typedef struct b2ReplayQueryInfo
 {
 	b2ReplayQueryType type; ///< the query type
-	b2QueryFilter filter;	///< zeroed for the shape local query types
+	b2QueryFilter filter;	///< the query filter
 	b2AABB aabb;			///< overlap AABB, relative to origin
 	b2Pos origin;			///< query origin
 	b2Vec2 translation;		///< ray and cast translation
-	b2ShapeId shapeId;		///< target shape for the shape local query types
 	int hitCount;			///< number of recorded results
 } b2ReplayQueryInfo;
 

@@ -332,6 +332,8 @@ B2_API b2Recording* b2CreateRecordingFromFile( const char* path );
  *
  * All the ids remain valid when a world is restored in place: b2BodyId, b2ShapeId, b2JointId,
  * b2ChainId, and b2ContactId.
+ *
+ * @warning Experimental. The snapshot API and image format will change in future versions.
  * @{
  */
 
@@ -1230,6 +1232,8 @@ B2_API float b2MotorJoint_GetMaxSpringTorque( b2JointId jointId );
  * @brief Functions for the mover joint.
  *
  * The mover joint is designed for a dynamic character mover.
+ *
+ * @warning Experimental. The mover joint may change in future versions.
  * @{
  */
 
@@ -1254,6 +1258,8 @@ B2_API b2Vec2 b2MoverJoint_GetMaxVelocityForce( b2JointId jointId );
 /**
  * @defgroup pogo_joint Pogo Joint
  * @brief Functions for the pogo joint. Used for dynamic character movers.
+ *
+ * @warning Experimental. The pogo joint may change in future versions.
  * @{
  */
 
