@@ -27,6 +27,8 @@ struct DynamicMoverDef
 	float pogoDampingRatio = 0.8f;
 	float pogoCompressionScale = 100.0f;
 	float pogoTensionScale = 100.0f;
+	uint64_t platformMaterialId = 0;
+	bool enableSidePogo = false;
 	bool enablePreSolveEvents = false;
 };
 
@@ -35,6 +37,15 @@ struct DynamicMoverCastResult
 	b2Pos point;
 	b2Vec2 normal;
 	b2BodyId bodyId;
+	uint64_t userMaterialId;
+	float fraction;
+	bool hit;
+};
+
+struct DynamicMoverProbe
+{
+	b2Pos origin;
+	b2Vec2 translation;
 	float fraction;
 	bool hit;
 };
@@ -57,14 +68,16 @@ public:
 	void Create( b2WorldId worldId, const DynamicMoverDef* def );
 	void Destroy();
 
-	// Advance the mover. Throttle is the horizontal input on [-1, 1].
-	void Update( float timeStep, float throttle );
+	// Advance the mover. Throttle is the horizontal input on [-1, 1]
+	void Update( float timeStep, float throttle, float speedScale );
 
 	// Jump if grounded. Returns false when airborne.
 	bool Jump();
 
 	// Gravity scale is used to size the pogo forces, so change it here.
 	void SetGravityScale( float gravityScale );
+
+	void CreateMoverJoint( b2BodyId baseId, b2Vec2 maxForce );
 
 	float m_jumpSpeed;
 	float m_maxSpeed;
@@ -94,6 +107,12 @@ public:
 	float m_pogoCompressionScale;
 	float m_pogoTensionScale;
 
+	// Enables extra ray casts when the central one misses.
+	bool m_enableSidePogo;
+
+	// Used for the pogo to detect moving platforms.
+	uint64_t m_platformMaterialId;
+
 	// Surfaces steeper than this are not ground.
 	float m_minGroundNormalY;
 
@@ -119,10 +138,8 @@ public:
 	float m_pogoVelocity;
 	float m_pogoLength;
 
-	// Ground probe from the last solve, kept for debug drawing. The probe ends at
-	// the origin plus the fraction of the translation.
-	b2Pos m_pogoOrigin;
-	b2Vec2 m_pogoTranslation;
-	float m_pogoFraction;
-	bool m_pogoHit;
+	// Pogo ray cast results for drawing.
+	DynamicMoverProbe m_probes[3];
+	int m_probeCount;
+	int m_selectedProbe;
 };
