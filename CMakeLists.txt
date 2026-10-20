@@ -104,6 +104,13 @@ if (EMSCRIPTEN AND PROJECT_IS_TOP_LEVEL)
 	string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EMSCRIPTEN_PTHREADS_LINKER_FLAGS}")
 endif()
 
+# Needed for samples.exe to find box2d.dll. Must precede add_subdirectory(src) because
+# a target reads these when it is created.
+if(PROJECT_IS_TOP_LEVEL)
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+endif()
+
 add_subdirectory(src)
 
 # This hides samples, test, and doxygen from apps that use box2d via FetchContent
@@ -112,10 +119,6 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_BENCHMARKS "Build the Box2D benchmarks" OFF)
 	option(BOX2D_DOCS "Build the Box2D documentation" OFF)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
-	
-	# Needed for samples.exe to find box2d.dll
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
 		add_subdirectory(shared)
