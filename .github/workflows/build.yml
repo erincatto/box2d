@@ -23,16 +23,17 @@ jobs:
           - name: ubuntu-gcc
             os: ubuntu-latest
             test: ./bin/test
+          # Clang jobs pin the image because each Ubuntu image ships a different set of clang versions
           - name: ubuntu-clang
-            os: ubuntu-latest
-            args: '-DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"'
+            os: ubuntu-26.04
+            args: '-DCMAKE_CXX_COMPILER=clang++-20 -DCMAKE_C_COMPILER=clang-20 -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"'
             test: ./bin/test
           # Runner speed varies about 3x by region and MSan at -O0 can exceed the timeout on the slow ones.
           # -O1 is the level MSan recommends and Debug keeps asserts. Line buffering shows per test timing.
           - name: ubuntu-clang-msan
-            os: ubuntu-latest
+            os: ubuntu-26.04
             timeout: 10
-            args: '-DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_C_FLAGS="-O1 -fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-O1 -fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory"'
+            args: '-DCMAKE_CXX_COMPILER=clang++-20 -DCMAKE_C_COMPILER=clang-20 -DCMAKE_C_FLAGS="-O1 -fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-O1 -fsanitize=memory -fsanitize-memory-track-origins=1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=memory"'
             test: lscpu | grep 'Model name'; nproc; stdbuf -oL ./bin/test
             msan-options: abort_on_error=1:halt_on_error=1
           - name: macos
@@ -271,13 +272,16 @@ jobs:
     - name: Setup zig
       uses: mlugg/setup-zig@v2
       with:
-        version: 0.16.0
+        version: 0.17.0
 
     - name: Build
-      run: zig build -Dunit_tests=true -Doptimize=ReleaseFast
+      run: zig build -Dc_unit_tests=true -Dzig_unit_tests=true -Doptimize=ReleaseFast
 
-    - name: Test
-      run: ${{github.workspace}}/zig-out/bin/test
+    - name: C Test
+      run: ${{github.workspace}}/zig-out/bin/c_test
+
+    - name: Zig Test
+      run: ${{github.workspace}}/zig-out/bin/zig_test
 
   swift-package-manager:
     name: swift-spm

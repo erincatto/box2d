@@ -1,7 +1,13 @@
 .{
     .name = .box2d,
     .version = "3.2.0",
-    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .translate_c = .{
+            .url = "git+https://codeberg.org/ziglang/translate-c?ref=zig-0.17.x#cfac21f3199b2b02ce3fd7db652aa456421fe4ab",
+            .hash = "translate_c-2.0.2-Q_BUWvBNBwDnyehSiuAJmdFcMYHYGA-Jc3KiYdrV2Dqx",
+        },
+    },
+    .minimum_zig_version = "0.17.0",
     .fingerprint = 0xbbd8fcbd18ea5e0b,
     .paths = .{
         "build.zig",
