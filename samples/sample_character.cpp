@@ -844,7 +844,7 @@ public:
 	static constexpr float m_elevatorAmplitude = 4.0f;
 	struct MovingPlatform
 	{
-		b2Vec2 base;
+		b2Pos base;
 		float amplitude;
 		float rate;
 	};
