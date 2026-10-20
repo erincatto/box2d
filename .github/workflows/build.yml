@@ -272,13 +272,16 @@ jobs:
     - name: Setup zig
       uses: mlugg/setup-zig@v2
       with:
-        version: 0.16.0
+        version: 0.17.0
 
     - name: Build
-      run: zig build -Dunit_tests=true -Doptimize=ReleaseFast
+      run: zig build -Dc_unit_tests=true -Dzig_unit_tests=true -Doptimize=ReleaseFast
 
-    - name: Test
-      run: ${{github.workspace}}/zig-out/bin/test
+    - name: C Test
+      run: ${{github.workspace}}/zig-out/bin/c_test
+
+    - name: Zig Test
+      run: ${{github.workspace}}/zig-out/bin/zig_test
 
   swift-package-manager:
     name: swift-spm
