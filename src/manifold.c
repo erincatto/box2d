@@ -1691,13 +1691,15 @@ b2LocalManifold b2CollideChainSegmentAndPolygon( const b2ChainSegment* segmentA,
 		float d2 = b2Dot( normal1, normals[i2] );
 		if ( d1 < d2 )
 		{
-			ib1 = i1, ib2 = i2;
+			ib1 = i1;
+			ib2 = i2;
 			b1 = vertices[ib1];
 			b2 = vertices[ib2];
 		}
 		else
 		{
-			ib1 = i2, ib2 = i2 < count - 1 ? i2 + 1 : 0;
+			ib1 = i2;
+			ib2 = i2 < count - 1 ? i2 + 1 : 0;
 			b1 = vertices[ib1];
 			b2 = vertices[ib2];
 		}

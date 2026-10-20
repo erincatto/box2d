@@ -6,21 +6,13 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 
-struct CastResult
-{
-	b2Pos point;
-	b2Vec2 normal;
-	b2BodyId bodyId;
-	float fraction;
-	bool hit;
-};
-
 static float CastCallback( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context )
 {
-	CastResult* result = (CastResult*)context;
+	DynamicMoverCastResult* result = (DynamicMoverCastResult*)context;
 	result->point = point;
 	result->normal = normal;
 	result->bodyId = b2Shape_GetBody( shapeId );
+	result->userMaterialId = b2Shape_GetUserMaterial( shapeId );
 	result->fraction = fraction;
 	result->hit = true;
 	return fraction;
@@ -43,6 +35,8 @@ DynamicMover::DynamicMover()
 	m_pogoDampingRatio = 0.8f;
 	m_pogoCompressionScale = 100.0f;
 	m_pogoTensionScale = 100.0f;
+	m_enableSidePogo = false;
+	m_platformMaterialId = 0;
 	m_minGroundNormalY = 0.7f;
 
 	m_capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
@@ -64,10 +58,13 @@ DynamicMover::DynamicMover()
 	m_pogoVelocity = 0.0f;
 	m_pogoLength = 0.0f;
 
-	m_pogoOrigin = b2Pos_zero;
-	m_pogoTranslation = b2Vec2_zero;
-	m_pogoFraction = 1.0f;
-	m_pogoHit = false;
+	for ( DynamicMoverProbe& probe : m_probes )
+	{
+		probe = { b2Pos_zero, b2Vec2_zero, 1.0f, false };
+	}
+
+	m_probeCount = 0;
+	m_selectedProbe = 0;
 
 	m_castResult = {};
 }
@@ -91,6 +88,8 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 	m_pogoDampingRatio = def->pogoDampingRatio;
 	m_pogoCompressionScale = def->pogoCompressionScale;
 	m_pogoTensionScale = def->pogoTensionScale;
+	m_enableSidePogo = def->enableSidePogo;
+	m_platformMaterialId = def->platformMaterialId;
 	m_minGroundNormalY = 0.7f;
 
 	m_worldId = worldId;
@@ -126,14 +125,19 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 
 	b2CreateCapsuleShape( m_moverId, &shapeDef, &m_capsule );
 
+	CreateMoverJoint( m_groundId, { m_maxGroundForce, 0.0f } );
+}
+
+void DynamicMover::CreateMoverJoint( b2BodyId baseId, b2Vec2 maxForce )
+{
 	b2MoverJointDef moverDef = b2DefaultMoverJointDef();
 	moverDef.linearVelocity = m_velocity;
-	moverDef.maxVelocityForce = { m_maxGroundForce, 0.0f };
-	moverDef.base.bodyIdA = m_groundId;
+	moverDef.maxVelocityForce = maxForce;
+	moverDef.base.bodyIdA = baseId;
 	moverDef.base.bodyIdB = m_moverId;
 	moverDef.base.collideConnected = true;
 
-	m_moverJointId = b2CreateMoverJoint( worldId, &moverDef );
+	m_moverJointId = b2CreateMoverJoint( m_worldId, &moverDef );
 }
 
 void DynamicMover::Destroy()
@@ -201,7 +205,7 @@ bool DynamicMover::Jump()
 // onGround - controls friction, mover max force, and pogo step-down extension
 // walkable - controls air steer
 // jumping - blocks the pogo from pulling down
-void DynamicMover::Update( float timeStep, float throttle )
+void DynamicMover::Update( float timeStep, float throttle, float speedScale )
 {
 	// Reach further while grounded so the spring can find the ground over a step
 	float stepDownLength = m_pogoRestLength;
@@ -219,10 +223,45 @@ void DynamicMover::Update( float timeStep, float throttle )
 	m_castResult = {};
 	b2World_CastRay( m_worldId, origin, translation, queryFilter, CastCallback, &m_castResult );
 
-	m_pogoOrigin = origin;
-	m_pogoTranslation = translation;
-	m_pogoFraction = m_castResult.hit ? m_castResult.fraction : 1.0f;
-	m_pogoHit = m_castResult.hit;
+	m_probes[0] = { origin, translation, m_castResult.hit ? m_castResult.fraction : 1.0f, m_castResult.hit };
+	m_probeCount = 1;
+	m_selectedProbe = 0;
+
+	b2Vec2 pogoOffset = b2Vec2_zero;
+
+	if ( m_castResult.hit == false && m_enableSidePogo )
+	{
+		float direction = b2Body_GetLinearVelocity( m_moverId ).x < 0.0f ? -1.0f : 1.0f;
+		b2Vec2 offsets[2] = {
+			{ direction * m_capsule.radius, 0.0f },
+			{ -direction * m_capsule.radius, 0.0f },
+		};
+
+		float bestDisplacement = FLT_MAX;
+		for ( b2Vec2 offset : offsets )
+		{
+			DynamicMoverCastResult result = {};
+			b2Pos sideOrigin = origin + offset;
+			b2World_CastRay( m_worldId, sideOrigin, translation, queryFilter, CastCallback, &result );
+
+			m_probes[m_probeCount] = { sideOrigin, translation, result.hit ? result.fraction : 1.0f, result.hit };
+
+			// Use the result that causes the least movement.
+			if ( result.hit )
+			{
+				float displacement = b2AbsFloat( result.fraction * rayLength - m_pogoRestLength );
+				if ( displacement < bestDisplacement )
+				{
+					bestDisplacement = displacement;
+					m_castResult = result;
+					m_selectedProbe = m_probeCount;
+					pogoOffset = offset;
+				}
+			}
+
+			m_probeCount += 1;
+		}
+	}
 
 	// Should jumping end?
 	if ( m_jumping )
@@ -251,7 +290,22 @@ void DynamicMover::Update( float timeStep, float throttle )
 		m_walkable = false;
 	}
 
-	m_velocity = b2Body_GetLinearVelocity( m_moverId );
+	// Connect the mover joint to platform. Acts like friction.
+	b2BodyId baseId = m_groundId;
+	if ( m_castResult.hit && m_platformMaterialId != 0 && m_castResult.userMaterialId == m_platformMaterialId &&
+		 b2Body_GetType( m_castResult.bodyId ) == b2_kinematicBody )
+	{
+		baseId = m_castResult.bodyId;
+	}
+
+	if ( B2_ID_EQUALS( b2Joint_GetBodyA( m_moverJointId ), baseId ) == false )
+	{
+		b2Vec2 maxForce = b2MoverJoint_GetMaxVelocityForce( m_moverJointId );
+		b2DestroyJoint( m_moverJointId );
+		CreateMoverJoint( baseId, maxForce );
+	}
+
+	m_velocity = b2Body_GetLinearVelocity( m_moverId ) - b2Body_GetLinearVelocity( baseId );
 
 	// Friction
 	if ( m_onGround )
@@ -284,13 +338,14 @@ void DynamicMover::Update( float timeStep, float throttle )
 		b2MoverJoint_SetMaxVelocityForce( m_moverJointId, { m_maxAirForce, 0.0f } );
 	}
 
-	b2Vec2 desiredVelocity = { m_maxSpeed * throttle, 0.0f };
+	float maxSpeed = speedScale * m_maxSpeed;
+	b2Vec2 desiredVelocity = { maxSpeed * throttle, 0.0f };
 	float desiredSpeed;
 	b2Vec2 desiredDirection = b2GetLengthAndNormalize( &desiredSpeed, desiredVelocity );
 
-	if ( desiredSpeed > m_maxSpeed )
+	if ( desiredSpeed > maxSpeed )
 	{
-		desiredSpeed = m_maxSpeed;
+		desiredSpeed = maxSpeed;
 	}
 
 	// Accelerate
@@ -299,7 +354,7 @@ void DynamicMover::Update( float timeStep, float throttle )
 	if ( addSpeed > 0.0f )
 	{
 		float steer = m_walkable ? 1.0f : m_airSteer;
-		float accelSpeed = steer * m_accelerate * m_maxSpeed * timeStep;
+		float accelSpeed = steer * m_accelerate * maxSpeed * timeStep;
 		if ( accelSpeed > addSpeed )
 		{
 			accelSpeed = addSpeed;
@@ -326,7 +381,7 @@ void DynamicMover::Update( float timeStep, float throttle )
 
 		b2PogoJointDef pogoDef = b2DefaultPogoJointDef();
 		pogoDef.base.localFrameA.p = b2Body_GetLocalPoint( m_castResult.bodyId, m_castResult.point );
-		pogoDef.base.localFrameB.p = m_capsule.center1;
+		pogoDef.base.localFrameB.p = m_capsule.center1 + pogoOffset;
 		pogoDef.normal = m_castResult.normal;
 		pogoDef.base.bodyIdA = m_castResult.bodyId;
 		pogoDef.base.bodyIdB = m_moverId;

@@ -403,10 +403,15 @@ public:
 			def.capsule = { { 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f };
 			def.filter = { MoverBit, StaticBit | DynamicBit };
 			def.enablePreSolveEvents = true;
+			def.platformMaterialId = m_platformMaterial;
 			m_mover.Create( m_worldId, &def );
 		}
 
 		m_elevatorId = b2_nullBodyId;
+		for ( b2BodyId& platformId : m_platformIds )
+		{
+			platformId = b2_nullBodyId;
+		}
 
 		b2BodyId groundId1;
 		{
@@ -543,6 +548,38 @@ public:
 			b2CreatePolygonShape( m_elevatorId, &shapeDef, &box );
 		}
 
+		// Platform ledges
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			b2BodyId ledgeId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+			b2Polygon box = b2MakeOffsetBox( 2.95f, 0.25f, { 117.05f, 13.85f }, b2Rot_identity );
+			b2CreatePolygonShape( ledgeId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 2.0f, 0.25f, { 136.0f, 13.85f }, b2Rot_identity );
+			b2CreatePolygonShape( ledgeId, &shapeDef, &box );
+
+			box = b2MakeOffsetBox( 1.75f, 0.25f, { 151.75f, 13.85f }, b2Rot_identity );
+			b2CreatePolygonShape( ledgeId, &shapeDef, &box );
+		}
+
+		for ( int i = 0; i < m_platformCount; ++i )
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.type = b2_kinematicBody;
+			bodyDef.position = m_platforms[i].base;
+			m_platformIds[i] = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			shapeDef.filter = { DynamicBit, AllBits, 0 };
+			shapeDef.material.userMaterialId = m_platformMaterial;
+
+			b2Polygon box = b2MakeBox( 1.5f, 0.1f );
+			b2CreatePolygonShape( m_platformIds[i], &shapeDef, &box );
+		}
+
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
@@ -677,6 +714,7 @@ public:
 		ImGui::SliderFloat( "Air Steer", &m_mover.m_airSteer, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Pogo Hertz", &m_mover.m_pogoHertz, 0.0f, 30.0f, "%.0f" );
 		ImGui::SliderFloat( "Pogo Damping", &m_mover.m_pogoDampingRatio, 0.0f, 4.0f, "%.1f" );
+		ImGui::Checkbox( "Side Pogo", &m_mover.m_enableSidePogo );
 
 		ImGui::Separator();
 
@@ -687,7 +725,7 @@ public:
 
 	void Step() override
 	{
-		DrawScreenTextLine( "left/right/jump = A/D/Space" );
+		DrawScreenTextLine( "left/right/jump/sprint/walk = A/D/Space/Shift/Ctrl" );
 
 		bool pause = false;
 		if ( m_context->pause )
@@ -712,6 +750,21 @@ public:
 			b2Body_SetTargetTransform( m_elevatorId, { point, b2Rot_identity }, timeStep, wake );
 		}
 
+		for ( int i = 0; i < m_platformCount; ++i )
+		{
+			if ( timeStep > 0.0f && B2_IS_NON_NULL( m_platformIds[i] ) )
+			{
+				const MovingPlatform& platform = m_platforms[i];
+				b2Pos point = {
+					.x = platform.amplitude * sinf( platform.rate * m_time ) + platform.base.x,
+					.y = platform.base.y,
+				};
+
+				bool wake = true;
+				b2Body_SetTargetTransform( m_platformIds[i], { point, b2Rot_identity }, timeStep, wake );
+			}
+		}
+
 		m_time += timeStep;
 
 		if ( pause == false )
@@ -728,6 +781,16 @@ public:
 				throttle += 1.0f;
 			}
 
+			float speedScale = 1.0f;
+			if ( glfwGetKey( m_context->window, GLFW_KEY_LEFT_CONTROL ) || glfwGetKey( m_context->window, GLFW_KEY_RIGHT_CONTROL ) )
+			{
+				speedScale = 0.25f;
+			}
+			else if ( glfwGetKey( m_context->window, GLFW_KEY_LEFT_SHIFT ) || glfwGetKey( m_context->window, GLFW_KEY_RIGHT_SHIFT ) )
+			{
+				speedScale = 1.5f;
+			}
+
 			if ( glfwGetKey( m_context->window, GLFW_KEY_SPACE ) )
 			{
 				if ( m_jumpReleased && m_mover.Jump() )
@@ -740,12 +803,17 @@ public:
 				m_jumpReleased = true;
 			}
 
-			m_mover.Update( timeStep, throttle );
+			m_mover.Update( timeStep, throttle, speedScale );
 		}
 
 		Sample::Step();
 
-		DrawPogo( m_draw, m_mover.m_pogoOrigin, m_mover.m_pogoTranslation, m_mover.m_pogoFraction, m_mover.m_pogoHit );
+		for ( int i = 0; i < m_mover.m_probeCount; ++i )
+		{
+			const DynamicMoverProbe& probe = m_mover.m_probes[i];
+			bool selected = probe.hit && i == m_mover.m_selectedProbe;
+			DrawPogo( m_draw, probe.origin, probe.translation, probe.fraction, selected );
+		}
 
 		b2Pos position = b2Body_GetPosition( m_mover.m_moverId );
 
@@ -774,9 +842,24 @@ public:
 
 	static constexpr b2Vec2 m_elevatorBase = { 112.0f, 10.0f };
 	static constexpr float m_elevatorAmplitude = 4.0f;
+	struct MovingPlatform
+	{
+		b2Pos base;
+		float amplitude;
+		float rate;
+	};
+
+	static constexpr int m_platformCount = 2;
+	static constexpr MovingPlatform m_platforms[m_platformCount] = {
+		{ { 127.0f, 14.0f }, 5.5f, 0.5f },
+		{ { 144.0f, 14.0f }, 4.5f, 0.8f },
+	};
+
+	static constexpr uint64_t m_platformMaterial = 1;
 
 	DynamicMover m_mover;
 	b2BodyId m_elevatorId;
+	b2BodyId m_platformIds[m_platformCount];
 	float m_time;
 	bool m_preSolve;
 	bool m_jumpReleased;

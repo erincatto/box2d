@@ -122,13 +122,13 @@ endif()
 
 if (BOX2D_PROFILE)
     target_compile_definitions(box2d PRIVATE BOX2D_PROFILE)
-    set(TRACY_DELAYED_INIT ON CACHE BOOL "Enable delayed init for Tracy" FORCE)
+    set(TRACY_ENABLE ON CACHE BOOL "Enable profiling" FORCE)
     set(TRACY_MANUAL_LIFETIME ON CACHE BOOL "Enable manual lifetime for Tracy" FORCE)
 
     FetchContent_Declare(
         tracy
         GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-        GIT_TAG v0.13.1
+        GIT_TAG v0.14.1
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
     )
