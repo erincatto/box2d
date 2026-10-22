@@ -347,6 +347,136 @@ static int SingleMaterialTest( void )
 	return 0;
 }
 
+// A ghost left on its endpoint means no neighbor, so both ends must act as convex corners: a
+// circle past either cap gets a contact, and a box corner just past either end gets the diagonal
+// vertex normal instead of being snapped up onto the segment normal as if the surface continued.
+static void CollideEnds( b2ChainSegment segment, int* circleCount, float* boxNormalX )
+{
+	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+	b2Polygon box = b2MakeSquare( 0.25f );
+
+	b2Transform xf1 = { { 4.3f, 0.2f }, b2Rot_identity };
+	b2Transform xf2 = { { -0.3f, 0.2f }, b2Rot_identity };
+	circleCount[0] = b2CollideChainSegmentAndCircle( &segment, &circle, xf1 ).pointCount;
+	circleCount[1] = b2CollideChainSegmentAndCircle( &segment, &circle, xf2 ).pointCount;
+
+	b2SimplexCache cache = { 0 };
+	xf1.p = (b2Vec2){ 4.26f, 0.26f };
+	b2LocalManifold m1 = b2CollideChainSegmentAndPolygon( &segment, &box, xf1, &cache );
+
+	cache = (b2SimplexCache){ 0 };
+	xf2.p = (b2Vec2){ -0.26f, 0.26f };
+	b2LocalManifold m2 = b2CollideChainSegmentAndPolygon( &segment, &box, xf2, &cache );
+
+	boxNormalX[0] = m1.pointCount > 0 ? m1.normal.x : 0.0f;
+	boxNormalX[1] = m2.pointCount > 0 ? m2.normal.x : 0.0f;
+
+}
+
+static int DegenerateGhostTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	// Right to left so the collision side faces up
+	b2Vec2 p1 = { 4.0f, 0.0f };
+	b2Vec2 p2 = { 0.0f, 0.0f };
+	b2ChainSegment degenerate = { p1, { p1, p2 }, p2, B2_NULL_INDEX };
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2ShapeId createdId = b2CreateChainSegmentShape( bodyId, &shapeDef, &degenerate );
+
+	b2Segment plain = { { 0.0f, -1.0f }, { 4.0f, -1.0f } };
+	b2ShapeId setId = b2CreateSegmentShape( bodyId, &shapeDef, &plain );
+	b2Shape_SetChainSegment( setId, &degenerate );
+
+	b2ChainSegment created = b2Shape_GetChainSegment( createdId );
+	b2ChainSegment set = b2Shape_GetChainSegment( setId );
+
+	b2DestroyWorld( worldId );
+
+	ENSURE( SamePoint( created.segment.point1, p1 ) );
+	ENSURE( SamePoint( created.segment.point2, p2 ) );
+	ENSURE( SamePoint( created.ghost1, set.ghost1 ) );
+	ENSURE( SamePoint( created.ghost2, set.ghost2 ) );
+	ENSURE( b2Distance( created.ghost1, p1 ) > B2_LINEAR_SLOP );
+	ENSURE( b2Distance( created.ghost2, p2 ) > B2_LINEAR_SLOP );
+
+	int circleCount[2];
+	float boxNormalX[2];
+	CollideEnds( created, circleCount, boxNormalX );
+
+	ENSURE( circleCount[0] == 1 );
+	ENSURE( circleCount[1] == 1 );
+	ENSURE( boxNormalX[0] > 0.5f );
+	ENSURE( boxNormalX[1] < -0.5f );
+
+	return 0;
+}
+
+typedef struct MoverPlanes
+{
+	int count;
+	b2Vec2 normal;
+} MoverPlanes;
+
+static bool GatherPlane( b2ShapeId shapeId, const b2PlaneResult* plane, void* context )
+{
+	MAYBE_UNUSED( shapeId );
+	MoverPlanes* planes = context;
+	planes->count += 1;
+	planes->normal = plane->plane.normal;
+	return true;
+}
+
+static MoverPlanes CollideMoverAt( b2WorldId worldId, float y )
+{
+	b2Capsule mover = { { 1.5f, y }, { 2.5f, y }, 0.3f };
+	MoverPlanes planes = { 0 };
+	b2World_CollideMover( worldId, b2Pos_zero, &mover, b2DefaultQueryFilter(), GatherPlane, &planes );
+	return planes;
+}
+
+// The mover must see a chain segment from the front only, matching contacts and the mover cast.
+// A plain segment beside it stays two-sided.
+static int MoverOneSidedTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	// Right to left so the collision side faces up
+	b2ChainSegment chainSegment = { { 5.0f, 0.0f }, { { 4.0f, 0.0f }, { 0.0f, 0.0f } }, { -1.0f, 0.0f }, B2_NULL_INDEX };
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2CreateChainSegmentShape( bodyId, &shapeDef, &chainSegment );
+
+	MoverPlanes front = CollideMoverAt( worldId, 0.2f );
+	MoverPlanes behind = CollideMoverAt( worldId, -0.2f );
+
+	b2Segment segment = { { 4.0f, 0.0f }, { 0.0f, 0.0f } };
+	b2BodyDef plainDef = b2DefaultBodyDef();
+	plainDef.position = (b2Vec2){ 0.0f, 10.0f };
+	b2BodyId plainId = b2CreateBody( worldId, &plainDef );
+	b2CreateSegmentShape( plainId, &shapeDef, &segment );
+
+	MoverPlanes plainBehind = CollideMoverAt( worldId, 9.8f );
+
+	b2DestroyWorld( worldId );
+
+	ENSURE( front.count == 1 );
+	ENSURE( front.normal.y > 0.99f );
+	ENSURE( behind.count == 0 );
+	ENSURE( plainBehind.count == 1 );
+	ENSURE( plainBehind.normal.y < -0.99f );
+
+	return 0;
+}
+
 // Each subtest probes a different part of the index space, so report all of them instead of
 // stopping at the first failure the way RUN_SUBTEST does
 static int RunChainSubtest( const char* name, int ( *subtest )( void ) )
@@ -365,6 +495,8 @@ int ChainTest( void )
 	result |= RunChainSubtest( "LoopMaterialTest", LoopMaterialTest );
 	result |= RunChainSubtest( "OpenMaterialTest", OpenMaterialTest );
 	result |= RunChainSubtest( "SingleMaterialTest", SingleMaterialTest );
+	result |= RunChainSubtest( "DegenerateGhostTest", DegenerateGhostTest );
+	result |= RunChainSubtest( "MoverOneSidedTest", MoverOneSidedTest );
 
 	return result;
 }
