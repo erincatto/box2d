@@ -249,7 +249,7 @@ static void b2FixGhostVertices( b2ChainSegment* chainSegment )
 	b2Vec2 p2 = chainSegment->segment.point2;
 	float tolSqr = B2_LINEAR_SLOP * B2_LINEAR_SLOP;
 
-	// normal is computed twice in the worse case, but neither should happen normally.
+	// normal is computed twice in the worst case, but neither should happen normally.
 
 	if ( b2DistanceSquared( chainSegment->ghost1, p1 ) <= tolSqr )
 	{

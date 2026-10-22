@@ -460,7 +460,7 @@ static int MoverOneSidedTest( void )
 
 	b2Segment segment = { { 4.0f, 0.0f }, { 0.0f, 0.0f } };
 	b2BodyDef plainDef = b2DefaultBodyDef();
-	plainDef.position = (b2Vec2){ 0.0f, 10.0f };
+	plainDef.position = (b2Pos){ 0.0f, 10.0f };
 	b2BodyId plainId = b2CreateBody( worldId, &plainDef );
 	b2CreateSegmentShape( plainId, &shapeDef, &segment );
 
