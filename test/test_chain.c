@@ -477,6 +477,186 @@ static int MoverOneSidedTest( void )
 	return 0;
 }
 
+static float LoopArea( const b2ChainData* chain )
+{
+	float area = 0.0f;
+	for ( int i = 0; i < chain->count; ++i )
+	{
+		b2Vec2 p1 = chain->points[i];
+		b2Vec2 p2 = chain->points[i + 1 < chain->count ? i + 1 : 0];
+		area += 0.5f * b2Cross( p1, p2 );
+	}
+	return area;
+}
+
+static bool CreateChainsOnGround( const b2ChainResult* result )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	BeginCountingAsserts();
+	bool valid = true;
+	for ( int i = 0; i < result->chainCount; ++i )
+	{
+		b2ChainDef chainDef = b2DefaultChainDef();
+		chainDef.points = result->chains[i].points;
+		chainDef.pointCount = result->chains[i].count;
+		chainDef.isLoop = true;
+		b2ChainId chainId = b2CreateChain( bodyId, &chainDef );
+		valid = valid && b2Chain_IsValid( chainId );
+	}
+	valid = valid && EndCountingAsserts() == 0;
+
+	b2DestroyWorld( worldId );
+	return valid;
+}
+
+// Tiles that share edges must merge into the outline of their union, with seams and T-junctions
+// gone and every loop winding counter-clockwise around solid.
+static int ComputeChainsTest( void )
+{
+	// A row of boxes with float noise on the seams welds into one rectangle
+	{
+		b2Polygon boxes[3];
+		for ( int i = 0; i < 3; ++i )
+		{
+			float noise = 0.0001f * (float)( i - 1 );
+			boxes[i] = b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.0f * i + noise, noise }, b2Rot_identity );
+		}
+
+		b2ChainResult result = b2ComputeChains( boxes, 3, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 1 );
+		ENSURE( result.chains[0].count == 4 );
+		ENSURE_SMALL( LoopArea( result.chains ) - 3.0f, 0.01f );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+		ENSURE( result.chains == NULL && result.chainCount == 0 );
+	}
+
+	// Two boxes sitting on one long box meet it in a T-junction
+	{
+		b2Polygon boxes[3] = {
+			b2MakeOffsetBox( 1.0f, 0.5f, (b2Vec2){ 1.0f, 0.5f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 0.5f, 1.5f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.5f, 1.5f }, b2Rot_identity ),
+		};
+
+		b2ChainResult result = b2ComputeChains( boxes, 3, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 1 );
+		ENSURE( result.chains[0].count == 4 );
+		ENSURE_SMALL( LoopArea( result.chains ) - 4.0f, 0.01f );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// Boxes touching at one corner trace a single loop through the shared vertex, turning into
+	// each empty quadrant so both corners there are concave. The shared vertex is ambiguous.
+	{
+		b2Polygon boxes[2] = {
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 0.5f, 0.5f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.5f, 1.5f }, b2Rot_identity ),
+		};
+
+		b2ChainResult result = b2ComputeChains( boxes, 2, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusCornerTouch );
+		ENSURE( result.chainCount == 1 );
+
+		const b2ChainData* chain = result.chains;
+		ENSURE( chain->count == 8 );
+		ENSURE_SMALL( LoopArea( chain ) - 2.0f, 0.01f );
+
+		b2Vec2 shared = { 1.0f, 1.0f };
+		int visits = 0;
+		for ( int i = 0; i < chain->count; ++i )
+		{
+			if ( b2DistanceSquared( chain->points[i], shared ) < 1.0e-6f )
+			{
+				b2Vec2 previous = chain->points[i > 0 ? i - 1 : chain->count - 1];
+				b2Vec2 next = chain->points[i + 1 < chain->count ? i + 1 : 0];
+				b2Vec2 edge1 = b2Sub( shared, previous );
+				b2Vec2 edge2 = b2Sub( next, shared );
+				ENSURE( b2Cross( edge1, edge2 ) < 0.0f );
+				visits += 1;
+			}
+		}
+		ENSURE( visits == 2 );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// A ring of boxes gives an outer loop and a clockwise hole
+	{
+		b2Polygon boxes[8];
+		int count = 0;
+		for ( int i = 0; i < 3; ++i )
+		{
+			for ( int j = 0; j < 3; ++j )
+			{
+				if ( i == 1 && j == 1 )
+				{
+					continue;
+				}
+				boxes[count++] = b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.0f * i, 1.0f * j }, b2Rot_identity );
+			}
+		}
+
+		b2ChainResult result = b2ComputeChains( boxes, count, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 2 );
+
+		float areas[2] = { LoopArea( result.chains + 0 ), LoopArea( result.chains + 1 ) };
+		float outer = b2MaxFloat( areas[0], areas[1] );
+		float inner = b2MinFloat( areas[0], areas[1] );
+		ENSURE( result.chains[0].count == 4 && result.chains[1].count == 4 );
+		ENSURE_SMALL( outer - 9.0f, 0.01f );
+		ENSURE_SMALL( inner + 1.0f, 0.01f );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// A gap narrower than the weld tolerance closes, a wider one keeps the tiles apart
+	{
+		b2Polygon boxes[2] = {
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 0.0f, 0.0f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.05f, 0.0f }, b2Rot_identity ),
+		};
+
+		b2ChainResult result = b2ComputeChains( boxes, 2, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 2 );
+		b2FreeChains( &result );
+
+		result = b2ComputeChains( boxes, 2, 0.1f );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 1 );
+		ENSURE( result.chains[0].count == 4 );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// Overlapping polygons are not supported, an exact duplicate shows up as duplicate edges and
+	// overlap wins over the corner touches it also causes
+	{
+		b2Polygon boxes[2] = { b2MakeBox( 0.5f, 0.5f ), b2MakeBox( 0.5f, 0.5f ) };
+
+		b2ChainResult result = b2ComputeChains( boxes, 2, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusOverlap );
+		b2FreeChains( &result );
+	}
+
+	{
+		b2ChainResult result = b2ComputeChains( NULL, 0, B2_LINEAR_SLOP );
+		ENSURE( result.chains == NULL && result.chainCount == 0 && result.status == b2_chainStatusSuccess );
+		b2FreeChains( &result );
+	}
+
+	return 0;
+}
+
 // Each subtest probes a different part of the index space, so report all of them instead of
 // stopping at the first failure the way RUN_SUBTEST does
 static int RunChainSubtest( const char* name, int ( *subtest )( void ) )
@@ -497,6 +677,7 @@ int ChainTest( void )
 	result |= RunChainSubtest( "SingleMaterialTest", SingleMaterialTest );
 	result |= RunChainSubtest( "DegenerateGhostTest", DegenerateGhostTest );
 	result |= RunChainSubtest( "MoverOneSidedTest", MoverOneSidedTest );
+	result |= RunChainSubtest( "ComputeChainsTest", ComputeChainsTest );
 
 	return result;
 }
