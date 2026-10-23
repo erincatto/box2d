@@ -7,7 +7,6 @@
 #include "box2d/collision.h"
 #include "box2d/constants.h"
 #include "box2d/math_functions.h"
-#include "box2d/types.h"
 
 #include <float.h>
 #include <math.h>
@@ -72,34 +71,34 @@ static float b2DistanceSquaredToSegment( b2Vec2 p, b2Vec2 a, b2Vec2 b )
 	return b2DistanceSquared( p, b2MulAdd( a, t, d ) );
 }
 
-static bool b2SplitQueryCallback( int proxyId, uint64_t userData, void* context )
+static void b2TestSplitVertex( b2SplitContext* context, int vertex )
 {
-	B2_UNUSED( proxyId );
-
-	b2SplitContext* splitContext = context;
-	int vertex = (int)userData;
-	if ( vertex == splitContext->vertex1 || vertex == splitContext->vertex2 )
+	if ( vertex == context->vertex1 || vertex == context->vertex2 )
 	{
-		return true;
+		return;
 	}
 
-	b2Vec2 p = splitContext->vertices[vertex];
-	b2Vec2 a = splitContext->point1;
-	b2Vec2 d = b2Sub( splitContext->point2, a );
+	b2Vec2 p = context->vertices[vertex];
+	b2Vec2 a = context->point1;
+	b2Vec2 d = b2Sub( context->point2, a );
 	float t = b2Dot( b2Sub( p, a ), d ) / b2Dot( d, d );
 	if ( t <= 0.0f || 1.0f <= t )
 	{
-		return true;
+		return;
 	}
 
-	if ( b2DistanceSquared( p, b2MulAdd( a, t, d ) ) > splitContext->toleranceSquared )
+	if ( b2DistanceSquared( p, b2MulAdd( a, t, d ) ) > context->toleranceSquared )
 	{
-		return true;
+		return;
 	}
 
 	b2EdgeSplit split = { t, vertex };
-	b2Array_Push( splitContext->splits, split );
-	return true;
+	b2Array_Push( context->splits, split );
+}
+
+static int b2CellCoordinate( float x, float inverseCellSize )
+{
+	return (int)floorf( x * inverseCellSize );
 }
 
 static int b2WeldVertices( const b2Polygon* polygons, int polygonCount, float tolerance, b2Vec2* vertices, int* remap,
@@ -168,19 +167,52 @@ static int b2WeldVertices( const b2Polygon* polygons, int polygonCount, float to
 static void b2SplitEdges( const b2Polygon* polygons, int polygonCount, const b2Vec2* vertices, int vertexCount,
 						  const int* remap, float tolerance, b2Array( b2BuilderEdge ) * edges )
 {
-	b2DynamicTree* tree = b2CreateDynamicTree( vertexCount );
+	float lengthSum = 0.0f;
+	int inputEdgeCount = 0;
+	int base = 0;
+	for ( int i = 0; i < polygonCount; ++i )
+	{
+		int count = polygons[i].count;
+		for ( int j = 0; j < count; ++j )
+		{
+			int vertex1 = remap[base + j];
+			int vertex2 = remap[base + ( j + 1 < count ? j + 1 : 0 )];
+			if ( vertex1 != vertex2 )
+			{
+				lengthSum += b2Distance( vertices[vertex1], vertices[vertex2] );
+				inputEdgeCount += 1;
+			}
+		}
+		base += count;
+	}
+
+	if ( inputEdgeCount == 0 )
+	{
+		return;
+	}
+
+	// Base the hash grid cell size on the average length.
+	float cellSize = b2MaxFloat( lengthSum / inputEdgeCount, 4.0f * tolerance );
+	float inverseCellSize = 1.0f / cellSize;
+
+	b2IndexMap grid;
+	b2IndexMap_init( &grid );
+	b2IndexMap_reserve( &grid, vertexCount );
+	int* gridNext = b2Alloc( vertexCount * sizeof( int ) );
 	for ( int i = 0; i < vertexCount; ++i )
 	{
-		b2AABB box = { vertices[i], vertices[i] };
-		b2CreateTreeProxy( tree, box, B2_DEFAULT_CATEGORY_BITS, (uint64_t)i );
+		uint64_t key = b2CellKey( b2CellCoordinate( vertices[i].x, inverseCellSize ),
+								  b2CellCoordinate( vertices[i].y, inverseCellSize ) );
+		b2IndexMap_itr itr = b2IndexMap_get( &grid, key );
+		gridNext[i] = b2IndexMap_is_end( itr ) ? B2_NULL_INDEX : itr.data->val;
+		b2IndexMap_insert( &grid, key, i );
 	}
 
 	b2SplitContext context = { 0 };
 	context.vertices = vertices;
 	context.toleranceSquared = tolerance * tolerance;
-	b2Vec2 extension = { tolerance, tolerance };
 
-	int base = 0;
+	base = 0;
 	for ( int i = 0; i < polygonCount; ++i )
 	{
 		int count = polygons[i].count;
@@ -202,8 +234,43 @@ static void b2SplitEdges( const b2Polygon* polygons, int polygonCount, const b2V
 			context.vertex2 = vertex2;
 			context.splits.count = 0;
 
-			b2AABB box = { b2Sub( b2Min( p1, p2 ), extension ), b2Add( b2Max( p1, p2 ), extension ) };
-			b2DynamicTree_OverlapAABBAll( tree, box, b2SplitQueryCallback, &context );
+			// Walk the grid. First the column range. Then for each row use the range of
+			// cells the segment visits.
+			float minX = b2MinFloat( p1.x, p2.x );
+			float maxX = b2MaxFloat( p1.x, p2.x );
+			float dx = p2.x - p1.x;
+			int firstColumn = b2CellCoordinate( minX - tolerance, inverseCellSize );
+			int lastColumn = b2CellCoordinate( maxX + tolerance, inverseCellSize );
+			for ( int column = firstColumn; column <= lastColumn; ++column )
+			{
+				float xa = b2ClampFloat( column * cellSize - tolerance, minX, maxX );
+				float xb = b2ClampFloat( ( column + 1 ) * cellSize + tolerance, minX, maxX );
+				float ya = p1.y;
+				float yb = p2.y;
+				if ( dx != 0.0f )
+				{
+					float ta = b2ClampFloat( ( xa - p1.x ) / dx, 0.0f, 1.0f );
+					float tb = b2ClampFloat( ( xb - p1.x ) / dx, 0.0f, 1.0f );
+					ya = p1.y + ta * ( p2.y - p1.y );
+					yb = p1.y + tb * ( p2.y - p1.y );
+				}
+
+				int firstRow = b2CellCoordinate( b2MinFloat( ya, yb ) - tolerance, inverseCellSize );
+				int lastRow = b2CellCoordinate( b2MaxFloat( ya, yb ) + tolerance, inverseCellSize );
+				for ( int row = firstRow; row <= lastRow; ++row )
+				{
+					b2IndexMap_itr itr = b2IndexMap_get( &grid, b2CellKey( column, row ) );
+					if ( b2IndexMap_is_end( itr ) )
+					{
+						continue;
+					}
+
+					for ( int k = itr.data->val; k != B2_NULL_INDEX; k = gridNext[k] )
+					{
+						b2TestSplitVertex( &context, k );
+					}
+				}
+			}
 
 			b2EdgeSplit* splits = context.splits.data;
 			int splitCount = context.splits.count;
@@ -236,7 +303,8 @@ static void b2SplitEdges( const b2Polygon* polygons, int polygonCount, const b2V
 	}
 
 	b2Array_Destroy( context.splits );
-	b2DestroyDynamicTree( tree );
+	b2Free( gridNext, vertexCount * sizeof( int ) );
+	b2IndexMap_cleanup( &grid );
 }
 
 static bool b2CancelEdges( const b2BuilderEdge* edges, int edgeCount, bool* alive )

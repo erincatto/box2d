@@ -1957,7 +1957,6 @@ public:
 		m_scene = e_slidingBox;
 		m_terrain = e_chains;
 		m_follow = true;
-		m_drawLoopPoints = true;
 		m_weldTolerance = B2_LINEAR_SLOP;
 		SetSceneDefaults();
 		Rebuild();
@@ -2346,7 +2345,7 @@ public:
 			chainDef.materialCount = 1;
 			b2CreateChain( m_groundId, &chainDef );
 
-			m_loopPoints.insert( m_loopPoints.end(), chain.points, chain.points + chain.count );
+			m_pointCount += chain.count;
 		}
 
 		m_chainCount = result.chainCount;
@@ -2370,8 +2369,8 @@ public:
 
 		m_polygons.clear();
 		m_surface.clear();
-		m_loopPoints.clear();
 		m_chainCount = 0;
+		m_pointCount = 0;
 		m_chainStatus = b2_chainStatusSuccess;
 		m_friction = 0.0f;
 		m_push = b2Vec2_zero;
@@ -2471,11 +2470,11 @@ public:
 		changed |= ImGui::Combo( "Terrain", &m_terrain, terrainNames, IM_ARRAYSIZE( terrainNames ) );
 		if ( m_terrain == e_chains )
 		{
-			changed |= ImGui::SliderFloat( "Weld Tolerance", &m_weldTolerance, B2_LINEAR_SLOP, 0.25f, "%.4f",
+			changed |= ImGui::SliderFloat( "Weld", &m_weldTolerance, B2_LINEAR_SLOP, 0.25f, "%.4f",
 										   ImGuiSliderFlags_Logarithmic );
 		}
 		changed |= ImGui::SliderFloat( "Speed", &m_speed, 0.0f, 100.0f, "%.1f" );
-		changed |= ImGui::SliderFloat( "Gravity Scale", &m_gravityScale, 1.0f, 100.0f, "%.1f", ImGuiSliderFlags_Logarithmic );
+		changed |= ImGui::SliderFloat( "Gravity", &m_gravityScale, 1.0f, 100.0f, "%.1f", ImGuiSliderFlags_Logarithmic );
 		if ( info.knobName != nullptr )
 		{
 			changed |= ImGui::SliderFloat( info.knobName, &m_knob, 0.0f, info.knobMax, "%.4f" );
@@ -2483,7 +2482,6 @@ public:
 		ImGui::PopItemWidth();
 
 		ImGui::Checkbox( "Follow", &m_follow );
-		ImGui::Checkbox( "Loop Points", &m_drawLoopPoints );
 
 		if ( ImGui::Button( "Relaunch" ) || changed )
 		{
@@ -2517,19 +2515,11 @@ public:
 
 		FollowPlayer();
 
-		if ( m_drawLoopPoints )
-		{
-			for ( b2Vec2 point : m_loopPoints )
-			{
-				DrawPoint( m_draw, b2ToPos( point ), 5.0f, b2_colorGold );
-			}
-		}
-
 		DrawScreenTextLine( "%s", m_scenes[m_scene].summary );
 		if ( m_terrain == e_chains )
 		{
 			DrawScreenTextLine( "%d polygons became %d chain loops with %d points", (int)m_polygons.size(), m_chainCount,
-								(int)m_loopPoints.size() );
+								m_pointCount );
 
 			if ( m_chainStatus == b2_chainStatusCornerTouch )
 			{
@@ -2565,8 +2555,8 @@ public:
 	b2BodyId m_playerId;
 	std::vector<b2Polygon> m_polygons;
 	std::vector<b2Vec2> m_surface;
-	std::vector<b2Vec2> m_loopPoints;
 	int m_chainCount;
+	int m_pointCount;
 	b2ChainStatus m_chainStatus;
 
 	int m_scene;
@@ -2575,7 +2565,6 @@ public:
 	float m_gravityScale;
 	float m_knob;
 	bool m_follow;
-	bool m_drawLoopPoints;
 	float m_weldTolerance;
 
 	float m_friction;

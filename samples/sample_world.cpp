@@ -73,12 +73,13 @@ public:
 			// Most algorithms in Box2D work in local coordinates, but contact points are computed
 			// relative to the body origin.
 			// This makes a noticeable improvement in stability far from the origin.
-			if ( i % 10 == 0 )
+			if ( i % m_columnsPerBody == 0 )
 			{
 				bodyDef.position.x = xBody;
 				groundId = b2CreateBody( m_worldId, &bodyDef );
 				m_groundIds.push_back( groundId );
 				xShape = 0.0f;
+				shapeDef.material.customColor = m_chunkColors[(m_groundIds.size() - 1) % 6];
 			}
 
 			float y = 0.0f;
@@ -87,7 +88,8 @@ public:
 
 			for ( int j = 0; j < ycount; ++j )
 			{
-				b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize, { xShape, y }, b2Rot_identity );
+				b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize,
+													{ xShape, y }, b2Rot_identity );
 				square.radius = 0.1f;
 				b2CreatePolygonShape( groundId, &shapeDef, &square );
 
@@ -102,13 +104,12 @@ public:
 	// Each ground body builds its own chains the way a streaming world would build a chunk. It sees
 	// one neighbor column on each side, keeps only the segments inside its own span, and takes the
 	// ghosts at its open ends from the neighbor columns, so adjacent chunks link without a seam. A
-	// face on a boundary goes to the chunk on the right. A flat surface that crosses a boundary has to
-	// end there, so chunk boundaries keep a point.
+	// face on a boundary goes to the chunk on the right. A flat surface that crosses a boundary has
+	// to end there, so chunk boundaries keep a point.
 	void CreateTileChains( float xStart )
 	{
-		constexpr int columnsPerBody = 10;
 		int columnCount = (int)m_gridCount;
-		int bodyCount = ( columnCount + columnsPerBody - 1 ) / columnsPerBody;
+		int bodyCount = ( columnCount + m_columnsPerBody - 1 ) / m_columnsPerBody;
 
 		std::vector<int> heights( columnCount );
 		std::vector<float> columnX( columnCount );
@@ -131,8 +132,8 @@ public:
 
 		for ( int bodyIndex = 0; bodyIndex < bodyCount; ++bodyIndex )
 		{
-			int first = bodyIndex * columnsPerBody;
-			int last = b2MinInt( first + columnsPerBody, columnCount ) - 1;
+			int first = bodyIndex * m_columnsPerBody;
+			int last = b2MinInt( first + m_columnsPerBody, columnCount ) - 1;
 			int haloFirst = b2MaxInt( first - 1, 0 );
 			int haloLast = b2MinInt( last + 1, columnCount - 1 );
 
@@ -143,12 +144,14 @@ public:
 				for ( int j = 0; j < heights[i]; ++j )
 				{
 					b2Vec2 center = { ( i - first ) * m_gridSize, j * m_gridSize };
-					polygons.push_back( b2MakeOffsetBox( 0.5f * m_gridSize, 0.5f * m_gridSize, center, b2Rot_identity ) );
+					polygons.push_back( b2MakeOffsetBox( 0.5f * m_gridSize, 0.5f * m_gridSize,
+														 center, b2Rot_identity ) );
 				}
 			}
 
 			uint64_t ticks = b2GetTicks();
-			b2ChainResult result = b2ComputeChains( polygons.data(), (int)polygons.size(), B2_LINEAR_SLOP );
+			b2ChainResult result =
+				b2ComputeChains( polygons.data(), (int)polygons.size(), B2_LINEAR_SLOP );
 			m_computeTime += b2GetMilliseconds( ticks );
 			m_loopCount += result.chainCount;
 			m_problemChunkCount += result.status == b2_chainStatusSuccess ? 0 : 1;
@@ -159,14 +162,13 @@ public:
 			m_groundIds.push_back( groundId );
 
 			// A color per chunk shows where the chains end and link
-			constexpr b2HexColor chunkColors[] = { b2_colorGold,	  b2_colorDeepSkyBlue, b2_colorOrchid,
-												   b2_colorLimeGreen, b2_colorTomato,	   b2_colorAquamarine };
 			b2SurfaceMaterial material = b2DefaultSurfaceMaterial();
-			material.customColor = chunkColors[bodyIndex % 6];
+			material.customColor = m_chunkColors[bodyIndex % 6];
 
 			// The world ends keep their caps
 			float lower = bodyIndex == 0 ? -FLT_MAX : -0.5f * m_gridSize;
-			float upper = bodyIndex == bodyCount - 1 ? FLT_MAX : ( last - first + 0.5f ) * m_gridSize;
+			float upper =
+				bodyIndex == bodyCount - 1 ? FLT_MAX : ( last - first + 0.5f ) * m_gridSize;
 			float cuts[2] = { lower, upper };
 
 			for ( int loopIndex = 0; loopIndex < result.chainCount; ++loopIndex )
@@ -261,7 +263,8 @@ public:
 		}
 	}
 
-	// Destroys only the ground bodies, so the swap happens between two steps with everything else live
+	// Destroys only the ground bodies, so the swap happens between two steps with everything else
+	// live
 	void CreateTerrain()
 	{
 		for ( b2BodyId groundId : m_groundIds )
@@ -320,7 +323,8 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
-					CreateHuman( &human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, nullptr, false );
+					CreateHuman( &human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f,
+								 humanIndex + 1, nullptr, false );
 					humanIndex += 1;
 					position.x += 1.0f;
 				}
@@ -432,8 +436,9 @@ public:
 
 		if ( m_useChains )
 		{
-			DrawScreenTextLine( "chains computed in %.1f ms over %d chunks: %d loops trimmed to %d chains", m_computeTime,
-								(int)m_groundIds.size(), m_loopCount, m_chainCount );
+			DrawScreenTextLine(
+				"chains computed in %.1f ms over %d chunks: %d loops trimmed to %d chains",
+				m_computeTime, (int)m_groundIds.size(), m_loopCount, m_chainCount );
 
 			if ( m_problemChunkCount > 0 )
 			{
@@ -446,6 +451,11 @@ public:
 	{
 		return new TileWorld( context );
 	}
+
+	static inline constexpr b2HexColor m_chunkColors[] = { b2_colorGold,   b2_colorDeepSkyBlue,
+														   b2_colorOrchid, b2_colorLimeGreen,
+														   b2_colorTomato, b2_colorAquamarine };
+	static inline constexpr int m_columnsPerBody = 40;
 
 	Car m_car;
 	b2Pos m_viewPosition;
@@ -576,10 +586,12 @@ public:
 		{
 			for ( int j = 0; j < e_columnCount; ++j )
 			{
-				float x = 2.4f * scale * ( j - 0.5f * ( e_columnCount - 1 ) ) + RandomFloatRange( -0.3f, 0.3f );
+				float x = 2.4f * scale * ( j - 0.5f * ( e_columnCount - 1 ) ) +
+						  RandomFloatRange( -0.3f, 0.3f );
 				float y = 2.0f + 2.2f * scale * i;
 				b2Pos p = b2OffsetPos( origin, { x, y } );
-				CreateHuman( m_humans + index, m_worldId, p, scale, 0.05f, 1.0f, 0.5f, index + 1, nullptr, false );
+				CreateHuman( m_humans + index, m_worldId, p, scale, 0.05f, 1.0f, 0.5f, index + 1,
+							 nullptr, false );
 				index += 1;
 			}
 		}
@@ -601,7 +613,8 @@ public:
 		}
 
 		b2Pos c = m_context->camera.center;
-		DrawScreenTextLine( "%d ragdolls piled %.0f km from the world origin", m_humanCount, 0.001f * c.x );
+		DrawScreenTextLine( "%d ragdolls piled %.0f km from the world origin", m_humanCount,
+							0.001f * c.x );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -646,11 +659,14 @@ public:
 			bodyDef.position = origin;
 			groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			const char* path =
-				"m 63.500002,201.08333 103.187498,0 1e-5,-37.04166 h -2.64584 l 0,34.39583 h -42.33333 v -2.64583 l "
-				"-2.64584,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -2.64584 v -2.64583 H 111.125 v -2.64583 h -2.64583 v "
-				"-2.64583 h -2.64583 v -2.64584 l -2.64584,1e-5 v -2.64583 l -2.64583,-1e-5 V 174.625 h -2.645834 v -2.64584 l "
-				"-2.645833,1e-5 v -2.64584 H 92.60417 v -2.64583 h -2.645834 v -2.64583 l -26.458334,0 0,37.04166";
+			const char* path = "m 63.500002,201.08333 103.187498,0 1e-5,-37.04166 h -2.64584 l "
+							   "0,34.39583 h -42.33333 v -2.64583 l "
+							   "-2.64584,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -2.64584 v "
+							   "-2.64583 H 111.125 v -2.64583 h -2.64583 v "
+							   "-2.64583 h -2.64583 v -2.64584 l -2.64584,1e-5 v -2.64583 l "
+							   "-2.64583,-1e-5 V 174.625 h -2.645834 v -2.64584 l "
+							   "-2.645833,1e-5 v -2.64584 H 92.60417 v -2.64583 h -2.645834 v "
+							   "-2.64583 l -26.458334,0 0,37.04166";
 
 			b2Vec2 points[128];
 
@@ -682,8 +698,10 @@ public:
 
 		b2Pos gearPosition1 = origin + b2Vec2{ -4.25f, 9.75f };
 		b2Pos gearPosition2 = gearPosition1 + b2Vec2{ 2.0f, 1.0f };
-		b2Pos linkAttachPosition = gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
-		b2Pos doorPosition = linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
+		b2Pos linkAttachPosition =
+			gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
+		b2Pos doorPosition =
+			linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
 
 		{
 			b2Pos position = gearPosition1;
@@ -707,7 +725,8 @@ public:
 
 			for ( int i = 0; i < count; ++i )
 			{
-				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center,
+														  rotation, toothRadius );
 				shapeDef.material.customColor = b2_colorGray;
 				b2CreatePolygonShape( bodyId, &shapeDef, &tooth );
 
@@ -755,7 +774,8 @@ public:
 
 			for ( int i = 0; i < count; ++i )
 			{
-				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center,
+														  rotation, toothRadius );
 				shapeDef.material.customColor = b2_colorGray;
 				b2CreatePolygonShape( followerId, &shapeDef, &tooth );
 
@@ -866,7 +886,8 @@ public:
 			shapeDef.material.rollingResistance = 0.3f;
 
 			b2HexColor colors[5] = {
-				b2_colorGray, b2_colorGainsboro, b2_colorLightGray, b2_colorLightSlateGray, b2_colorDarkGray,
+				b2_colorGray,			b2_colorGainsboro, b2_colorLightGray,
+				b2_colorLightSlateGray, b2_colorDarkGray,
 			};
 
 			float y = 4.25f;
