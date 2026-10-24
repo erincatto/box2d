@@ -170,6 +170,8 @@ static void b2SplitEdges( const b2Polygon* polygons, int polygonCount, const b2V
 	float lengthSum = 0.0f;
 	int inputEdgeCount = 0;
 	int base = 0;
+
+	// Count edges and compute total edge length, accounting for vertices that got welded.
 	for ( int i = 0; i < polygonCount; ++i )
 	{
 		int count = polygons[i].count;
@@ -459,6 +461,12 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 		return result;
 	}
 
+	if ( b2IsValidFloat( weldTolerance ) == false)
+	{
+		B2_ASSERT( false );
+		return result;
+	}
+
 	int inputCount = 0;
 	for ( int i = 0; i < polygonCount; ++i )
 	{
@@ -466,7 +474,7 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 		inputCount += polygons[i].count;
 	}
 
-	float tolerance = b2IsValidFloat( weldTolerance ) ? b2MaxFloat( weldTolerance, B2_LINEAR_SLOP ) : B2_LINEAR_SLOP;
+	float tolerance = b2MaxFloat( weldTolerance, B2_LINEAR_SLOP );
 
 	b2Vec2* vertices = b2Alloc( inputCount * sizeof( b2Vec2 ) );
 	int* remap = b2Alloc( inputCount * sizeof( int ) );
