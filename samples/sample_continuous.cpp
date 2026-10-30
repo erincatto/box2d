@@ -1895,12 +1895,6 @@ public:
 		e_sceneCount
 	};
 
-	enum Terrain
-	{
-		e_polygons,
-		e_chains,
-	};
-
 	struct SceneInfo
 	{
 		const char* name;
@@ -1922,7 +1916,7 @@ public:
 		{ "Slope Tiles", "Free box sliding down a 30 degree slope of slanted tiles", nullptr, 5.0f, 1.0f, 0.0f, 0.0f },
 		{ "Slope Triangles", "Triangle tiles touching only at corners, chains warn and still snag", nullptr, 5.0f, 1.0f, 0.0f,
 		  0.0f },
-		{ "Tile Wall", "Box pushed into a wall of 0.5 m tiles, it should stop at x = 11.5", nullptr, 10.0f, 1.0f, 0.0f, 0.0f },
+		{ "Tile Wall", "Box pushed into a wall of 0.5 m tiles, it should stop at x = 1.5", nullptr, 10.0f, 1.0f, 0.0f, 0.0f },
 		{ "Cliff Pit", "Floor ends at a pit of stacked tiles, the box should end up in the pit", nullptr, 10.0f, 1.0f, 0.0f,
 		  0.0f },
 		{ "Wall Slide", "Box pushed into a tiled wall slides down into the corner", nullptr, 2.0f, 1.0f, 0.0f, 0.0f },
@@ -1949,14 +1943,14 @@ public:
 	{
 		if ( m_context->restart == false )
 		{
-			m_context->camera.zoom = 8.0f;
+			m_context->camera.center = { 0.0f, 10.0f };
+			m_context->camera.zoom = 20.0f;
 		}
 
 		m_groundId = b2_nullBodyId;
 		m_playerId = b2_nullBodyId;
 		m_scene = e_slidingBox;
-		m_terrain = e_chains;
-		m_follow = true;
+		m_useChains = false;
 		m_weldTolerance = B2_LINEAR_SLOP;
 		SetSceneDefaults();
 		Rebuild();
@@ -2064,52 +2058,52 @@ public:
 			case e_misalignedTiles:
 			{
 				float step = m_scene == e_misalignedTiles ? m_knob : 0.0f;
-				AddFloor( -2.0f, 24, 2.0f, 0.0f, step );
-				PlayerDef def = MakePlayerDef( { 0.0f, 0.5f } );
+				AddFloor( -24.0f, 24, 2.0f, 0.0f, step );
+				PlayerDef def = MakePlayerDef( { -22.0f, 0.5f } );
 				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
-				SetFlatSurface( { 0.0f, 0.0f }, { 46.0f, 0.0f }, 0.5f, 0.5f, 40.0f );
+				SetFlatSurface( { -22.0f, 0.0f }, { 24.0f, 0.0f }, 0.5f, 0.5f, 40.0f );
 			}
 			break;
 
 			case e_tiltedBox:
 			{
-				AddFloor( -2.0f, 24, 2.0f, 0.0f, 0.0f );
+				AddFloor( -24.0f, 24, 2.0f, 0.0f, 0.0f );
 				float h = 0.5f;
 				b2Rot q = b2MakeRot( m_knob * B2_PI / 180.0f );
 
 				// Lowest corner touches the floor
 				float restHeight = h * ( b2AbsFloat( q.s ) + q.c );
-				PlayerDef def = MakePlayerDef( { 0.0f, restHeight } );
+				PlayerDef def = MakePlayerDef( { -22.0f, restHeight } );
 				CreatePlayerPolygon( def, b2MakeOffsetBox( h, h, b2Vec2_zero, q ) );
-				SetFlatSurface( { 0.0f, 0.0f }, { 46.0f, 0.0f }, restHeight, 0.5f, 40.0f );
+				SetFlatSurface( { -22.0f, 0.0f }, { 24.0f, 0.0f }, restHeight, 0.5f, 40.0f );
 			}
 			break;
 
 			case e_fastLanding:
 			{
-				AddFloor( -2.0f, 400, 0.5f, 0.0f, 0.0f );
-				PlayerDef def = MakePlayerDef( { 0.0f, 3.0f } );
+				AddFloor( -24.0f, 96, 0.5f, 0.0f, 0.0f );
+				PlayerDef def = MakePlayerDef( { -22.0f, 3.0f } );
 				def.velocity = { m_speed, -15.0f };
 				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
 
 				// Landing takes about 0.17 seconds
-				SetFlatSurface( { 0.0f, 0.0f }, { 198.0f, 0.0f }, 0.5f, 0.3f * m_speed, b2MinFloat( 3.0f * m_speed, 180.0f ) );
+				SetFlatSurface( { -22.0f, 0.0f }, { 24.0f, 0.0f }, 0.5f, 0.3f * m_speed, b2MinFloat( 3.0f * m_speed, 40.0f ) );
 			}
 			break;
 
 			case e_marble:
 			{
 				m_friction = 0.01f;
-				AddTiledBlock( -4.0f, -1.0f, 16.0f, 0.0f, 20, 1 );
+				AddTiledBlock( -10.0f, -1.0f, 10.0f, 0.0f, 20, 1 );
 
 				float radius = 0.2f;
-				PlayerDef def = MakePlayerDef( { -3.5f, radius } );
+				PlayerDef def = MakePlayerDef( { -9.5f, radius } );
 				def.lockRotation = false;
 				def.isBullet = true;
 				def.friction = 0.01f;
 				def.restitution = 0.1f;
 				CreatePlayerCircle( def, radius );
-				SetFlatSurface( { 0.0f, 0.0f }, { 16.0f, 0.0f }, radius, -3.0f, 14.0f );
+				SetFlatSurface( { -6.0f, 0.0f }, { 10.0f, 0.0f }, radius, -3.0f, 14.0f );
 			}
 			break;
 
@@ -2120,10 +2114,11 @@ public:
 				b2Vec2 down = { cosf( slope ), -sinf( slope ) };
 				b2Vec2 up = b2LeftPerp( down );
 
+				b2Vec2 origin = { -13.0f, 10.0f };
 				b2Vec2 points[31];
 				for ( int i = 0; i <= 30; ++i )
 				{
-					points[i] = b2MulSV( (float)i, down );
+					points[i] = b2MulAdd( origin, (float)i, down );
 				}
 
 				// Slanted slabs with vertical cuts share whole edges. Triangles touch at one corner, which
@@ -2146,7 +2141,7 @@ public:
 
 				// Low friction lets a caught corner tip the box over
 				float h = 0.5f;
-				PlayerDef def = MakePlayerDef( b2MulAdd( down, h, up ) );
+				PlayerDef def = MakePlayerDef( b2MulAdd( b2Add( origin, down ), h, up ) );
 				def.velocity = b2MulSV( m_speed, down );
 				def.lockRotation = false;
 				def.friction = 0.1f;
@@ -2157,23 +2152,23 @@ public:
 
 			case e_tileWall:
 			{
-				AddFloor( -2.0f, 12, 2.0f, 0.0f, 0.0f );
-				AddTiledBlock( 12.0f, 0.0f, 13.5f, 1.0f, 3, 4 );
-				PlayerDef def = MakePlayerDef( { 0.0f, 0.5f } );
+				AddFloor( -12.0f, 12, 2.0f, 0.0f, 0.0f );
+				AddTiledBlock( 2.0f, 0.0f, 3.5f, 1.0f, 3, 4 );
+				PlayerDef def = MakePlayerDef( { -10.0f, 0.5f } );
 				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
 				m_push = { 20.0f, 0.0f };
-				SetFlatSurface( { 0.0f, 0.0f }, { 22.0f, 0.0f }, 0.5f, 0.5f, 14.0f );
+				SetFlatSurface( { -10.0f, 0.0f }, { 12.0f, 0.0f }, 0.5f, 0.5f, 14.0f );
 			}
 			break;
 
 			case e_cliffPit:
 			{
-				AddFloor( -2.0f, 6, 2.0f, 0.0f, 0.0f );
-				AddTiledBlock( 8.0f, -3.5f, 10.0f, -0.5f, 1, 6 );
-				AddTiledBlock( 10.0f, -3.5f, 14.0f, -3.0f, 2, 1 );
-				AddTiledBlock( 14.0f, -3.5f, 16.0f, -0.5f, 1, 6 );
-				AddFloor( 14.0f, 8, 2.0f, 0.0f, 0.0f );
-				PlayerDef def = MakePlayerDef( { 0.0f, 0.5f } );
+				AddFloor( -16.0f, 6, 2.0f, 0.0f, 0.0f );
+				AddTiledBlock( -6.0f, -3.5f, -4.0f, -0.5f, 1, 6 );
+				AddTiledBlock( -4.0f, -3.5f, 0.0f, -3.0f, 2, 1 );
+				AddTiledBlock( 0.0f, -3.5f, 2.0f, -0.5f, 1, 6 );
+				AddFloor( 0.0f, 8, 2.0f, 0.0f, 0.0f );
+				PlayerDef def = MakePlayerDef( { -14.0f, 0.5f } );
 				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
 				m_measure = false;
 			}
@@ -2181,35 +2176,35 @@ public:
 
 			case e_wallSlide:
 			{
-				AddTiledBlock( 0.0f, 0.0f, 1.0f, 10.0f, 1, 20 );
-				AddTiledBlock( -1.0f, -0.5f, 9.0f, 0.0f, 5, 1 );
-				PlayerDef def = MakePlayerDef( { 1.5f, 9.0f } );
+				AddTiledBlock( -4.0f, 0.0f, -3.0f, 10.0f, 1, 20 );
+				AddTiledBlock( -5.0f, -0.5f, 5.0f, 0.0f, 5, 1 );
+				PlayerDef def = MakePlayerDef( { -2.5f, 9.0f } );
 				def.velocity = { 0.0f, -m_speed };
 				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
 				m_push = { -20.0f, 0.0f };
 
 				// Progress runs down the wall face
-				SetFlatSurface( { 1.0f, 9.0f }, { 1.0f, 0.0f }, 0.5f, 0.3f, 7.5f );
+				SetFlatSurface( { -3.0f, 9.0f }, { -3.0f, 0.0f }, 0.5f, 0.3f, 7.5f );
 			}
 			break;
 
 			case e_vehicleCrest:
 			{
 				float slope = 20.0f * B2_PI / 180.0f;
-				b2Vec2 crest = { 10.0f, 0.0f };
-				b2Vec2 foot = { 10.0f + 2.0f / tanf( slope ), -2.0f };
+				b2Vec2 crest = { -6.0f, 0.0f };
+				b2Vec2 foot = { crest.x + 2.0f / tanf( slope ), -2.0f };
 
-				AddFloor( -4.0f, 7, 2.0f, 0.0f, 0.0f );
+				AddFloor( -20.0f, 7, 2.0f, 0.0f, 0.0f );
 				for ( int i = 0; i < 3; ++i )
 				{
 					b2Vec2 a = b2Lerp( crest, foot, i / 3.0f );
 					b2Vec2 b = b2Lerp( crest, foot, ( i + 1 ) / 3.0f );
 					AddQuad( a, b, { b.x, -2.5f }, { a.x, -2.5f } );
 				}
-				AddFloor( foot.x, 16, 2.0f, -2.0f, 0.0f );
+				AddFloor( foot.x, 10, 2.0f, -2.0f, 0.0f );
 
 				float radius = 0.4f;
-				PlayerDef def = MakePlayerDef( { 0.0f, radius } );
+				PlayerDef def = MakePlayerDef( { -16.0f, radius } );
 				def.lockRotation = false;
 				b2ShapeDef shapeDef = CreatePlayerBody( def );
 				b2Circle rear = { { -1.5f, 0.0f }, radius };
@@ -2226,16 +2221,16 @@ public:
 
 			case e_smallGaps:
 			{
-				float x = -2.0f;
+				float x = -22.0f;
 				for ( int i = 0; i < 20; ++i )
 				{
 					AddBox( x, -0.5f, x + 2.0f, 0.0f );
 					x += 2.0f + m_knob;
 				}
 
-				PlayerDef def = MakePlayerDef( { 0.0f, 0.5f } );
+				PlayerDef def = MakePlayerDef( { -20.0f, 0.5f } );
 				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
-				SetFlatSurface( { 0.0f, 0.0f }, { 40.0f, 0.0f }, 0.5f, 0.5f, 30.0f );
+				SetFlatSurface( { -20.0f, 0.0f }, { 20.0f, 0.0f }, 0.5f, 0.5f, 30.0f );
 			}
 			break;
 
@@ -2318,7 +2313,7 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		m_groundId = b2CreateBody( m_worldId, &bodyDef );
 
-		if ( m_terrain == e_polygons )
+		if ( m_useChains == false )
 		{
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			shapeDef.material.friction = m_friction;
@@ -2388,16 +2383,6 @@ public:
 
 		BuildScene();
 		CreateTerrain();
-		FollowPlayer();
-	}
-
-	void FollowPlayer()
-	{
-		if ( m_follow )
-		{
-			b2Pos p = b2Body_GetPosition( m_playerId );
-			m_context->camera.center = { p.x, p.y + 1.0f };
-		}
 	}
 
 	void UpdateMetrics()
@@ -2466,9 +2451,8 @@ public:
 			changed = true;
 		}
 
-		const char* terrainNames[] = { "Polygons", "Chains" };
-		changed |= ImGui::Combo( "Terrain", &m_terrain, terrainNames, IM_ARRAYSIZE( terrainNames ) );
-		if ( m_terrain == e_chains )
+		changed |= ImGui::Checkbox( "Chains", &m_useChains );
+		if ( m_useChains )
 		{
 			changed |= ImGui::SliderFloat( "Weld", &m_weldTolerance, B2_LINEAR_SLOP, 0.25f, "%.4f",
 										   ImGuiSliderFlags_Logarithmic );
@@ -2480,8 +2464,6 @@ public:
 			changed |= ImGui::SliderFloat( info.knobName, &m_knob, 0.0f, info.knobMax, "%.4f" );
 		}
 		ImGui::PopItemWidth();
-
-		ImGui::Checkbox( "Follow", &m_follow );
 
 		if ( ImGui::Button( "Relaunch" ) || changed )
 		{
@@ -2513,10 +2495,8 @@ public:
 			UpdateMetrics();
 		}
 
-		FollowPlayer();
-
 		DrawScreenTextLine( "%s", m_scenes[m_scene].summary );
-		if ( m_terrain == e_chains )
+		if ( m_useChains )
 		{
 			DrawScreenTextLine( "%d polygons became %d chain loops with %d points", (int)m_polygons.size(), m_chainCount,
 								m_pointCount );
@@ -2560,11 +2540,10 @@ public:
 	b2ChainStatus m_chainStatus;
 
 	int m_scene;
-	int m_terrain;
+	bool m_useChains;
 	float m_speed;
 	float m_gravityScale;
 	float m_knob;
-	bool m_follow;
 	float m_weldTolerance;
 
 	float m_friction;
