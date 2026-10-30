@@ -110,6 +110,7 @@ fn compileBox2d(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, optio
         "src/bitset.c",
         "src/body.c",
         "src/broad_phase.c",
+        "src/chain_builder.c",
         "src/constraint_graph.c",
         "src/contact_solver.c",
         "src/contact_solver_w4.c",

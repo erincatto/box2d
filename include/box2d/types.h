@@ -800,7 +800,8 @@ typedef struct b2MoverJointDef
 /// @ingroup mover_joint
 B2_API b2MoverJointDef b2DefaultMoverJointDef( void );
 
-/// Pogo joint definition
+/// The pogo joint is used for the dynamic character mover. The pogo axis is along the frame B
+/// y-axis.
 /// @ingroup pogo_joint
 typedef struct b2PogoJointDef
 {

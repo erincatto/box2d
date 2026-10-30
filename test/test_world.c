@@ -672,6 +672,78 @@ static int PreSolveRejectRecycleTest( void )
 	return 0;
 }
 
+static void CountingPreSolve( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold,
+							  void* context )
+{
+	(void)shapeIdA;
+	(void)shapeIdB;
+	(void)manifold;
+	int* count = context;
+	*count += 1;
+}
+
+// Contacts latch the recycle and pre-solve flags at creation, and a recycled contact never reaches
+// pre-solve. Enabling pre-solve mid-simulation must refresh the contacts that already exist,
+// including a settled contact that recycles every step.
+static int PreSolveToggleTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.enableSleep = false;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	int preSolveCount = 0;
+	b2World_SetPreSolveCallback( worldId, CountingPreSolve, NULL, &preSolveCount );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.position = (b2Pos){ 0.0f, -0.5f };
+	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon groundBox = b2MakeBox( 10.0f, 0.5f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
+
+	float radius = 0.25f;
+	bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position = (b2Pos){ 0.0f, radius + 0.2f };
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2Circle circle = { { 0.0f, 0.0f }, radius };
+	b2ShapeId ballId = b2CreateCircleShape( bodyId, &shapeDef, &circle );
+
+	// Let the ball settle so the contact recycles
+	for ( int i = 0; i < 60; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+
+	ENSURE( preSolveCount == 0 );
+
+	b2Shape_EnablePreSolveEvents( ballId, true );
+
+	int before = preSolveCount;
+	for ( int i = 0; i < 10; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+
+	// Pre-solve must fire every step, including on the recycled contact
+	ENSURE( preSolveCount - before == 10 );
+
+	b2Shape_EnablePreSolveEvents( ballId, false );
+
+	before = preSolveCount;
+	for ( int i = 0; i < 10; ++i )
+	{
+		b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	}
+
+	ENSURE( preSolveCount - before == 0 );
+
+	b2DestroyWorld( worldId );
+
+	return 0;
+}
+
 static int SetBulletDriftTest( void )
 {
 	b2WorldDef worldDef = b2DefaultWorldDef();
@@ -1781,6 +1853,7 @@ int WorldTest( void )
 	RUN_SUBTEST( EnableSleepFlagSyncTest );
 	RUN_SUBTEST( EnableContactRecyclingTest );
 	RUN_SUBTEST( PreSolveRejectRecycleTest );
+	RUN_SUBTEST( PreSolveToggleTest );
 	RUN_SUBTEST( EnlargedProxyDestroyedTest );
 	RUN_SUBTEST( BroadPhasePairsTest );
 	RUN_SUBTEST( BodySimLocatorTest );

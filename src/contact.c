@@ -283,8 +283,9 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->shapeIdB = shapeIdB;
 	contact->flags = 0;
 
-	// Both bodies must enable recycling
-	if ( ( bodyA->flags & b2_bodyEnableContactRecycling ) != 0 && ( bodyB->flags & b2_bodyEnableContactRecycling ) != 0 )
+	// Both bodies must enable recycling. Disable for pre-solve.
+	if ( ( bodyA->flags & b2_bodyEnableContactRecycling ) != 0 && ( bodyB->flags & b2_bodyEnableContactRecycling ) != 0 &&
+		 shapeA->enablePreSolveEvents == false && shapeB->enablePreSolveEvents == false )
 	{
 		contact->flags |= b2_contactRecycleFlag;
 	}

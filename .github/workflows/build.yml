@@ -191,7 +191,7 @@ jobs:
     - uses: actions/checkout@v6
 
     - name: Install armhf cross toolchain and qemu
-      run: sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf qemu-user-static
+      run: sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf qemu-user
 
     - name: Configure CMake
       run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBOX2D_SAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DBOX2D_VALIDATE=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
@@ -201,7 +201,7 @@ jobs:
 
     - name: Test
       working-directory: build
-      run: qemu-arm-static -L /usr/arm-linux-gnueabihf ./bin/test
+      run: qemu-arm -L /usr/arm-linux-gnueabihf ./bin/test
 
   samples:
     name: ${{ matrix.name }}

@@ -334,6 +334,35 @@ B2_API b2Hull b2ComputeHull( const b2Vec2* points, int count );
 /// This is expensive and should not be called at runtime.
 B2_API bool b2ValidateHull( const b2Hull* hull );
 
+/// Status after converging polygons to chains.
+typedef enum b2ChainStatus
+{
+	b2_chainStatusSuccess,
+	b2_chainStatusCornerTouch,
+	b2_chainStatusOverlap,
+} b2ChainStatus;
+
+/// Chain data created by merging polygons.
+typedef struct b2ChainData
+{
+	b2Vec2* points;
+	int count;
+} b2ChainData;
+
+/// An array of chain loops created by merging polygons.
+typedef struct b2ChainResult
+{
+	b2ChainData* chains;
+	int chainCount;
+	b2ChainStatus status;
+} b2ChainResult;
+
+/// Merge polygons into multiple chain loops.
+B2_API b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, float weldTolerance );
+
+/// Free the chains.
+B2_API void b2FreeChains( b2ChainResult* result );
+
 /**@}*/
 
 /**

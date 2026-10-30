@@ -347,6 +347,316 @@ static int SingleMaterialTest( void )
 	return 0;
 }
 
+// A ghost left on its endpoint means no neighbor, so both ends must act as convex corners: a
+// circle past either cap gets a contact, and a box corner just past either end gets the diagonal
+// vertex normal instead of being snapped up onto the segment normal as if the surface continued.
+static void CollideEnds( b2ChainSegment segment, int* circleCount, float* boxNormalX )
+{
+	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+	b2Polygon box = b2MakeSquare( 0.25f );
+
+	b2Transform xf1 = { { 4.3f, 0.2f }, b2Rot_identity };
+	b2Transform xf2 = { { -0.3f, 0.2f }, b2Rot_identity };
+	circleCount[0] = b2CollideChainSegmentAndCircle( &segment, &circle, xf1 ).pointCount;
+	circleCount[1] = b2CollideChainSegmentAndCircle( &segment, &circle, xf2 ).pointCount;
+
+	b2SimplexCache cache = { 0 };
+	xf1.p = (b2Vec2){ 4.26f, 0.26f };
+	b2LocalManifold m1 = b2CollideChainSegmentAndPolygon( &segment, &box, xf1, &cache );
+
+	cache = (b2SimplexCache){ 0 };
+	xf2.p = (b2Vec2){ -0.26f, 0.26f };
+	b2LocalManifold m2 = b2CollideChainSegmentAndPolygon( &segment, &box, xf2, &cache );
+
+	boxNormalX[0] = m1.pointCount > 0 ? m1.normal.x : 0.0f;
+	boxNormalX[1] = m2.pointCount > 0 ? m2.normal.x : 0.0f;
+
+}
+
+static int DegenerateGhostTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	// Right to left so the collision side faces up
+	b2Vec2 p1 = { 4.0f, 0.0f };
+	b2Vec2 p2 = { 0.0f, 0.0f };
+	b2ChainSegment degenerate = { p1, { p1, p2 }, p2, B2_NULL_INDEX };
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2ShapeId createdId = b2CreateChainSegmentShape( bodyId, &shapeDef, &degenerate );
+
+	b2Segment plain = { { 0.0f, -1.0f }, { 4.0f, -1.0f } };
+	b2ShapeId setId = b2CreateSegmentShape( bodyId, &shapeDef, &plain );
+	b2Shape_SetChainSegment( setId, &degenerate );
+
+	b2ChainSegment created = b2Shape_GetChainSegment( createdId );
+	b2ChainSegment set = b2Shape_GetChainSegment( setId );
+
+	b2DestroyWorld( worldId );
+
+	ENSURE( SamePoint( created.segment.point1, p1 ) );
+	ENSURE( SamePoint( created.segment.point2, p2 ) );
+	ENSURE( SamePoint( created.ghost1, set.ghost1 ) );
+	ENSURE( SamePoint( created.ghost2, set.ghost2 ) );
+	ENSURE( b2Distance( created.ghost1, p1 ) > B2_LINEAR_SLOP );
+	ENSURE( b2Distance( created.ghost2, p2 ) > B2_LINEAR_SLOP );
+
+	int circleCount[2];
+	float boxNormalX[2];
+	CollideEnds( created, circleCount, boxNormalX );
+
+	ENSURE( circleCount[0] == 1 );
+	ENSURE( circleCount[1] == 1 );
+	ENSURE( boxNormalX[0] > 0.5f );
+	ENSURE( boxNormalX[1] < -0.5f );
+
+	return 0;
+}
+
+typedef struct MoverPlanes
+{
+	int count;
+	b2Vec2 normal;
+} MoverPlanes;
+
+static bool GatherPlane( b2ShapeId shapeId, const b2PlaneResult* plane, void* context )
+{
+	MAYBE_UNUSED( shapeId );
+	MoverPlanes* planes = context;
+	planes->count += 1;
+	planes->normal = plane->plane.normal;
+	return true;
+}
+
+static MoverPlanes CollideMoverAt( b2WorldId worldId, float y )
+{
+	b2Capsule mover = { { 1.5f, y }, { 2.5f, y }, 0.3f };
+	MoverPlanes planes = { 0 };
+	b2World_CollideMover( worldId, b2Pos_zero, &mover, b2DefaultQueryFilter(), GatherPlane, &planes );
+	return planes;
+}
+
+// The mover must see a chain segment from the front only, matching contacts and the mover cast.
+// A plain segment beside it stays two-sided.
+static int MoverOneSidedTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	// Right to left so the collision side faces up
+	b2ChainSegment chainSegment = { { 5.0f, 0.0f }, { { 4.0f, 0.0f }, { 0.0f, 0.0f } }, { -1.0f, 0.0f }, B2_NULL_INDEX };
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2CreateChainSegmentShape( bodyId, &shapeDef, &chainSegment );
+
+	MoverPlanes front = CollideMoverAt( worldId, 0.2f );
+	MoverPlanes behind = CollideMoverAt( worldId, -0.2f );
+
+	b2Segment segment = { { 4.0f, 0.0f }, { 0.0f, 0.0f } };
+	b2BodyDef plainDef = b2DefaultBodyDef();
+	plainDef.position = (b2Pos){ 0.0f, 10.0f };
+	b2BodyId plainId = b2CreateBody( worldId, &plainDef );
+	b2CreateSegmentShape( plainId, &shapeDef, &segment );
+
+	MoverPlanes plainBehind = CollideMoverAt( worldId, 9.8f );
+
+	b2DestroyWorld( worldId );
+
+	ENSURE( front.count == 1 );
+	ENSURE( front.normal.y > 0.99f );
+	ENSURE( behind.count == 0 );
+	ENSURE( plainBehind.count == 1 );
+	ENSURE( plainBehind.normal.y < -0.99f );
+
+	return 0;
+}
+
+static float LoopArea( const b2ChainData* chain )
+{
+	float area = 0.0f;
+	for ( int i = 0; i < chain->count; ++i )
+	{
+		b2Vec2 p1 = chain->points[i];
+		b2Vec2 p2 = chain->points[i + 1 < chain->count ? i + 1 : 0];
+		area += 0.5f * b2Cross( p1, p2 );
+	}
+	return area;
+}
+
+static bool CreateChainsOnGround( const b2ChainResult* result )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	BeginCountingAsserts();
+	bool valid = true;
+	for ( int i = 0; i < result->chainCount; ++i )
+	{
+		b2ChainDef chainDef = b2DefaultChainDef();
+		chainDef.points = result->chains[i].points;
+		chainDef.pointCount = result->chains[i].count;
+		chainDef.isLoop = true;
+		b2ChainId chainId = b2CreateChain( bodyId, &chainDef );
+		valid = valid && b2Chain_IsValid( chainId );
+	}
+	valid = valid && EndCountingAsserts() == 0;
+
+	b2DestroyWorld( worldId );
+	return valid;
+}
+
+// Tiles that share edges must merge into the outline of their union, with seams and T-junctions
+// gone and every loop winding counter-clockwise around solid.
+static int ComputeChainsTest( void )
+{
+	// A row of boxes with float noise on the seams welds into one rectangle
+	{
+		b2Polygon boxes[3];
+		for ( int i = 0; i < 3; ++i )
+		{
+			float noise = 0.0001f * (float)( i - 1 );
+			boxes[i] = b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.0f * i + noise, noise }, b2Rot_identity );
+		}
+
+		b2ChainResult result = b2ComputeChains( boxes, 3, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 1 );
+		ENSURE( result.chains[0].count == 4 );
+		ENSURE_SMALL( LoopArea( result.chains ) - 3.0f, 0.01f );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+		ENSURE( result.chains == NULL && result.chainCount == 0 );
+	}
+
+	// Two boxes sitting on one long box meet it in a T-junction
+	{
+		b2Polygon boxes[3] = {
+			b2MakeOffsetBox( 1.0f, 0.5f, (b2Vec2){ 1.0f, 0.5f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 0.5f, 1.5f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.5f, 1.5f }, b2Rot_identity ),
+		};
+
+		b2ChainResult result = b2ComputeChains( boxes, 3, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 1 );
+		ENSURE( result.chains[0].count == 4 );
+		ENSURE_SMALL( LoopArea( result.chains ) - 4.0f, 0.01f );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// Boxes touching at one corner trace a single loop through the shared vertex, turning into
+	// each empty quadrant so both corners there are concave. The shared vertex is ambiguous.
+	{
+		b2Polygon boxes[2] = {
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 0.5f, 0.5f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.5f, 1.5f }, b2Rot_identity ),
+		};
+
+		b2ChainResult result = b2ComputeChains( boxes, 2, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusCornerTouch );
+		ENSURE( result.chainCount == 1 );
+
+		const b2ChainData* chain = result.chains;
+		ENSURE( chain->count == 8 );
+		ENSURE_SMALL( LoopArea( chain ) - 2.0f, 0.01f );
+
+		b2Vec2 shared = { 1.0f, 1.0f };
+		int visits = 0;
+		for ( int i = 0; i < chain->count; ++i )
+		{
+			if ( b2DistanceSquared( chain->points[i], shared ) < 1.0e-6f )
+			{
+				b2Vec2 previous = chain->points[i > 0 ? i - 1 : chain->count - 1];
+				b2Vec2 next = chain->points[i + 1 < chain->count ? i + 1 : 0];
+				b2Vec2 edge1 = b2Sub( shared, previous );
+				b2Vec2 edge2 = b2Sub( next, shared );
+				ENSURE( b2Cross( edge1, edge2 ) < 0.0f );
+				visits += 1;
+			}
+		}
+		ENSURE( visits == 2 );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// A ring of boxes gives an outer loop and a clockwise hole
+	{
+		b2Polygon boxes[8];
+		int count = 0;
+		for ( int i = 0; i < 3; ++i )
+		{
+			for ( int j = 0; j < 3; ++j )
+			{
+				if ( i == 1 && j == 1 )
+				{
+					continue;
+				}
+				boxes[count++] = b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.0f * i, 1.0f * j }, b2Rot_identity );
+			}
+		}
+
+		b2ChainResult result = b2ComputeChains( boxes, count, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 2 );
+
+		float areas[2] = { LoopArea( result.chains + 0 ), LoopArea( result.chains + 1 ) };
+		float outer = b2MaxFloat( areas[0], areas[1] );
+		float inner = b2MinFloat( areas[0], areas[1] );
+		ENSURE( result.chains[0].count == 4 && result.chains[1].count == 4 );
+		ENSURE_SMALL( outer - 9.0f, 0.01f );
+		ENSURE_SMALL( inner + 1.0f, 0.01f );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// A gap narrower than the weld tolerance closes, a wider one keeps the tiles apart
+	{
+		b2Polygon boxes[2] = {
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 0.0f, 0.0f }, b2Rot_identity ),
+			b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.05f, 0.0f }, b2Rot_identity ),
+		};
+
+		b2ChainResult result = b2ComputeChains( boxes, 2, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 2 );
+		b2FreeChains( &result );
+
+		result = b2ComputeChains( boxes, 2, 0.1f );
+		ENSURE( result.status == b2_chainStatusSuccess );
+		ENSURE( result.chainCount == 1 );
+		ENSURE( result.chains[0].count == 4 );
+		ENSURE( CreateChainsOnGround( &result ) );
+		b2FreeChains( &result );
+	}
+
+	// Overlapping polygons are not supported, an exact duplicate shows up as duplicate edges and
+	// overlap wins over the corner touches it also causes
+	{
+		b2Polygon boxes[2] = { b2MakeBox( 0.5f, 0.5f ), b2MakeBox( 0.5f, 0.5f ) };
+
+		b2ChainResult result = b2ComputeChains( boxes, 2, B2_LINEAR_SLOP );
+		ENSURE( result.status == b2_chainStatusOverlap );
+		b2FreeChains( &result );
+	}
+
+	{
+		b2ChainResult result = b2ComputeChains( NULL, 0, B2_LINEAR_SLOP );
+		ENSURE( result.chains == NULL && result.chainCount == 0 && result.status == b2_chainStatusSuccess );
+		b2FreeChains( &result );
+	}
+
+	return 0;
+}
+
 // Each subtest probes a different part of the index space, so report all of them instead of
 // stopping at the first failure the way RUN_SUBTEST does
 static int RunChainSubtest( const char* name, int ( *subtest )( void ) )
@@ -365,6 +675,9 @@ int ChainTest( void )
 	result |= RunChainSubtest( "LoopMaterialTest", LoopMaterialTest );
 	result |= RunChainSubtest( "OpenMaterialTest", OpenMaterialTest );
 	result |= RunChainSubtest( "SingleMaterialTest", SingleMaterialTest );
+	result |= RunChainSubtest( "DegenerateGhostTest", DegenerateGhostTest );
+	result |= RunChainSubtest( "MoverOneSidedTest", MoverOneSidedTest );
+	result |= RunChainSubtest( "ComputeChainsTest", ComputeChainsTest );
 
 	return result;
 }

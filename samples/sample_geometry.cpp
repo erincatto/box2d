@@ -190,7 +190,8 @@ public:
 		for ( int32_t i = 0; i < m_count; ++i )
 		{
 			DrawPoint( m_draw, b2ToPos( m_points[i] ), 5.0f, b2_colorBlue );
-			DrawString( m_draw, m_camera, b2ToPos( b2Add( m_points[i], { 0.1f, 0.1f } ) ), b2_colorWhite, "%d", i );
+			DrawString( m_draw, m_camera, b2ToPos( b2Add( m_points[i], { 0.1f, 0.1f } ) ),
+						b2_colorWhite, "%d", i );
 		}
 
 		for ( int32_t i = 0; i < hull.count; ++i )
@@ -212,3 +213,83 @@ public:
 };
 
 static int sampleIndex = RegisterSample( "Geometry", "Convex Hull", ConvexHull::Create );
+
+class ChainBuilder : public Sample
+{
+public:
+	explicit ChainBuilder( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 0.0f };
+			m_context->camera.zoom = 0.5f;
+		}
+
+		m_useChain = false;
+
+		float a = 0.5f;
+		float b = 0.2f;
+		float h = 0.1f;
+		m_polygons[0] = b2MakeBox( a, h );
+		m_polygons[1] = b2MakeOffsetBox( b, h, { 0.0f, 2.0f * h }, b2Rot_identity );
+
+		m_chainResult = b2ComputeChains( m_polygons, 2, B2_LINEAR_SLOP );
+	}
+
+	~ChainBuilder() override
+	{
+		b2FreeChains( &m_chainResult );
+	}
+
+	bool DrawControls() override
+	{
+		if ( ImGui::Checkbox( "Chain", &m_useChain ) )
+		{
+		}
+
+		return true;
+	}
+
+	void Step() override
+	{
+		Sample::Step();
+
+		if ( m_useChain )
+		{
+			for (int i = 0; i < m_chainResult.chainCount; ++i)
+			{
+				const b2ChainData* data = m_chainResult.chains + i;
+				if (data->count== 0)
+				{
+					continue;
+				}
+
+				b2Vec2 p1 = data->points[data->count - 1];
+				for (int j = 0; j < data->count; ++j)
+				{
+					b2Vec2 p2 = data->points[j];
+					DrawLine( m_draw, b2ToPos(p1), b2ToPos(p2), b2_colorGray );
+					DrawPoint( m_draw, b2ToPos( p1 ), 5.0f, b2_colorGray );
+					p1 = p2;
+				}
+			}
+		}
+		else
+		{
+			DrawPolygon( m_draw, b2WorldTransform_identity, m_polygons[0].vertices, m_polygons[0].count, b2_colorGray );
+			DrawPolygon( m_draw, b2WorldTransform_identity, m_polygons[1].vertices, m_polygons[1].count, b2_colorGray );
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new ChainBuilder( context );
+	}
+
+	b2Polygon m_polygons[2];
+	b2ChainResult m_chainResult;
+	bool m_useChain;
+};
+
+static int sampleChainBuilder = RegisterSample( "Geometry", "Chain Builder", ChainBuilder::Create );

@@ -12,7 +12,9 @@
 #include "box2d/math_functions.h"
 
 #include <GLFW/glfw3.h>
+#include <float.h>
 #include <imgui.h>
+#include <vector>
 
 class TileWorld : public Sample
 {
@@ -21,10 +23,15 @@ public:
 		: Sample( context )
 	{
 		m_period = 40.0f;
-		float omega = 2.0f * B2_PI / m_period;
 		m_cycleCount = m_isDebug ? 10 : 600;
 		m_gridSize = 1.0f;
 		m_gridCount = (int)( m_cycleCount * m_period / m_gridSize );
+		m_useChains = false;
+		m_tileCount = 0;
+		m_loopCount = 0;
+		m_problemChunkCount = 0;
+		m_chainCount = 0;
+		m_computeTime = 0.0f;
 
 		float xStart = -0.5f * ( m_cycleCount * m_period );
 
@@ -37,50 +44,255 @@ public:
 			m_context->debugDraw.drawJoints = false;
 		}
 
+		CreateScene();
+	}
+
+	int ColumnHeight( float x ) const
+	{
+		float omega = 2.0f * B2_PI / m_period;
+		float height = 4.0f;
+		return (int)roundf( height * cosf( omega * x ) ) + 12;
+	}
+
+	void CreateTiles( float xStart )
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+
+		// Setting this to false significantly reduces the cost of creating
+		// static bodies and shapes.
+		shapeDef.invokeContactCreation = false;
+
+		float xBody = xStart;
+		float xShape = xStart;
+
+		b2BodyId groundId;
+
+		for ( int i = 0; i < m_gridCount; ++i )
 		{
-			b2BodyDef bodyDef = b2DefaultBodyDef();
-			b2ShapeDef shapeDef = b2DefaultShapeDef();
-
-			// Setting this to false significantly reduces the cost of creating
-			// static bodies and shapes.
-			shapeDef.invokeContactCreation = false;
-
-			float height = 4.0f;
-			float xBody = xStart;
-			float xShape = xStart;
-
-			b2BodyId groundId;
-
-			for ( int i = 0; i < m_gridCount; ++i )
+			// Create a new body regularly so that shapes are not too far from the body origin.
+			// Most algorithms in Box2D work in local coordinates, but contact points are computed
+			// relative to the body origin.
+			// This makes a noticeable improvement in stability far from the origin.
+			if ( i % m_columnsPerBody == 0 )
 			{
-				// Create a new body regularly so that shapes are not too far from the body origin.
-				// Most algorithms in Box2D work in local coordinates, but contact points are computed
-				// relative to the body origin.
-				// This makes a noticeable improvement in stability far from the origin.
-				if ( i % 10 == 0 )
-				{
-					bodyDef.position.x = xBody;
-					groundId = b2CreateBody( m_worldId, &bodyDef );
-					xShape = 0.0f;
-				}
-
-				float y = 0.0f;
-
-				int ycount = (int)roundf( height * cosf( omega * xBody ) ) + 12;
-
-				for ( int j = 0; j < ycount; ++j )
-				{
-					b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize, { xShape, y }, b2Rot_identity );
-					square.radius = 0.1f;
-					b2CreatePolygonShape( groundId, &shapeDef, &square );
-
-					y += m_gridSize;
-				}
-
-				xBody += m_gridSize;
-				xShape += m_gridSize;
+				bodyDef.position.x = xBody;
+				groundId = b2CreateBody( m_worldId, &bodyDef );
+				m_groundIds.push_back( groundId );
+				xShape = 0.0f;
+				shapeDef.material.customColor = m_chunkColors[( m_groundIds.size() - 1 ) % 6];
 			}
+
+			float y = 0.0f;
+
+			int ycount = ColumnHeight( xBody );
+
+			for ( int j = 0; j < ycount; ++j )
+			{
+				b2Polygon square = b2MakeOffsetBox( 0.4f * m_gridSize, 0.4f * m_gridSize,
+													{ xShape, y }, b2Rot_identity );
+				square.radius = 0.1f;
+				b2CreatePolygonShape( groundId, &shapeDef, &square );
+
+				y += m_gridSize;
+			}
+
+			xBody += m_gridSize;
+			xShape += m_gridSize;
 		}
+	}
+
+	// Each ground body builds its own chains the way a streaming world would build a chunk. It sees
+	// one neighbor column on each side, keeps only the segments inside its own span, and takes the
+	// ghosts at its open ends from the neighbor columns, so adjacent chunks link without a seam. A
+	// face on a boundary goes to the chunk on the right. A flat surface that crosses a boundary has
+	// to end there, so chunk boundaries keep a point.
+	void CreateTileChains( float xStart )
+	{
+		int columnCount = (int)m_gridCount;
+		int bodyCount = ( columnCount + m_columnsPerBody - 1 ) / m_columnsPerBody;
+
+		std::vector<int> heights( columnCount );
+		std::vector<float> columnX( columnCount );
+		float x = xStart;
+		for ( int i = 0; i < columnCount; ++i )
+		{
+			columnX[i] = x;
+			heights[i] = ColumnHeight( x );
+			x += m_gridSize;
+		}
+
+		m_computeTime = 0.0f;
+		m_loopCount = 0;
+		m_problemChunkCount = 0;
+		m_chainCount = 0;
+		m_tileCount = 0;
+
+		std::vector<b2Polygon> polygons;
+		std::vector<b2Vec2> points;
+		std::vector<bool> keep;
+
+		for ( int bodyIndex = 0; bodyIndex < bodyCount; ++bodyIndex )
+		{
+			int first = bodyIndex * m_columnsPerBody;
+			int last = b2MinInt( first + m_columnsPerBody, columnCount ) - 1;
+			int haloFirst = b2MaxInt( first - 1, 0 );
+			int haloLast = b2MinInt( last + 1, columnCount - 1 );
+
+			// The tile builder ignores the polygon radius, so use the rounded square's full extent
+			polygons.clear();
+			for ( int i = haloFirst; i <= haloLast; ++i )
+			{
+				for ( int j = 0; j < heights[i]; ++j )
+				{
+					b2Vec2 center = { ( i - first ) * m_gridSize, j * m_gridSize };
+					polygons.push_back( b2MakeOffsetBox( 0.5f * m_gridSize, 0.5f * m_gridSize,
+														 center, b2Rot_identity ) );
+				}
+			}
+
+			m_tileCount += (int)polygons.size();
+
+			uint64_t ticks = b2GetTicks();
+			b2ChainResult result =
+				b2ComputeChains( polygons.data(), (int)polygons.size(), B2_LINEAR_SLOP );
+			m_computeTime += b2GetMilliseconds( ticks );
+			m_loopCount += result.chainCount;
+			m_problemChunkCount += result.status == b2_chainStatusSuccess ? 0 : 1;
+
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			bodyDef.position.x = columnX[first];
+			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			m_groundIds.push_back( groundId );
+
+			// A color per chunk shows where the chains end and link
+			b2SurfaceMaterial material = b2DefaultSurfaceMaterial();
+			material.customColor = m_chunkColors[bodyIndex % 6];
+
+			// The world ends keep their caps
+			float lower = bodyIndex == 0 ? -FLT_MAX : -0.5f * m_gridSize;
+			float upper =
+				bodyIndex == bodyCount - 1 ? FLT_MAX : ( last - first + 0.5f ) * m_gridSize;
+			float cuts[2] = { lower, upper };
+
+			for ( int loopIndex = 0; loopIndex < result.chainCount; ++loopIndex )
+			{
+				const b2ChainData& loop = result.chains[loopIndex];
+
+				points.clear();
+				keep.clear();
+				for ( int i = 0; i < loop.count; ++i )
+				{
+					b2Vec2 a = loop.points[i];
+					b2Vec2 b = loop.points[i + 1 < loop.count ? i + 1 : 0];
+					points.push_back( a );
+
+					// Split where the segment crosses the span, nearest cut first
+					for ( int c = 0; c < 2; ++c )
+					{
+						float cut = cuts[a.x < b.x ? c : 1 - c];
+						bool crosses = b2MinFloat( a.x, b.x ) + 2.0f * B2_LINEAR_SLOP < cut &&
+									   cut < b2MaxFloat( a.x, b.x ) - 2.0f * B2_LINEAR_SLOP;
+						if ( crosses )
+						{
+							float t = ( cut - a.x ) / ( b.x - a.x );
+							float midX = 0.5f * ( points.back().x + cut );
+							keep.push_back( lower <= midX && midX < upper );
+							points.push_back( { cut, a.y + t * ( b.y - a.y ) } );
+						}
+					}
+
+					float midX = 0.5f * ( points.back().x + b.x );
+					keep.push_back( lower <= midX && midX < upper );
+				}
+
+				int n = (int)points.size();
+				int keptCount = 0;
+				for ( bool k : keep )
+				{
+					keptCount += k ? 1 : 0;
+				}
+
+				if ( keptCount == 0 )
+				{
+					continue;
+				}
+
+				if ( keptCount == n )
+				{
+					b2ChainDef chainDef = b2DefaultChainDef();
+					chainDef.points = points.data();
+					chainDef.pointCount = n;
+					chainDef.isLoop = true;
+					chainDef.materials = &material;
+					chainDef.materialCount = 1;
+					b2CreateChain( groundId, &chainDef );
+					m_chainCount += 1;
+					continue;
+				}
+
+				// Each run of kept segments becomes an open chain, ghosts from the neighbor columns
+				for ( int i = 0; i < n; ++i )
+				{
+					if ( keep[i] == false || keep[( i + n - 1 ) % n] )
+					{
+						continue;
+					}
+
+					int segmentCount = 0;
+					while ( keep[( i + segmentCount ) % n] )
+					{
+						segmentCount += 1;
+					}
+
+					std::vector<b2Vec2> run( segmentCount + 1 );
+					for ( int j = 0; j <= segmentCount; ++j )
+					{
+						run[j] = points[( i + j ) % n];
+					}
+
+					b2ChainDef chainDef = b2DefaultChainDef();
+					chainDef.points = run.data();
+					chainDef.pointCount = segmentCount + 1;
+					chainDef.ghost1 = points[( i + n - 1 ) % n];
+					chainDef.ghost2 = points[( i + segmentCount + 1 ) % n];
+					chainDef.materials = &material;
+					chainDef.materialCount = 1;
+					b2CreateChain( groundId, &chainDef );
+					m_chainCount += 1;
+				}
+			}
+
+			b2FreeChains( &result );
+		}
+	}
+
+	// Destroys only the ground bodies, so the swap happens between two steps with everything else
+	// live
+	void CreateTerrain()
+	{
+		for ( b2BodyId groundId : m_groundIds )
+		{
+			b2DestroyBody( groundId );
+		}
+		m_groundIds.clear();
+
+		float xStart = -0.5f * ( m_cycleCount * m_period );
+		if ( m_useChains )
+		{
+			CreateTileChains( xStart );
+		}
+		else
+		{
+			CreateTiles( xStart );
+		}
+	}
+
+	void CreateScene()
+	{
+		float xStart = -0.5f * ( m_cycleCount * m_period );
+
+		CreateTerrain();
 
 		int humanIndex = 0;
 		for ( int cycleIndex = 0; cycleIndex < m_cycleCount; ++cycleIndex )
@@ -115,7 +327,8 @@ public:
 				for ( int i = 0; i < 5; ++i )
 				{
 					Human human = {};
-					CreateHuman( &human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f, humanIndex + 1, nullptr, false );
+					CreateHuman( &human, m_worldId, position, 1.5f, 0.05f, 0.0f, 0.0f,
+								 humanIndex + 1, nullptr, false );
 					humanIndex += 1;
 					position.x += 1.0f;
 				}
@@ -154,6 +367,11 @@ public:
 
 		ImGui::Checkbox( "explode", &m_explode );
 		ImGui::Checkbox( "follow car", &m_followCar );
+
+		if ( ImGui::Checkbox( "chains", &m_useChains ) )
+		{
+			CreateTerrain();
+		}
 
 		ImGui::Text( "world size = %g kilometers", m_gridSize * m_gridCount / 1000.0f );
 
@@ -219,12 +437,30 @@ public:
 		}
 
 		Sample::Step();
+
+		if ( m_useChains )
+		{
+			DrawScreenTextLine( "chains computed in %.1f ms over %d tiles", m_computeTime,
+								m_tileCount );
+			DrawScreenTextLine( "%d chunks: %d loops trimmed to %d chains", (int)m_groundIds.size(),
+								m_loopCount, m_chainCount );
+
+			if ( m_problemChunkCount > 0 )
+			{
+				DrawScreenTextLine( "%d chunks reported ambiguous input", m_problemChunkCount );
+			}
+		}
 	}
 
 	static Sample* Create( SampleContext* context )
 	{
 		return new TileWorld( context );
 	}
+
+	static inline constexpr b2HexColor m_chunkColors[] = { b2_colorGold,   b2_colorDeepSkyBlue,
+														   b2_colorOrchid, b2_colorLimeGreen,
+														   b2_colorTomato, b2_colorAquamarine };
+	static inline constexpr int m_columnsPerBody = 40;
 
 	Car m_car;
 	b2Pos m_viewPosition;
@@ -238,6 +474,14 @@ public:
 	b2Pos m_explosionPosition;
 	bool m_explode;
 	bool m_followCar;
+
+	std::vector<b2BodyId> m_groundIds;
+	bool m_useChains;
+	int m_loopCount;
+	int m_problemChunkCount;
+	int m_chainCount;
+	int m_tileCount;
+	float m_computeTime;
 };
 
 static int sampleTileWorld = RegisterSample( "World", "Tiles", TileWorld::Create );
@@ -348,10 +592,12 @@ public:
 		{
 			for ( int j = 0; j < e_columnCount; ++j )
 			{
-				float x = 2.4f * scale * ( j - 0.5f * ( e_columnCount - 1 ) ) + RandomFloatRange( -0.3f, 0.3f );
+				float x = 2.4f * scale * ( j - 0.5f * ( e_columnCount - 1 ) ) +
+						  RandomFloatRange( -0.3f, 0.3f );
 				float y = 2.0f + 2.2f * scale * i;
 				b2Pos p = b2OffsetPos( origin, { x, y } );
-				CreateHuman( m_humans + index, m_worldId, p, scale, 0.05f, 1.0f, 0.5f, index + 1, nullptr, false );
+				CreateHuman( m_humans + index, m_worldId, p, scale, 0.05f, 1.0f, 0.5f, index + 1,
+							 nullptr, false );
 				index += 1;
 			}
 		}
@@ -373,7 +619,8 @@ public:
 		}
 
 		b2Pos c = m_context->camera.center;
-		DrawScreenTextLine( "%d ragdolls piled %.0f km from the world origin", m_humanCount, 0.001f * c.x );
+		DrawScreenTextLine( "%d ragdolls piled %.0f km from the world origin", m_humanCount,
+							0.001f * c.x );
 	}
 
 	static Sample* Create( SampleContext* context )
@@ -418,11 +665,14 @@ public:
 			bodyDef.position = origin;
 			groundId = b2CreateBody( m_worldId, &bodyDef );
 
-			const char* path =
-				"m 63.500002,201.08333 103.187498,0 1e-5,-37.04166 h -2.64584 l 0,34.39583 h -42.33333 v -2.64583 l "
-				"-2.64584,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -2.64584 v -2.64583 H 111.125 v -2.64583 h -2.64583 v "
-				"-2.64583 h -2.64583 v -2.64584 l -2.64584,1e-5 v -2.64583 l -2.64583,-1e-5 V 174.625 h -2.645834 v -2.64584 l "
-				"-2.645833,1e-5 v -2.64584 H 92.60417 v -2.64583 h -2.645834 v -2.64583 l -26.458334,0 0,37.04166";
+			const char* path = "m 63.500002,201.08333 103.187498,0 1e-5,-37.04166 h -2.64584 l "
+							   "0,34.39583 h -42.33333 v -2.64583 l "
+							   "-2.64584,-1e-5 v -2.64583 h -2.64583 v -2.64584 h -2.64584 v "
+							   "-2.64583 H 111.125 v -2.64583 h -2.64583 v "
+							   "-2.64583 h -2.64583 v -2.64584 l -2.64584,1e-5 v -2.64583 l "
+							   "-2.64583,-1e-5 V 174.625 h -2.645834 v -2.64584 l "
+							   "-2.645833,1e-5 v -2.64584 H 92.60417 v -2.64583 h -2.645834 v "
+							   "-2.64583 l -26.458334,0 0,37.04166";
 
 			b2Vec2 points[128];
 
@@ -454,8 +704,10 @@ public:
 
 		b2Pos gearPosition1 = origin + b2Vec2{ -4.25f, 9.75f };
 		b2Pos gearPosition2 = gearPosition1 + b2Vec2{ 2.0f, 1.0f };
-		b2Pos linkAttachPosition = gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
-		b2Pos doorPosition = linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
+		b2Pos linkAttachPosition =
+			gearPosition2 + b2Vec2{ gearRadius + 2.0f * toothHalfWidth + toothRadius, 0.0f };
+		b2Pos doorPosition =
+			linkAttachPosition - b2Vec2{ 0.0f, 2.0f * linkCount * linkHalfLength + doorHalfHeight };
 
 		{
 			b2Pos position = gearPosition1;
@@ -479,7 +731,8 @@ public:
 
 			for ( int i = 0; i < count; ++i )
 			{
-				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center,
+														  rotation, toothRadius );
 				shapeDef.material.customColor = b2_colorGray;
 				b2CreatePolygonShape( bodyId, &shapeDef, &tooth );
 
@@ -527,7 +780,8 @@ public:
 
 			for ( int i = 0; i < count; ++i )
 			{
-				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center, rotation, toothRadius );
+				b2Polygon tooth = b2MakeOffsetRoundedBox( toothHalfWidth, toothHalfHeight, center,
+														  rotation, toothRadius );
 				shapeDef.material.customColor = b2_colorGray;
 				b2CreatePolygonShape( followerId, &shapeDef, &tooth );
 
@@ -638,7 +892,8 @@ public:
 			shapeDef.material.rollingResistance = 0.3f;
 
 			b2HexColor colors[5] = {
-				b2_colorGray, b2_colorGainsboro, b2_colorLightGray, b2_colorLightSlateGray, b2_colorDarkGray,
+				b2_colorGray,			b2_colorGainsboro, b2_colorLightGray,
+				b2_colorLightSlateGray, b2_colorDarkGray,
 			};
 
 			float y = 4.25f;

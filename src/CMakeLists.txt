@@ -12,6 +12,7 @@ set(BOX2D_SOURCE_FILES
 	body.h
 	broad_phase.c
 	broad_phase.h
+	chain_builder.c
 	constraint_graph.c
 	constraint_graph.h
 	contact_solver.c
@@ -72,6 +73,7 @@ set(BOX2D_SOURCE_FILES
 	table.h
 	timer.c
 	types.c
+	verstable.h
 	weld_joint.c
 	wheel_joint.c
 )
@@ -190,6 +192,9 @@ if (MSVC)
 elseif (MINGW)
 	message(STATUS "Box2D on MinGW")
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
+	if (NOT BOX2D_DISABLE_SIMD AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
+		set_source_files_properties(contact_solver_w8.c PROPERTIES COMPILE_OPTIONS "-Wa,-muse-unaligned-vector-move")
+	endif()
 elseif (APPLE)
 	message(STATUS "Box2D on Apple")
 	target_compile_options(box2d PRIVATE -Wmissing-prototypes -Wall -Wextra -pedantic -Wno-unused-value)
