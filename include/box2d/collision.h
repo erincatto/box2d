@@ -357,7 +357,7 @@ typedef struct b2ChainResult
 	b2ChainStatus status;
 } b2ChainResult;
 
-/// Merge polygons into a multiple chain loops.
+/// Merge polygons into multiple chain loops.
 B2_API b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, float weldTolerance );
 
 /// Free the chains.

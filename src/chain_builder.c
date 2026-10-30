@@ -185,7 +185,7 @@ static void b2SplitEdges( const b2Polygon* polygons, int polygonCount, const b2V
 	int inputEdgeCount = 0;
 	int base = 0;
 
-	// Count edges and compute total edge length, skipping vertice that got welded away.
+	// Count edges and compute total edge length, skipping vertices that got welded away.
 	for ( int i = 0; i < polygonCount; ++i )
 	{
 		int count = polygons[i].count;
@@ -548,12 +548,12 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 	const b2BuilderEdge* edges = edgeArray.data;
 	int edgeCount = edgeArray.count;
 
-	// Cancel identical but antiparallel edges. The creates the outline.
+	// Cancel identical but antiparallel edges. This creates the outline.
 	bool* alive = b2Alloc( edgeCount * sizeof( bool ) );
 	bool hasDuplicate = b2CancelEdges( edges, edgeCount, alive );
 
-	// Group the surving edges by start vertex and a counting sort. This creates an adjacency list.
-	// https://en.wikipedia.org/wiki/Counting_sort
+	// Group the surviving edges by start vertex and a counting sort. This creates an adjacency
+	// list. https://en.wikipedia.org/wiki/Counting_sort
 
 	// The number of outgoing edges per vertex via counting sort.
 	// For example: [0 3 4] means vertex0 has 3 outgoing edges, vertex1 has 1.
@@ -590,7 +590,7 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 			// Outgoing edge by vertex.
 			outEdges[fill[edges[i].vertex1]] = i;
 
-			// Ircrement the cursor.
+			// Increment the cursor.
 			fill[edges[i].vertex1] += 1;
 		}
 	}

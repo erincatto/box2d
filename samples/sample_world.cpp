@@ -27,6 +27,7 @@ public:
 		m_gridSize = 1.0f;
 		m_gridCount = (int)( m_cycleCount * m_period / m_gridSize );
 		m_useChains = false;
+		m_tileCount = 0;
 		m_loopCount = 0;
 		m_problemChunkCount = 0;
 		m_chainCount = 0;
@@ -79,7 +80,7 @@ public:
 				groundId = b2CreateBody( m_worldId, &bodyDef );
 				m_groundIds.push_back( groundId );
 				xShape = 0.0f;
-				shapeDef.material.customColor = m_chunkColors[(m_groundIds.size() - 1) % 6];
+				shapeDef.material.customColor = m_chunkColors[( m_groundIds.size() - 1 ) % 6];
 			}
 
 			float y = 0.0f;
@@ -125,6 +126,7 @@ public:
 		m_loopCount = 0;
 		m_problemChunkCount = 0;
 		m_chainCount = 0;
+		m_tileCount = 0;
 
 		std::vector<b2Polygon> polygons;
 		std::vector<b2Vec2> points;
@@ -148,6 +150,8 @@ public:
 														 center, b2Rot_identity ) );
 				}
 			}
+
+			m_tileCount += (int)polygons.size();
 
 			uint64_t ticks = b2GetTicks();
 			b2ChainResult result =
@@ -436,9 +440,10 @@ public:
 
 		if ( m_useChains )
 		{
-			DrawScreenTextLine(
-				"chains computed in %.1f ms over %d chunks: %d loops trimmed to %d chains",
-				m_computeTime, (int)m_groundIds.size(), m_loopCount, m_chainCount );
+			DrawScreenTextLine( "chains computed in %.1f ms over %d tiles", m_computeTime,
+								m_tileCount );
+			DrawScreenTextLine( "%d chunks: %d loops trimmed to %d chains", (int)m_groundIds.size(),
+								m_loopCount, m_chainCount );
 
 			if ( m_problemChunkCount > 0 )
 			{
@@ -475,6 +480,7 @@ public:
 	int m_loopCount;
 	int m_problemChunkCount;
 	int m_chainCount;
+	int m_tileCount;
 	float m_computeTime;
 };
 
