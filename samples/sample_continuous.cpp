@@ -1892,6 +1892,7 @@ public:
 		e_vehicleCrest,
 		e_smallGaps,
 		e_parabolaCrates,
+		e_tileHole,
 		e_sceneCount
 	};
 
@@ -1925,6 +1926,8 @@ public:
 		{ "Small Gaps", "Tiles separated by small gaps, a gap below the weld tolerance merges", "gap", 10.0f, 1.0f, 0.05f,
 		  0.2f },
 		{ "Parabola Crates", "Ball rolling over unevenly cut static slices on a curved floor", nullptr, 6.0f, 1.0f, 0.0f, 0.0f },
+		{ "Tile Hole", "Box sliding on the floor of a hole in a tile map, chains make the hole an inner loop", nullptr, 10.0f,
+		  1.0f, 0.0f, 0.0f },
 	};
 
 	struct PlayerDef
@@ -2237,6 +2240,29 @@ public:
 			case e_parabolaCrates:
 				BuildParabolaCrates();
 				break;
+
+			case e_tileHole:
+			{
+				// 20 by 8 map of 1 m tiles with a 16 by 4 hole
+				for ( int i = 0; i < 20; ++i )
+				{
+					for ( int j = 0; j < 8; ++j )
+					{
+						bool inHole = 2 <= i && i < 18 && 2 <= j && j < 6;
+						if ( inHole == false )
+						{
+							AddBox( -10.0f + i, (float)j, -9.0f + i, j + 1.0f );
+						}
+					}
+				}
+
+				PlayerDef def = MakePlayerDef( { -7.0f, 2.5f } );
+				CreatePlayerPolygon( def, b2MakeBox( 0.5f, 0.5f ) );
+
+				// Stop measuring before the box reaches the far wall
+				SetFlatSurface( { -7.0f, 2.0f }, { 8.0f, 2.0f }, 0.5f, 0.5f, 13.0f );
+			}
+			break;
 
 			default:
 				break;
