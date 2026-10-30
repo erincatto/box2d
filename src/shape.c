@@ -1595,7 +1595,67 @@ void b2Shape_EnablePreSolveEvents( b2ShapeId shapeId, bool flag )
 	B2_REC( world, ShapeEnablePreSolveEvents, shapeId, flag );
 
 	b2Shape* shape = b2GetShape( world, shapeId );
+	if ( shape->enablePreSolveEvents == flag )
+	{
+		return;
+	}
+
 	shape->enablePreSolveEvents = flag;
+
+	// Refresh the cached flags on contacts.
+	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
+	int contactKey = body->headContactKey;
+	while ( contactKey != B2_NULL_INDEX )
+	{
+		int contactId = contactKey >> 1;
+		int edgeIndex = contactKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+
+		if ( contact->shapeIdA == shape->id || contact->shapeIdB == shape->id )
+		{
+			b2Shape* shapeA = b2Array_Get( world->shapes, contact->shapeIdA );
+			b2Shape* shapeB = b2Array_Get( world->shapes, contact->shapeIdB );
+			b2Body* bodyA = b2Array_Get( world->bodies, shapeA->bodyId );
+			b2Body* bodyB = b2Array_Get( world->bodies, shapeB->bodyId );
+
+			bool recycle = ( bodyA->flags & b2_bodyEnableContactRecycling ) != 0 &&
+						   ( bodyB->flags & b2_bodyEnableContactRecycling ) != 0 &&
+						   shapeA->enablePreSolveEvents == false &&
+						   shapeB->enablePreSolveEvents == false;
+
+			if ( recycle )
+			{
+				contact->flags |= b2_contactRecycleFlag;
+			}
+			else
+			{
+				contact->flags &= ~b2_contactRecycleFlag;
+			}
+
+			b2ContactSim* contactSim = b2GetContactSim( world, contact );
+
+			if ( recycle )
+			{
+				contactSim->simFlags |= b2_contactRecycleFlag;
+			}
+			else
+			{
+				contactSim->simFlags &= ~b2_contactRecycleFlag;
+			}
+
+			if ( shapeA->enablePreSolveEvents || shapeB->enablePreSolveEvents )
+			{
+				contactSim->simFlags |= b2_simEnablePreSolveEvents;
+			}
+			else
+			{
+				contactSim->simFlags &= ~b2_simEnablePreSolveEvents;
+			}
+		}
+
+		contactKey = contact->edges[edgeIndex].nextKey;
+	}
 }
 
 bool b2Shape_ArePreSolveEventsEnabled( b2ShapeId shapeId )

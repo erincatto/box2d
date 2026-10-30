@@ -647,6 +647,7 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 		// Build a loop starting from the current edge.
 		loop.count = 0;
 		int edgeIndex = firstEdge;
+		bool openPath = false;
 
 		while ( true )
 		{
@@ -691,6 +692,7 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 			{
 				// If the next edge is null then there is an algorithmic failure.
 				B2_ASSERT( false );
+				openPath = true;
 				break;
 			}
 
@@ -701,6 +703,12 @@ b2ChainResult b2ComputeChains( const b2Polygon* polygons, int polygonCount, floa
 			}
 
 			edgeIndex = nextEdge;
+		}
+
+		// Failure
+		if ( openPath )
+		{
+			continue;
 		}
 
 		// The loop is ready. Now remove collinear points.
