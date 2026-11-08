@@ -164,7 +164,7 @@ while ( batch.count > 0 )
 ```
 
 No callbacks are needed and the built-in scheduler is never created. The worker count still sets
-the most tasks in a batch, `workerCount + 1`, and the size of the per-worker data.
+the most tasks in a batch, `workerCount + 2`, and the size of the per-worker data.
 
 The rules:
 

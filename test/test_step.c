@@ -310,7 +310,7 @@ static int RunFallingHinges( HostConfig config )
 		ENSURE( b2GetWorldFromId( worldId )->scheduler == NULL );
 	}
 
-	ENSURE( serialHost.maxBatchSize <= config.workerCount + 1 );
+	ENSURE( serialHost.maxBatchSize <= config.workerCount + 2 );
 
 	b2DestroyWorld( worldId );
 
@@ -613,7 +613,7 @@ static int SplitBatchTest( void )
 		stepCount += 1;
 	}
 
-	printf( "  split steps=%d maxBatchSize=%d\n", stepCount, host.maxBatchSize );
+	ENSURE( host.maxBatchSize == worldDef.workerCount + 2 );
 	ENSURE( b2Body_IsAwake( bodyA ) == false );
 	ENSURE( b2Body_IsAwake( ballId ) );
 
