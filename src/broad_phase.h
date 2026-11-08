@@ -29,6 +29,8 @@ typedef struct b2BroadPhase
 	// The moved siblings gathered from the dynamic body tree.
 	int* movedSiblings;
 
+	struct b2CrossContext* crossContext;
+
 	// Tracks shape pairs that have a b2Contact
 	b2HashSet pairSet;
 } b2BroadPhase;
@@ -42,7 +44,9 @@ void b2BroadPhase_DestroyProxy( b2BroadPhase* bp, int proxyKey );
 
 void b2BroadPhase_MoveProxy( b2BroadPhase* bp, int proxyKey, b2AABB aabb );
 
-void b2UpdateBroadPhasePairs( b2World* world );
+bool b2BeginPairs( b2World* world );
+void b2StageSelfPairs( b2World* world );
+void b2EndPairs( b2World* world );
 
 void b2RadixSortKeys( uint64_t* keys, uint64_t* tempKeys, int count );
 

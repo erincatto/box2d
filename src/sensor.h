@@ -44,6 +44,7 @@ typedef struct b2SensorTaskContext
 
 b2DeclareArray( b2SensorTaskContext );
 
-void b2OverlapSensors( b2World* world );
+void b2BeginSensors( b2World* world );
+void b2EndSensors( b2World* world );
 
 void b2DestroySensor( b2World* world, b2Shape* sensorShape );

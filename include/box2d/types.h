@@ -36,6 +36,22 @@ typedef void* b2EnqueueTaskCallbackFcn( b2TaskCallbackFcn* task, void* taskConte
 /// @ingroup world
 typedef void b2FinishTaskCallbackFcn( void* userTask, void* userContext );
 
+// todo document b2Task and b2TaskBatch
+typedef struct b2Task
+{
+	b2TaskCallbackFcn* fcn;
+	void* context;
+	bool deferred;
+} b2Task;
+
+typedef struct b2TaskBatch
+{
+	const b2Task* tasks;
+	int count;
+	const b2Task* joinTasks;
+	int joinCount;
+} b2TaskBatch;
+
 /// Optional friction mixing callback. This intentionally provides no context objects because this
 /// is called from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
@@ -164,6 +180,7 @@ typedef struct b2WorldDef
 	b2EnqueueTaskCallbackFcn* enqueueTask;
 
 	/// Function to finish a task
+	// todo document that finishTask is optional when enqueueTask is provided
 	b2FinishTaskCallbackFcn* finishTask;
 
 	/// User context that is provided to enqueueTask and finishTask

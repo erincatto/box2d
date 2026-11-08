@@ -236,7 +236,7 @@ static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* c
 	b2TracyCZoneEnd( sensor_task );
 }
 
-void b2OverlapSensors( b2World* world )
+void b2BeginSensors( b2World* world )
 {
 	int sensorCount = world->sensors.count;
 	if ( sensorCount == 0 )
@@ -246,8 +246,6 @@ void b2OverlapSensors( b2World* world )
 
 	B2_ASSERT( world->workerCount > 0 );
 
-	b2TracyCZoneNC( overlap_sensors, "Sensors", b2_colorMediumPurple, true );
-
 	for ( int i = 0; i < world->workerCount; ++i )
 	{
 		b2SetBitCountAndClear( &world->sensorTaskContexts.data[i].eventBits, sensorCount );
@@ -255,9 +253,18 @@ void b2OverlapSensors( b2World* world )
 
 	// Parallel-for sensors overlaps
 	int minRange = 16;
-	b2ParallelFor( world, &b2SensorTask, sensorCount, minRange, world );
+	b2StageParallelFor( world, &b2SensorTask, sensorCount, minRange, world );
+}
 
-	b2TracyCZoneNC( sensor_state, "Events", b2_colorLightSlateGray, true );
+void b2EndSensors( b2World* world )
+{
+	int sensorCount = world->sensors.count;
+	if ( sensorCount == 0 )
+	{
+		return;
+	}
+
+	b2TracyCZoneNC( sensor_state, "Sensor Events", b2_colorLightSlateGray, true );
 
 	b2BitSet* bitSet = &world->sensorTaskContexts.data[0].eventBits;
 	for ( int i = 1; i < world->workerCount; ++i )
@@ -366,7 +373,6 @@ void b2OverlapSensors( b2World* world )
 	}
 
 	b2TracyCZoneEnd( sensor_state );
-	b2TracyCZoneEnd( overlap_sensors );
 }
 
 void b2DestroySensor( b2World* world, b2Shape* sensorShape )

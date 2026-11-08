@@ -139,6 +139,49 @@ def.userTaskContext = myTaskContext;
 The worker count is a target. If your threads are busy, Box2D can still finish its work with a
 single thread.
 
+The finish callback is optional. Without it `b2World_Step()` waits on an internal semaphore that
+the last task of each phase signals. This suits task systems that can launch work but cannot wait
+on a single task.
+
+### Stepping without blocking
+
+`b2World_Step()` holds the calling thread until the step is done. Some task systems cannot allow
+this, for example a phased or wavefront scheduler where a thread that joins a parallel job cannot
+leave it. For these you can drive the step yourself with `b2World_BeginStep()` and
+`b2World_ContinueStep()`. Each call runs the serial work between two phases and returns the next
+batch of tasks. An empty batch means the step is complete.
+
+```c
+b2TaskBatch batch = b2World_BeginStep( worldId, timeStep, subStepCount );
+while ( batch.count > 0 )
+{
+    // Run every task in the batch on any threads, in any order, then wait for them.
+    // MyRunTasks is a function you implement.
+    MyRunTasks( batch.tasks, batch.count );
+
+    batch = b2World_ContinueStep( worldId );
+}
+```
+
+No callbacks are needed and the built-in scheduler is never created. The worker count still sets
+the most tasks in a batch, `workerCount + 1`, and the size of the per-worker data.
+
+The rules:
+
+- Call each task function exactly once. Tasks in a batch may run concurrently on any threads.
+- Begin and continue may be called from any thread, but never while a task of the current batch is
+  running.
+- The world is locked until the step completes. Do not read or write it in between.
+- The tasks of the constraint solver wait on each other. They work with any number of threads,
+  even when run one after another on a single thread, but a solver task that has started must not
+  be suspended indefinitely.
+
+One task may be marked `b2Task::deferred`. This is the rebuild of the dynamic tree, which overlaps
+the narrow phase and the solver. You may leave it running across continue calls. A later batch
+lists it in `b2TaskBatch::joinTasks` and it must be complete before the continue that follows that
+batch. If you ignore the flag and run it with the rest of its batch, the step is still correct, it
+just loses the overlap.
+
 ### Threading considerations
 
 The multithreading design for Box2D is focused on [data

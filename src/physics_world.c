@@ -250,8 +250,6 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	world->stepIndex = 0;
 	world->splitIslandId = B2_NULL_INDEX;
-	world->activeTaskCount = 0;
-	world->taskCount = 0;
 	world->gravity = def->gravity;
 	world->hitEventThreshold = b2ClampFloat( def->hitEventThreshold, 0.0f, FLT_MAX );
 	world->restitutionThreshold = b2ClampFloat( def->restitutionThreshold, 0.0f, FLT_MAX );
@@ -279,10 +277,9 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	world->enableWarmStarting = true;
 	world->enableContinuous = def->enableContinuous;
 	world->simdWidth = b2GetSIMDWidth();
-	world->userTreeTask = NULL;
 	world->userData = def->userData;
 
-	if ( def->workerCount > 0 && def->enqueueTask != NULL && def->finishTask != NULL )
+	if ( def->workerCount > 0 && def->enqueueTask != NULL )
 	{
 		// External task system
 		world->workerCount = b2MinInt( def->workerCount, B2_MAX_WORKERS );
@@ -293,12 +290,13 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	}
 	else if ( def->workerCount > 1 )
 	{
-		// Built-in scheduler
+		// Built-in scheduler, created on the first b2World_Step
 		world->workerCount = b2MinInt( def->workerCount, B2_MAX_WORKERS );
-		world->scheduler = b2CreateScheduler( world->workerCount );
+		world->useScheduler = true;
+		world->scheduler = NULL;
 		world->enqueueTaskFcn = b2SchedulerEnqueueTask;
 		world->finishTaskFcn = b2SchedulerFinishTask;
-		world->userTaskContext = world->scheduler;
+		world->userTaskContext = NULL;
 	}
 	else
 	{
@@ -311,6 +309,14 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 	}
 
 	b2CreateWorkerContexts( world );
+
+	world->stepContext = b2Alloc( sizeof( b2StepContext ) );
+	memset( world->stepContext, 0, sizeof( b2StepContext ) );
+	if ( world->finishTaskFcn == NULL )
+	{
+		world->stepContext->batchSemaphore = b2CreateSemaphore( 0 );
+		world->stepContext->treeSemaphore = b2CreateSemaphore( 0 );
+	}
 
 	world->debugBodySet = b2CreateBitSet( 256 );
 	world->debugJointSet = b2CreateBitSet( 256 );
@@ -330,6 +336,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
 
 	// Detach any recording before teardown. The user owns and frees the recording buffer.
 	b2StopRecordingInternal( world );
@@ -339,6 +346,15 @@ void b2DestroyWorld( b2WorldId worldId )
 		b2DestroyScheduler( world->scheduler );
 		world->scheduler = NULL;
 	}
+
+	if ( world->stepContext->batchSemaphore != NULL )
+	{
+		b2DestroySemaphore( world->stepContext->batchSemaphore );
+		b2DestroySemaphore( world->stepContext->treeSemaphore );
+	}
+
+	b2Free( world->stepContext, sizeof( b2StepContext ) );
+	world->stepContext = NULL;
 
 	b2DestroyBitSet( &world->debugBodySet );
 	b2DestroyBitSet( &world->debugJointSet );
@@ -663,15 +679,8 @@ static void b2RemoveNonTouchingContact( b2World* world, int setIndex, int localI
 }
 
 // Narrow-phase collision
-static void b2Collide( b2StepContext* context )
+static int b2GetCollideContactCount( b2World* world )
 {
-	b2World* world = context->world;
-
-	B2_ASSERT( world->workerCount > 0 );
-
-	b2TracyCZoneNC( collide, "Narrow Phase", b2_colorDodgerBlue, true );
-
-	// gather contacts into a single array for easier parallel-for
 	int contactCount = 0;
 	b2GraphColor* graphColors = world->constraintGraph.colors;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
@@ -679,16 +688,30 @@ static void b2Collide( b2StepContext* context )
 		contactCount += graphColors[i].contactSims.count;
 	}
 
-	int nonTouchingCount = world->solverSets.data[b2_awakeSet].contactSims.count;
-	contactCount += nonTouchingCount;
+	contactCount += world->solverSets.data[b2_awakeSet].contactSims.count;
+	return contactCount;
+}
 
+static void b2BeginCollide( b2StepContext* context )
+{
+	b2World* world = context->world;
+
+	B2_ASSERT( world->workerCount > 0 );
+
+	// gather contacts into a single array for easier parallel-for
+	int contactCount = b2GetCollideContactCount( world );
+	context->collideContactCount = contactCount;
 	if ( contactCount == 0 )
 	{
-		b2TracyCZoneEnd( collide );
 		return;
 	}
 
-	b2ContactCollideSpan collideSpans[B2_GRAPH_COLOR_COUNT + 2];
+	b2TracyCZoneNC( collide, "Narrow Phase Setup", b2_colorDodgerBlue, true );
+
+	b2GraphColor* graphColors = world->constraintGraph.colors;
+	int nonTouchingCount = world->solverSets.data[b2_awakeSet].contactSims.count;
+
+	b2ContactCollideSpan* collideSpans = context->collideSpans;
 	int spanCount = 0;
 	int contactIndex = 0;
 	for ( int i = 0; i < B2_GRAPH_COLOR_COUNT; ++i )
@@ -718,8 +741,6 @@ static void b2Collide( b2StepContext* context )
 	collideSpans[spanCount].start = contactCount;
 	collideSpans[spanCount].contacts = NULL;
 
-	context->collideSpans = collideSpans;
-
 	// Contact bit set on ids because contact pointers are unstable as they move between touching and not touching.
 	int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
 	for ( int i = 0; i < world->workerCount; ++i )
@@ -730,9 +751,21 @@ static void b2Collide( b2StepContext* context )
 
 	// Task should take at least 40us on a 4GHz CPU (10K cycles)
 	int minRange = 64;
-	b2ParallelFor( world, &b2CollideTask, contactCount, minRange, context );
+	b2StageParallelFor( world, &b2CollideTask, contactCount, minRange, context );
 
-	context->collideSpans = NULL;
+	b2TracyCZoneEnd( collide );
+}
+
+static void b2EndCollide( b2StepContext* context )
+{
+	b2World* world = context->world;
+
+	if ( context->collideContactCount == 0 )
+	{
+		return;
+	}
+
+	b2GraphColor* graphColors = world->constraintGraph.colors;
 
 	// Serially update contact state
 	b2TracyCZoneNC( contact_state, "Contact State", b2_colorLightSlateGray, true );
@@ -880,22 +913,221 @@ static void b2Collide( b2StepContext* context )
 	b2ValidateContacts( world );
 
 	b2TracyCZoneEnd( contact_state );
-	b2TracyCZoneEnd( collide );
 }
 
-void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
+static void b2PrepareStepContext( b2World* world, b2StepContext* context )
 {
-	B2_CHECK_INPUT( b2IsValidFloat( timeStep ) );
-	B2_ASSERT( 0 < subStepCount );
+	float timeStep = context->dt;
+	context->subStepCount = b2MaxInt( 1, context->subStepCount );
 
-	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
-	if ( world->locked )
+	if ( timeStep > 0.0f )
 	{
-		b2TracyCFrame;
-		return;
+		context->inv_dt = 1.0f / timeStep;
+		context->h = timeStep / context->subStepCount;
+		context->inv_h = context->subStepCount * context->inv_dt;
+	}
+	else
+	{
+		context->inv_dt = 0.0f;
+		context->h = 0.0f;
+		context->inv_h = 0.0f;
 	}
 
+	world->inv_h = context->inv_h;
+	world->inv_dt = context->inv_dt;
+
+	// Hertz values get reduced for large time steps
+	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context->inv_h );
+	context->contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context->h );
+	context->staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context->h );
+
+	context->restitutionThreshold = world->restitutionThreshold;
+	context->maxLinearVelocity = world->maxLinearSpeed;
+	context->enableWarmStarting = world->enableWarmStarting;
+}
+
+static b2TaskBatch b2MakeTaskBatch( b2StepContext* context )
+{
+	int deferredCount = context->batchStart == 0 ? 1 : 0;
+	b2AtomicStoreInt( &context->pendingCount, context->batchCount - deferredCount );
+
+	return (b2TaskBatch){
+		.tasks = context->tasks + context->batchStart,
+		.count = context->batchCount,
+		.joinTasks = context->joinTree ? context->tasks : NULL,
+		.joinCount = context->joinTree ? 1 : 0,
+	};
+}
+
+static void b2JoinTreeTask( b2StepContext* context )
+{
+	if ( context->treeStaged )
+	{
+		B2_ASSERT( b2AtomicLoadInt( &context->treePending ) == 0 );
+		context->treeStaged = false;
+		b2ValidateNoEnlarged( &context->world->broadPhase );
+	}
+}
+
+static void b2EnterSensors( b2World* world, b2StepContext* context )
+{
+	context->phase = b2_stepSensors;
+	context->sensorTicks = b2GetTicks();
+	b2BeginSensors( world );
+}
+
+static void b2EndStep( b2World* world )
+{
+	b2StepContext* context = world->stepContext;
+	B2_ASSERT( context->treeStaged == false );
+
+	world->profile.step = b2GetMilliseconds( context->stepTicks );
+
+	B2_ASSERT( b2GetStackAllocation( &world->stack ) == 0 );
+
+	world->maxCapacity.arenaByteCount = b2MaxInt( world->maxCapacity.arenaByteCount, b2GetMaxStackAllocation( &world->stack ) );
+
+	// Ensure stack is large enough
+	b2GrowStack( &world->stack );
+
+	// Swap end event array buffers
+	world->endEventArrayIndex = 1 - world->endEventArrayIndex;
+	b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
+	b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
+
+	if ( world->recording != NULL )
+	{
+		// Write the per-step StateHash while the world is still locked. Queries early return while
+		// locked, so this keeps the shared recording buffer single-writer without a lock. StateHash
+		// proves the simulation reproduced exactly on replay.
+		b2WorldId worldId = { (uint16_t)( world->worldId + 1 ), world->generation };
+		uint64_t hash = b2HashWorldState( world );
+		b2RecArgs_StateHash stateHash = { worldId, hash };
+		b2RecWrite_StateHash( world->recording, &stateHash );
+
+		// Grow the recorded bounds so a replay can frame the whole motion, not just frame 0
+		b2AABB bounds;
+		if ( b2ComputeWorldBounds( world, &bounds ) )
+		{
+			b2RecAccumulateBounds( world->recording, bounds );
+		}
+	}
+
+	context->phase = b2_stepIdle;
+	world->locked = false;
+
+	b2TracyCFrame;
+}
+
+static b2TaskBatch b2AdvanceStep( b2World* world )
+{
+	b2StepContext* context = world->stepContext;
+
+	for ( ;; )
+	{
+		b2ResetTaskBatch( context );
+
+		switch ( context->phase )
+		{
+			case b2_stepBegin:
+				context->phase = b2_stepCrossPairs;
+				context->pairTicks = b2GetTicks();
+				context->pairsUpdated = b2BeginPairs( world );
+				break;
+
+			case b2_stepCrossPairs:
+				context->phase = b2_stepSelfPairs;
+				if ( context->pairsUpdated )
+				{
+					b2StageSelfPairs( world );
+				}
+				break;
+
+			case b2_stepSelfPairs:
+				if ( context->pairsUpdated )
+				{
+					b2EndPairs( world );
+				}
+				world->profile.pairs = b2GetMilliseconds( context->pairTicks );
+
+				b2PrepareStepContext( world, context );
+
+				context->phase = b2_stepCollide;
+				context->collideTicks = b2GetTicks();
+				context->solveSkipped =
+					( context->dt > 0.0f ) == false || world->solverSets.data[b2_awakeSet].bodySims.count == 0;
+
+				b2BeginCollide( context );
+
+				if ( context->treeStaged )
+				{
+					context->batchStart = 0;
+					context->batchCount += 1;
+					context->joinTree = context->solveSkipped;
+				}
+				break;
+
+			case b2_stepCollide:
+				b2EndCollide( context );
+				world->profile.collide = b2GetMilliseconds( context->collideTicks );
+
+				// Integrate velocities, solve velocity constraints, and integrate positions.
+				if ( context->dt > 0.0f )
+				{
+					context->phase = b2_stepSolve;
+					context->solveTicks = b2GetTicks();
+					if ( b2BeginSolve( world, context ) )
+					{
+						B2_ASSERT( context->solveSkipped == false );
+						context->joinTree = context->treeStaged;
+						break;
+					}
+
+					world->profile.solve = b2GetMilliseconds( context->solveTicks );
+				}
+
+				B2_ASSERT( context->solveSkipped );
+				b2JoinTreeTask( context );
+				b2EnterSensors( world, context );
+				break;
+
+			case b2_stepSolve:
+				b2JoinTreeTask( context );
+				context->phase = b2_stepFinalize;
+				b2BeginFinalize( world, context );
+				break;
+
+			case b2_stepFinalize:
+				context->phase = b2_stepBullets;
+				b2BeginBullets( world, context );
+				break;
+
+			case b2_stepBullets:
+				b2EndBullets( world, context );
+				world->profile.solve = b2GetMilliseconds( context->solveTicks );
+				b2EnterSensors( world, context );
+				break;
+
+			case b2_stepSensors:
+				b2EndSensors( world );
+				world->profile.sensors = b2GetMilliseconds( context->sensorTicks );
+				b2EndStep( world );
+				return (b2TaskBatch){ 0 };
+
+			default:
+				B2_ASSERT( false );
+				return (b2TaskBatch){ 0 };
+		}
+
+		if ( context->batchCount > 0 )
+		{
+			return b2MakeTaskBatch( context );
+		}
+	}
+}
+
+static b2TaskBatch b2StartStep( b2World* world, b2WorldId worldId, float timeStep, int subStepCount, bool signalSemaphores )
+{
 	// Record step inputs before simulation runs
 	B2_REC( world, Step, worldId, timeStep, subStepCount );
 
@@ -909,18 +1141,22 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 
 	world->profile = (b2Profile){ 0 };
 
-	b2TracyCZoneNC( world_step, "Step", b2_colorBox2DGreen, true );
-
 	world->locked = true;
-	world->activeTaskCount = 0;
-	world->taskCount = 0;
 
-	if ( world->scheduler != NULL )
-	{
-		b2ResetScheduler( world->scheduler );
-	}
+	b2StepContext* context = world->stepContext;
+	b2Semaphore* batchSemaphore = context->batchSemaphore;
+	b2Semaphore* treeSemaphore = context->treeSemaphore;
+	memset( context, 0, sizeof( b2StepContext ) );
+	context->batchSemaphore = batchSemaphore;
+	context->treeSemaphore = treeSemaphore;
+	context->signalSemaphores = signalSemaphores;
+	B2_ASSERT( signalSemaphores == false || ( batchSemaphore != NULL && treeSemaphore != NULL ) );
 
-	uint64_t stepTicks = b2GetTicks();
+	context->world = world;
+	context->dt = timeStep;
+	context->subStepCount = subStepCount;
+	context->phase = b2_stepBegin;
+	context->stepTicks = b2GetTicks();
 
 	{
 		b2Capacity* c = &world->maxCapacity;
@@ -938,113 +1174,226 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 		c->contactCount = b2MaxInt( c->contactCount, totalContactCount );
 	}
 
-	// Update collision pairs and create contacts
+	return b2AdvanceStep( world );
+}
+
+static b2TaskBatch b2ContinueStepInternal( b2World* world )
+{
+	b2StepContext* context = world->stepContext;
+	B2_UNUSED( context );
+	B2_ASSERT( b2AtomicLoadInt( &context->pendingCount ) == 0 );
+	B2_ASSERT( context->joinTree == false || b2AtomicLoadInt( &context->treePending ) == 0 );
+	return b2AdvanceStep( world );
+}
+
+typedef struct b2StepDriver
+{
+	b2World* world;
+	void* treeTask;
+	int enqueueCount;
+	bool useFinish;
+} b2StepDriver;
+
+static void b2RunTaskBatch( b2StepDriver* driver, b2TaskBatch batch )
+{
+	b2World* world = driver->world;
+	void* userContext = world->userTaskContext;
+
+	void* handles[B2_STEP_TASK_CAPACITY];
+	bool waitBatch = false;
+	int lastIndex = batch.count - 1;
+	B2_ASSERT( 0 <= lastIndex && lastIndex < B2_STEP_TASK_CAPACITY );
+
+	for ( int i = 0; i < lastIndex; ++i )
 	{
-		uint64_t pairTicks = b2GetTicks();
-		b2UpdateBroadPhasePairs( world );
-		world->profile.pairs = b2GetMilliseconds( pairTicks );
-	}
-
-	b2StepContext context = { 0 };
-	context.world = world;
-	context.dt = timeStep;
-	context.subStepCount = b2MaxInt( 1, subStepCount );
-
-	if ( timeStep > 0.0f )
-	{
-		context.inv_dt = 1.0f / timeStep;
-		context.h = timeStep / context.subStepCount;
-		context.inv_h = context.subStepCount * context.inv_dt;
-	}
-	else
-	{
-		context.inv_dt = 0.0f;
-		context.h = 0.0f;
-		context.inv_h = 0.0f;
-	}
-
-	world->inv_h = context.inv_h;
-	world->inv_dt = context.inv_dt;
-
-	// Hertz values get reduced for large time steps
-	float contactHertz = b2MinFloat( world->contactHertz, 0.125f * context.inv_h );
-	context.contactSoftness = b2MakeSoft( contactHertz, world->contactDampingRatio, context.h );
-	context.staticSoftness = b2MakeSoft( 2.0f * contactHertz, world->contactDampingRatio, context.h );
-
-	context.restitutionThreshold = world->restitutionThreshold;
-	context.maxLinearVelocity = world->maxLinearSpeed;
-	context.enableWarmStarting = world->enableWarmStarting;
-
-	// Narrow phase : update contacts
-	{
-		uint64_t collideTicks = b2GetTicks();
-		b2Collide( &context );
-		world->profile.collide = b2GetMilliseconds( collideTicks );
-	}
-
-	// Integrate velocities, solve velocity constraints, and integrate positions.
-	if ( timeStep > 0.0f )
-	{
-		uint64_t solveTicks = b2GetTicks();
-		b2Solve( world, &context );
-		world->profile.solve = b2GetMilliseconds( solveTicks );
-	}
-
-	// Finish the tree task in case b2Solve didn't finish it
-	if ( world->userTreeTask )
-	{
-		world->finishTaskFcn( world->userTreeTask, world->userTaskContext );
-		world->userTreeTask = NULL;
-		world->activeTaskCount -= 1;
-		b2ValidateNoEnlarged( &world->broadPhase );
-	}
-
-	// Update sensors
-	{
-		uint64_t sensorTicks = b2GetTicks();
-		b2OverlapSensors( world );
-		world->profile.sensors = b2GetMilliseconds( sensorTicks );
-	}
-
-	world->profile.step = b2GetMilliseconds( stepTicks );
-
-	B2_ASSERT( b2GetStackAllocation( &world->stack ) == 0 );
-
-	world->maxCapacity.arenaByteCount = b2MaxInt( world->maxCapacity.arenaByteCount, b2GetMaxStackAllocation( &world->stack ) );
-
-	// Ensure stack is large enough
-	b2GrowStack( &world->stack );
-
-	// Make sure all tasks that were started were also finished
-	B2_ASSERT( world->activeTaskCount == 0 );
-
-	b2TracyCZoneEnd( world_step );
-
-	// Swap end event array buffers
-	world->endEventArrayIndex = 1 - world->endEventArrayIndex;
-	b2Array_Clear( world->sensorEndEvents[world->endEventArrayIndex] );
-	b2Array_Clear( world->contactEndEvents[world->endEventArrayIndex] );
-
-	if ( world->recording != NULL )
-	{
-		// Write the per-step StateHash while the world is still locked. Queries early return while
-		// locked, so this keeps the shared recording buffer single-writer without a lock. StateHash
-		// proves the simulation reproduced exactly on replay.
-		uint64_t hash = b2HashWorldState( world );
-		b2RecArgs_StateHash stateHash = { worldId, hash };
-		b2RecWrite_StateHash( world->recording, &stateHash );
-
-		// Grow the recorded bounds so a replay can frame the whole motion, not just frame 0
-		b2AABB bounds;
-		if ( b2ComputeWorldBounds( world, &bounds ) )
+		const b2Task* task = batch.tasks + i;
+		void* handle = NULL;
+		if ( driver->enqueueCount < B2_MAX_TASKS )
 		{
-			b2RecAccumulateBounds( world->recording, bounds );
+			handle = world->enqueueTaskFcn( task->fcn, task->context, userContext );
+			driver->enqueueCount += 1;
+		}
+		else
+		{
+			task->fcn( task->context );
+		}
+
+		if ( task->deferred )
+		{
+			B2_ASSERT( driver->treeTask == NULL );
+			driver->treeTask = handle;
+			handles[i] = NULL;
+		}
+		else
+		{
+			handles[i] = handle;
+			waitBatch = true;
 		}
 	}
 
-	world->locked = false;
+	const b2Task* lastTask = batch.tasks + lastIndex;
+	waitBatch = waitBatch || lastTask->deferred == false;
+	lastTask->fcn( lastTask->context );
 
-	b2TracyCFrame;
+	if ( driver->useFinish )
+	{
+		for ( int i = 0; i < lastIndex; ++i )
+		{
+			if ( handles[i] != NULL )
+			{
+				world->finishTaskFcn( handles[i], userContext );
+			}
+		}
+	}
+	else if ( waitBatch )
+	{
+		b2WaitSemaphore( world->stepContext->batchSemaphore );
+	}
+
+	if ( batch.joinCount > 0 )
+	{
+		if ( driver->useFinish )
+		{
+			if ( driver->treeTask != NULL )
+			{
+				world->finishTaskFcn( driver->treeTask, userContext );
+			}
+		}
+		else
+		{
+			b2WaitSemaphore( world->stepContext->treeSemaphore );
+		}
+
+		driver->treeTask = NULL;
+	}
+}
+
+void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
+{
+	B2_CHECK_INPUT( b2IsValidFloat( timeStep ) );
+	B2_ASSERT( 0 < subStepCount );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		b2TracyCFrame;
+		return;
+	}
+
+	b2TracyCZoneNC( world_step, "Step", b2_colorBox2DGreen, true );
+
+	if ( world->useScheduler )
+	{
+		if ( world->scheduler == NULL )
+		{
+			world->scheduler = b2CreateScheduler( world->workerCount );
+			world->userTaskContext = world->scheduler;
+		}
+
+		b2ResetScheduler( world->scheduler );
+	}
+
+	b2StepDriver driver = {
+		.world = world,
+		.treeTask = NULL,
+		.enqueueCount = 0,
+		.useFinish = world->finishTaskFcn != NULL,
+	};
+
+	b2TaskBatch batch = b2StartStep( world, worldId, timeStep, subStepCount, driver.useFinish == false );
+	while ( batch.count > 0 )
+	{
+		switch ( world->stepContext->phase )
+		{
+			case b2_stepCrossPairs:
+			case b2_stepSelfPairs:
+			{
+				b2TracyCZoneNC( find_pairs, "Find Pairs", b2_colorMediumSlateBlue, true );
+				b2RunTaskBatch( &driver, batch );
+				b2TracyCZoneEnd( find_pairs );
+			}
+			break;
+
+			case b2_stepCollide:
+			{
+				b2TracyCZoneNC( collide, "Narrow Phase", b2_colorDodgerBlue, true );
+				b2RunTaskBatch( &driver, batch );
+				b2TracyCZoneEnd( collide );
+			}
+			break;
+
+			case b2_stepSolve:
+			{
+				b2TracyCZoneNC( solve_constraints, "Solve Constraints", b2_colorIndigo, true );
+				b2RunTaskBatch( &driver, batch );
+				b2TracyCZoneEnd( solve_constraints );
+			}
+			break;
+
+			case b2_stepFinalize:
+			{
+				b2TracyCZoneNC( update_transforms, "Update Transforms", b2_colorMediumSeaGreen, true );
+				b2RunTaskBatch( &driver, batch );
+				b2TracyCZoneEnd( update_transforms );
+			}
+			break;
+
+			case b2_stepBullets:
+			{
+				b2TracyCZoneNC( bullets, "Bullets", b2_colorLightYellow, true );
+				b2RunTaskBatch( &driver, batch );
+				b2TracyCZoneEnd( bullets );
+			}
+			break;
+
+			case b2_stepSensors:
+			{
+				b2TracyCZoneNC( sensors, "Sensors", b2_colorMediumPurple, true );
+				b2RunTaskBatch( &driver, batch );
+				b2TracyCZoneEnd( sensors );
+			}
+			break;
+
+			default:
+				B2_ASSERT( false );
+				break;
+		}
+
+		batch = b2ContinueStepInternal( world );
+	}
+
+	B2_ASSERT( driver.treeTask == NULL );
+
+	b2TracyCZoneEnd( world_step );
+}
+
+b2TaskBatch b2World_BeginStep( b2WorldId worldId, float timeStep, int subStepCount )
+{
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( timeStep ), ( b2TaskBatch ){ 0 } );
+	B2_ASSERT( 0 < subStepCount );
+
+	b2World* world = b2GetWorldFromId( worldId );
+	B2_ASSERT( world->locked == false );
+	if ( world->locked )
+	{
+		return (b2TaskBatch){ 0 };
+	}
+
+	return b2StartStep( world, worldId, timeStep, subStepCount, false );
+}
+
+b2TaskBatch b2World_ContinueStep( b2WorldId worldId )
+{
+	b2World* world = b2GetWorldFromId( worldId );
+	b2StepContext* context = world->stepContext;
+	B2_ASSERT( world->locked && context->phase != b2_stepIdle );
+	if ( context->phase == b2_stepIdle )
+	{
+		return (b2TaskBatch){ 0 };
+	}
+
+	return b2ContinueStepInternal( world );
 }
 
 static void b2DrawShape( b2DebugDraw* draw, b2Shape* shape, b2WorldTransform transform, b2HexColor color, bool drawChainNormals )
@@ -2024,7 +2373,7 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 
 	s.stackUsed = b2GetMaxStackAllocation( &world->stack );
 	s.byteCount = b2GetByteCount();
-	s.taskCount = world->taskCount;
+	s.taskCount = world->stepContext->taskCount;
 
 	s.recycledContactCount = 0;
 	for ( int i = 0; i < world->workerCount; ++i )

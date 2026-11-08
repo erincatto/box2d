@@ -29,13 +29,6 @@
 #define ITERATIONS 1
 #define RELAX_ITERATIONS 1
 
-typedef struct b2WorkerContext
-{
-	b2StepContext* context;
-	int workerIndex;
-	void* userTask;
-} b2WorkerContext;
-
 // Integrate velocities and apply damping
 static void b2IntegrateVelocitiesTask( b2SolverBlock block, b2StepContext* context )
 {
@@ -948,7 +941,12 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 	int startIndex = GetWorkerStartIndex( workerIndex, blockCount, context->workerCount );
 	if ( startIndex == B2_NULL_INDEX )
 	{
-		return;
+		if ( workerIndex != context->orchestratorIndex )
+		{
+			return;
+		}
+
+		startIndex = 0;
 	}
 
 	B2_ASSERT( 0 <= startIndex && startIndex < blockCount );
@@ -988,7 +986,7 @@ static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, ui
 		return;
 	}
 
-	int workerIndex = 0;
+	int workerIndex = context->orchestratorIndex;
 
 	if ( blockCount == 1 )
 	{
@@ -1024,17 +1022,9 @@ static void b2SolverTask( void* taskContext )
 	b2SolverStage* stages = context->stages;
 	b2Profile* profile = &context->world->profile;
 
-	if ( workerIndex == 0 )
+	if ( b2AtomicCompareExchangeInt( &context->orchestratorClaimed, 0, 1 ) )
 	{
-		// The orchestrator slot is a race. The calling thread of b2World_Step also enters here
-		// as worker 0, so progress is guaranteed even if the user's task system schedules tasks
-		// out of order, has fewer threads than workerCount, or runs the task synchronously
-		// inside enqueueTaskFcn. Whoever wins the CAS becomes the orchestrator; the loser
-		// returns and lets the spinner-only path handle workers >0.
-		if ( b2AtomicCompareExchangeInt( &context->mainClaimed, 0, 1 ) == false )
-		{
-			return;
-		}
+		context->orchestratorIndex = workerIndex;
 
 		// Main thread synchronizes the workers and does work itself.
 		//
@@ -1285,7 +1275,7 @@ static void b2BulletBodyTask( int startIndex, int endIndex, int workerIndex, voi
 }
 
 // Solve with graph coloring
-void b2Solve( b2World* world, b2StepContext* stepContext )
+bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 {
 	int simdShift = world->simdWidth == 8 ? 3 : 2;
 
@@ -1297,8 +1287,10 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	int awakeBodyCount = awakeSet->bodySims.count;
 	if ( awakeBodyCount == 0 )
 	{
-		return;
+		return false;
 	}
+
+	stepContext->awakeBodyCount = awakeBodyCount;
 
 	// Solve constraints using graph coloring
 	{
@@ -1401,8 +1393,8 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		// Build the span table for the flat prepare/store parallel-for while I slice the
 		// wide constraint buffer across colors. One entry per active color plus a sentinel
 		// at wideContactCount.
-		b2ContactPrepareSpan contactPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
-		b2JointPrepareSpan jointPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
+		b2ContactPrepareSpan* contactPrepareSpans = stepContext->contactPrepareSpans;
+		b2JointPrepareSpan* jointPrepareSpans = stepContext->jointPrepareSpans;
 
 		// Distribute transient constraints to each graph color and prepare spans
 		{
@@ -1487,27 +1479,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		b2SyncBlock* jointBlocks = b2StackAlloc( &world->stack, jointPrepareDim.count * sizeof( b2SyncBlock ), "joint blocks" );
 		b2SyncBlock* graphBlocks = b2StackAlloc( &world->stack, graphBlockCount * sizeof( b2SyncBlock ), "graph blocks" );
 
-		// Split an awake island. This modifies:
-		// - stack allocator
-		// - world island array and solver set
-		// - island indices on bodies, contacts, and joints
-		// I'm squeezing this task in here because it may be expensive and this is a safe place to put it.
-		// Note: cannot split islands in parallel with FinalizeBodies
-		void* splitIslandTask = NULL;
-		if ( world->splitIslandId != B2_NULL_INDEX )
-		{
-			if ( world->taskCount < B2_MAX_TASKS )
-			{
-				splitIslandTask = world->enqueueTaskFcn( &b2SplitIslandTask, world, world->userTaskContext );
-				world->taskCount += 1;
-				world->activeTaskCount += splitIslandTask == NULL ? 0 : 1;
-			}
-			else
-			{
-				b2SplitIslandTask( world );
-			}
-		}
-
 		// Prepare body blocks
 		b2InitBlocks( bodyBlocks, bodyDim, awakeBodyCount, b2_bodyBlock, UINT8_MAX );
 
@@ -1554,7 +1525,6 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		B2_ASSERT( (int)( stage - stages ) == stageCount );
 
 		B2_ASSERT( workerCount <= B2_MAX_WORKERS );
-		b2WorkerContext workerContext[B2_MAX_WORKERS];
 
 		stepContext->graph = graph;
 		stepContext->activeColorCount = activeColorCount;
@@ -1562,17 +1532,15 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 		stepContext->stageCount = stageCount;
 		stepContext->stages = stages;
 		stepContext->wideContactConstraints = wideContactConstraints;
-		stepContext->contactPrepareSpans = contactPrepareSpans;
 		stepContext->wideContactCount = wideContactCount;
-		stepContext->jointPrepareSpans = jointPrepareSpans;
+		stepContext->bodyBlocks = bodyBlocks;
+		stepContext->contactBlocks = contactBlocks;
+		stepContext->jointBlocks = jointBlocks;
+		stepContext->graphBlocks = graphBlocks;
+		stepContext->overflowContacts = overflowContacts;
+		stepContext->orchestratorIndex = B2_NULL_INDEX;
 		b2AtomicStoreU32( &stepContext->atomicSyncBits, 0 );
-		b2AtomicStoreInt( &stepContext->mainClaimed, 0 );
-
-		world->profile.solverSetup = b2GetMillisecondsAndReset( &setupTicks );
-		b2TracyCZoneEnd( solver_setup );
-
-		b2TracyCZoneNC( solve_constraints, "Solve Constraints", b2_colorIndigo, true );
-		uint64_t constraintTicks = b2GetTicks();
+		b2AtomicStoreInt( &stepContext->orchestratorClaimed, 0 );
 
 		int jointIdCapacity = b2GetIdCapacity( &world->jointIdPool );
 		int contactIdCapacity = b2GetIdCapacity( &world->contactIdPool );
@@ -1582,93 +1550,83 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			b2SetBitCountAndClear( &taskContext->jointStateBitSet, jointIdCapacity );
 			b2SetBitCountAndClear( &taskContext->hitEventBitSet, contactIdCapacity );
 			taskContext->hasHitEvents = false;
-
-			workerContext[i].context = stepContext;
-			workerContext[i].workerIndex = i;
-
-			if ( world->taskCount < B2_MAX_TASKS )
-			{
-				workerContext[i].userTask = world->enqueueTaskFcn( &b2SolverTask, workerContext + i, world->userTaskContext );
-				world->taskCount += 1;
-				world->activeTaskCount += workerContext[i].userTask == NULL ? 0 : 1;
-			}
-			else
-			{
-				workerContext[i].userTask = NULL;
-				b2SolverTask( workerContext + i );
-			}
 		}
 
-		// The calling thread of b2World_Step also enters b2SolverTask as worker 0 and races for the
-		// orchestrator slot via the CAS inside. This guarantees progress even when the user's task
-		// system can't run the queued worker 0 promptly: it might schedule out of order, have fewer
-		// threads than workerCount, or invert priority by parking the calling thread in finishTaskFcn.
-		// Whoever wins the CAS becomes the orchestrator; the loser returns and lets the spinner-only
-		// path handle workers >0.
-		b2WorkerContext callerContext = { stepContext, 0, NULL };
-		b2SolverTask( &callerContext );
+		// Split an awake island. This modifies:
+		// - stack allocator
+		// - world island array and solver set
+		// - island indices on bodies, contacts, and joints
+		// I'm squeezing this task in here because it may be expensive and this is a safe place to put it.
+		// Note: cannot split islands in parallel with FinalizeBodies
+		if ( world->splitIslandId != B2_NULL_INDEX )
+		{
+			b2AddTask( stepContext, &b2SplitIslandTask, world );
+		}
 
-		// Finish constraint solve
 		for ( int i = 0; i < workerCount; ++i )
 		{
-			if ( workerContext[i].userTask != NULL )
-			{
-				world->finishTaskFcn( workerContext[i].userTask, world->userTaskContext );
-				world->activeTaskCount -= 1;
-			}
+			b2WorkerContext* workerContext = stepContext->workerContexts + i;
+			workerContext->context = stepContext;
+			workerContext->workerIndex = i;
+			b2AddTask( stepContext, &b2SolverTask, workerContext );
 		}
 
-		// Finish island split
-		if ( splitIslandTask != NULL )
-		{
-			world->finishTaskFcn( splitIslandTask, world->userTaskContext );
-			world->activeTaskCount -= 1;
-		}
-		world->splitIslandId = B2_NULL_INDEX;
+		world->profile.solverSetup = b2GetMillisecondsAndReset( &setupTicks );
+		b2TracyCZoneEnd( solver_setup );
 
-		world->profile.constraints = b2GetMillisecondsAndReset( &constraintTicks );
-		b2TracyCZoneEnd( solve_constraints );
-
-		b2TracyCZoneNC( update_transforms, "Update Transforms", b2_colorMediumSeaGreen, true );
-		uint64_t transformTicks = b2GetTicks();
-
-		// Prepare contact, enlarged body, and island bit sets used in body finalization.
-		int awakeIslandCount = awakeSet->islandSims.count;
-		for ( int i = 0; i < world->workerCount; ++i )
-		{
-			b2TaskContext* taskContext = world->taskContexts.data + i;
-			taskContext->sensorHits.count = 0;
-			b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
-			b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
-			taskContext->splitIslandId = B2_NULL_INDEX;
-			taskContext->splitSleepTime = 0.0f;
-		}
-
-		// Finish the user tree task that was queued earlier in the time step. This must be complete before touching the
-		// broad-phase.
-		if ( world->userTreeTask != NULL )
-		{
-			world->finishTaskFcn( world->userTreeTask, world->userTaskContext );
-			world->userTreeTask = NULL;
-			world->activeTaskCount -= 1;
-		}
-
-		b2ValidateNoEnlarged( &world->broadPhase );
-
-		// Finalize bodies. Must happen after the constraint solver and after island splitting.
-		b2ParallelFor( world, &b2FinalizeBodiesTask, awakeBodyCount, 64, stepContext );
-
-		b2StackFree( &world->stack, graphBlocks );
-		b2StackFree( &world->stack, jointBlocks );
-		b2StackFree( &world->stack, contactBlocks );
-		b2StackFree( &world->stack, bodyBlocks );
-		b2StackFree( &world->stack, stages );
-		b2StackFree( &world->stack, overflowContacts );
-		b2StackFree( &world->stack, wideContactConstraints );
-
-		world->profile.transforms = b2GetMilliseconds( transformTicks );
-		b2TracyCZoneEnd( update_transforms );
+		stepContext->constraintTicks = b2GetTicks();
 	}
+
+	return true;
+}
+
+void b2BeginFinalize( b2World* world, b2StepContext* stepContext )
+{
+	world->splitIslandId = B2_NULL_INDEX;
+	world->profile.constraints = b2GetMilliseconds( stepContext->constraintTicks );
+
+	stepContext->transformTicks = b2GetTicks();
+
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
+	int awakeBodyCount = stepContext->awakeBodyCount;
+	B2_ASSERT( awakeBodyCount == awakeSet->bodySims.count );
+
+	// Prepare contact, enlarged body, and island bit sets used in body finalization.
+	int awakeIslandCount = awakeSet->islandSims.count;
+	for ( int i = 0; i < world->workerCount; ++i )
+	{
+		b2TaskContext* taskContext = world->taskContexts.data + i;
+		taskContext->sensorHits.count = 0;
+		b2SetBitCountAndClear( &taskContext->enlargedSimBitSet, awakeBodyCount );
+		b2SetBitCountAndClear( &taskContext->awakeIslandBitSet, awakeIslandCount );
+		taskContext->splitIslandId = B2_NULL_INDEX;
+		taskContext->splitSleepTime = 0.0f;
+	}
+
+	b2ValidateNoEnlarged( &world->broadPhase );
+
+	// Finalize bodies. Must happen after the constraint solver and after island splitting.
+	b2StageParallelFor( world, &b2FinalizeBodiesTask, awakeBodyCount, 64, stepContext );
+}
+
+void b2BeginBullets( b2World* world, b2StepContext* stepContext )
+{
+	b2StackFree( &world->stack, stepContext->graphBlocks );
+	b2StackFree( &world->stack, stepContext->jointBlocks );
+	b2StackFree( &world->stack, stepContext->contactBlocks );
+	b2StackFree( &world->stack, stepContext->bodyBlocks );
+	b2StackFree( &world->stack, stepContext->stages );
+	b2StackFree( &world->stack, stepContext->overflowContacts );
+	b2StackFree( &world->stack, stepContext->wideContactConstraints );
+	stepContext->graphBlocks = NULL;
+	stepContext->jointBlocks = NULL;
+	stepContext->contactBlocks = NULL;
+	stepContext->bodyBlocks = NULL;
+	stepContext->stages = NULL;
+	stepContext->overflowContacts = NULL;
+	stepContext->wideContactConstraints = NULL;
+
+	world->profile.transforms = b2GetMilliseconds( stepContext->transformTicks );
 
 	// Report joint events
 	{
@@ -1863,13 +1821,23 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 	int bulletBodyCount = b2AtomicLoadInt( &stepContext->bulletBodyCount );
 	if ( bulletBodyCount > 0 )
 	{
-		b2TracyCZoneNC( bullets, "Bullets", b2_colorLightYellow, true );
-		uint64_t bulletTicks = b2GetTicks();
+		stepContext->bulletTicks = b2GetTicks();
 
 		// Fast bullet bodies
 		// Note: a bullet body may be moving slow
 		int minRange = 8;
-		b2ParallelFor( world, &b2BulletBodyTask, bulletBodyCount, minRange, stepContext );
+		b2StageParallelFor( world, &b2BulletBodyTask, bulletBodyCount, minRange, stepContext );
+	}
+}
+
+void b2EndBullets( b2World* world, b2StepContext* stepContext )
+{
+	b2SolverSet* awakeSet = b2Array_Get( world->solverSets, b2_awakeSet );
+
+	int bulletBodyCount = b2AtomicLoadInt( &stepContext->bulletBodyCount );
+	if ( bulletBodyCount > 0 )
+	{
+		b2TracyCZoneNC( bullets, "Bullet Proxies", b2_colorLightYellow, true );
 
 		b2BroadPhase* broadPhase = &world->broadPhase;
 		b2DynamicTree* dynamicTree = broadPhase->trees + b2_dynamicBody;
@@ -1921,7 +1889,7 @@ void b2Solve( b2World* world, b2StepContext* stepContext )
 			}
 		}
 
-		world->profile.bullets = b2GetMilliseconds( bulletTicks );
+		world->profile.bullets = b2GetMilliseconds( stepContext->bulletTicks );
 		b2TracyCZoneEnd( bullets );
 	}
 

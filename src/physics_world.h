@@ -195,9 +195,10 @@ typedef struct b2World
 	b2EnqueueTaskCallbackFcn* enqueueTaskFcn;
 	b2FinishTaskCallbackFcn* finishTaskFcn;
 	void* userTaskContext;
-	void* userTreeTask;
+	struct b2StepContext* stepContext;
 
 	struct b2Scheduler* scheduler;
+	bool useScheduler;
 
 	void* userData;
 
@@ -209,9 +210,6 @@ typedef struct b2World
 
 	// inverse full-step
 	float inv_dt;
-
-	int activeTaskCount;
-	int taskCount;
 
 	uint16_t worldId;
 

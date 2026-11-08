@@ -6,29 +6,84 @@
 #include "core.h"
 #include "physics_world.h"
 #include "platform.h"
+#include "solver.h"
 
 #include "box2d/base.h"
 #include "box2d/constants.h"
 
 #include <stddef.h>
 
-// Shared state for one b2ParallelFor invocation. Workers race on nextBlock to
-// claim work, so a slow chunk can't strand the other threads.
-typedef struct b2ParallelForShared
+static void b2RunStepTask( void* taskContext )
 {
-	b2AtomicInt nextBlock;
-	int blockCount;
-	int blockSize;
-	int itemCount;
-	b2ParallelForCallback* callback;
-	void* context;
-} b2ParallelForShared;
+	b2StepTask* task = taskContext;
+	b2StepContext* stepContext = task->stepContext;
 
-typedef struct b2ParallelForTask
+	task->fcn( task->context );
+
+	if ( task->deferred )
+	{
+		if ( b2AtomicFetchAddInt( &stepContext->treePending, -1 ) == 1 && stepContext->signalSemaphores )
+		{
+			b2SignalSemaphore( stepContext->treeSemaphore );
+		}
+	}
+	else
+	{
+		if ( b2AtomicFetchAddInt( &stepContext->pendingCount, -1 ) == 1 && stepContext->signalSemaphores )
+		{
+			b2SignalSemaphore( stepContext->batchSemaphore );
+		}
+	}
+}
+
+void b2ResetTaskBatch( b2StepContext* stepContext )
 {
-	b2ParallelForShared* shared;
-	int workerIndex;
-} b2ParallelForTask;
+	stepContext->batchStart = 1;
+	stepContext->batchCount = 0;
+	stepContext->joinTree = false;
+}
+
+void b2AddTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* context )
+{
+	int index = stepContext->batchStart + stepContext->batchCount;
+	B2_ASSERT( 1 <= index && index < B2_STEP_TASK_CAPACITY );
+
+	b2StepTask* stepTask = stepContext->stepTasks + index;
+	stepTask->fcn = fcn;
+	stepTask->context = context;
+	stepTask->stepContext = stepContext;
+	stepTask->deferred = false;
+
+	stepContext->tasks[index] = (b2Task){
+		.fcn = b2RunStepTask,
+		.context = stepTask,
+		.deferred = false,
+	};
+
+	stepContext->batchCount += 1;
+	stepContext->taskCount += 1;
+}
+
+void b2StageDeferredTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* context )
+{
+	B2_ASSERT( stepContext->treeStaged == false );
+
+	b2StepTask* stepTask = stepContext->stepTasks + 0;
+	stepTask->fcn = fcn;
+	stepTask->context = context;
+	stepTask->stepContext = stepContext;
+	stepTask->deferred = true;
+
+	stepContext->tasks[0] = (b2Task){
+		.fcn = b2RunStepTask,
+		.context = stepTask,
+		.deferred = true,
+	};
+
+	stepContext->treeStaged = true;
+	stepContext->taskCount += 1;
+	b2AtomicStoreInt( &stepContext->treePending, 1 );
+}
 
 static void b2ParallelForTrampoline( void* taskContext )
 {
@@ -61,7 +116,7 @@ static void b2ParallelForTrampoline( void* taskContext )
 	}
 }
 
-void b2ParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCount, int minRange, void* context )
+void b2StageParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCount, int minRange, void* context )
 {
 	if ( itemCount <= 0 )
 	{
@@ -97,38 +152,20 @@ void b2ParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCou
 	// No point enqueueing more tasks than blocks.
 	int taskCount = workerCount < blockCount ? workerCount : blockCount;
 
-	b2ParallelForShared shared;
-	shared.blockCount = blockCount;
-	shared.blockSize = blockSize;
-	shared.itemCount = itemCount;
-	shared.callback = callback;
-	shared.context = context;
-	b2AtomicStoreInt( &shared.nextBlock, 0 );
-
-	b2ParallelForTask tasks[B2_MAX_WORKERS];
-	void* handles[B2_MAX_WORKERS];
-	for ( int i = 0; i < taskCount; ++i )
-	{
-		tasks[i].shared = &shared;
-		tasks[i].workerIndex = i;
-
-		if ( world->taskCount < B2_MAX_TASKS )
-		{
-			handles[i] = world->enqueueTaskFcn( &b2ParallelForTrampoline, tasks + i, world->userTaskContext );
-			world->taskCount += 1;
-		}
-		else
-		{
-			handles[i] = NULL;
-			b2ParallelForTrampoline( tasks + i );
-		}
-	}
+	b2StepContext* stepContext = world->stepContext;
+	b2ParallelForShared* shared = &stepContext->parallelFor;
+	shared->blockCount = blockCount;
+	shared->blockSize = blockSize;
+	shared->itemCount = itemCount;
+	shared->callback = callback;
+	shared->context = context;
+	b2AtomicStoreInt( &shared->nextBlock, 0 );
 
 	for ( int i = 0; i < taskCount; ++i )
 	{
-		if ( handles[i] != NULL )
-		{
-			world->finishTaskFcn( handles[i], world->userTaskContext );
-		}
+		b2ParallelForTask* task = stepContext->parallelForTasks + i;
+		task->shared = shared;
+		task->workerIndex = i;
+		b2AddTask( stepContext, b2ParallelForTrampoline, task );
 	}
 }

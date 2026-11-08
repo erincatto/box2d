@@ -49,17 +49,50 @@
 #pragma once
 
 #include "core.h"
+#include "parallel_for.h"
 
+#include "box2d/constants.h"
 #include "box2d/math_functions.h"
+#include "box2d/types.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
 typedef struct b2BodySim b2BodySim;
 typedef struct b2BodyState b2BodyState;
+typedef struct b2ContactConstraint b2ContactConstraint;
 typedef struct b2ContactSim b2ContactSim;
 typedef struct b2JointSim b2JointSim;
 typedef struct b2World b2World;
+
+typedef enum b2StepPhase
+{
+	b2_stepIdle,
+	b2_stepBegin,
+	b2_stepCrossPairs,
+	b2_stepSelfPairs,
+	b2_stepCollide,
+	b2_stepSolve,
+	b2_stepFinalize,
+	b2_stepBullets,
+	b2_stepSensors,
+} b2StepPhase;
+
+typedef struct b2StepTask
+{
+	b2TaskCallbackFcn* fcn;
+	void* context;
+	b2StepContext* stepContext;
+	bool deferred;
+} b2StepTask;
+
+typedef struct b2WorkerContext
+{
+	b2StepContext* context;
+	int workerIndex;
+} b2WorkerContext;
+
+#define B2_STEP_TASK_CAPACITY ( B2_MAX_WORKERS + 2 )
 
 // Solver stages. Prepare joints and prepare contacts are split up
 // because there is no need to store joint impulses.
@@ -153,9 +186,48 @@ typedef struct b2JointPrepareSpan
 	b2JointSim* joints;
 } b2JointPrepareSpan;
 
-// Context for a time step. Recreated each time step.
+// Context for a time step. Owned by the world and reset each time step.
 typedef struct b2StepContext
 {
+	b2StepPhase phase;
+	bool pairsUpdated;
+	bool treeStaged;
+	bool solveSkipped;
+	bool joinTree;
+	bool signalSemaphores;
+
+	int batchStart;
+	int batchCount;
+	int taskCount;
+
+	b2Task tasks[B2_STEP_TASK_CAPACITY];
+	b2StepTask stepTasks[B2_STEP_TASK_CAPACITY];
+
+	b2ParallelForShared parallelFor;
+	b2ParallelForTask parallelForTasks[B2_MAX_WORKERS];
+	b2WorkerContext workerContexts[B2_MAX_WORKERS];
+
+	b2Semaphore* batchSemaphore;
+	b2Semaphore* treeSemaphore;
+
+	uint64_t stepTicks;
+	uint64_t pairTicks;
+	uint64_t collideTicks;
+	uint64_t solveTicks;
+	uint64_t constraintTicks;
+	uint64_t transformTicks;
+	uint64_t bulletTicks;
+	uint64_t sensorTicks;
+
+	int awakeBodyCount;
+	int collideContactCount;
+
+	b2SyncBlock* bodyBlocks;
+	b2SyncBlock* contactBlocks;
+	b2SyncBlock* jointBlocks;
+	b2SyncBlock* graphBlocks;
+	b2ContactConstraint* overflowContacts;
+
 	// time step
 	float dt;
 
@@ -194,17 +266,17 @@ typedef struct b2StepContext
 	b2AtomicInt anyRestitution;
 
 	// Graph color spans for the narrow-phase, includes non-touching contacts as well.
-	const b2ContactCollideSpan* collideSpans;
+	b2ContactCollideSpan collideSpans[B2_GRAPH_COLOR_COUNT + 2];
 
 	// Flat view of the wide contact constraint array used by prepare and store.
 	// prepareSpans has activeColorCount + 1 entries, the last being a sentinel
 	// at wideContactCount. wideContactConstraints is the contiguous base
 	// pointer; per-color slices live at colors[i].wideConstraints.
 	void* wideContactConstraints;
-	b2ContactPrepareSpan* contactPrepareSpans;
+	b2ContactPrepareSpan contactPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
 	int wideContactCount;
 
-	b2JointPrepareSpan* jointPrepareSpans;
+	b2JointPrepareSpan jointPrepareSpans[B2_GRAPH_COLOR_COUNT + 1];
 	int jointCount;
 
 	int activeColorCount;
@@ -212,6 +284,7 @@ typedef struct b2StepContext
 
 	b2SolverStage* stages;
 	int stageCount;
+	int orchestratorIndex;
 	bool enableWarmStarting;
 
 	// padding to prevent false sharing
@@ -227,15 +300,13 @@ typedef struct b2StepContext
 	// padding to prevent false sharing
 	char padding2[64];
 
-	// Race flag claimed by whichever runner reaches b2SolverTask with workerIndex 0 first.
-	// The calling thread of b2World_Step also races for this slot so the orchestrator can
-	// always make progress, regardless of how the user's task system schedules tasks (out
-	// of order, fewer threads than workers, or synchronously inside enqueueTaskFcn). The
-	// loser of the race no-ops as workerIndex 0.
-	b2AtomicInt mainClaimed;
+	b2AtomicInt orchestratorClaimed;
 
 	// padding to prevent false sharing
 	char padding3[64];
+
+	b2AtomicInt pendingCount;
+	b2AtomicInt treePending;
 
 } b2StepContext;
 
@@ -283,4 +354,7 @@ static inline b2Softness b2MakeSoft( float hertz, float zeta, float h )
 	};
 }
 
-void b2Solve( b2World* world, b2StepContext* stepContext );
+bool b2BeginSolve( b2World* world, b2StepContext* stepContext );
+void b2BeginFinalize( b2World* world, b2StepContext* stepContext );
+void b2BeginBullets( b2World* world, b2StepContext* stepContext );
+void b2EndBullets( b2World* world, b2StepContext* stepContext );

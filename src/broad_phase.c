@@ -38,6 +38,7 @@ void b2CreateBroadPhase( b2BroadPhase* bp, const b2Capacity* capacity )
 	b2CreateDynamicTreeInternal( bp->trees + b2_dynamicBody, dynamicCapacity );
 
 	bp->movedSiblings = NULL;
+	bp->crossContext = NULL;
 }
 
 void b2DestroyBroadPhase( b2BroadPhase* bp )
@@ -480,8 +481,10 @@ static int b2GatherCrossSeeds( const b2DynamicTree* treeA, const b2DynamicTree* 
 typedef struct b2CrossContext
 {
 	b2World* world;
-	const b2NodePair* seeds;
+	b2NodePair seeds[2 * B2_CROSS_SEED_COUNT];
 	int staticSeedCount;
+	int crossMoveCount;
+	int dynamicMoveCount;
 } b2CrossContext;
 
 static void b2CrossPairsTask( int startIndex, int endIndex, int workerIndex, void* context )
@@ -574,24 +577,7 @@ static void b2UpdateTreesTask( void* context )
 	b2TracyCZoneEnd( tree_task );
 }
 
-// Task that can be done in parallel with the narrow-phase
-// - rebuild the collision tree for dynamic and kinematic bodies to keep their query performance good
-static void b2EnqueueTreeUpdate( b2World* world )
-{
-	if ( world->taskCount < B2_MAX_TASKS )
-	{
-		world->userTreeTask = world->enqueueTaskFcn( &b2UpdateTreesTask, world, world->userTaskContext );
-		world->taskCount += 1;
-		world->activeTaskCount += world->userTreeTask == NULL ? 0 : 1;
-	}
-	else
-	{
-		world->userTreeTask = NULL;
-		b2UpdateTreesTask( world );
-	}
-}
-
-void b2UpdateBroadPhasePairs( b2World* world )
+bool b2BeginPairs( b2World* world )
 {
 	b2BroadPhase* bp = &world->broadPhase;
 
@@ -601,10 +587,10 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	if ( needUpdate == false )
 	{
-		return;
+		return false;
 	}
 
-	b2TracyCZoneNC( update_pairs, "Find Pairs", b2_colorMediumSlateBlue, true );
+	b2TracyCZoneNC( update_pairs, "Find Pairs Setup", b2_colorMediumSlateBlue, true );
 
 	b2Stack* alloc = &world->stack;
 
@@ -615,41 +601,56 @@ void b2UpdateBroadPhasePairs( b2World* world )
 
 	// Generate pairs by querying the dynamic body tree against itself and against
 	// the kinematic and static trees.
-	{
-		// Get the sibling pairs of the dynamic body tree that have moved.
-		const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
-		int pairCapacity = dynamicTree->nodeEnd / 2;
-		bp->movedSiblings = b2StackAlloc( alloc, pairCapacity * sizeof( int ), "moved pairs" );
-		int dynamicMoveCount = b2GatherMovedSiblings( dynamicTree, bp->movedSiblings );
 
-		// Get seeds for colliding against the static and kinematic trees.
-		b2NodePair crossSeeds[2 * B2_CROSS_SEED_COUNT];
-		int staticSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_staticBody, crossSeeds );
-		B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
-		int kinematicSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, crossSeeds + staticSeedCount );
-		B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
-		int crossMoveCount = staticSeedCount + kinematicSeedCount;
+	// Get the sibling pairs of the dynamic body tree that have moved.
+	const b2DynamicTree* dynamicTree = bp->trees + b2_dynamicBody;
+	int pairCapacity = dynamicTree->nodeEnd / 2;
+	bp->movedSiblings = b2StackAlloc( alloc, pairCapacity * sizeof( int ), "moved pairs" );
+	int dynamicMoveCount = b2GatherMovedSiblings( dynamicTree, bp->movedSiblings );
 
-		// Collide the dynamic body tree against the static and kinematic trees.
-		b2CrossContext crossContext = {
-			.world = world,
-			.seeds = crossSeeds,
-			.staticSeedCount = staticSeedCount,
-		};
-		b2ParallelFor( world, &b2CrossPairsTask, crossMoveCount, 1, &crossContext );
+	b2CrossContext* crossContext = b2StackAlloc( alloc, sizeof( b2CrossContext ), "cross context" );
+	bp->crossContext = crossContext;
 
-		// Collide the dynamic body tree against itself.
-		b2ParallelFor( world, &b2SelfPairsTask, dynamicMoveCount, 64, world );
-	}
+	// Get seeds for colliding against the static and kinematic trees.
+	int staticSeedCount = b2GatherCrossSeeds( dynamicTree, bp->trees + b2_staticBody, crossContext->seeds );
+	B2_ASSERT( staticSeedCount <= B2_CROSS_SEED_COUNT );
+	int kinematicSeedCount =
+		b2GatherCrossSeeds( dynamicTree, bp->trees + b2_kinematicBody, crossContext->seeds + staticSeedCount );
+	B2_ASSERT( kinematicSeedCount <= B2_CROSS_SEED_COUNT );
 
-	b2DynamicTree_ClearMoved( bp->trees + b2_staticBody );
+	crossContext->world = world;
+	crossContext->staticSeedCount = staticSeedCount;
+	crossContext->crossMoveCount = staticSeedCount + kinematicSeedCount;
+	crossContext->dynamicMoveCount = dynamicMoveCount;
+
+	// Collide the dynamic body tree against the static and kinematic trees.
+	b2StageParallelFor( world, &b2CrossPairsTask, crossContext->crossMoveCount, 1, crossContext );
 
 	b2TracyCZoneEnd( update_pairs );
+
+	return true;
+}
+
+void b2StageSelfPairs( b2World* world )
+{
+	// Collide the dynamic body tree against itself.
+	b2StageParallelFor( world, &b2SelfPairsTask, world->broadPhase.crossContext->dynamicMoveCount, 64, world );
+}
+
+void b2EndPairs( b2World* world )
+{
+	b2BroadPhase* bp = &world->broadPhase;
+	b2Stack* alloc = &world->stack;
+
+	b2StackFree( alloc, bp->crossContext );
+	bp->crossContext = NULL;
+
+	b2DynamicTree_ClearMoved( bp->trees + b2_staticBody );
 
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
 	// Update stale trees.
-	b2EnqueueTreeUpdate( world );
+	b2StageDeferredTask( world->stepContext, &b2UpdateTreesTask, world );
 
 	// Pairs arrive in deterministic order but scrambled relative to body and shape order
 	// sorting them here improves solver performance.
