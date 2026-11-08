@@ -192,6 +192,7 @@ typedef struct b2StepContext
 	b2StepPhase phase;
 	bool pairsUpdated;
 	bool treeStaged;
+	bool treeLaunched;
 	bool solveSkipped;
 	bool joinTree;
 	bool signalSemaphores;

@@ -1059,10 +1059,11 @@ static b2TaskBatch b2AdvanceStep( b2World* world )
 
 				b2BeginCollide( context );
 
-				if ( context->treeStaged )
+				if ( context->treeStaged && ( context->batchCount > 0 || context->solveSkipped ) )
 				{
 					context->batchStart = 0;
 					context->batchCount += 1;
+					context->treeLaunched = true;
 					context->joinTree = context->solveSkipped;
 				}
 				break;
@@ -1079,6 +1080,12 @@ static b2TaskBatch b2AdvanceStep( b2World* world )
 					if ( b2BeginSolve( world, context ) )
 					{
 						B2_ASSERT( context->solveSkipped == false );
+						if ( context->treeStaged && context->treeLaunched == false )
+						{
+							context->batchStart = 0;
+							context->batchCount += 1;
+							context->treeLaunched = true;
+						}
 						context->joinTree = context->treeStaged;
 						break;
 					}

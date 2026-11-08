@@ -519,6 +519,31 @@ static int JoinPlacementTest( void )
 		b2DestroyWorld( worldId );
 	}
 
+	// A lone moving ball, no contacts. The collide batch is empty, so the rebuild rides with the solver
+	// tasks instead of running alone.
+	{
+		b2WorldId worldId = b2CreateWorld( &worldDef );
+		b2BodyId bodyId = CreateBall( worldId, (b2Pos){ 0.0f, 4.0f } );
+		b2Body_SetLinearVelocity( bodyId, (b2Vec2){ 10.0f, 0.0f } );
+
+		SerialHost host = { .order = e_forward, .honorDeferred = true };
+		int rebuildCount = 0;
+		for ( int i = 0; i < 4; ++i )
+		{
+			ENSURE( SerialPhasedStep( &host, worldId, 1.0f / 60.0f, 4 ) == 0 );
+			if ( host.deferredBatch >= 0 )
+			{
+				ENSURE( host.joinBatch == host.deferredBatch );
+				rebuildCount += 1;
+			}
+		}
+
+		ENSURE( rebuildCount > 0 );
+		ENSURE( host.deferredOnlyBatchCount == 0 );
+
+		b2DestroyWorld( worldId );
+	}
+
 	// Touching balls on the ground with a zero step: the collide batch has contacts and the join
 	{
 		b2WorldId worldId = b2CreateWorld( &worldDef );
@@ -551,6 +576,48 @@ static int JoinPlacementTest( void )
 		b2DestroyWorld( worldId );
 	}
 
+	return 0;
+}
+
+// No contacts, a moving ball that keeps the rebuild staged, and a resting pair whose joint is destroyed.
+// The pair can only sleep after its island splits, so the solve batch carries the rebuild, the split and
+// the solver tasks together.
+static int SplitBatchTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 4;
+	worldDef.gravity = b2Vec2_zero;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyId bodyA = CreateBall( worldId, (b2Pos){ 0.0f, 0.0f } );
+	b2BodyId bodyB = CreateBall( worldId, (b2Pos){ 2.0f, 0.0f } );
+	b2BodyId ballId = CreateBall( worldId, (b2Pos){ 0.0f, 20.0f } );
+	b2Body_SetLinearVelocity( ballId, (b2Vec2){ 10.0f, 0.0f } );
+
+	b2RevoluteJointDef jointDef = b2DefaultRevoluteJointDef();
+	jointDef.base.bodyIdA = bodyA;
+	jointDef.base.bodyIdB = bodyB;
+	jointDef.base.localFrameA.p = (b2Vec2){ 1.0f, 0.0f };
+	jointDef.base.localFrameB.p = (b2Vec2){ -1.0f, 0.0f };
+	b2JointId jointId = b2CreateRevoluteJoint( worldId, &jointDef );
+
+	SerialHost host = { .order = e_forward, .honorDeferred = true };
+	ENSURE( SerialPhasedStep( &host, worldId, 1.0f / 60.0f, 4 ) == 0 );
+
+	b2DestroyJoint( jointId );
+
+	int stepCount = 0;
+	while ( b2Body_IsAwake( bodyA ) && stepCount < 120 )
+	{
+		ENSURE( SerialPhasedStep( &host, worldId, 1.0f / 60.0f, 4 ) == 0 );
+		stepCount += 1;
+	}
+
+	printf( "  split steps=%d maxBatchSize=%d\n", stepCount, host.maxBatchSize );
+	ENSURE( b2Body_IsAwake( bodyA ) == false );
+	ENSURE( b2Body_IsAwake( ballId ) );
+
+	b2DestroyWorld( worldId );
 	return 0;
 }
 
@@ -732,6 +799,7 @@ int StepTest( void )
 	RUN_SUBTEST( AlternateTest );
 	RUN_SUBTEST( EmptyWorldTest );
 	RUN_SUBTEST( JoinPlacementTest );
+	RUN_SUBTEST( SplitBatchTest );
 	RUN_SUBTEST( MixedSceneTest );
 	RUN_SUBTEST( PhasedRecordingTest );
 
