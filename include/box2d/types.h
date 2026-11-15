@@ -209,7 +209,7 @@ typedef struct b2WorldDef
 	/// Function to spawn tasks
 	b2EnqueueTaskCallbackFcn* enqueueTask;
 
-	/// Function to finish a task. This is optional and may be removed.
+	/// Function to finish a task. Blocks and helps make progress.
 	b2FinishTaskCallbackFcn* finishTask;
 
 	/// User context that is provided to enqueueTask and finishTask
