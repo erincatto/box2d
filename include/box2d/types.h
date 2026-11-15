@@ -36,19 +36,33 @@ typedef void* b2EnqueueTaskCallbackFcn( b2TaskCallbackFcn* task, void* taskConte
 /// @ingroup world
 typedef void b2FinishTaskCallbackFcn( void* userTask, void* userContext );
 
-// todo document b2Task and b2TaskBatch
+/// A task in the task pull model.
 typedef struct b2Task
 {
+	/// The task function.
 	b2TaskCallbackFcn* fcn;
+
+	/// The context that must be passed to the task function.
 	void* context;
+
+	/// Is this task deferred? This indicates that this task must be joined
+	/// at a later stage instead of immediately before the next stage.
+	/// @see b2TaskBatch::joinTasks
 	bool deferred;
 } b2Task;
 
 typedef struct b2TaskBatch
 {
+	/// The regular tasks that must be executed in this stage.
 	const b2Task* tasks;
+
+	/// The task count.
 	int count;
+
+	/// Earlier tasks that must now be joined before the next stage.
 	const b2Task* joinTasks;
+
+	/// The join task count.
 	int joinCount;
 } b2TaskBatch;
 
@@ -179,8 +193,7 @@ typedef struct b2WorldDef
 	/// Function to spawn tasks
 	b2EnqueueTaskCallbackFcn* enqueueTask;
 
-	/// Function to finish a task
-	// todo document that finishTask is optional when enqueueTask is provided
+	/// Function to finish a task. This is optional and may be removed.
 	b2FinishTaskCallbackFcn* finishTask;
 
 	/// User context that is provided to enqueueTask and finishTask
