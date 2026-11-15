@@ -32,6 +32,7 @@ typedef struct SerialHost
 	int joinBatch;
 	int deferredOnlyBatchCount;
 	int maxBatchSize;
+	int taskCount;
 	const b2Task* heldTask;
 } SerialHost;
 
@@ -79,6 +80,7 @@ static void RunSerialBatch( SerialHost* host, b2TaskBatch batch )
 static int SerialPhasedStep( SerialHost* host, b2WorldId worldId, float timeStep, int subStepCount )
 {
 	host->batchCount = 0;
+	host->taskCount = 0;
 	host->deferredBatch = -1;
 	host->joinBatch = -1;
 	host->heldTask = NULL;
@@ -88,13 +90,15 @@ static int SerialPhasedStep( SerialHost* host, b2WorldId worldId, float timeStep
 	{
 		ENSURE( batch.count <= MAX_BATCH_TASKS );
 		ENSURE( batch.joinCount == 0 || batch.joinCount == 1 );
+		host->taskCount += batch.count;
 		RunSerialBatch( host, batch );
 		batch = b2World_ContinueStep( worldId );
 	}
 
 	ENSURE( host->heldTask == NULL );
+	ENSURE( b2World_GetCounters( worldId ).taskCount == host->taskCount );
 	ENSURE( ( host->deferredBatch == -1 ) == ( host->joinBatch == -1 ) );
-	ENSURE( host->deferredBatch <= host->joinBatch );
+	ENSURE( host->deferredBatch < host->joinBatch || host->deferredBatch == -1 );
 	return 0;
 }
 
@@ -241,8 +245,11 @@ static void PooledPhasedStep( Pool* pool, b2WorldId worldId, float timeStep, int
 	B2_ASSERT( b2AtomicLoadInt( &treeCounter ) == 0 );
 }
 
+static int enqueueOnlyCount;
+
 static void* EnqueueOnlyTask( b2TaskCallbackFcn* task, void* taskContext, void* userContext )
 {
+	enqueueOnlyCount += 1;
 	Pool* pool = userContext;
 	PoolPush( pool, task, taskContext, NULL );
 	return pool;
@@ -406,7 +413,10 @@ static int EnqueueOnlyTest( void )
 		float timeStep = 1.0f / 60.0f;
 		for ( int step = 0; step < 1000; ++step )
 		{
+			enqueueOnlyCount = 0;
 			b2World_Step( worldId, timeStep, 4 );
+			ENSURE( b2World_GetCounters( worldId ).taskCount == enqueueOnlyCount );
+
 			if ( UpdateFallingHinges( worldId, &data ) )
 			{
 				break;
@@ -502,16 +512,17 @@ static int JoinPlacementTest( void )
 	b2WorldDef worldDef = b2DefaultWorldDef();
 	worldDef.workerCount = 4;
 
-	// A lone ball, no contacts. A zero step skips solve, so the collide batch is the rebuild alone.
+	// A lone ball, no contacts. A zero step skips solve, so the collide batch is the rebuild alone and
+	// nothing later can join it. It runs as a regular task.
 	{
 		b2WorldId worldId = b2CreateWorld( &worldDef );
 		b2BodyId bodyId = CreateBall( worldId, (b2Pos){ 0.0f, 4.0f } );
 
 		SerialHost host = { .order = e_forward, .honorDeferred = true };
 		ENSURE( SerialPhasedStep( &host, worldId, 0.0f, 4 ) == 0 );
-		ENSURE( host.deferredBatch >= 0 );
-		ENSURE( host.joinBatch == host.deferredBatch );
-		ENSURE( host.deferredOnlyBatchCount == 1 );
+		ENSURE( host.batchCount > 0 );
+		ENSURE( host.deferredBatch == -1 );
+		ENSURE( host.deferredOnlyBatchCount == 0 );
 
 		b2Pos p = b2Body_GetPosition( bodyId );
 		ENSURE( p.x == 0.0f && p.y == 4.0f );
@@ -520,25 +531,19 @@ static int JoinPlacementTest( void )
 	}
 
 	// A lone moving ball, no contacts. The collide batch is empty, so the rebuild rides with the solver
-	// tasks instead of running alone.
+	// tasks as a regular task instead of running alone.
 	{
 		b2WorldId worldId = b2CreateWorld( &worldDef );
 		b2BodyId bodyId = CreateBall( worldId, (b2Pos){ 0.0f, 4.0f } );
 		b2Body_SetLinearVelocity( bodyId, (b2Vec2){ 10.0f, 0.0f } );
 
 		SerialHost host = { .order = e_forward, .honorDeferred = true };
-		int rebuildCount = 0;
 		for ( int i = 0; i < 4; ++i )
 		{
 			ENSURE( SerialPhasedStep( &host, worldId, 1.0f / 60.0f, 4 ) == 0 );
-			if ( host.deferredBatch >= 0 )
-			{
-				ENSURE( host.joinBatch == host.deferredBatch );
-				rebuildCount += 1;
-			}
+			ENSURE( host.deferredBatch == -1 );
 		}
 
-		ENSURE( rebuildCount > 0 );
 		ENSURE( host.deferredOnlyBatchCount == 0 );
 
 		b2DestroyWorld( worldId );

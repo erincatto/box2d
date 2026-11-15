@@ -977,7 +977,7 @@ static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int pr
 	(void)b2AtomicFetchAddInt( &stage->completionCount, completedCount );
 }
 
-// Execute a stage on worker 0 (main thread).
+// Execute a stage on the orchestrator, whichever solver task claimed that role.
 static void b2ExecuteMainStage( b2SolverStage* stage, b2StepContext* context, uint32_t syncBits )
 {
 	int blockCount = stage->blockCount;

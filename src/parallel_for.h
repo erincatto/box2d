@@ -39,6 +39,6 @@ void b2StageDeferredTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, vo
 
 // Divide [0, itemCount) into blocks and add up to world->workerCount tasks to the current
 // batch. Each task loops, atomically claiming the next unclaimed block until the range is
-// drained. minRange is the minimum block size; block size grows once itemCount exceeds
+// drained. minRange is the minimum block size. Block size grows once itemCount exceeds
 // 8 * workerCount * minRange so block count stays bounded.
 void b2StageParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCount, int minRange, void* context );

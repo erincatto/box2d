@@ -310,8 +310,8 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 
 	b2CreateWorkerContexts( world );
 
-	world->stepContext = b2Alloc( sizeof( b2StepContext ) );
-	memset( world->stepContext, 0, sizeof( b2StepContext ) );
+	world->stepContext = b2AllocZero( sizeof( b2StepContext ) );
+
 	if ( world->finishTaskFcn == NULL )
 	{
 		world->stepContext->batchSemaphore = b2CreateSemaphore( 0 );
@@ -336,7 +336,7 @@ b2WorldId b2CreateWorld( const b2WorldDef* def )
 void b2DestroyWorld( b2WorldId worldId )
 {
 	b2World* world = b2GetWorldFromId( worldId );
-	B2_ASSERT( world->locked == false );
+	B2_CHECK_INPUT( world->locked == false );
 
 	// Detach any recording before teardown. The user owns and frees the recording buffer.
 	b2StopRecordingInternal( world );
@@ -948,7 +948,7 @@ static void b2PrepareStepContext( b2World* world, b2StepContext* context )
 
 static b2TaskBatch b2MakeTaskBatch( b2StepContext* context )
 {
-	int deferredCount = context->batchStart == 0 ? 1 : 0;
+	int deferredCount = context->batchStart == 0 && context->tasks[0].deferred ? 1 : 0;
 	b2AtomicStoreInt( &context->pendingCount, context->batchCount - deferredCount );
 
 	return (b2TaskBatch){
@@ -957,6 +957,21 @@ static b2TaskBatch b2MakeTaskBatch( b2StepContext* context )
 		.joinTasks = context->joinTree ? context->tasks : NULL,
 		.joinCount = context->joinTree ? 1 : 0,
 	};
+}
+
+static void b2LaunchTreeTask( b2StepContext* context, bool deferred )
+{
+	B2_ASSERT( context->treeStaged && context->treeLaunched == false );
+	context->batchStart = 0;
+	context->batchCount += 1;
+	context->treeLaunched = true;
+
+	if ( deferred == false )
+	{
+		context->tasks[0].deferred = false;
+		context->stepTasks[0].deferred = false;
+		b2AtomicStoreInt( &context->treePending, 0 );
+	}
 }
 
 static void b2JoinTreeTask( b2StepContext* context )
@@ -1061,10 +1076,7 @@ static b2TaskBatch b2AdvanceStep( b2World* world )
 
 				if ( context->treeStaged && ( context->batchCount > 0 || context->solveSkipped ) )
 				{
-					context->batchStart = 0;
-					context->batchCount += 1;
-					context->treeLaunched = true;
-					context->joinTree = context->solveSkipped;
+					b2LaunchTreeTask( context, context->solveSkipped == false );
 				}
 				break;
 
@@ -1080,13 +1092,17 @@ static b2TaskBatch b2AdvanceStep( b2World* world )
 					if ( b2BeginSolve( world, context ) )
 					{
 						B2_ASSERT( context->solveSkipped == false );
-						if ( context->treeStaged && context->treeLaunched == false )
+						if ( context->treeStaged )
 						{
-							context->batchStart = 0;
-							context->batchCount += 1;
-							context->treeLaunched = true;
+							if ( context->treeLaunched )
+							{
+								context->joinTree = true;
+							}
+							else
+							{
+								b2LaunchTreeTask( context, false );
+							}
 						}
-						context->joinTree = context->treeStaged;
 						break;
 					}
 
@@ -1371,6 +1387,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	}
 
 	B2_ASSERT( driver.treeTask == NULL );
+	world->stepContext->taskCount = driver.enqueueCount;
 
 	b2TracyCZoneEnd( world_step );
 }
