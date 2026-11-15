@@ -5,6 +5,10 @@
 
 #include "core.h"
 
+#include "box2d/types.h"
+
+// todo rename files to task.c and task.h
+
 typedef struct b2StepContext b2StepContext;
 typedef struct b2World b2World;
 typedef void b2TaskCallbackFcn( void* taskContext );
@@ -34,11 +38,12 @@ typedef struct b2ParallelForTask
 } b2ParallelForTask;
 
 void b2ResetTaskBatch( b2StepContext* stepContext );
-void b2AddTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* context );
-void b2StageDeferredTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* context );
+void b2AddTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* fcn, void* context );
+void b2StageDeferredTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* fcn, void* context );
 
 // Divide [0, itemCount) into blocks and add up to world->workerCount tasks to the current
 // batch. Each task loops, atomically claiming the next unclaimed block until the range is
 // drained. minRange is the minimum block size. Block size grows once itemCount exceeds
 // 8 * workerCount * minRange so block count stays bounded.
-void b2StageParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCount, int minRange, void* context );
+void b2StageParallelFor( b2World* world, b2TaskType type, b2ParallelForCallback* callback, int itemCount, int minRange,
+						 void* context );

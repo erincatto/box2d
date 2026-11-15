@@ -1560,7 +1560,7 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 		// Note: cannot split islands in parallel with FinalizeBodies
 		if ( world->splitIslandId != B2_NULL_INDEX )
 		{
-			b2AddTask( stepContext, &b2SplitIslandTask, world );
+			b2AddTask( stepContext, b2_taskIslandSplit, &b2SplitIslandTask, world );
 		}
 
 		for ( int i = 0; i < workerCount; ++i )
@@ -1568,7 +1568,7 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 			b2WorkerContext* workerContext = stepContext->workerContexts + i;
 			workerContext->context = stepContext;
 			workerContext->workerIndex = i;
-			b2AddTask( stepContext, &b2SolverTask, workerContext );
+			b2AddTask( stepContext, b2_taskSolver, &b2SolverTask, workerContext );
 		}
 
 		world->profile.solverSetup = b2GetMillisecondsAndReset( &setupTicks );
@@ -1606,7 +1606,7 @@ void b2BeginFinalize( b2World* world, b2StepContext* stepContext )
 	b2ValidateNoEnlarged( &world->broadPhase );
 
 	// Finalize bodies. Must happen after the constraint solver and after island splitting.
-	b2StageParallelFor( world, &b2FinalizeBodiesTask, awakeBodyCount, 64, stepContext );
+	b2StageParallelFor( world, b2_taskFinalize, &b2FinalizeBodiesTask, awakeBodyCount, 64, stepContext );
 }
 
 void b2BeginBullets( b2World* world, b2StepContext* stepContext )
@@ -1826,7 +1826,7 @@ void b2BeginBullets( b2World* world, b2StepContext* stepContext )
 		// Fast bullet bodies
 		// Note: a bullet body may be moving slow
 		int minRange = 8;
-		b2StageParallelFor( world, &b2BulletBodyTask, bulletBodyCount, minRange, stepContext );
+		b2StageParallelFor( world, b2_taskContinuous, &b2BulletBodyTask, bulletBodyCount, minRange, stepContext );
 	}
 }
 

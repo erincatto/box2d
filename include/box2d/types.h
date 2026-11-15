@@ -29,14 +29,27 @@ typedef void b2TaskCallbackFcn( void* taskContext );
 /// user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
 /// serially within the callback and there is no need to call b2FinishTaskCallbackFcn.
 /// @ingroup world
-typedef void* b2EnqueueTaskCallbackFcn( b2TaskCallbackFcn* task, void* taskContext,
-										void* userContext );
+typedef void* b2EnqueueTaskCallbackFcn( b2TaskCallbackFcn* task, void* taskContext, void* userContext );
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
 typedef void b2FinishTaskCallbackFcn( void* userTask, void* userContext );
 
-/// A task in the task pull model.
+/// The task type for the pull model.
+typedef enum b2TaskType
+{
+	b2_taskPairs,		///< Finding pairs of potentially colliding shapes. The broad-phase.
+	b2_taskCollide,		///< Computing contact manifolds. The narrow-phase.
+	b2_taskTreeRebuild, ///< Rebuilding the bounding volume hierarchy. A long running side task.
+	b2_taskIslandSplit, ///< Splitting an island in order to let an island sleep.
+	b2_taskSolver,		///< Solving contraints.
+	b2_taskFinalize,	///< Updating body transforms and shape bounding boxes.
+	b2_taskContinuous,	///< Continuous collision detection.
+	b2_taskSensors,		///< Sensor overlaps and events.
+	b2_taskTypeCount	///< The type count.
+} b2TaskType;
+
+/// A task in the pull model.
 typedef struct b2Task
 {
 	/// The task function.
@@ -44,6 +57,9 @@ typedef struct b2Task
 
 	/// The context that must be passed to the task function.
 	void* context;
+
+	/// The task type. Informational.
+	b2TaskType type;
 
 	/// Is this task deferred? This indicates that this task must be joined
 	/// at a later stage instead of immediately before the next stage.
@@ -77,8 +93,8 @@ typedef float b2FrictionCallbackFcn( float frictionA, uint64_t userMaterialIdA, 
 /// this is called from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
 /// @ingroup world
-typedef float b2RestitutionCallbackFcn( float restitutionA, uint64_t userMaterialIdA,
-										float restitutionB, uint64_t userMaterialIdB );
+typedef float b2RestitutionCallbackFcn( float restitutionA, uint64_t userMaterialIdA, float restitutionB,
+										uint64_t userMaterialIdB );
 
 /// Result from b2World_CastRayClosest If there is initial overlap the fraction and normal will be
 /// zero while the point is an arbitrary point in the overlap region.
@@ -1318,8 +1334,7 @@ typedef bool b2CustomFilterCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, 
 /// - the supplied manifold impulses are not reliable
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef void b2PreSolveCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold,
-									void* context );
+typedef void b2PreSolveCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* context );
 
 /// Prototype for a pre-continuous callback. This is called when a time of impact event is computed
 /// in continuous collision. This function can be used to skip the event. Unlike the pre-solve
@@ -1331,8 +1346,8 @@ typedef void b2PreSolveCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Ma
 /// - this is not called for sensors Return false if you want to disable the time of impact event.
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-typedef bool b2PreContinuousCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point,
-										 b2Vec2 normal, void* context );
+typedef bool b2PreContinuousCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal,
+										 void* context );
 
 /// Prototype callback for overlap queries. Called for each shape found in the query.
 /// @see b2World_OverlapAABB
@@ -1357,13 +1372,11 @@ typedef bool b2OverlapResultCallbackFcn( b2ShapeId shapeId, void* context );
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
 /// @see b2World_CastRay
 /// @ingroup world
-typedef float b2CastResultCallbackFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal,
-									   float fraction, void* context );
+typedef float b2CastResultCallbackFcn( b2ShapeId shapeId, b2Pos point, b2Vec2 normal, float fraction, void* context );
 
 /// Used to collect collision planes for character movers. Return true to continue gathering planes.
 /// @ingroup character
-typedef bool b2PlaneResultCallbackFcn( b2ShapeId shapeId, const b2PlaneResult* plane,
-									   void* context );
+typedef bool b2PlaneResultCallbackFcn( b2ShapeId shapeId, const b2PlaneResult* plane, void* context );
 
 /**
  * @defgroup debug Debug Draw
@@ -1537,23 +1550,22 @@ B2_API b2HexColor b2GetGraphColor( int index );
 typedef struct b2DebugDraw
 {
 	/// Draw a closed polygon provided in CCW order.
-	void ( *DrawPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount,
-							  b2HexColor color, void* context );
+	void ( *DrawPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, b2HexColor color,
+							  void* context );
 
 	/// Draw a solid closed polygon provided in CCW order.
-	void ( *DrawSolidPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices,
-								   int vertexCount, float radius, b2HexColor color, void* context );
+	void ( *DrawSolidPolygonFcn )( b2WorldTransform transform, const b2Vec2* vertices, int vertexCount, float radius,
+								   b2HexColor color, void* context );
 
 	/// Draw a circle.
 	void ( *DrawCircleFcn )( b2Pos center, float radius, b2HexColor color, void* context );
 
 	/// Draw a solid circle.
-	void ( *DrawSolidCircleFcn )( b2WorldTransform transform, b2Vec2 center, float radius,
-								  b2HexColor color, void* context );
+	void ( *DrawSolidCircleFcn )( b2WorldTransform transform, b2Vec2 center, float radius, b2HexColor color,
+								  void* context );
 
 	/// Draw a solid capsule.
-	void ( *DrawSolidCapsuleFcn )( b2Pos p1, b2Pos p2, float radius, b2HexColor color,
-								   void* context );
+	void ( *DrawSolidCapsuleFcn )( b2Pos p1, b2Pos p2, float radius, b2HexColor color, void* context );
 
 	/// Draw a line segment.
 	void ( *DrawLineFcn )( b2Pos p1, b2Pos p2, b2HexColor color, void* context );

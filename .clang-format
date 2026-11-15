@@ -15,7 +15,7 @@ BraceWrapping:
   AfterUnion: true
   BeforeWhile: true
 
-ColumnLimit: 100
+ColumnLimit: 120
 PointerAlignment: Left
 UseTab: Always
 BreakConstructorInitializers: BeforeComma

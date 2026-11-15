@@ -90,6 +90,12 @@ static int SerialPhasedStep( SerialHost* host, b2WorldId worldId, float timeStep
 	{
 		ENSURE( batch.count <= MAX_BATCH_TASKS );
 		ENSURE( batch.joinCount == 0 || batch.joinCount == 1 );
+		for ( int i = 0; i < batch.count; ++i )
+		{
+			b2TaskType type = batch.tasks[i].type;
+			ENSURE( 0 <= type && type < b2_taskTypeCount );
+			ENSURE( batch.tasks[i].deferred == false || type == b2_taskTreeRebuild );
+		}
 		host->taskCount += batch.count;
 		RunSerialBatch( host, batch );
 		batch = b2World_ContinueStep( worldId );

@@ -253,7 +253,7 @@ void b2BeginSensors( b2World* world )
 
 	// Parallel-for sensors overlaps
 	int minRange = 16;
-	b2StageParallelFor( world, &b2SensorTask, sensorCount, minRange, world );
+	b2StageParallelFor( world, b2_taskSensors, &b2SensorTask, sensorCount, minRange, world );
 }
 
 void b2EndSensors( b2World* world )

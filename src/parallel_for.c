@@ -43,7 +43,7 @@ void b2ResetTaskBatch( b2StepContext* stepContext )
 	stepContext->joinTree = false;
 }
 
-void b2AddTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* context )
+void b2AddTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* fcn, void* context )
 {
 	int index = stepContext->batchStart + stepContext->batchCount;
 	B2_ASSERT( 1 <= index && index < B2_STEP_TASK_CAPACITY );
@@ -57,6 +57,7 @@ void b2AddTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* contex
 	stepContext->tasks[index] = (b2Task){
 		.fcn = b2RunStepTask,
 		.context = stepTask,
+		.type = type,
 		.deferred = false,
 	};
 
@@ -64,7 +65,7 @@ void b2AddTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* contex
 	stepContext->taskCount += 1;
 }
 
-void b2StageDeferredTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, void* context )
+void b2StageDeferredTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* fcn, void* context )
 {
 	B2_ASSERT( stepContext->treeStaged == false );
 
@@ -77,6 +78,7 @@ void b2StageDeferredTask( b2StepContext* stepContext, b2TaskCallbackFcn* fcn, vo
 	stepContext->tasks[0] = (b2Task){
 		.fcn = b2RunStepTask,
 		.context = stepTask,
+		.type = type,
 		.deferred = true,
 	};
 
@@ -116,7 +118,8 @@ static void b2ParallelForTrampoline( void* taskContext )
 	}
 }
 
-void b2StageParallelFor( b2World* world, b2ParallelForCallback* callback, int itemCount, int minRange, void* context )
+void b2StageParallelFor( b2World* world, b2TaskType type, b2ParallelForCallback* callback, int itemCount, int minRange,
+						 void* context )
 {
 	if ( itemCount <= 0 )
 	{
@@ -166,6 +169,6 @@ void b2StageParallelFor( b2World* world, b2ParallelForCallback* callback, int it
 		b2ParallelForTask* task = stepContext->parallelForTasks + i;
 		task->shared = shared;
 		task->workerIndex = i;
-		b2AddTask( stepContext, b2ParallelForTrampoline, task );
+		b2AddTask( stepContext, type, b2ParallelForTrampoline, task );
 	}
 }

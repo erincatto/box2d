@@ -624,7 +624,7 @@ bool b2BeginPairs( b2World* world )
 	crossContext->dynamicMoveCount = dynamicMoveCount;
 
 	// Collide the dynamic body tree against the static and kinematic trees.
-	b2StageParallelFor( world, &b2CrossPairsTask, crossContext->crossMoveCount, 1, crossContext );
+	b2StageParallelFor( world, b2_taskPairs, &b2CrossPairsTask, crossContext->crossMoveCount, 1, crossContext );
 
 	b2TracyCZoneEnd( update_pairs );
 
@@ -634,7 +634,7 @@ bool b2BeginPairs( b2World* world )
 void b2StageSelfPairs( b2World* world )
 {
 	// Collide the dynamic body tree against itself.
-	b2StageParallelFor( world, &b2SelfPairsTask, world->broadPhase.crossContext->dynamicMoveCount, 64, world );
+	b2StageParallelFor( world, b2_taskPairs, &b2SelfPairsTask, world->broadPhase.crossContext->dynamicMoveCount, 64, world );
 }
 
 void b2EndPairs( b2World* world )
@@ -650,7 +650,7 @@ void b2EndPairs( b2World* world )
 	b2TracyCZoneNC( create_contacts, "Create Contacts", b2_colorCoral, true );
 
 	// Update stale trees.
-	b2StageDeferredTask( world->stepContext, &b2UpdateTreesTask, world );
+	b2StageDeferredTask( world->stepContext, b2_taskTreeRebuild, &b2UpdateTreesTask, world );
 
 	// Pairs arrive in deterministic order but scrambled relative to body and shape order
 	// sorting them here improves solver performance.
