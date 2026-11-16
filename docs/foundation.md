@@ -164,7 +164,11 @@ while ( batch.count > 0 )
 ```
 
 No callbacks are needed and the built-in scheduler is never created. The worker count still sets
-the most tasks in a batch, `workerCount + 2`, and the size of the per-worker data.
+the most tasks in a batch, `workerCount + 2`, and the size of the per-worker data. Each parallel
+task claims blocks of work from a shared counter until none are left, so the tasks that run first
+do most of the work and a task that starts late returns right away. Fewer threads than tasks costs
+only the extra task launches, and you can adjust the worker count with `b2World_SetWorkerCount()` at
+runtime.
 
 The rules:
 
@@ -231,4 +235,3 @@ improve performance. On x64 CPUs it will use AVX2 if possible and otherwise fall
 decision is made at runtime using the [CPUID](https://en.wikipedia.org/wiki/CPUID) instruction. On
 ARM64 and Apple Silicon Box2D will use Neon instructions. You can completely disable SIMD using the
 preprocessor argument `BOX2D_DISABLE_SIMD`.
-
