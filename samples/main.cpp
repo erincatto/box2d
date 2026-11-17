@@ -581,7 +581,6 @@ int main( int argc, char** argv )
 	s_context.showControls = s_context.newUser;
 
 	s_context.workerCount = b2MinInt( 8, GetNumberOfCores() / 2 );
-	s_context.workerCount = 1;
 
 	// A recording path on the command line opens straight into the replay viewer.
 	// Dragging a file onto the exe arrives here as argv[1] too.

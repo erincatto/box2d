@@ -38,14 +38,14 @@ static void b2RunStepTask( void* taskContext )
 
 void b2ResetTaskBatch( b2StepContext* stepContext )
 {
-	stepContext->batchStart = 1;
-	stepContext->batchCount = 0;
+	stepContext->batchTaskBase = 1;
+	stepContext->batchTaskCount = 0;
 	stepContext->joinTree = false;
 }
 
 void b2AddTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* fcn, void* context )
 {
-	int index = stepContext->batchStart + stepContext->batchCount;
+	int index = stepContext->batchTaskBase + stepContext->batchTaskCount;
 	B2_ASSERT( 1 <= index && index < B2_STEP_TASK_CAPACITY );
 
 	b2StepTask* stepTask = stepContext->stepTasks + index;
@@ -61,7 +61,7 @@ void b2AddTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* 
 		.deferred = false,
 	};
 
-	stepContext->batchCount += 1;
+	stepContext->batchTaskCount += 1;
 	stepContext->taskCount += 1;
 }
 

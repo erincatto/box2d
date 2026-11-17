@@ -197,9 +197,10 @@ typedef struct b2StepContext
 	bool joinTree;
 	bool signalSemaphores;
 
-	int batchStart;
-	int batchCount;
+	int batchTaskBase;
+	int batchTaskCount;
 	int taskCount;
+	int enqueueCount;
 
 	b2Task tasks[B2_STEP_TASK_CAPACITY];
 	b2StepTask stepTasks[B2_STEP_TASK_CAPACITY];

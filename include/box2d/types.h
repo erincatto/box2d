@@ -36,13 +36,14 @@ typedef void* b2EnqueueTaskCallbackFcn( b2TaskCallbackFcn* task, void* taskConte
 typedef void b2FinishTaskCallbackFcn( void* userTask, void* userContext );
 
 /// The task type for the pull model.
+/// @ingroup world
 typedef enum b2TaskType
 {
 	b2_taskPairs,		///< Finding pairs of potentially colliding shapes. The broad-phase.
 	b2_taskCollide,		///< Computing contact manifolds. The narrow-phase.
 	b2_taskTreeRebuild, ///< Rebuilding the bounding volume hierarchy. A long running side task.
 	b2_taskIslandSplit, ///< Splitting an island in order to let an island sleep.
-	b2_taskSolver,		///< Solving contraints.
+	b2_taskSolver,		///< Solving constraints.
 	b2_taskFinalize,	///< Updating body transforms and shape bounding boxes.
 	b2_taskContinuous,	///< Continuous collision detection.
 	b2_taskSensors,		///< Sensor overlaps and events.
@@ -50,6 +51,7 @@ typedef enum b2TaskType
 } b2TaskType;
 
 /// A task in the pull model.
+/// @ingroup world
 typedef struct b2Task
 {
 	/// The task function.
@@ -67,6 +69,8 @@ typedef struct b2Task
 	bool deferred;
 } b2Task;
 
+/// A batch of tasks for the pull model.
+/// @ingroup world
 typedef struct b2TaskBatch
 {
 	/// The regular tasks that must be executed in this stage.
@@ -639,6 +643,7 @@ typedef struct b2Counters
 	int staticTreeHeight; ///<
 	int treeHeight;		  ///<
 	int taskCount;		  ///<
+	int enqueueCount;	  ///<
 	int colorCounts[24];  ///<
 
 	/// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).

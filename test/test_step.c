@@ -103,6 +103,7 @@ static int SerialPhasedStep( SerialHost* host, b2WorldId worldId, float timeStep
 
 	ENSURE( host->heldTask == NULL );
 	ENSURE( b2World_GetCounters( worldId ).taskCount == host->taskCount );
+	ENSURE( b2World_GetCounters( worldId ).enqueueCount == 0 );
 	ENSURE( ( host->deferredBatch == -1 ) == ( host->joinBatch == -1 ) );
 	ENSURE( host->deferredBatch < host->joinBatch || host->deferredBatch == -1 );
 	return 0;
@@ -421,7 +422,9 @@ static int EnqueueOnlyTest( void )
 		{
 			enqueueOnlyCount = 0;
 			b2World_Step( worldId, timeStep, 4 );
-			ENSURE( b2World_GetCounters( worldId ).taskCount == enqueueOnlyCount );
+			b2Counters counters = b2World_GetCounters( worldId );
+			ENSURE( counters.enqueueCount == enqueueOnlyCount );
+			ENSURE( counters.enqueueCount <= counters.taskCount );
 
 			if ( UpdateFallingHinges( worldId, &data ) )
 			{

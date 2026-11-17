@@ -952,12 +952,12 @@ static void b2PrepareStepContext( b2World* world, b2StepContext* context )
 
 static b2TaskBatch b2MakeTaskBatch( b2StepContext* context )
 {
-	int deferredCount = context->batchStart == 0 && context->tasks[0].deferred ? 1 : 0;
-	b2AtomicStoreInt( &context->pendingCount, context->batchCount - deferredCount );
+	int deferredCount = context->batchTaskBase == 0 && context->tasks[0].deferred ? 1 : 0;
+	b2AtomicStoreInt( &context->pendingCount, context->batchTaskCount - deferredCount );
 
 	return (b2TaskBatch){
-		.tasks = context->tasks + context->batchStart,
-		.count = context->batchCount,
+		.tasks = context->tasks + context->batchTaskBase,
+		.count = context->batchTaskCount,
 		.joinTasks = context->joinTree ? context->tasks : NULL,
 		.joinCount = context->joinTree ? 1 : 0,
 	};
@@ -966,8 +966,8 @@ static b2TaskBatch b2MakeTaskBatch( b2StepContext* context )
 static void b2LaunchTreeTask( b2StepContext* context, bool deferred )
 {
 	B2_ASSERT( context->treeStaged && context->treeLaunched == false );
-	context->batchStart = 0;
-	context->batchCount += 1;
+	context->batchTaskBase = 0;
+	context->batchTaskCount += 1;
 	context->treeLaunched = true;
 
 	if ( deferred == false )
@@ -1079,7 +1079,7 @@ static b2TaskBatch b2AdvanceStep( b2World* world )
 
 				b2BeginCollide( context );
 
-				if ( context->treeStaged && ( context->batchCount > 0 || context->solveSkipped ) )
+				if ( context->treeStaged && ( context->batchTaskCount > 0 || context->solveSkipped ) )
 				{
 					b2LaunchTreeTask( context, context->solveSkipped == false );
 				}
@@ -1147,7 +1147,7 @@ static b2TaskBatch b2AdvanceStep( b2World* world )
 				return (b2TaskBatch){ 0 };
 		}
 
-		if ( context->batchCount > 0 )
+		if ( context->batchTaskCount > 0 )
 		{
 			return b2MakeTaskBatch( context );
 		}
@@ -1393,7 +1393,7 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 	}
 
 	B2_ASSERT( driver.treeTask == NULL );
-	world->stepContext->taskCount = driver.enqueueCount;
+	world->stepContext->enqueueCount = driver.enqueueCount;
 
 	b2TracyCZoneEnd( world_step );
 }
@@ -2407,6 +2407,7 @@ b2Counters b2World_GetCounters( b2WorldId worldId )
 	s.stackUsed = b2GetMaxStackAllocation( &world->stack );
 	s.byteCount = b2GetByteCount();
 	s.taskCount = world->stepContext->taskCount;
+	s.enqueueCount = world->stepContext->enqueueCount;
 
 	s.recycledContactCount = 0;
 	for ( int i = 0; i < world->workerCount; ++i )
