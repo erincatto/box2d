@@ -189,6 +189,7 @@ fn buildCTests(b: *Build, target: ResolvedTarget, optimize: OptimizeMode, box2d_
             "test/test_shape.c",
             "test/test_snapshot.c",
             "test/test_sort.c",
+            "test/test_step.c",
             "test/test_table.c",
             "test/test_thread.c",
             "test/test_world.c",

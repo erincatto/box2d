@@ -50,6 +50,13 @@ B2_API bool b2World_IsValid( b2WorldId id );
 /// accuracy. Usually 4.
 B2_API void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount );
 
+/// The pull model for tasking. Instead of getting task callbacks from b2World_Step you can call
+/// this to kick off a step and get an array of tasks to execute.
+B2_API b2TaskBatch b2World_BeginStep( b2WorldId worldId, float timeStep, int subStepCount );
+
+/// Call this after executing each task batch. The step is done when the batch is empty.
+B2_API b2TaskBatch b2World_ContinueStep( b2WorldId worldId );
+
 /// Call this to draw shapes and other debug draw data
 B2_API void b2World_Draw( b2WorldId worldId, b2DebugDraw* draw );
 

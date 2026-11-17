@@ -976,7 +976,7 @@ void Sample::DrawMetrics()
 					ImGui::Text( "contacts %d / %d", s.contactCount, c.contactCount );
 					ImGui::Text( "joints   %d", s.jointCount );
 					ImGui::Text( "islands  %d", s.islandCount );
-					ImGui::Text( "tasks    %d", s.taskCount );
+					ImGui::Text( "tasks    %d / %d", s.enqueueCount, s.taskCount );
 
 					ImGui::TableNextColumn();
 
