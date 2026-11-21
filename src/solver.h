@@ -83,7 +83,6 @@ typedef struct b2StepTask
 	b2TaskCallbackFcn* fcn;
 	void* context;
 	b2StepContext* stepContext;
-	bool deferred;
 } b2StepTask;
 
 typedef struct b2WorkerContext

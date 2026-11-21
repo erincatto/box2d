@@ -20,7 +20,8 @@ static void b2RunStepTask( void* taskContext )
 
 	task->fcn( task->context );
 
-	if ( task->deferred )
+	int index = (int)( task - stepContext->stepTasks );
+	if ( stepContext->tasks[index].deferred )
 	{
 		if ( b2AtomicFetchAddInt( &stepContext->treePending, -1 ) == 1 && stepContext->signalSemaphores )
 		{
@@ -52,7 +53,6 @@ void b2AddTask( b2StepContext* stepContext, b2TaskType type, b2TaskCallbackFcn* 
 	stepTask->fcn = fcn;
 	stepTask->context = context;
 	stepTask->stepContext = stepContext;
-	stepTask->deferred = false;
 
 	stepContext->tasks[index] = (b2Task){
 		.fcn = b2RunStepTask,
@@ -73,7 +73,6 @@ void b2StageDeferredTask( b2StepContext* stepContext, b2TaskType type, b2TaskCal
 	stepTask->fcn = fcn;
 	stepTask->context = context;
 	stepTask->stepContext = stepContext;
-	stepTask->deferred = true;
 
 	stepContext->tasks[0] = (b2Task){
 		.fcn = b2RunStepTask,

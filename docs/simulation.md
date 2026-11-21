@@ -1164,7 +1164,8 @@ for (int i = 0; i < sensorEvents.endCount; ++i)
 ```
 
 Sensor events should be processed after the world step and before other game logic. This should help
-you avoid processing stale data.
+you avoid processing stale data. The event arrays are reset by every `b2World_Step`, so if you step
+more than once per frame, read the events after each step.
 
 Sensor events are only enabled for shapes and sensors if b2ShapeDef::enableSensorEvents is set to
 true.
@@ -1381,6 +1382,23 @@ operation, such as destroying a body or shape. These events are included with si
 after the next `b2World_Step`.
 
 Shapes only generate begin and end touch events if `b2ShapeDef::enableContactEvents` is true.
+
+Begin and end touch events are always paired. An end touch event is only generated for a contact
+that previously generated a begin touch event. Both events carry the same contact id, so you can use
+it to match them up.
+
+The event arrays are reset at the start of every `b2World_Step`. If you step the world more than once
+per frame, such as in a fixed time step loop, read the events after every step. Otherwise events from
+the earlier steps are lost and you may see an end touch event without the matching begin touch event.
+
+```c
+while (accumulator >= timeStep)
+{
+    b2World_Step(myWorldId, timeStep, subStepCount);
+    ProcessContactEvents(b2World_GetContactEvents(myWorldId));
+    accumulator -= timeStep;
+}
+```
 
 #### Hit events
 

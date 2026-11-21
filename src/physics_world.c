@@ -973,7 +973,6 @@ static void b2LaunchTreeTask( b2StepContext* context, bool deferred )
 	if ( deferred == false )
 	{
 		context->tasks[0].deferred = false;
-		context->stepTasks[0].deferred = false;
 		b2AtomicStoreInt( &context->treePending, 0 );
 	}
 }
@@ -1300,7 +1299,6 @@ static void b2RunTaskBatch( b2StepDriver* driver, b2TaskBatch batch )
 void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( timeStep ) );
-	B2_ASSERT( 0 < subStepCount );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -1401,7 +1399,6 @@ void b2World_Step( b2WorldId worldId, float timeStep, int subStepCount )
 b2TaskBatch b2World_BeginStep( b2WorldId worldId, float timeStep, int subStepCount )
 {
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( timeStep ), (b2TaskBatch){ 0 } );
-	B2_ASSERT( 0 < subStepCount );
 
 	b2World* world = b2GetWorldFromId( worldId );
 	B2_ASSERT( world->locked == false );
@@ -2653,6 +2650,12 @@ void b2World_DumpMemoryStats( b2WorldId worldId )
 	fprintf( file, "kinematic tree: %d\n", kinematicTreeBytes );
 	fprintf( file, "dynamic tree: %d\n", dynamicTreeBytes );
 	fprintf( file, "pairSet: %d (%u, %u)\n", pairSetBytes, pairSet->count, pairSet->capacity );
+	fprintf( file, "\n" );
+
+	int stepContextBytes = (int)sizeof( b2StepContext );
+	total += stepContextBytes;
+
+	fprintf( file, "step context: %d\n", stepContextBytes );
 	fprintf( file, "\n" );
 
 	// solver sets
