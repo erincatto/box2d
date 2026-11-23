@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    sodipodi:docname="ghost_vertices.svg"
-   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
    version="1.1"
    id="svg6349"
-   height="95.10083"
-   width="249.00421">
+   viewBox="-8 -4 466.9267 186.29144"
+   height="186.29144"
+   width="466.9267"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs6351">
     <marker
@@ -79,23 +80,26 @@
      fit-margin-right="0.5"
      fit-margin-left="0.5"
      fit-margin-top="0.5"
-     inkscape:window-maximized="0"
-     inkscape:window-y="66"
-     inkscape:window-x="1946"
-     inkscape:window-height="1038"
-     inkscape:window-width="1413"
+     inkscape:window-maximized="1"
+     inkscape:window-y="-9"
+     inkscape:window-x="-9"
+     inkscape:window-height="2131"
+     inkscape:window-width="3840"
      showgrid="false"
      inkscape:current-layer="layer1"
      inkscape:document-units="px"
-     inkscape:cy="-1.4711953"
-     inkscape:cx="34.170039"
-     inkscape:zoom="2.8"
+     inkscape:cy="107.75"
+     inkscape:cx="361.75"
+     inkscape:zoom="2"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
      bordercolor="#666666"
      pagecolor="#ffffff"
-     id="base" />
+     id="base"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
   <metadata
      id="metadata6354">
     <rdf:RDF>
@@ -104,12 +108,11 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(-269.69485,-530.99694)"
+     transform="translate(-153.50197,-488.44649)"
      id="layer1"
      inkscape:groupmode="layer"
      inkscape:label="Layer 1">
@@ -119,7 +122,7 @@
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        inkscape:connector-curvature="0"
        id="path9018"
-       d="m 291.78571,534.50504 66.42858,52.5"
+       d="M 189.37788,489.9761 322.23504,595.25654"
        style="fill:none;stroke:#7d7d7d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 3;stroke-dashoffset:0;stroke-opacity:1" />
     <path
        inkscape:export-ydpi="179.94545"
@@ -127,7 +130,7 @@
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        inkscape:connector-curvature="0"
        id="path9020"
-       d="m 358.21429,586.6479 80.71429,-26.07143"
+       d="M 322.23504,594.54036 483.66362,542.25823"
        style="fill:none;stroke:#7d7d7d;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
     <path
        inkscape:export-ydpi="179.94545"
@@ -135,60 +138,61 @@
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        inkscape:connector-curvature="0"
        id="path9022"
-       d="m 438.57143,560.57647 56.78572,32.14286"
+       d="m 482.94932,542.25823 113.57144,64.45742"
        style="fill:none;stroke:#7d7d7d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 3;stroke-dashoffset:0;stroke-opacity:1" />
-    <circle
-       r="2.5253813"
-       cy="611.93567"
-       cx="241.93153"
+    <ellipse
+       cy="490.01074"
+       cx="187.77687"
        inkscape:export-ydpi="179.94545"
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
-       transform="translate(49.053675,-77.413343)"
        id="path6867"
-       style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-    <circle
-       r="2.5253813"
-       cy="611.93567"
-       cx="241.93153"
+       style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       rx="5.0507627"
+       ry="5.0642529" />
+    <ellipse
+       cy="595.16833"
+       cx="322.3143"
        inkscape:export-ydpi="179.94545"
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
-       transform="translate(116.32238,-24.974615)"
        id="path6867-1"
-       style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-    <circle
-       r="2.5253813"
-       cy="611.93567"
-       cx="241.93153"
+       style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       rx="5.0507627"
+       ry="5.0642529" />
+    <ellipse
+       cy="607.93695"
+       cx="599.5058"
        style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="path9012"
-       transform="translate(254.91814,-18.60732)"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        inkscape:export-xdpi="179.94545"
-       inkscape:export-ydpi="179.94545" />
-    <circle
-       r="2.5253813"
-       cy="611.93567"
-       cx="241.93153"
+       inkscape:export-ydpi="179.94545"
+       rx="5.0507627"
+       ry="5.0642529" />
+    <ellipse
+       cy="542.76331"
+       cx="483.7915"
        inkscape:export-ydpi="179.94545"
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
-       transform="translate(197.06099,-51.10732)"
        id="path9014"
-       style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+       style="fill:#b0ddb3;fill-opacity:1;stroke:#7d7d7d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       rx="5.0507627"
+       ry="5.0642529" />
     <text
        inkscape:export-ydpi="179.94545"
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        id="text9024"
-       y="610.57648"
-       x="492.14285"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       xml:space="preserve"><tspan
-         style="font-size:14px;line-height:1.25"
-         y="610.57648"
-         x="492.14285"
+       y="641.66901"
+       x="590.8797"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:0%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
+       xml:space="preserve"
+       transform="scale(0.99866722,1.0013346)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
+         y="641.66901"
+         x="590.8797"
          id="tspan9026"
          sodipodi:role="line">v0</tspan></text>
     <text
@@ -196,27 +200,29 @@
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       x="432.5"
-       y="577.36218"
-       id="text9028"><tspan
-         style="font-size:14px;line-height:1.25"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:0%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
+       x="471.43478"
+       y="575.15173"
+       id="text9028"
+       transform="scale(0.99866722,1.0013346)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
          sodipodi:role="line"
          id="tspan9030"
-         x="432.5"
-         y="577.36218">v1</tspan></text>
+         x="471.43478"
+         y="575.15173">v1</tspan></text>
     <text
        inkscape:export-ydpi="179.94545"
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        id="text9032"
-       y="602.7193"
-       x="349.64285"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       xml:space="preserve"><tspan
-         style="font-size:14px;line-height:1.25"
-         y="602.7193"
-         x="349.64285"
+       y="625.93365"
+       x="305.49933"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:0%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
+       xml:space="preserve"
+       transform="scale(0.99866722,1.0013346)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
+         y="625.93365"
+         x="305.49933"
          id="tspan9034"
          sodipodi:role="line">v2</tspan></text>
     <text
@@ -224,27 +230,29 @@
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       x="283.92856"
-       y="552.00507"
-       id="text9036"><tspan
-         style="font-size:14px;line-height:1.25"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:0%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
+       x="173.89534"
+       y="524.36981"
+       id="text9036"
+       transform="scale(0.99866722,1.0013346)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
          sodipodi:role="line"
          id="tspan9038"
-         x="283.92856"
-         y="552.00507">v3</tspan></text>
+         x="173.89534"
+         y="524.36981">v3</tspan></text>
     <text
        inkscape:export-ydpi="179.94545"
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        id="text9040"
-       y="565.93359"
-       x="269.28568"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       xml:space="preserve"><tspan
-         style="font-size:14px;line-height:1.25"
-         y="565.93359"
-         x="269.28568"
+       y="552.26404"
+       x="144.5705"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:0%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
+       xml:space="preserve"
+       transform="scale(0.99866722,1.0013346)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
+         y="552.26404"
+         x="144.5705"
          id="tspan9042"
          sodipodi:role="line">(ghost)</tspan></text>
     <text
@@ -252,13 +260,14 @@
        inkscape:export-xdpi="179.94545"
        inkscape:export-filename="D:\Development\Box2D\Box2D\Documentation\images\GhostVertices.png"
        id="text9040-2"
-       y="623.10266"
-       x="479.21371"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       xml:space="preserve"><tspan
-         style="font-size:14px;line-height:1.25"
-         y="623.10266"
-         x="479.21371"
+       y="666.75476"
+       x="564.98688"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:0%;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1"
+       xml:space="preserve"
+       transform="scale(0.99866722,1.0013346)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.3333px;line-height:1.25;font-family:Calibri;-inkscape-font-specification:'Calibri, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
+         y="666.75476"
+         x="564.98688"
          id="tspan9042-0"
          sodipodi:role="line">(ghost)</tspan></text>
   </g>

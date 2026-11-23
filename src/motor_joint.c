@@ -266,6 +266,28 @@ void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context )
 		joint->linearSpringImpulse = b2Vec2_zero;
 		joint->angularSpringImpulse = 0.0f;
 	}
+	else
+	{
+		if ( ( joint->maxSpringForce > 0.0f && joint->linearHertz > 0.0f ) == false )
+		{
+			joint->linearSpringImpulse = b2Vec2_zero;
+		}
+
+		if ( ( joint->maxVelocityForce > 0.0f ) == false )
+		{
+			joint->linearVelocityImpulse = b2Vec2_zero;
+		}
+
+		if ( ( joint->maxSpringTorque > 0.0f && joint->angularHertz > 0.0f ) == false )
+		{
+			joint->angularSpringImpulse = 0.0f;
+		}
+
+		if ( ( joint->maxVelocityTorque > 0.0f ) == false )
+		{
+			joint->angularVelocityImpulse = 0.0f;
+		}
+	}
 }
 
 void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context )

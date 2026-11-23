@@ -1,4 +1,7 @@
 build/
+build-clangd/
+.clangd
+.zed/
 imgui.ini
 settings.ini
 .vscode/

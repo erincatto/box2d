@@ -119,7 +119,7 @@ static void b2SnapRCheck( b2SnapReader* r, int need )
 static void b2SnapR_Bytes( b2SnapReader* r, void* dst, int n )
 {
 	b2SnapRCheck( r, n );
-	if ( !r->ok )
+	if ( !r->ok || n == 0 )
 	{
 		return;
 	}
@@ -706,7 +706,7 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 		{
 			r->ok = false;
 		}
-		if ( r->ok )
+		if ( r->ok && chainCount > 0 )
 		{
 			b2Array_Resize( world->chainShapes, chainCount );
 			// Zero the whole array so free slots have NULL pointers
@@ -756,7 +756,7 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 		{
 			r->ok = false;
 		}
-		if ( r->ok )
+		if ( r->ok && sensorCount > 0 )
 		{
 			b2Array_Resize( world->sensors, sensorCount );
 			// Zero so inner array headers start clean
@@ -790,7 +790,7 @@ static bool b2DeserializeIntoShell( b2SnapReader* r, b2World* world )
 		{
 			r->ok = false;
 		}
-		if ( r->ok )
+		if ( r->ok && islandCount > 0 )
 		{
 			b2Array_Resize( world->islands, islandCount );
 			memset( world->islands.data, 0, islandCount * sizeof( b2Island ) );

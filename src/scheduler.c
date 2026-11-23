@@ -190,7 +190,7 @@ b2Scheduler* b2CreateScheduler( int workerCount )
 		scheduler->workerContexts[i].scheduler = scheduler;
 		scheduler->workerContexts[i].threadIndex = i + 1;
 
-		char name[16];
+		char name[32];
 		snprintf( name, sizeof( name ), "box2d_worker_%02d", i + 1 );
 		scheduler->threads[i] = b2CreateThread( b2SchedulerWorkerMain, scheduler->workerContexts + i, name );
 	}

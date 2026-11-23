@@ -21,7 +21,9 @@ jobs:
       matrix:
         include:
           - name: ubuntu-gcc
-            os: ubuntu-latest
+            os: ubuntu-24.04
+            timeout: 10
+            args: -DBOX2D_SANITIZE=ON
             test: ./bin/test
           # Clang jobs pin the image because each Ubuntu image ships a different set of clang versions
           - name: ubuntu-clang
