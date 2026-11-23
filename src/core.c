@@ -175,7 +175,10 @@ void* b2Alloc( size_t size )
 void* b2AllocZero( size_t size )
 {
 	void* memory = b2Alloc( size );
-	memset( memory, 0, size );
+	if ( memory != NULL )
+	{
+		memset( memory, 0, size );
+	}
 	return memory;
 }
 

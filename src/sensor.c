@@ -129,7 +129,12 @@ static int b2CompareVisitors( const void* a, const void* b )
 		return -1;
 	}
 
-	return 1;
+	if ( sa->shapeId > sb->shapeId )
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
 static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* context )

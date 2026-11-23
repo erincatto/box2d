@@ -6,6 +6,7 @@
 #include "dynamic_tree.h"
 #include "joint.h"
 #include "physics_world.h"
+#include "shape.h"
 #include "solver_set.h"
 
 #include "box2d/box2d.h"
@@ -1837,6 +1838,387 @@ static int NonDynamicJointDisableTest( void )
 	return 0;
 }
 
+// A body move index is only valid until the next step clears the move events. A body that leaves
+// the awake set keeps its index, so putting it to sleep later must not touch another body's event.
+static int StaleMoveIndexSleepTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	enum
+	{
+		e_count = 16
+	};
+
+	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+	b2BodyId bodyIds[e_count];
+	for ( int i = 0; i < e_count; ++i )
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = (b2Pos){ 2.0f * i, 10.0f };
+		bodyIds[i] = b2CreateBody( worldId, &bodyDef );
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2CreateCircleShape( bodyIds[i], &shapeDef, &circle );
+	}
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	// Disable and enable leave an index that now belongs to another body
+	b2Body_Disable( bodyIds[0] );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	b2Body_Enable( bodyIds[0] );
+	b2Body_SetAwake( bodyIds[0], false );
+	ENSURE( b2Body_IsAwake( bodyIds[0] ) == false );
+
+	b2BodyEvents events = b2World_GetBodyEvents( worldId );
+	ENSURE( events.moveCount == e_count - 1 );
+	for ( int i = 0; i < events.moveCount; ++i )
+	{
+		ENSURE( events.moveEvents[i].fellAsleep == false );
+	}
+
+	// Disable and enable leave an index past the end of the events
+	b2Body_Disable( bodyIds[15] );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	b2Body_Enable( bodyIds[15] );
+	b2Body_SetAwake( bodyIds[15], false );
+	ENSURE( b2Body_IsAwake( bodyIds[15] ) == false );
+
+	// A zero time step clears the events without assigning new indices
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	b2World_Step( worldId, 0.0f, 4 );
+	b2Body_SetAwake( bodyIds[1], false );
+	ENSURE( b2Body_IsAwake( bodyIds[1] ) == false );
+	ENSURE( b2World_GetBodyEvents( worldId ).moveCount == 0 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// The snapshot restores into a fresh world with no move events, so a body put to sleep before the
+// first replayed step must not use the move index it had when recording started. Box3D issue #197.
+static int SleepAfterRestoreTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.workerCount = 1;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2Circle circle = { { 0.0f, 0.0f }, 0.5f };
+	b2BodyId bodyIds[16];
+	for ( int i = 0; i < 16; ++i )
+	{
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = (b2Pos){ 2.0f * i, 10.0f };
+		bodyIds[i] = b2CreateBody( worldId, &bodyDef );
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2CreateCircleShape( bodyIds[i], &shapeDef, &circle );
+	}
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2Recording* rec = b2CreateRecording( 0 );
+	ENSURE( rec != NULL );
+	b2World_StartRecording( worldId, rec );
+	b2Body_SetAwake( bodyIds[15], false );
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+	b2World_StopRecording( worldId );
+	b2DestroyWorld( worldId );
+
+	ENSURE( b2ValidateRecording( b2Recording_GetData( rec ), b2Recording_GetSize( rec ), 1 ) );
+
+	b2DestroyRecording( rec );
+	return 0;
+}
+
+enum ReleaseCase
+{
+	e_motorSpringForce,
+	e_motorLinearHertz,
+	e_motorVelocityForce,
+	e_motorSpringTorque,
+	e_motorAngularHertz,
+	e_motorVelocityTorque,
+	e_distanceHertz,
+	e_distanceLimit,
+	e_releaseCaseCount,
+};
+
+static b2JointId CreateReleaseJoint( b2BodyId groundId, b2BodyId bodyId, int releaseCase )
+{
+	switch ( releaseCase )
+	{
+		case e_motorSpringForce:
+		case e_motorLinearHertz:
+		case e_motorVelocityForce:
+		case e_motorSpringTorque:
+		case e_motorAngularHertz:
+		case e_motorVelocityTorque:
+		{
+			b2MotorJointDef def = b2DefaultMotorJointDef();
+			def.base.bodyIdA = groundId;
+			def.base.bodyIdB = bodyId;
+			def.base.localFrameA.p = (b2Vec2){ 0.0f, 4.0f };
+			if ( releaseCase == e_motorSpringForce || releaseCase == e_motorLinearHertz )
+			{
+				def.linearHertz = 5.0f;
+				def.linearDampingRatio = 1.0f;
+				def.maxSpringForce = 1000.0f;
+			}
+			else if ( releaseCase == e_motorVelocityForce )
+			{
+				def.maxVelocityForce = 1000.0f;
+			}
+			else if ( releaseCase == e_motorVelocityTorque )
+			{
+				def.maxVelocityTorque = 1000.0f;
+			}
+			else
+			{
+				def.angularHertz = 5.0f;
+				def.angularDampingRatio = 1.0f;
+				def.maxSpringTorque = 1000.0f;
+			}
+			return b2CreateMotorJoint( b2Body_GetWorld( groundId ), &def );
+		}
+
+		default:
+		{
+			b2DistanceJointDef def = b2DefaultDistanceJointDef();
+			def.base.bodyIdA = groundId;
+			def.base.bodyIdB = bodyId;
+			def.base.localFrameA.p = (b2Vec2){ 0.0f, 6.0f };
+			def.length = 2.0f;
+			def.enableSpring = true;
+			if ( releaseCase == e_distanceHertz )
+			{
+				def.hertz = 5.0f;
+				def.dampingRatio = 1.0f;
+			}
+			else
+			{
+				def.enableLimit = true;
+				def.maxLength = 2.0f;
+			}
+			return b2CreateDistanceJoint( b2Body_GetWorld( groundId ), &def );
+		}
+	}
+}
+
+static void ReleaseJoint( b2JointId jointId, int releaseCase )
+{
+	switch ( releaseCase )
+	{
+		case e_motorSpringForce:
+			b2MotorJoint_SetMaxSpringForce( jointId, 0.0f );
+			break;
+		case e_motorLinearHertz:
+			b2MotorJoint_SetLinearHertz( jointId, 0.0f );
+			break;
+		case e_motorVelocityForce:
+			b2MotorJoint_SetMaxVelocityForce( jointId, 0.0f );
+			break;
+		case e_motorSpringTorque:
+			b2MotorJoint_SetMaxSpringTorque( jointId, 0.0f );
+			break;
+		case e_motorAngularHertz:
+			b2MotorJoint_SetAngularHertz( jointId, 0.0f );
+			break;
+		case e_motorVelocityTorque:
+			b2MotorJoint_SetMaxVelocityTorque( jointId, 0.0f );
+			break;
+		case e_distanceHertz:
+			b2DistanceJoint_SetSpringHertz( jointId, 0.0f );
+			break;
+		default:
+			b2DistanceJoint_EnableLimit( jointId, false );
+			break;
+	}
+}
+
+// A joint term that is switched off must let go of a loaded body, not keep warm starting the impulse that held it
+static int JointReleasesLoadTest( void )
+{
+	for ( int releaseCase = 0; releaseCase < e_releaseCaseCount; ++releaseCase )
+	{
+		b2WorldDef worldDef = b2DefaultWorldDef();
+		worldDef.gravity = b2Vec2_zero;
+		b2WorldId worldId = b2CreateWorld( &worldDef );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.position = (b2Pos){ 0.0f, 4.0f };
+		bodyDef.enableSleep = false;
+		b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+		// Unit square, so 1 kg and 1/6 kg m^2
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+		b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+		b2JointId jointId = CreateReleaseJoint( groundId, bodyId, releaseCase );
+
+		bool angular = releaseCase == e_motorSpringTorque || releaseCase == e_motorAngularHertz ||
+					   releaseCase == e_motorVelocityTorque;
+
+		b2Vec2 force = angular ? b2Vec2_zero : (b2Vec2){ 0.0f, -10.0f };
+		float torque = angular ? 1.0f : 0.0f;
+
+		for ( int i = 0; i < 120; ++i )
+		{
+			if ( i == 60 )
+			{
+				b2Vec2 v = b2Body_GetLinearVelocity( bodyId );
+				float w = b2Body_GetAngularVelocity( bodyId );
+				ENSURE( b2Length( v ) < 0.1f && b2AbsFloat( w ) < 0.1f );
+				ReleaseJoint( jointId, releaseCase );
+			}
+
+			b2Body_ApplyForceToCenter( bodyId, force, true );
+			b2Body_ApplyTorque( bodyId, torque, true );
+			b2World_Step( worldId, 1.0f / 60.0f, 4 );
+		}
+
+		// Free motion after one second is 10 m/s and 6 rad/s
+		if ( angular )
+		{
+			ENSURE( b2Body_GetAngularVelocity( bodyId ) > 5.0f );
+		}
+		else
+		{
+			ENSURE( b2Body_GetLinearVelocity( bodyId ).y < -9.0f );
+		}
+
+		b2DestroyWorld( worldId );
+	}
+
+	return 0;
+}
+
+// Box3D issue #167
+static int ShapeApplyWindWakeTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2_zero;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.isAwake = false;
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2Polygon box = b2MakeBox( 0.25f, 0.25f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2ShapeId shapeId = b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+	ENSURE( b2Body_IsAwake( bodyId ) == false );
+
+	b2Shape_ApplyWind( shapeId, (b2Vec2){ 20.0f, 0.0f }, 1.0f, 0.0f, false );
+	ENSURE( b2Body_IsAwake( bodyId ) == false );
+
+	b2Shape_ApplyWind( shapeId, (b2Vec2){ 20.0f, 0.0f }, 1.0f, 0.0f, true );
+	ENSURE( b2Body_IsAwake( bodyId ) );
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	ENSURE( b2Body_GetLinearVelocity( bodyId ).x > 0.0f );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+static int CheckShapeCentroid( b2ShapeId shapeId, b2Vec2 expected )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2Array_Get( world->shapes, shapeId.index1 - 1 );
+	ENSURE( b2Distance( shape->localCentroid, b2GetShapeCentroid( shape ) ) < FLT_EPSILON );
+	ENSURE( b2Distance( shape->localCentroid, expected ) < 1.0e-5f );
+	return 0;
+}
+
+// Box3D issue #206
+static int ShapeSetGeometryCentroidTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2Polygon box = b2MakeBox( 0.5f, 0.5f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2ShapeId shapeId = b2CreatePolygonShape( bodyId, &shapeDef, &box );
+	ENSURE( CheckShapeCentroid( shapeId, b2Vec2_zero ) == 0 );
+
+	b2Vec2 offset = { 2.0f, -1.0f };
+	b2Polygon offsetBox = b2MakeOffsetBox( 0.5f, 0.5f, offset, b2Rot_identity );
+	b2Shape_SetPolygon( shapeId, &offsetBox );
+	ENSURE( CheckShapeCentroid( shapeId, offset ) == 0 );
+
+	b2Circle movedCircle = { { -3.0f, 1.0f }, 0.5f };
+	b2Shape_SetCircle( shapeId, &movedCircle );
+	ENSURE( CheckShapeCentroid( shapeId, movedCircle.center ) == 0 );
+
+	b2Capsule movedCapsule = { { 1.0f, 2.0f }, { 3.0f, 2.0f }, 0.25f };
+	b2Shape_SetCapsule( shapeId, &movedCapsule );
+	ENSURE( CheckShapeCentroid( shapeId, (b2Vec2){ 2.0f, 2.0f } ) == 0 );
+
+	b2Segment movedSegment = { { -1.0f, 3.0f }, { 1.0f, 5.0f } };
+	b2Shape_SetSegment( shapeId, &movedSegment );
+	ENSURE( CheckShapeCentroid( shapeId, (b2Vec2){ 0.0f, 4.0f } ) == 0 );
+
+	b2World_Step( worldId, 1.0f / 60.0f, 4 );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
+// A recycled contact skips the material update, so a material change must break recycling. Box3D issue #209.
+static int ShapeMaterialRecycleTest( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	b2BodyId groundId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon groundBox = b2MakeBox( 10.0f, 0.5f );
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2ShapeId groundShapeId = b2CreatePolygonShape( groundId, &shapeDef, &groundBox );
+
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position = (b2Pos){ 0.0f, 1.0f };
+	bodyDef.enableSleep = false;
+	b2BodyId crateId = b2CreateBody( worldId, &bodyDef );
+	b2Polygon crateBox = b2MakeBox( 0.5f, 0.5f );
+	b2CreatePolygonShape( crateId, &shapeDef, &crateBox );
+
+	float timeStep = 1.0f / 60.0f;
+	for ( int i = 0; i < 60; ++i )
+	{
+		b2World_Step( worldId, timeStep, 4 );
+	}
+
+	ENSURE( b2World_GetCounters( worldId ).recycledContactCount > 0 );
+
+	b2SurfaceMaterial material = b2Shape_GetSurfaceMaterial( groundShapeId );
+	material.tangentSpeed = 1.0f;
+	b2Shape_SetSurfaceMaterial( groundShapeId, &material );
+
+	for ( int i = 0; i < 60; ++i )
+	{
+		b2World_Step( worldId, timeStep, 4 );
+	}
+
+	ENSURE( b2AbsFloat( b2Body_GetLinearVelocity( crateId ).x ) > 0.9f );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
 int WorldTest( void )
 {
 	RUN_SUBTEST( HelloWorld );
@@ -1858,6 +2240,12 @@ int WorldTest( void )
 	RUN_SUBTEST( BroadPhasePairsTest );
 	RUN_SUBTEST( BodySimLocatorTest );
 	RUN_SUBTEST( NonDynamicJointDisableTest );
+	RUN_SUBTEST( StaleMoveIndexSleepTest );
+	RUN_SUBTEST( SleepAfterRestoreTest );
+	RUN_SUBTEST( JointReleasesLoadTest );
+	RUN_SUBTEST( ShapeApplyWindWakeTest );
+	RUN_SUBTEST( ShapeSetGeometryCentroidTest );
+	RUN_SUBTEST( ShapeMaterialRecycleTest );
 
 	return 0;
 }

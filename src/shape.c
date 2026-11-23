@@ -1367,6 +1367,26 @@ float b2Shape_GetDensity( b2ShapeId shapeId )
 	return shape->density;
 }
 
+static void b2InvalidateContactRecycling( b2World* world, b2Shape* shape )
+{
+	b2Body* body = b2Array_Get( world->bodies, shape->bodyId );
+	int edgeKey = body->headContactKey;
+	while ( edgeKey != B2_NULL_INDEX )
+	{
+		int contactId = edgeKey >> 1;
+		int edgeIndex = edgeKey & 1;
+
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		if ( contact->shapeIdA == shape->id || contact->shapeIdB == shape->id )
+		{
+			b2ContactSim* contactSim = b2GetContactSim( world, contact );
+			contactSim->simFlags &= ~b2_simRelativeTransformValid;
+		}
+
+		edgeKey = contact->edges[edgeIndex].nextKey;
+	}
+}
+
 void b2Shape_SetFriction( b2ShapeId shapeId, float friction )
 {
 	B2_CHECK_INPUT( b2IsValidFloat( friction ) && friction >= 0.0f );
@@ -1382,6 +1402,7 @@ void b2Shape_SetFriction( b2ShapeId shapeId, float friction )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->material.friction = friction;
+	b2InvalidateContactRecycling( world, shape );
 }
 
 float b2Shape_GetFriction( b2ShapeId shapeId )
@@ -1406,6 +1427,7 @@ void b2Shape_SetRestitution( b2ShapeId shapeId, float restitution )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->material.restitution = restitution;
+	b2InvalidateContactRecycling( world, shape );
 }
 
 float b2Shape_GetRestitution( b2ShapeId shapeId )
@@ -1428,6 +1450,7 @@ void b2Shape_SetUserMaterial( b2ShapeId shapeId, uint64_t material )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->material.userMaterialId = material;
+	b2InvalidateContactRecycling( world, shape );
 }
 
 uint64_t b2Shape_GetUserMaterial( b2ShapeId shapeId )
@@ -1452,6 +1475,7 @@ void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, const b2SurfaceMaterial* sur
 	B2_REC( world, ShapeSetSurfaceMaterial, shapeId, *surfaceMaterial );
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->material = *surfaceMaterial;
+	b2InvalidateContactRecycling( world, shape );
 }
 
 b2Filter b2Shape_GetFilter( b2ShapeId shapeId )
@@ -1677,6 +1701,7 @@ void b2Shape_EnableHitEvents( b2ShapeId shapeId, bool flag )
 
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->enableHitEvents = flag;
+	b2InvalidateContactRecycling( world, shape );
 }
 
 bool b2Shape_AreHitEventsEnabled( b2ShapeId shapeId )
@@ -1748,6 +1773,7 @@ void b2Shape_SetCircle( b2ShapeId shapeId, const b2Circle* circle )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->circle = *circle;
 	shape->type = b2_circleShape;
+	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	bool destroyProxy = true;
@@ -1775,6 +1801,7 @@ void b2Shape_SetCapsule( b2ShapeId shapeId, const b2Capsule* capsule )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->capsule = *capsule;
 	shape->type = b2_capsuleShape;
+	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	bool destroyProxy = true;
@@ -1796,6 +1823,7 @@ void b2Shape_SetSegment( b2ShapeId shapeId, const b2Segment* segment )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->segment = *segment;
 	shape->type = b2_segmentShape;
+	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	bool destroyProxy = true;
@@ -1817,6 +1845,7 @@ void b2Shape_SetPolygon( b2ShapeId shapeId, const b2Polygon* polygon )
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->polygon = *polygon;
 	shape->type = b2_polygonShape;
+	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	bool destroyProxy = true;
@@ -1855,6 +1884,7 @@ void b2Shape_SetChainSegment( b2ShapeId shapeId, const b2ChainSegment* chainSegm
 	shape->chainSegment.chainId = B2_NULL_INDEX;
 	b2FixGhostVertices( &shape->chainSegment );
 	shape->type = b2_chainSegmentShape;
+	shape->localCentroid = b2GetShapeCentroid( shape );
 	shape->aabbMargin = b2ComputeShapeMargin( shape );
 
 	bool destroyProxy = true;
@@ -2093,8 +2123,6 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 		return;
 	}
 
-	b2BodySim* sim = b2GetBodySim( world, body );
-
 	if ( body->setIndex != b2_awakeSet )
 	{
 		// Must wake for state to exist
@@ -2103,6 +2131,7 @@ void b2Shape_ApplyWind( b2ShapeId shapeId, b2Vec2 wind, float drag, float lift, 
 
 	B2_ASSERT( body->setIndex == b2_awakeSet );
 
+	b2BodySim* sim = b2GetBodySim( world, body );
 	b2BodyState* state = b2GetBodyState( world, body );
 	b2WorldTransform transform = sim->transform;
 

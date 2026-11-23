@@ -255,14 +255,14 @@ void b2JoinThread( b2Thread* t )
 #include <emscripten/emscripten.h>
 
 // clock_gettime doesn't work well in emscripten (issue 165).
-uint64_t b3GetTicks( void )
+uint64_t b2GetTicks( void )
 {
 	return (uint64_t)( emscripten_get_now() * 1000000.0 );
 }
 
 #else
 
-uint64_t b3GetTicks( void )
+uint64_t b2GetTicks( void )
 {
 	struct timespec ts;
 	clock_gettime( CLOCK_MONOTONIC, &ts );

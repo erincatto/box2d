@@ -233,10 +233,15 @@ void b2TrySleepIsland( b2World* world, int islandId )
 			// It could happen the body is forced asleep before it ever moves.
 			if ( body->bodyMoveIndex != B2_NULL_INDEX )
 			{
-				b2BodyMoveEvent* moveEvent = b2Array_Get( world->bodyMoveEvents, body->bodyMoveIndex );
-				B2_ASSERT( moveEvent->bodyId.index1 - 1 == bodyId );
-				B2_ASSERT( moveEvent->bodyId.generation == body->generation );
-				moveEvent->fellAsleep = true;
+				// todo the move index can be stale after disable/enable or a snapshot restore
+				if ( body->bodyMoveIndex < world->bodyMoveEvents.count )
+				{
+					b2BodyMoveEvent* moveEvent = world->bodyMoveEvents.data + body->bodyMoveIndex;
+					if ( moveEvent->bodyId.index1 - 1 == bodyId && moveEvent->bodyId.generation == body->generation )
+					{
+						moveEvent->fellAsleep = true;
+					}
+				}
 				body->bodyMoveIndex = B2_NULL_INDEX;
 			}
 
