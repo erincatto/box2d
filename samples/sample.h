@@ -182,6 +182,19 @@ public:
 typedef Sample* SampleCreateFcn( SampleContext* context );
 typedef b2Capacity SampleCapacityFcn( void );
 
+// Locks in world axes, built from a motion lock joint and body fixed rotation
+struct MotionLockFlags
+{
+	bool linearX;
+	bool linearY;
+	bool fixedRotation;
+};
+
+// Holds the body to a static body with a motion lock joint anchored at its center of mass, so call it after
+// the body's shapes are created. Fixed rotation stays on the body. Returns a null id when the flags lock no
+// translation.
+b2JointId CreateMotionLock( b2BodyId groundId, b2BodyId bodyId, MotionLockFlags flags );
+
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
 int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
 int RegisterReplay( const char* category, const char* name, SampleCreateFcn* fcn );

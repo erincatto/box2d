@@ -889,9 +889,10 @@ public:
 			m_context->camera.zoom = 3.5f;
 		}
 
+		b2BodyId groundId;
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
-			b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
+			groundId = b2CreateBody( m_worldId, &bodyDef );
 
 			b2ShapeDef shapeDef = b2DefaultShapeDef();
 			b2Segment segment = { { -40.0, 0.0f }, { 40.0f, 0.0f } };
@@ -934,7 +935,7 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { -1.0f, 1.0f };
-			bodyDef.motionLocks.angularZ = true;
+			bodyDef.fixedRotation = true;
 			bodyDef.name = "angular z";
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
@@ -945,36 +946,33 @@ public:
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { -2.0f, 2.0f };
-			bodyDef.motionLocks.linearX = true;
 			bodyDef.name = "linear x";
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			CreateMotionLock( groundId, bodyId, { .linearX = true } );
 		}
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { -1.0f, 2.5f };
-			bodyDef.motionLocks.linearY = true;
-			bodyDef.motionLocks.angularZ = true;
 			bodyDef.name = "lin y ang z";
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			CreateMotionLock( groundId, bodyId, { .linearY = true, .fixedRotation = true } );
 		}
 
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { 0.0f, 1.0f };
-			bodyDef.motionLocks.linearX = true;
-			bodyDef.motionLocks.linearY = true;
-			bodyDef.motionLocks.angularZ = true;
 			bodyDef.name = "full";
 
 			b2BodyId bodyId = b2CreateBody( m_worldId, &bodyDef );
 			b2CreatePolygonShape( bodyId, &shapeDef, &box );
+			CreateMotionLock( groundId, bodyId, { .linearX = true, .linearY = true, .fixedRotation = true } );
 		}
 	}
 

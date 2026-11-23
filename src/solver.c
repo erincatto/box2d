@@ -98,11 +98,6 @@ static void b2IntegratePositionsTask( b2SolverBlock block, b2StepContext* contex
 		b2Vec2 v = state->linearVelocity;
 		float w = state->angularVelocity;
 
-		// Motion locks - these can be viewed as a constraint that comes last
-		v.x = ( state->flags & b2_lockLinearX ) ? 0.0f : v.x;
-		v.y = ( state->flags & b2_lockLinearY ) ? 0.0f : v.y;
-		w = ( state->flags & b2_lockAngularZ ) ? 0.0f : w;
-
 		// Clamp to max linear speed
 		if ( b2Dot( v, v ) > maxLinearSpeedSquared )
 		{
@@ -442,8 +437,6 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 		b2Vec2 v = fastBodyState->linearVelocity;
 		float timeLoss = ( 1.0f - context.fraction ) * dt;
 		b2Vec2 dv = b2MulSV( -timeLoss * fastBodySim->gravityScale, world->gravity );
-		dv.x = ( fastBodyState->flags & b2_lockLinearX ) ? 0.0f : dv.x;
-		dv.y = ( fastBodyState->flags & b2_lockLinearY ) ? 0.0f : dv.y;
 		fastBodyState->linearVelocity = b2Add( v, dv );
 
 		// Update body move event

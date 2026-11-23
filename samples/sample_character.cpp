@@ -936,7 +936,7 @@ public:
 			bodyDef.type = b2_dynamicBody;
 			bodyDef.position = { -9.0f, surfaceHeights[i] + 0.5f };
 			bodyDef.linearVelocity = { m_speed, 0.0f };
-			bodyDef.motionLocks.angularZ = true;
+			bodyDef.fixedRotation = true;
 
 			// Pre-solve must see a fresh manifold at every tile boundary.
 			bodyDef.enableContactRecycling = false;

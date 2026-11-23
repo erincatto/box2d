@@ -68,7 +68,7 @@ B2_REC_OP( 0x34, BodyEnableSleeping, RET_NONE, ARG( BODYID, body ) ARG( BOOL, fl
 B2_REC_OP( 0x35, BodySetSleepThreshold, RET_NONE, ARG( BODYID, body ) ARG( F32, threshold ) )
 B2_REC_OP( 0x36, BodyDisable, RET_NONE, ARG( BODYID, body ) )
 B2_REC_OP( 0x37, BodyEnable, RET_NONE, ARG( BODYID, body ) )
-B2_REC_OP( 0x38, BodySetMotionLocks, RET_NONE, ARG( BODYID, body ) ARG( LOCKS, locks ) )
+B2_REC_OP( 0x38, BodySetFixedRotation, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x39, BodySetBullet, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x3A, BodyEnableContactRecycling, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
 B2_REC_OP( 0x3B, BodyEnableContactEvents, RET_NONE, ARG( BODYID, body ) ARG( BOOL, flag ) )
@@ -201,6 +201,10 @@ B2_REC_OP( 0xD4, WheelJointSetLimits, RET_NONE, ARG( JOINTID, joint ) ARG( F32, 
 B2_REC_OP( 0xD5, WheelJointEnableMotor, RET_NONE, ARG( JOINTID, joint ) ARG( BOOL, enableMotor ) )
 B2_REC_OP( 0xD6, WheelJointSetTargetMotorSpeed, RET_NONE, ARG( JOINTID, joint ) ARG( F32, motorSpeed ) )
 B2_REC_OP( 0xD7, WheelJointSetMaxMotorTorque, RET_NONE, ARG( JOINTID, joint ) ARG( F32, torque ) )
+
+// Motion lock joint
+B2_REC_OP( 0xD8, CreateMotionLockJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( MOTIONLOCKJOINTDEF, def ) )
+B2_REC_OP( 0xD9, MotionLockJointEnableLinearLock, RET_NONE, ARG( JOINTID, joint ) ARG( I32, axis ) ARG( BOOL, flag ) )
 
 // Spatial queries. Inputs through the manifest (reader side). Hit tail / results hand-written.
 // Query geometry is relative to the origin so recordings reproduce queries far from the world origin.

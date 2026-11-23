@@ -615,12 +615,11 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Set the motion locks on this body. This causes mass properties to be recomputed because fixed
-/// rotation sets the rotational inertia to zero.
-B2_API void b2Body_SetMotionLocks( b2BodyId bodyId, b2MotionLocks locks );
+/// Fix the rotation of this body. Sets the angular velocity to zero.
+B2_API void b2Body_SetFixedRotation( b2BodyId bodyId, bool flag );
 
-/// Get the motion locks for this body.
-B2_API b2MotionLocks b2Body_GetMotionLocks( b2BodyId bodyId );
+/// Does this body have fixed rotation?
+B2_API bool b2Body_IsFixedRotation( b2BodyId bodyId );
 
 /// Set this body to be a bullet. A bullet does continuous collision detection against dynamic
 /// and kinematic bodies (but not other bullets). This only works on dynamic bodies.
@@ -1511,6 +1510,24 @@ B2_API void b2WeldJoint_SetAngularDampingRatio( b2JointId jointId, float damping
 
 /// Get the weld joint angular damping ratio, non-dimensional
 B2_API float b2WeldJoint_GetAngularDampingRatio( b2JointId jointId );
+
+/** @} */
+
+/**
+ * @defgroup motion_lock_joint Motion Lock Joint
+ * @brief Functions for the motion lock joint.
+ * @{
+ */
+
+/// Create a motion lock joint.
+/// @see b2MotionLockJointDef for details
+B2_API b2JointId b2CreateMotionLockJoint( b2WorldId worldId, const b2MotionLockJointDef* def );
+
+/// Enable/disable a linear lock. The axis is 0 for x and 1 for y.
+B2_API void b2MotionLockJoint_EnableLinearLock( b2JointId jointId, int axis, bool flag );
+
+/// Is a linear lock enabled? The axis is 0 for x and 1 for y.
+B2_API bool b2MotionLockJoint_IsLinearLockEnabled( b2JointId jointId, int axis );
 
 /** @} */
 

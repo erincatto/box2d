@@ -710,7 +710,7 @@ public:
 		{
 			b2BodyDef bodyDef = b2DefaultBodyDef();
 			bodyDef.type = b2_dynamicBody;
-			bodyDef.motionLocks.angularZ = true;
+			bodyDef.fixedRotation = true;
 			bodyDef.position = { 0.0f, 1.0f };
 			m_playerId = b2CreateBody( m_worldId, &bodyDef );
 			b2ShapeDef shapeDef = b2DefaultShapeDef();

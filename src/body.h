@@ -13,14 +13,8 @@
 
 enum b2BodyFlags
 {
-	// This body has fixed translation along the x-axis
-	b2_lockLinearX = 0x00000001,
-
-	// This body has fixed translation along the y-axis
-	b2_lockLinearY = 0x00000002,
-
 	// This body has fixed rotation
-	b2_lockAngularZ = 0x00000004,
+	b2_fixedRotation = 0x00000001,
 
 	// This flag is used for debug draw and contact recycling. Only on b2BodySim.
 	b2_isFast = 0x00000008,
@@ -54,12 +48,6 @@ enum b2BodyFlags
 	b2_enableSleep = 0x00000800,
 
 	b2_bodyEnableContactRecycling = 0x00001000,
-
-	// All lock flags
-	b2_allLocks = b2_lockAngularZ | b2_lockLinearX | b2_lockLinearY,
-
-	// If this flag is set then the body has fixed rotation
-	b2_fixedRotation = b2_lockAngularZ,
 
 	// These flags are transient per time step. These may be different across b2Body, b2BodySim, and b2BodyState.
 	b2_bodyTransientFlags = b2_isSpeedCapped | b2_hadTimeOfImpact,

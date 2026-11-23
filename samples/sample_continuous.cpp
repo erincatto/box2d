@@ -320,7 +320,7 @@ public:
 		bodyDef.linearVelocity = { 0.0f, m_speed };
 		bodyDef.position = { 0.0f, 10.0f + m_yOffset };
 		bodyDef.rotation = b2MakeRot( 0.5f * B2_PI );
-		bodyDef.motionLocks.angularZ = true;
+		bodyDef.fixedRotation = true;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -1102,7 +1102,7 @@ public:
 			// ballShapeDef.restitution = 1.f;
 			b2CreatePolygonShape( m_ballId, &ballShapeDef, &ballShape );
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -5.0f } );
-			b2Body_SetMotionLocks( m_ballId, { false, false, true } );
+			b2Body_SetFixedRotation( m_ballId, true );
 		}
 	}
 
@@ -1172,7 +1172,7 @@ public:
 			b2CreateCircleShape( m_ballId, &ballShapeDef, &ballShape );
 
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } );	   // Initial velocity
-			b2Body_SetMotionLocks( m_ballId, { false, false, true } ); // Do not rotate a ball
+			b2Body_SetFixedRotation( m_ballId, true ); // Do not rotate a ball
 		}
 	}
 
@@ -2020,7 +2020,7 @@ public:
 		bodyDef.linearVelocity = def.velocity;
 		bodyDef.angularVelocity = def.angularVelocity;
 		bodyDef.gravityScale = m_gravityScale;
-		bodyDef.motionLocks.angularZ = def.lockRotation;
+		bodyDef.fixedRotation = def.lockRotation;
 		bodyDef.isBullet = def.isBullet;
 		bodyDef.enableSleep = false;
 		m_playerId = b2CreateBody( m_worldId, &bodyDef );

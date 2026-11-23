@@ -1510,7 +1510,7 @@ public:
 static int sampleCantileverIndex = RegisterSample( "Joints", "Cantilever", Cantilever::Create );
 
 // This test ensures joints work correctly with bodies that have motion locks
-class MotionLocks : public Sample
+class LockedJoints : public Sample
 {
 public:
 	enum
@@ -1518,7 +1518,7 @@ public:
 		e_count = 6
 	};
 
-	explicit MotionLocks( SampleContext* context )
+	explicit LockedJoints( SampleContext* context )
 		: Sample( context )
 	{
 		if ( m_context->restart == false )
@@ -1530,16 +1530,20 @@ public:
 		b2BodyDef bodyDef = b2DefaultBodyDef();
 		b2BodyId groundId = b2CreateBody( m_worldId, &bodyDef );
 
-		m_motionLocks = { false, false, true };
+		bodyDef.name = "lock ground";
+		m_lockGroundId = b2CreateBody( m_worldId, &bodyDef );
+		bodyDef.name = nullptr;
+
+		m_flags = { false, false, true };
 
 		for ( int i = 0; i < e_count; ++i )
 		{
 			m_bodyIds[i] = b2_nullBodyId;
+			m_lockIds[i] = b2_nullJointId;
 		}
 
 		b2Pos position = { -12.5f, 10.0f };
 		bodyDef.type = b2_dynamicBody;
-		bodyDef.motionLocks = m_motionLocks;
 
 		b2Polygon box = b2MakeBox( 1.0f, 1.0f );
 
@@ -1685,35 +1689,34 @@ public:
 
 		position.x += 5.0f;
 		++index;
+
+		ApplyLocks();
+	}
+
+	void ApplyLocks()
+	{
+		for ( int i = 0; i < e_count; ++i )
+		{
+			if ( B2_IS_NON_NULL( m_lockIds[i] ) )
+			{
+				b2DestroyJoint( m_lockIds[i] );
+			}
+
+			m_lockIds[i] = CreateMotionLock( m_lockGroundId, m_bodyIds[i], m_flags );
+			b2Body_SetAwake( m_bodyIds[i], true );
+		}
 	}
 
 	bool DrawControls() override
 	{
-		if ( ImGui::Checkbox( "Lock Linear X", &m_motionLocks.linearX ) )
-		{
-			for ( int i = 0; i < e_count; ++i )
-			{
-				b2Body_SetMotionLocks( m_bodyIds[i], m_motionLocks );
-				b2Body_SetAwake( m_bodyIds[i], true );
-			}
-		}
+		bool changed = false;
+		changed = ImGui::Checkbox( "Lock Linear X", &m_flags.linearX ) || changed;
+		changed = ImGui::Checkbox( "Lock Linear Y", &m_flags.linearY ) || changed;
+		changed = ImGui::Checkbox( "Fixed Rotation", &m_flags.fixedRotation ) || changed;
 
-		if ( ImGui::Checkbox( "Lock Linear Y", &m_motionLocks.linearY ) )
+		if ( changed )
 		{
-			for ( int i = 0; i < e_count; ++i )
-			{
-				b2Body_SetMotionLocks( m_bodyIds[i], m_motionLocks );
-				b2Body_SetAwake( m_bodyIds[i], true );
-			}
-		}
-
-		if ( ImGui::Checkbox( "Lock Angular Z", &m_motionLocks.angularZ ) )
-		{
-			for ( int i = 0; i < e_count; ++i )
-			{
-				b2Body_SetMotionLocks( m_bodyIds[i], m_motionLocks );
-				b2Body_SetAwake( m_bodyIds[i], true );
-			}
+			ApplyLocks();
 		}
 
 		if ( glfwGetKey( m_context->window, GLFW_KEY_L ) == GLFW_PRESS )
@@ -1726,14 +1729,146 @@ public:
 
 	static Sample* Create( SampleContext* context )
 	{
-		return new MotionLocks( context );
+		return new LockedJoints( context );
+	}
+
+	b2BodyId m_lockGroundId;
+	b2BodyId m_bodyIds[e_count];
+	b2JointId m_lockIds[e_count];
+	MotionLockFlags m_flags;
+};
+
+static int sampleLockedJoints = RegisterSample( "Joints", "Locked Joints", LockedJoints::Create );
+
+class MotionLockJoint : public Sample
+{
+public:
+	enum
+	{
+		e_count = 3
+	};
+
+	explicit MotionLockJoint( SampleContext* context )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = 25.0f * 0.5f;
+		}
+
+		b2BodyId groundId;
+		{
+			b2BodyDef bodyDef = b2DefaultBodyDef();
+			groundId = b2CreateBody( m_worldId, &bodyDef );
+
+			b2ShapeDef shapeDef = b2DefaultShapeDef();
+			b2Segment segment = { { -20.0f, 0.0f }, { 20.0f, 0.0f } };
+			b2CreateSegmentShape( groundId, &shapeDef, &segment );
+		}
+
+		b2ShapeDef shapeDef = b2DefaultShapeDef();
+		b2Polygon box = b2MakeBox( 1.0f, 0.5f );
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type = b2_dynamicBody;
+		bodyDef.enableSleep = false;
+
+		struct Preset
+		{
+			const char* name;
+			bool x, y;
+		};
+
+		Preset presets[e_count] = {
+			{ "point", true, true },
+			{ "line x", false, true },
+			{ "line y", true, false },
+		};
+
+		for ( int i = 0; i < e_count; ++i )
+		{
+			b2Pos position = { -6.0f + 6.0f * i, 4.0f };
+			bodyDef.name = presets[i].name;
+			bodyDef.position = position;
+			m_bodyIds[i] = b2CreateBody( m_worldId, &bodyDef );
+			b2CreatePolygonShape( m_bodyIds[i], &shapeDef, &box );
+
+			b2MotionLockJointDef jointDef = b2DefaultMotionLockJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = m_bodyIds[i];
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, position );
+			jointDef.base.collideConnected = true;
+			jointDef.lockLinearX = presets[i].x;
+			jointDef.lockLinearY = presets[i].y;
+			b2CreateMotionLockJoint( m_worldId, &jointDef );
+		}
+
+		// A heavy circle on a light platform held by a point lock and fixed rotation
+		{
+			b2Pos position = { 0.0f, 8.0f };
+			bodyDef.name = "platform";
+			bodyDef.position = position;
+			bodyDef.fixedRotation = true;
+			b2BodyId platformId = b2CreateBody( m_worldId, &bodyDef );
+			b2Polygon platform = b2MakeBox( 2.0f, 0.05f );
+			b2CreatePolygonShape( platformId, &shapeDef, &platform );
+
+			b2MassData massData = b2Body_GetMassData( platformId );
+			massData.rotationalInertia = massData.rotationalInertia / massData.mass;
+			massData.mass = 1.0f;
+			b2Body_SetMassData( platformId, massData );
+
+			b2MotionLockJointDef jointDef = b2DefaultMotionLockJointDef();
+			jointDef.base.bodyIdA = groundId;
+			jointDef.base.bodyIdB = platformId;
+			jointDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, position );
+			jointDef.lockLinearX = true;
+			jointDef.lockLinearY = true;
+			b2CreateMotionLockJoint( m_worldId, &jointDef );
+
+			bodyDef.name = nullptr;
+			bodyDef.position = { 0.0f, 9.0f };
+			bodyDef.fixedRotation = false;
+			m_circleId = b2CreateBody( m_worldId, &bodyDef );
+			b2Circle circle = { b2Vec2_zero, 0.5f };
+			b2CreateCircleShape( m_circleId, &shapeDef, &circle );
+
+			massData = b2Body_GetMassData( m_circleId );
+			massData.rotationalInertia = 10.0f * massData.rotationalInertia / massData.mass;
+			massData.mass = 10.0f;
+			b2Body_SetMassData( m_circleId, massData );
+		}
+	}
+
+	void Step() override
+	{
+		if ( glfwGetKey( m_context->window, GLFW_KEY_L ) == GLFW_PRESS )
+		{
+			for ( int i = 0; i < e_count; ++i )
+			{
+				b2Body_ApplyLinearImpulseToCenter( m_bodyIds[i], { 5.0f, 5.0f }, true );
+				b2Body_ApplyAngularImpulse( m_bodyIds[i], 2.0f, true );
+			}
+		}
+
+		Sample::Step();
+
+		DrawScreenTextLine( "Point, line x, line y. Press L to push." );
+		DrawScreenTextLine( "10 kg circle on a 1 kg locked platform: gap = %.3f m",
+							(float)b2Body_GetPosition( m_circleId ).y - 8.55f );
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new MotionLockJoint( context );
 	}
 
 	b2BodyId m_bodyIds[e_count];
-	b2MotionLocks m_motionLocks;
+	b2BodyId m_circleId;
 };
 
-static int sampleMotionLocks = RegisterSample( "Joints", "Motion Locks", MotionLocks::Create );
+static int sampleMotionLockJoint = RegisterSample( "Joints", "Motion Lock Joint", MotionLockJoint::Create );
 
 // This sample shows how to break joints when the internal reaction force becomes large.
 class BreakableJoint : public Sample

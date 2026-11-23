@@ -32,7 +32,7 @@
 
 // Bump this if any of the data structures below get modified. The layout hash only catches
 // size changes, a same-size reinterpretation like the contact cache reshape needs this bump.
-#define B2_SNAP_VERSION 13u // extend b2Capacity
+#define B2_SNAP_VERSION 14u
 
 // Header flag bits
 #define B2_SNAP_FLAG_VALIDATION 0x1u // image was built with validation, only used for diagnostics
@@ -1160,6 +1160,9 @@ uint64_t b2HashWorldStateDeep( b2World* world )
 				case b2_weldJoint:
 					hash = b2FnvMixBytes( hash, &sim->weldJoint.linearImpulse, sizeof( b2Vec2 ) );
 					hash = b2FnvMixFloat( hash, sim->weldJoint.angularImpulse );
+					break;
+				case b2_motionLockJoint:
+					hash = b2FnvMixBytes( hash, &sim->motionLockJoint.linearImpulse, sizeof( b2Vec2 ) );
 					break;
 				case b2_wheelJoint:
 					hash = b2FnvMixFloat( hash, sim->wheelJoint.perpImpulse );

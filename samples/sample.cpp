@@ -1275,6 +1275,30 @@ SampleEntry g_sampleEntries[MAX_SAMPLES] = {};
 int g_sampleCount = 0;
 int g_replayIndex = -1;
 
+b2JointId CreateMotionLock( b2BodyId groundId, b2BodyId bodyId, MotionLockFlags flags )
+{
+	// Fixed rotation is a zero inverse inertia on the body, not a constraint
+	b2Body_SetFixedRotation( bodyId, flags.fixedRotation );
+
+	if ( flags.linearX == false && flags.linearY == false )
+	{
+		return b2_nullJointId;
+	}
+
+	b2MotionLockJointDef jointDef = b2DefaultMotionLockJointDef();
+	jointDef.base.bodyIdA = groundId;
+	jointDef.base.bodyIdB = bodyId;
+	jointDef.base.localFrameA.q = b2InvertRot( b2Body_GetRotation( groundId ) );
+	jointDef.base.localFrameA.p = b2Body_GetLocalPoint( groundId, b2Body_GetWorldCenter( bodyId ) );
+	jointDef.base.localFrameB.q = b2InvertRot( b2Body_GetRotation( bodyId ) );
+	jointDef.base.localFrameB.p = b2Body_GetLocalCenter( bodyId );
+	jointDef.lockLinearX = flags.linearX;
+	jointDef.lockLinearY = flags.linearY;
+
+	b2WorldId worldId = b2Body_GetWorld( bodyId );
+	return b2CreateMotionLockJoint( worldId, &jointDef );
+}
+
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn )
 {
 	int index = g_sampleCount;

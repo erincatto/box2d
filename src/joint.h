@@ -262,6 +262,22 @@ typedef struct b2WheelJoint
 	bool enableLimit;
 } b2WheelJoint;
 
+typedef struct b2MotionLockJoint
+{
+	b2Vec2 linearImpulse;
+
+	int indexA;
+	int indexB;
+	b2Transform frameA;
+	b2Transform frameB;
+	b2Vec2 separation;
+
+	bool lockLinear[2];
+
+	// The linear block solve has no off diagonal elements
+	bool diagonal;
+} b2MotionLockJoint;
+
 /// The base joint class. Joints are used to constraint two bodies together in
 /// various fashions. Some joints also feature limits and motors.
 typedef struct b2JointSim
@@ -292,6 +308,7 @@ typedef struct b2JointSim
 		b2DistanceJoint distanceJoint;
 		b2MotorJoint motorJoint;
 		b2MoverJoint moverJoint;
+		b2MotionLockJoint motionLockJoint;
 		b2PogoJoint pogoJoint;
 		b2RevoluteJoint revoluteJoint;
 		b2PrismaticJoint prismaticJoint;
@@ -325,6 +342,7 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint );
 b2Vec2 b2GetDistanceJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetMotorJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetMoverJointForce( b2World* world, b2JointSim* base );
+b2Vec2 b2GetMotionLockJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetPogoJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetPrismaticJointForce( b2World* world, b2JointSim* base );
 b2Vec2 b2GetRevoluteJointForce( b2World* world, b2JointSim* base );
@@ -340,6 +358,7 @@ float b2GetWheelJointTorque( b2World* world, b2JointSim* base );
 void b2PrepareDistanceJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareMotorJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareMoverJoint( b2JointSim* base, b2StepContext* context );
+void b2PrepareMotionLockJoint( b2JointSim* base, b2StepContext* context );
 void b2PreparePogoJoint( b2JointSim* base, b2StepContext* context );
 void b2PreparePrismaticJoint( b2JointSim* base, b2StepContext* context );
 void b2PrepareRevoluteJoint( b2JointSim* base, b2StepContext* context );
@@ -349,6 +368,7 @@ void b2PrepareWheelJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartDistanceJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartMotorJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartMoverJoint( b2JointSim* base, b2StepContext* context );
+void b2WarmStartMotionLockJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartPogoJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartPrismaticJoint( b2JointSim* base, b2StepContext* context );
 void b2WarmStartRevoluteJoint( b2JointSim* base, b2StepContext* context );
@@ -358,6 +378,7 @@ void b2WarmStartWheelJoint( b2JointSim* base, b2StepContext* context );
 void b2SolveDistanceJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveMotorJoint( b2JointSim* base, b2StepContext* context );
 void b2SolveMoverJoint( b2JointSim* base, b2StepContext* context );
+void b2SolveMotionLockJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolvePogoJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolvePrismaticJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBias );
@@ -365,6 +386,8 @@ void b2SolveWeldJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 void b2SolveWheelJoint( b2JointSim* base, b2StepContext* context, bool useBias );
 
 void b2DrawDistanceJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB );
+void b2DrawMotionLockJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,
+							float drawScale );
 void b2DrawPrismaticJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,
 						   float drawScale );
 void b2DrawRevoluteJoint( b2DebugDraw* draw, b2JointSim* base, b2WorldTransform transformA, b2WorldTransform transformB,

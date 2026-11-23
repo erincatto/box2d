@@ -67,6 +67,8 @@ static const char* ReplayJointTypeName( b2JointType type )
 			return "weld";
 		case b2_wheelJoint:
 			return "wheel";
+		case b2_motionLockJoint:
+			return "motion lock";
 		default:
 			return "?";
 	}

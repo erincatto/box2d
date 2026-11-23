@@ -251,20 +251,6 @@ typedef enum b2BodyType
 	b2_bodyTypeCount,
 } b2BodyType;
 
-/// Motion locks to restrict the body movement
-/// @ingroup body
-typedef struct b2MotionLocks
-{
-	/// Prevent translation along the x-axis
-	bool linearX;
-
-	/// Prevent translation along the y-axis
-	bool linearY;
-
-	/// Prevent rotation around the z-axis
-	bool angularZ;
-} b2MotionLocks;
-
 /// A body definition holds all the data needed to construct a rigid body. You can safely re-use
 /// body definitions. Shapes are added to a body after construction. Body definitions are temporary
 /// objects used to bundle creation parameters. Must be initialized using b2DefaultBodyDef().
@@ -319,9 +305,9 @@ typedef struct b2BodyDef
 	/// Use this to store application specific body data.
 	void* userData;
 
-	/// Motion locks to restrict linear and angular movement. Caution: may lead to softer
-	/// constraints along the locked direction
-	b2MotionLocks motionLocks;
+	/// Fully lock the rotation of this body by setting the inverse rotational inertia to zero. This also
+	/// keeps the angular velocity at zero.
+	bool fixedRotation;
 
 	/// Set this flag to false if this body should never fall asleep.
 	bool enableSleep;
@@ -670,6 +656,7 @@ typedef enum b2JointType
 	b2_revoluteJoint,  ///< rotate around a pivot
 	b2_weldJoint,	   ///< bring two bodies together with some flex
 	b2_wheelJoint,	   ///< wheel spins with shock absorber
+	b2_motionLockJoint, ///< restrict translation to a line or a point
 } b2JointType;
 
 /// Base joint definition used by all joint types. The local frames are measured from the body's
@@ -1015,6 +1002,28 @@ typedef struct b2WeldJointDef
 /// Use this to initialize your joint definition
 /// @ingroup weld_joint
 B2_API b2WeldJointDef b2DefaultWeldJointDef( void );
+
+/// A motion lock joint is designed to restrict motion to a line or a point. All restrictions are
+/// relative to the joint frame in body A.
+/// @ingroup motion_lock_joint
+typedef struct b2MotionLockJointDef
+{
+	/// Base joint definition
+	b2JointDef base;
+
+	/// Lock movement along the x axis.
+	bool lockLinearX;
+
+	/// Lock movement along the y axis.
+	bool lockLinearY;
+
+	/// Used internally to detect a valid definition. DO NOT SET.
+	int internalValue;
+} b2MotionLockJointDef;
+
+/// Use this to initialize your joint definition.
+/// @ingroup motion_lock_joint
+B2_API b2MotionLockJointDef b2DefaultMotionLockJointDef( void );
 
 /// Wheel joint definition Body B is a wheel that may rotate freely and slide along the local x-axis
 /// in frame A. The joint translation is zero when the local frame origins coincide in world space.

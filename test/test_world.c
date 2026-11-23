@@ -761,9 +761,7 @@ static int SetBulletDriftTest( void )
 		b2Body_SetBullet( bodyId, true );
 		ENSURE( b2Body_IsBullet( bodyId ) == true );
 
-		b2MotionLocks locks = { 0 };
-		locks.linearX = true;
-		b2Body_SetMotionLocks( bodyId, locks );
+		b2Body_SetFixedRotation( bodyId, true );
 
 		ENSURE( b2Body_IsBullet( bodyId ) == true );
 	}
@@ -779,9 +777,7 @@ static int SetBulletDriftTest( void )
 		b2Body_SetBullet( bodyId, false );
 		ENSURE( b2Body_IsBullet( bodyId ) == false );
 
-		b2MotionLocks locks = { 0 };
-		locks.linearX = true;
-		b2Body_SetMotionLocks( bodyId, locks );
+		b2Body_SetFixedRotation( bodyId, true );
 
 		ENSURE( b2Body_IsBullet( bodyId ) == false );
 	}
