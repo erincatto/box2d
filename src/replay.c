@@ -200,6 +200,10 @@ b2JointId b2RecR_JOINTID( b2RecReader* rdr )
 static void b2RecRdrBlob( b2RecReader* rdr, void* out, int size )
 {
 	b2RecRdrCheck( rdr, size );
+	if ( size == 0 )
+	{
+		return;
+	}
 	if ( !rdr->ok )
 	{
 		memset( out, 0, (size_t)size );

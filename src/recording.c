@@ -51,8 +51,11 @@ void b2RecBufAppend( b2RecBuffer* buf, const void* data, int size )
 		buf->capacity = newCap;
 	}
 
-	memcpy( buf->data + buf->size, data, (size_t)size );
-	buf->size += size;
+	if ( size > 0 )
+	{
+		memcpy( buf->data + buf->size, data, (size_t)size );
+		buf->size += size;
+	}
 }
 
 void b2RecBufFree( b2RecBuffer* buf )

@@ -8,13 +8,13 @@
 #include "platform.h"
 #include "parallel_for.h"
 #include "physics_world.h"
+#include "qsort.h"
 #include "shape.h"
 #include "solver_set.h"
 
 #include "box2d/collision.h"
 
 #include <stddef.h>
-#include <stdlib.h>
 
 struct b2SensorQueryContext
 {
@@ -119,24 +119,6 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	return true;
 }
 
-static int b2CompareVisitors( const void* a, const void* b )
-{
-	const b2Visitor* sa = a;
-	const b2Visitor* sb = b;
-
-	if ( sa->shapeId < sb->shapeId )
-	{
-		return -1;
-	}
-
-	if ( sa->shapeId > sb->shapeId )
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
 static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* context )
 {
 	b2TracyCZoneNC( sensor_task, "Overlap", b2_colorBrown, true );
@@ -198,7 +180,23 @@ static void b2SensorTask( int startIndex, int endIndex, int threadIndex, void* c
 		b2DynamicTree_OverlapAABB( trees + 2, queryBounds, sensorShape->filter.maskBits, b2SensorQueryCallback, &queryContext );
 
 		// Sort the overlaps to enable finding begin and end events.
-		qsort( sensor->overlaps2.data, sensor->overlaps2.count, sizeof( b2Visitor ), b2CompareVisitors );
+		{
+			b2Visitor* visitors = sensor->overlaps2.data;
+#define LESS( i, j ) ( visitors[(int)( i )].shapeId < visitors[(int)( j )].shapeId )
+#define SWAP( i, j )                                                                                                   \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		b2Visitor swapTemp = visitors[(int)( i )];                                                                     \
+		visitors[(int)( i )] = visitors[(int)( j )];                                                                   \
+		visitors[(int)( j )] = swapTemp;                                                                               \
+	}                                                                                                                  \
+	while ( 0 )
+
+			QSORT( sensor->overlaps2.count, LESS, SWAP );
+
+#undef LESS
+#undef SWAP
+		}
 
 		// Remove duplicates from overlaps2 (sorted). Duplicates are possible due to the hit events appended earlier.
 		int uniqueCount = 0;
