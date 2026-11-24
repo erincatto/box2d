@@ -389,6 +389,35 @@ static int FixedRotationRejectsSpin( void )
 	return 0;
 }
 
+// The body cannot turn toward the target rotation, so the target center must use the current one
+static int FixedRotationTargetTransform( void )
+{
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.gravity = b2Vec2_zero;
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.fixedRotation = true;
+	b2BodyId bodyId = b2CreateBody( worldId, &bodyDef );
+
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	b2Polygon box = b2MakeOffsetBox( 0.5f, 0.5f, (b2Vec2){ 1.0f, 0.0f }, b2Rot_identity );
+	b2CreatePolygonShape( bodyId, &shapeDef, &box );
+
+	b2WorldTransform target = { { 2.0f, 3.0f }, b2MakeRot( 0.5f * B2_PI ) };
+	b2Body_SetTargetTransform( bodyId, target, 1.0f / 60.0f, true );
+	StepScene( worldId, 1 );
+
+	b2Pos p = b2Body_GetPosition( bodyId );
+	ENSURE_SMALL( p.x - 2.0f, 1.0e-4f );
+	ENSURE_SMALL( p.y - 3.0f, 1.0e-4f );
+	ENSURE( b2Body_GetRotation( bodyId ).s == 0.0f );
+
+	b2DestroyWorld( worldId );
+	return 0;
+}
+
 int JointTest( void )
 {
 	RUN_SUBTEST( MotionLockJointApi );
@@ -402,6 +431,7 @@ int JointTest( void )
 #endif
 	RUN_SUBTEST( FixedRotationMassData );
 	RUN_SUBTEST( FixedRotationRejectsSpin );
+	RUN_SUBTEST( FixedRotationTargetTransform );
 
 	return 0;
 }

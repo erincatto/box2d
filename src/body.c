@@ -888,7 +888,9 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float 
 	b2BodySim* sim = b2GetBodySim( world, body );
 
 	// Compute linear velocity. The center difference is taken in world precision then demoted
-	b2Vec2 delta = b2SubPos( b2TransformWorldPoint( target, sim->localCenter ), sim->center );
+	bool fixedRotation = ( body->flags & b2_fixedRotation ) != 0;
+	b2WorldTransform targetCenterTransform = { target.p, fixedRotation ? sim->transform.q : target.q };
+	b2Vec2 delta = b2SubPos( b2TransformWorldPoint( targetCenterTransform, sim->localCenter ), sim->center );
 	float invTimeStep = 1.0f / timeStep;
 	b2Vec2 linearVelocity = b2MulSV( invTimeStep, delta );
 
@@ -896,7 +898,7 @@ void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float 
 	b2Rot q1 = sim->transform.q;
 	b2Rot q2 = target.q;
 	float deltaAngle = b2RelativeAngle( q1, q2 );
-	float angularVelocity = ( body->flags & b2_fixedRotation ) ? 0.0f : invTimeStep * deltaAngle;
+	float angularVelocity = fixedRotation ? 0.0f : invTimeStep * deltaAngle;
 
 	// Early out if the body is asleep already and the desired movement is small
 	if ( body->setIndex != b2_awakeSet )
