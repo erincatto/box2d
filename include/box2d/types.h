@@ -306,7 +306,7 @@ typedef struct b2BodyDef
 	void* userData;
 
 	/// Fully lock the rotation of this body by setting the inverse rotational inertia to zero. This also
-	/// keeps the angular velocity at zero.
+	/// keeps the angular velocity at zero. The main inertia value is not affected.
 	bool fixedRotation;
 
 	/// Set this flag to false if this body should never fall asleep.

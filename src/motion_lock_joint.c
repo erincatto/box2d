@@ -23,7 +23,14 @@ void b2MotionLockJoint_EnableLinearLock( b2JointId jointId, int axis, bool flag 
 	if ( flag != joint->lockLinear[axis] )
 	{
 		joint->lockLinear[axis] = flag;
-		( &joint->linearImpulse.x )[axis] = 0.0f;
+		if ( axis == 0 )
+		{
+			joint->linearImpulse.x = 0.0f;
+		}
+		else
+		{
+			joint->linearImpulse.y = 0.0f;
+		}
 	}
 }
 
@@ -90,8 +97,8 @@ void b2PrepareMotionLockJoint( b2JointSim* base, b2StepContext* context )
 	joint->frameB.q = b2MulRot( bodySimB->transform.q, base->localFrameB.q );
 	joint->frameB.p = b2RotateVector( bodySimB->transform.q, b2Sub( base->localFrameB.p, bodySimB->localCenter ) );
 
-	// todo comment: the anchor difference is taken in world precision so a lock far from the
-	// center of body A keeps its accuracy in double precision
+	// The anchor difference is taken in world precision so a lock far from the center of body A keeps its accuracy
+	// in double precision
 	b2Pos posA = b2OffsetPos( bodySimA->center, joint->frameA.p );
 	b2Pos posB = b2OffsetPos( bodySimB->center, joint->frameB.p );
 	joint->separation = b2SubPos( posB, posA );
@@ -204,7 +211,7 @@ void b2SolveMotionLockJoint( b2JointSim* base, b2StepContext* context, bool useB
 	float sA[2];
 	float sB[2];
 	float rhs[2];
-	float* oldImpulses = &joint->linearImpulse.x;
+	float oldImpulses[2] = { joint->linearImpulse.x, joint->linearImpulse.y };
 	float impulses[2] = { 0.0f, 0.0f };
 
 	for ( int i = 0; i < count; ++i )
@@ -261,6 +268,9 @@ void b2SolveMotionLockJoint( b2JointSim* base, b2StepContext* context, bool useB
 		LA += impulses[i] * sA[i];
 		LB += impulses[i] * sB[i];
 	}
+
+	joint->linearImpulse.x = oldImpulses[0];
+	joint->linearImpulse.y = oldImpulses[1];
 
 	vA = b2MulSub( vA, mA, P );
 	wA -= iA * LA;

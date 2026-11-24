@@ -532,7 +532,7 @@ B2_API void b2Body_ApplyAngularImpulse( b2BodyId bodyId, float impulse, bool wak
 /// Get the mass of the body, usually in kilograms
 B2_API float b2Body_GetMass( b2BodyId bodyId );
 
-/// Get the rotational inertia of the body, usually in kg*m^2
+/// Get the rotational inertia of the body, usually in kg*m^2.
 B2_API float b2Body_GetRotationalInertia( b2BodyId bodyId );
 
 /// Get the center of mass position of the body in local space.
@@ -615,7 +615,8 @@ B2_API void b2Body_Disable( b2BodyId bodyId );
 /// Enable a body by adding it to the simulation. This is expensive.
 B2_API void b2Body_Enable( b2BodyId bodyId );
 
-/// Fix the rotation of this body. Sets the angular velocity to zero.
+/// Fix the rotation of this body by setting the inverse inertia to zero in the solver. It doesn't affect the main
+/// inertia value. Sets the angular velocity to zero.
 B2_API void b2Body_SetFixedRotation( b2BodyId bodyId, bool flag );
 
 /// Does this body have fixed rotation?
