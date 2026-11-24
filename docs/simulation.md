@@ -450,8 +450,7 @@ vectors.
 ### Mass data
 
 A body has mass (scalar), center of mass (2-vector), and rotational inertia (scalar). For static
-bodies, the mass and rotational inertia are set to zero. When a body has fixed rotation, its
-rotational inertia is zero.
+bodies, the mass and rotational inertia are set to zero.
 
 Normally the mass properties of a body are established automatically when shapes are added to the
 body. You can also adjust the mass of a body at run-time. This is usually done when you have special

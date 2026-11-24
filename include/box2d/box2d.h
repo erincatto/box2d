@@ -543,8 +543,7 @@ B2_API b2Pos b2Body_GetWorldCenter( b2BodyId bodyId );
 
 /// Override the body's mass properties. Normally this is computed automatically using the shape
 /// geometry and density. This information is lost if a shape is added or removed or if the body
-/// type changes. If motion locks are used to fix rotation then the rotational inertia value is
-/// ignored and rotational inertia remains fixed at zero.
+/// type changes.
 B2_API void b2Body_SetMassData( b2BodyId bodyId, b2MassData massData );
 
 /// Get the mass data for a body
