@@ -538,6 +538,25 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact )
 	return b2Array_Get( set->contactSims, contact->localIndex );
 }
 
+// Rolling resistance for non-rounded polygons.
+static float b2GetRollingRadius( const b2Shape* shape )
+{
+	if ( shape->type != b2_polygonShape )
+	{
+		return b2GetShapeRadius( shape );
+	}
+
+	const b2Polygon* polygon = &shape->polygon;
+	float innerRadius = FLT_MAX;
+	for ( int i = 0; i < polygon->count; ++i )
+	{
+		float offset = b2Dot( polygon->normals[i], b2Sub( polygon->vertices[i], polygon->centroid ) );
+		innerRadius = b2MinFloat( innerRadius, offset );
+	}
+
+	return polygon->radius + 0.25f * innerRadius;
+}
+
 // Update the contact manifold and touching status.
 // Note: do not assume the shape AABBs are overlapping or are valid.
 bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2WorldTransform transformA,
@@ -591,8 +610,8 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 
 	if ( shapeA->material.rollingResistance > 0.0f || shapeB->material.rollingResistance > 0.0f )
 	{
-		float radiusA = b2GetShapeRadius( shapeA );
-		float radiusB = b2GetShapeRadius( shapeB );
+		float radiusA = b2GetRollingRadius( shapeA );
+		float radiusB = b2GetRollingRadius( shapeB );
 		float maxRadius = b2MaxFloat( radiusA, radiusB );
 		contactSim->rollingResistance =
 			b2MaxFloat( shapeA->material.rollingResistance, shapeB->material.rollingResistance ) * maxRadius;

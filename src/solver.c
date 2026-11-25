@@ -143,7 +143,7 @@ struct b2ContinuousContext
 #define B2_CORE_FRACTION 0.25f
 
 // Determine if this TOI event pair will be convered by a contact manifold.
-static bool b2IsCoveredByManifold( b2World* world, int bodyId, int shapeId, const b2Sweep* sweep, b2Vec2 localPoint )
+static bool b2IsCoveredByManifold( b2World* world, int bodyId, const b2Sweep* sweep, b2Vec2 localPoint )
 {
 	b2Body* body = b2Array_Get( world->bodies, bodyId );
 	int contactKey = body->headContactKey;
@@ -152,15 +152,11 @@ static bool b2IsCoveredByManifold( b2World* world, int bodyId, int shapeId, cons
 		int contactId = contactKey >> 1;
 		int edgeIndex = contactKey & 1;
 		b2Contact* contact = b2Array_Get( world->contacts, contactId );
-		if ( contact->shapeIdA != shapeId && contact->shapeIdB != shapeId )
-		{
-			contactKey = contact->edges[edgeIndex].nextKey;
-			continue;
-		}
+		contactKey = contact->edges[edgeIndex].nextKey;
 
 		if ( ( contact->flags & b2_contactTouchingFlag ) == 0 )
 		{
-			return false;
+			continue;
 		}
 
 		b2ContactSim* contactSim = b2GetContactSim( world, contact );
@@ -188,7 +184,10 @@ static bool b2IsCoveredByManifold( b2World* world, int bodyId, int shapeId, cons
 			distance = b2Distance( localPoint, b2MulAdd( points[0], t, e ) );
 		}
 
-		return distance < B2_SPECULATIVE_DISTANCE;
+		if ( distance < B2_SPECULATIVE_DISTANCE )
+		{
+			return true;
+		}
 	}
 
 	return false;
@@ -290,7 +289,27 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 
 			float coreDistance = B2_CORE_FRACTION * fastBodySim->minExtent;
 
-			if ( separation1 < 0.0f || ( separation1 - separation2 < coreDistance && separation2 > coreDistance ) )
+			// Consider if the center is over the chain segment by a convex vertex.
+			bool behind = separation1 < 0.0f;
+			if ( behind )
+			{
+				const float convexTol = 0.01f;
+				b2Vec2 g1 = b2TransformPoint( transform, shape->chainSegment.ghost1 );
+				b2Vec2 g2 = b2TransformPoint( transform, shape->chainSegment.ghost2 );
+				b2Vec2 e0 = b2Normalize( b2Sub( p1, g1 ) );
+				b2Vec2 e2 = b2Normalize( b2Sub( g2, p2 ) );
+				if ( b2Cross( e0, e ) >= convexTol && b2Cross( b2Sub( c1, p1 ), e0 ) >= 0.0f )
+				{
+					behind = false;
+				}
+
+				if ( b2Cross( e, e2 ) >= convexTol && b2Cross( b2Sub( c1, p2 ), e2 ) >= 0.0f )
+				{
+					behind = false;
+				}
+			}
+
+			if ( behind || ( separation1 - separation2 < coreDistance && separation2 > coreDistance ) )
 			{
 				// Minimal clipping
 				return true;
@@ -372,7 +391,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 				b2Vec2 localPoint = b2InvTransformPoint( xf, encroach.point );
 
 				// Will this TOI be handled by a manifold (speculative)? If not then we really need to TOI event.
-				bool safe = b2IsCoveredByManifold( world, fastBodySim->bodyId, shape->id, &input.sweepB, localPoint );
+				bool safe = b2IsCoveredByManifold( world, fastBodySim->bodyId, &input.sweepB, localPoint );
 
 				if ( safe == false )
 				{
@@ -380,6 +399,52 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 					hitFraction = encroach.fraction;
 					didHit = true;
 				}
+			}
+		}
+
+		if ( didHit == false && 0.0f == output.fraction &&
+			 ( fastShape->type == b2_polygonShape || fastShape->type == b2_capsuleShape ) )
+		{
+			// Shrink - todo still necessary?
+			b2Vec2 centroid = b2GetShapeCentroid( fastShape );
+			b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
+			float inset = 0.5f * extent.minExtent;
+			b2Vec2 coreVertices[B2_MAX_POLYGON_VERTICES];
+			b2TOIInput coreInput = input;
+
+			if ( fastShape->type == b2_capsuleShape )
+			{
+				const b2Capsule* capsule = &fastShape->capsule;
+				coreInput.proxyB = b2MakeProxy( &capsule->center1, 2, b2MaxFloat( capsule->radius - inset, 0.0f ) );
+			}
+			else
+			{
+				const b2Polygon* polygon = &fastShape->polygon;
+				int count = polygon->count;
+				if ( inset <= polygon->radius )
+				{
+					coreInput.proxyB = b2MakeProxy( polygon->vertices, count, polygon->radius - inset );
+				}
+				else
+				{
+					float offset = inset - polygon->radius;
+					for ( int i = 0; i < count; ++i )
+					{
+						b2Vec2 n0 = polygon->normals[i > 0 ? i - 1 : count - 1];
+						b2Vec2 n1 = polygon->normals[i];
+						float scale = offset / ( 1.0f + b2Dot( n0, n1 ) );
+						coreVertices[i] = b2MulSub( polygon->vertices[i], scale, b2Add( n0, n1 ) );
+					}
+					coreInput.proxyB = b2MakeProxy( coreVertices, count, 0.0f );
+				}
+			}
+
+			b2TOIOutput coreOutput = b2ComputeTimeOfImpact( &coreInput );
+			if ( 0.0f < coreOutput.fraction && coreOutput.fraction < continuousContext->fraction )
+			{
+				output = coreOutput;
+				hitFraction = coreOutput.fraction;
+				didHit = true;
 			}
 		}
 
