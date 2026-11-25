@@ -1290,10 +1290,11 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 
-	// Relative to body A so the difference stays in float precision far from the origin
+	// Relative to anchor A so the difference stays in float precision far from the origin
 	b2WorldTransform wxfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
-	b2Transform xfA = b2ToRelativeTransform( wxfA, wxfA.p );
-	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), wxfA.p );
+	b2Pos origin = b2MulWorldTransforms( wxfA, base->localFrameA ).p;
+	b2Transform xfA = b2ToRelativeTransform( wxfA, origin );
+	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), origin );
 
 	b2Vec2 pA = b2TransformPoint( xfA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( xfB, base->localFrameB.p );

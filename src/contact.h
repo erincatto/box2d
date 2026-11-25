@@ -47,7 +47,7 @@ enum b2ContactFlags
 	// This contact has a cached relative transform
 	b2_simRelativeTransformValid = 0x00400000,
 
-	// Did this body have a time of impact event?
+	// Did a body on this contact have a time of impact event?
 	b2_simHadTimeOfImpact = 0x00800000,
 };
 
