@@ -3,6 +3,8 @@
 set(BOX2D_SHARED_FILES
 	benchmarks.c
 	benchmarks.h
+	wave_drop.c
+	wave_drop.h
 	determinism.c
 	determinism.h
 	human.c

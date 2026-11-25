@@ -1239,7 +1239,8 @@ recycling_. It has a large impact on performance and also improves stacking stab
 
 Contact recycling considers the relative movement between shapes and adjusts the contact point
 separation to account for the movement. If the relative movement is larger than the _contact
-recycling distance_ then contact points are computed from scratch.
+recycling distance_, or either body has rotated more than about 11 degrees since the contact points
+were computed, then the contact points are computed from scratch.
 
 Sometimes stacks of objects can become too stable. You can adjust the recycling distance to tune
 stability:
@@ -1261,9 +1262,15 @@ specific bodies as needed.
 bodyDef.enableContactRecycling = false;
 ```
 
+A contact is only recycled when both bodies have recycling enabled, so disabling it on either body
+is enough.
+
 > [!note]
 > Recycled contacts skip friction and restitution updates. They also skip pre-solve
 > callbacks.
+
+Cargo resting on a rotating body can drift when its contact is recycled. See
+[Known Limitations](known_limitations.md).
 
 ### Contact data
 

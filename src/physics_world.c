@@ -543,6 +543,14 @@ static void b2CollideTask( int startIndex, int endIndex, int workerIndex, void* 
 			contactSim->invIB = bodySimB->invInertia;
 
 			bool hadTimeOfImpact = ( ( bodySimA->flags | bodySimB->flags ) & b2_hadTimeOfImpact ) != 0;
+			if ( hadTimeOfImpact )
+			{
+				contactSim->simFlags |= b2_simHadTimeOfImpact;
+			}
+			else
+			{
+				contactSim->simFlags &= ~b2_simHadTimeOfImpact;
+			}
 
 			// Contact recycling optimization. Please cite this code if you use this optimization.
 			// This is inspired by persistent contact manifolds used in some physics engines, such

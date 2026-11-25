@@ -65,7 +65,8 @@ static void b2IntegrateVelocitiesTask( b2SolverBlock block, b2StepContext* conte
 		float gravityScale = sim->invMass > 0.0f ? sim->gravityScale : 0.0f;
 
 		// lvd = h * im * f + h * g
-		b2Vec2 linearVelocityDelta = b2Add( b2MulSV( h * sim->invMass, sim->force ), b2MulSV( h * gravityScale, gravity ) );
+		b2Vec2 linearVelocityDelta =
+			b2Add( b2MulSV( h * sim->invMass, sim->force ), b2MulSV( h * gravityScale, gravity ) );
 		float angularVelocityDelta = h * sim->invInertia * sim->torque;
 
 		v = b2MulAdd( linearVelocityDelta, linearDamping, v );
@@ -140,6 +141,58 @@ struct b2ContinuousContext
 };
 
 #define B2_CORE_FRACTION 0.25f
+
+// Determine if this TOI event pair will be convered by a contact manifold.
+static bool b2IsCoveredByManifold( b2World* world, int bodyId, int shapeId, const b2Sweep* sweep, b2Vec2 localPoint )
+{
+	b2Body* body = b2Array_Get( world->bodies, bodyId );
+	int contactKey = body->headContactKey;
+	while ( contactKey != B2_NULL_INDEX )
+	{
+		int contactId = contactKey >> 1;
+		int edgeIndex = contactKey & 1;
+		b2Contact* contact = b2Array_Get( world->contacts, contactId );
+		if ( contact->shapeIdA != shapeId && contact->shapeIdB != shapeId )
+		{
+			contactKey = contact->edges[edgeIndex].nextKey;
+			continue;
+		}
+
+		if ( ( contact->flags & b2_contactTouchingFlag ) == 0 )
+		{
+			return false;
+		}
+
+		b2ContactSim* contactSim = b2GetContactSim( world, contact );
+		const b2Manifold* manifold = &contactSim->manifold;
+
+		b2Vec2 points[2];
+		for ( int i = 0; i < manifold->pointCount; ++i )
+		{
+			const b2ManifoldPoint* mp = manifold->points + i;
+			b2Vec2 anchor = edgeIndex == 0 ? mp->anchorA : mp->anchorB;
+			points[i] = b2Add( b2InvRotateVector( sweep->q1, anchor ), sweep->localCenter );
+		}
+
+		float distance;
+		if ( manifold->pointCount == 1 )
+		{
+			distance = b2Distance( localPoint, points[0] );
+		}
+		else
+		{
+			b2Vec2 e = b2Sub( points[1], points[0] );
+			float t = b2Dot( b2Sub( localPoint, points[0] ), e );
+			float ee = b2Dot( e, e );
+			t = ee > 0.0f ? b2ClampFloat( t / ee, 0.0f, 1.0f ) : 0.0f;
+			distance = b2Distance( localPoint, b2MulAdd( points[0], t, e ) );
+		}
+
+		return distance < B2_SPECULATIVE_DISTANCE;
+	}
+
+	return false;
+}
 
 // This is called from b2DynamicTree_OverlapAABB for continuous collision
 static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* context )
@@ -283,7 +336,8 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	if ( isSensor )
 	{
 		// Only accept a sensor hit that is sooner than the current solid hit.
-		if ( output.fraction <= continuousContext->fraction && continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
+		if ( output.fraction <= continuousContext->fraction &&
+			 continuousContext->sensorCount < B2_MAX_CONTINUOUS_SENSOR_HITS )
 		{
 			int index = continuousContext->sensorCount;
 
@@ -308,7 +362,28 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			hitFraction = output.fraction;
 			didHit = true;
 		}
-		else if ( 0.0f == output.fraction )
+		else if ( 0.0f == output.fraction && output.state == b2_toiStateHit )
+		{
+			// Allow enchroachment as a form of TOI sub-stepping.
+			b2TOIOutput encroach = b2TimeOfImpact( &input, true );
+			if ( 0.0f < encroach.fraction && encroach.fraction < continuousContext->fraction )
+			{
+				b2Transform xf = b2GetSweepTransform( &input.sweepB, encroach.fraction );
+				b2Vec2 localPoint = b2InvTransformPoint( xf, encroach.point );
+
+				// Will this TOI be handled by a manifold (speculative)? If not then we really need to TOI event.
+				bool safe = b2IsCoveredByManifold( world, fastBodySim->bodyId, shape->id, &input.sweepB, localPoint );
+
+				if ( safe == false )
+				{
+					output = encroach;
+					hitFraction = encroach.fraction;
+					didHit = true;
+				}
+			}
+		}
+
+		if ( didHit == false && 0.0f == output.fraction )
 		{
 			// fallback to TOI of a small circle around the fast shape centroid
 			b2Vec2 centroid = b2GetShapeCentroid( fastShape );
@@ -323,7 +398,8 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			}
 		}
 
-		if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) && world->preContinuousFcn != NULL )
+		if ( didHit && ( shape->enablePreSolveEvents || fastShape->enablePreSolveEvents ) &&
+			 world->preContinuousFcn != NULL )
 		{
 			b2ShapeId shapeIdA = { shape->id + 1, world->worldId, shape->generation };
 			b2ShapeId shapeIdB = { fastShape->id + 1, world->worldId, fastShape->generation };
@@ -408,8 +484,10 @@ static void b2SolveContinuous( b2World* world, int bodySimIndex, b2TaskContext* 
 
 		if ( isBullet )
 		{
-			b2DynamicTree_OverlapAABB( kinematicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
-			b2DynamicTree_OverlapAABB( dynamicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback, &context );
+			b2DynamicTree_OverlapAABB( kinematicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback,
+									   &context );
+			b2DynamicTree_OverlapAABB( dynamicTree, sweptBox, B2_DEFAULT_MASK_BITS, b2ContinuousQueryCallback,
+									   &context );
 		}
 	}
 
@@ -590,7 +668,8 @@ static void b2FinalizeBodiesTask( int startIndex, int endIndex, int workerIndex,
 		float maxVelocity = b2Length( v ) + b2AbsFloat( w ) * sim->maxExtent;
 
 		// Sleep needs to observe position correction as well as true velocity.
-		float maxDeltaPosition = b2Length( state->deltaPosition ) + b2AbsFloat( state->deltaRotation.s ) * sim->maxExtent;
+		float maxDeltaPosition =
+			b2Length( state->deltaPosition ) + b2AbsFloat( state->deltaRotation.s ) * sim->maxExtent;
 
 		// Position correction is not as important for sleep as true velocity.
 		float positionSleepFactor = 0.5f;
@@ -812,8 +891,8 @@ static void b2InitBlocks( b2SyncBlock* blocks, b2BlockDim dim, int itemCount, ui
 	B2_VALIDATE( ( dim.count - 1 ) * dim.size + blocks[dim.count - 1].block.count == itemCount );
 }
 
-static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageType type, b2SyncBlock* blocks, int blockCount,
-										  uint8_t colorIndex )
+static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageType type, b2SyncBlock* blocks,
+										  int blockCount, uint8_t colorIndex )
 {
 	stage->type = type;
 	stage->blocks = blocks;
@@ -826,8 +905,9 @@ static inline b2SolverStage* b2InitStage( b2SolverStage* stage, b2SolverStageTyp
 // Initialize one stage per color for each iteration. Used for warm start, solve, relax, and restitution.
 // All iterations of a given color share the same b2SyncBlock array so the per-block syncIndex
 // grows monotonically across stages within that color.
-static b2SolverStage* b2InitColorStages( b2SolverStage* stage, b2SolverStageType type, int iterations, int activeColorCount,
-										 b2SyncBlock** colorBlocks, int* colorBlockCounts, int* activeColorIndices )
+static b2SolverStage* b2InitColorStages( b2SolverStage* stage, b2SolverStageType type, int iterations,
+										 int activeColorCount, b2SyncBlock** colorBlocks, int* colorBlockCounts,
+										 int* activeColorIndices )
 {
 	for ( int j = 0; j < iterations; ++j )
 	{
@@ -925,7 +1005,8 @@ static inline int GetWorkerStartIndex( int workerIndex, int blockCount, int work
 
 // Execute a stage, which is an array of solver blocks, each controlled with an atomic sync index.
 // Each worker starts at its home index and sweeps the ring, CAS-claiming any unclaimed blocks.
-static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int previousSyncIndex, int syncIndex, int workerIndex )
+static void b2ExecuteStage( b2SolverStage* stage, b2StepContext* context, int previousSyncIndex, int syncIndex,
+							int workerIndex )
 {
 	int completedCount = 0;
 	b2SyncBlock* blocks = stage->blocks;
@@ -1198,9 +1279,8 @@ static void b2SolverTask( void* taskContext )
 	// uint64_t maxSpinTime = 10;
 	while ( true )
 	{
-		// Spin until main thread bumps changes the sync bits. This can waste significant time overall, but it is necessary for
-		// parallel simulation with graph coloring.
-		// todo improve this spinner
+		// Spin until main thread bumps changes the sync bits. This can waste significant time overall, but it is
+		// necessary for parallel simulation with graph coloring. todo improve this spinner
 		uint32_t syncBits;
 		int spinCount = 0;
 		while ( ( syncBits = b2AtomicLoadU32( &context->atomicSyncBits ) ) == lastSyncBits )
@@ -1410,7 +1490,8 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 				}
 				else
 				{
-					color->wideConstraints = (uint8_t*)wideContactConstraints + wideBase * wideContactConstraintByteCount;
+					color->wideConstraints =
+						(uint8_t*)wideContactConstraints + wideBase * wideContactConstraintByteCount;
 
 					int colorContactCountW = ( ( colorContactCount - 1 ) >> simdShift ) + 1;
 					color->wideConstraintCount = colorContactCountW;
@@ -1419,8 +1500,9 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 					// initialize them.
 					if ( ( colorContactCount & ( world->simdWidth - 1 ) ) != 0 )
 					{
-						memset( (uint8_t*)color->wideConstraints + ( colorContactCountW - 1 ) * wideContactConstraintByteCount, 0,
-								wideContactConstraintByteCount );
+						memset( (uint8_t*)color->wideConstraints +
+									( colorContactCountW - 1 ) * wideContactConstraintByteCount,
+								0, wideContactConstraintByteCount );
 					}
 
 					wideBase += colorContactCountW;
@@ -1469,8 +1551,10 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 		b2SyncBlock* bodyBlocks = b2StackAlloc( &world->stack, bodyDim.count * sizeof( b2SyncBlock ), "body blocks" );
 		b2SyncBlock* contactBlocks =
 			b2StackAlloc( &world->stack, contactPrepareDim.count * sizeof( b2SyncBlock ), "contact blocks" );
-		b2SyncBlock* jointBlocks = b2StackAlloc( &world->stack, jointPrepareDim.count * sizeof( b2SyncBlock ), "joint blocks" );
-		b2SyncBlock* graphBlocks = b2StackAlloc( &world->stack, graphBlockCount * sizeof( b2SyncBlock ), "graph blocks" );
+		b2SyncBlock* jointBlocks =
+			b2StackAlloc( &world->stack, jointPrepareDim.count * sizeof( b2SyncBlock ), "joint blocks" );
+		b2SyncBlock* graphBlocks =
+			b2StackAlloc( &world->stack, graphBlockCount * sizeof( b2SyncBlock ), "graph blocks" );
 
 		// Prepare body blocks
 		b2InitBlocks( bodyBlocks, bodyDim, awakeBodyCount, b2_bodyBlock, UINT8_MAX );
@@ -1492,7 +1576,8 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 			b2InitBlocks( baseGraphBlock, graphJointDims[i], colorJointCounts[i], b2_graphJointBlock, colorIndex );
 			baseGraphBlock += graphJointDims[i].count;
 
-			b2InitBlocks( baseGraphBlock, graphContactDims[i], colorContactCounts[i], b2_graphContactBlock, colorIndex );
+			b2InitBlocks( baseGraphBlock, graphContactDims[i], colorContactCounts[i], b2_graphContactBlock,
+						  colorIndex );
 			baseGraphBlock += graphContactDims[i].count;
 
 			graphBlockCounts[i] = graphJointDims[i].count + graphContactDims[i].count;
@@ -1506,11 +1591,11 @@ bool b2BeginSolve( b2World* world, b2StepContext* stepContext )
 		stage = b2InitStage( stage, b2_stageIntegrateVelocities, bodyBlocks, bodyDim.count, UINT8_MAX );
 		stage = b2InitColorStages( stage, b2_stageWarmStart, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
-		stage = b2InitColorStages( stage, b2_stageSolve, ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
-								   activeColorIndices );
+		stage = b2InitColorStages( stage, b2_stageSolve, ITERATIONS, activeColorCount, graphColorBlocks,
+								   graphBlockCounts, activeColorIndices );
 		stage = b2InitStage( stage, b2_stageIntegratePositions, bodyBlocks, bodyDim.count, UINT8_MAX );
-		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks, graphBlockCounts,
-								   activeColorIndices );
+		stage = b2InitColorStages( stage, b2_stageRelax, RELAX_ITERATIONS, activeColorCount, graphColorBlocks,
+								   graphBlockCounts, activeColorIndices );
 		stage = b2InitColorStages( stage, b2_stageRestitution, 1, activeColorCount, graphColorBlocks, graphBlockCounts,
 								   activeColorIndices );
 		stage = b2InitStage( stage, b2_stageStoreImpulses, contactBlocks, contactPrepareDim.count, UINT8_MAX );
@@ -1943,7 +2028,8 @@ void b2EndBullets( b2World* world, b2StepContext* stepContext )
 				B2_ASSERT( taskContext->splitSleepTime > 0.0f );
 
 				// Tie breaking for determinism. Largest island id wins. Needed due to work stealing.
-				if ( taskContext->splitSleepTime == splitSleepTimer && taskContext->splitIslandId < world->splitIslandId )
+				if ( taskContext->splitSleepTime == splitSleepTimer &&
+					 taskContext->splitIslandId < world->splitIslandId )
 				{
 					continue;
 				}

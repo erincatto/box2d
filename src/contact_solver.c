@@ -131,6 +131,9 @@ void b2PrepareContacts_Overflow( b2StepContext* context )
 		b2Vec2 normal = constraint->normal;
 		b2Vec2 tangent = b2RightPerp( constraint->normal );
 
+		// Separation tweak to make contacts more rigid after a TOI event.
+		float separationFloor = ( contactSim->simFlags & b2_simHadTimeOfImpact ) != 0 ? B2_TOI_RIGID_SEPARATION : -FLT_MAX;
+
 		for ( int j = 0; j < pointCount; ++j )
 		{
 			b2ManifoldPoint* mp = manifold->points + j;
@@ -146,7 +149,14 @@ void b2PrepareContacts_Overflow( b2StepContext* context )
 
 			cp->anchorA = rA;
 			cp->anchorB = rB;
-			cp->baseSeparation = mp->separation - b2Dot( b2Sub( rB, rA ), normal );
+
+			float s = mp->separation;
+			if ( s > B2_TOI_RIGID_SEPARATION_LIMIT )
+			{
+				s = b2MaxFloat( s, separationFloor );
+			}
+
+			cp->baseSeparation = s - b2Dot( b2Sub( rB, rA ), normal );
 
 			float rnA = b2Cross( rA, normal );
 			float rnB = b2Cross( rB, normal );

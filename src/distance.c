@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "core.h"
+#include "shape.h"
 
 #include "box2d/collision.h"
 #include "box2d/constants.h"
@@ -1145,7 +1146,7 @@ static float b2EvaluateSeparation( const b2SeparationFunction* f, int indexA, in
 
 // CCD via the local separating axis method. This seeks progression
 // by computing the largest time at which separation is maintained.
-b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
+b2TOIOutput b2TimeOfImpact( const b2TOIInput* input, bool canEncroach )
 {
 #if B2_SNOOP_TOI_COUNTERS
 	uint64_t ticks = b2GetTicks();
@@ -1172,7 +1173,9 @@ b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
 
 	// Setup target distance and tolerance
 	float totalRadius = proxyA->radius + proxyB->radius;
-	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius - B2_LINEAR_SLOP );
+
+	// The target is just touching so the solver can make the contact rigid.
+	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius );
 	float tolerance = 0.25f * B2_LINEAR_SLOP;
 	B2_ASSERT( target > tolerance );
 
@@ -1232,6 +1235,14 @@ b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
 #endif
 			output.fraction = 0.0f;
 			break;
+		}
+
+		// Encroachment to support the TOI fallback.
+		if ( canEncroach && distanceIterations == 1 && distanceOutput.distance <= target + tolerance &&
+			 distanceOutput.distance > 0.1f * B2_LINEAR_SLOP )
+		{
+			target = 0.5f * distanceOutput.distance;
+			tolerance = b2MinFloat( tolerance, 0.25f * distanceOutput.distance );
 		}
 
 		if ( distanceOutput.distance <= target + tolerance )
@@ -1438,4 +1449,9 @@ b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
 #endif
 
 	return output;
+}
+
+b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
+{
+	return b2TimeOfImpact( input, false );
 }

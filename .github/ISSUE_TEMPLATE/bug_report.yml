@@ -1,0 +1,66 @@
+name: Bug report
+description: A bug you hit while using Box2D in a real application.
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bug reports must come from practical use.
+
+        An LLM may help you write the report. Please include context describing the scenario that triggered the bug.
+
+        Check the [known limitations](https://github.com/erincatto/box2d/blob/main/docs/known_limitations.md) first. These are intentional trade-offs, not bugs.
+
+  - type: textarea
+    id: application
+    attributes:
+      label: Application
+      description: What are you building with Box2D? A game, engine integration, tool, research project?
+    validations:
+      required: true
+
+  - type: textarea
+    id: encounter
+    attributes:
+      label: What happened
+      description: What were you doing when you hit this, what did you see, and what did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: |
+        A recording is the best reproduction. Create one with `b2CreateRecording`, `b2World_StartRecording`, `b2World_StopRecording` and `b2Recording_SaveToFile`, then zip and attach it.
+
+        A crash or hang on real content is a bug even when the content is malformed. Attach the content that triggered it, such as the polygon or point cloud.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Box2D version or commit
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and compiler
+      placeholder: Windows 11, MSVC 2022, x64
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I hit this in my own application, not by reading the source or probing it with tools.
+          required: true
+        - label: I checked the known limitations.
+          required: true
+        - label: This issue reports a single bug.
+          required: true
