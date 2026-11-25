@@ -142,57 +142,6 @@ struct b2ContinuousContext
 
 #define B2_CORE_FRACTION 0.25f
 
-// Determine if this TOI event pair will be convered by a contact manifold.
-static bool b2IsCoveredByManifold( b2World* world, int bodyId, const b2Sweep* sweep, b2Vec2 localPoint )
-{
-	b2Body* body = b2Array_Get( world->bodies, bodyId );
-	int contactKey = body->headContactKey;
-	while ( contactKey != B2_NULL_INDEX )
-	{
-		int contactId = contactKey >> 1;
-		int edgeIndex = contactKey & 1;
-		b2Contact* contact = b2Array_Get( world->contacts, contactId );
-		contactKey = contact->edges[edgeIndex].nextKey;
-
-		if ( ( contact->flags & b2_contactTouchingFlag ) == 0 )
-		{
-			continue;
-		}
-
-		b2ContactSim* contactSim = b2GetContactSim( world, contact );
-		const b2Manifold* manifold = &contactSim->manifold;
-
-		b2Vec2 points[2];
-		for ( int i = 0; i < manifold->pointCount; ++i )
-		{
-			const b2ManifoldPoint* mp = manifold->points + i;
-			b2Vec2 anchor = edgeIndex == 0 ? mp->anchorA : mp->anchorB;
-			points[i] = b2Add( b2InvRotateVector( sweep->q1, anchor ), sweep->localCenter );
-		}
-
-		float distance;
-		if ( manifold->pointCount == 1 )
-		{
-			distance = b2Distance( localPoint, points[0] );
-		}
-		else
-		{
-			b2Vec2 e = b2Sub( points[1], points[0] );
-			float t = b2Dot( b2Sub( localPoint, points[0] ), e );
-			float ee = b2Dot( e, e );
-			t = ee > 0.0f ? b2ClampFloat( t / ee, 0.0f, 1.0f ) : 0.0f;
-			distance = b2Distance( localPoint, b2MulAdd( points[0], t, e ) );
-		}
-
-		if ( distance < B2_SPECULATIVE_DISTANCE )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
 // This is called from b2DynamicTree_OverlapAABB for continuous collision
 static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* context )
 {
@@ -381,31 +330,11 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 			hitFraction = output.fraction;
 			didHit = true;
 		}
-		else if ( 0.0f == output.fraction && output.state == b2_toiStateHit )
-		{
-			// Allow enchroachment as a form of TOI sub-stepping.
-			b2TOIOutput encroach = b2TimeOfImpact( &input, true );
-			if ( 0.0f < encroach.fraction && encroach.fraction < continuousContext->fraction )
-			{
-				b2Transform xf = b2GetSweepTransform( &input.sweepB, encroach.fraction );
-				b2Vec2 localPoint = b2InvTransformPoint( xf, encroach.point );
-
-				// Will this TOI be handled by a manifold (speculative)? If not then we really need to TOI event.
-				bool safe = b2IsCoveredByManifold( world, fastBodySim->bodyId, &input.sweepB, localPoint );
-
-				if ( safe == false )
-				{
-					output = encroach;
-					hitFraction = encroach.fraction;
-					didHit = true;
-				}
-			}
-		}
 
 		if ( didHit == false && 0.0f == output.fraction &&
 			 ( fastShape->type == b2_polygonShape || fastShape->type == b2_capsuleShape ) )
 		{
-			// Shrink - todo still necessary?
+			// Shrink the shape.
 			b2Vec2 centroid = b2GetShapeCentroid( fastShape );
 			b2ShapeExtent extent = b2ComputeShapeExtent( fastShape, centroid );
 			float inset = 0.5f * extent.minExtent;

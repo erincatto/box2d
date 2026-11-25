@@ -91,8 +91,6 @@ float b2GetShapeProjectedPerimeter( const b2Shape* shape, b2Vec2 line );
 
 b2ShapeProxy b2MakeShapeDistanceProxy( const b2Shape* shape );
 
-b2TOIOutput b2TimeOfImpact( const b2TOIInput* input, bool canEncroach );
-
 b2CastOutput b2RayCastShape( const b2RayCastInput* input, const b2Shape* shape, b2Transform transform );
 b2CastOutput b2ShapeCastShape( const b2ShapeCastInput* input, const b2Shape* shape, b2Transform transform );
 
