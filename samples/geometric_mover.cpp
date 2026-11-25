@@ -158,7 +158,8 @@ void GeometricMover::PushBodies()
 		float invMassB = massB > 0.0f ? 1.0f / massB : 0.0f;
 
 		float inertiaB = b2Body_GetRotationalInertia( bodyId );
-		float invIB = inertiaB > 0.0f ? 1.0f / inertiaB : 0.0f;
+		bool fixedRotationB =  b2Body_IsFixedRotation( bodyId );
+		float invIB = inertiaB > 0.0f && fixedRotationB == false ? 1.0f / inertiaB : 0.0f;
 
 		b2Pos centerB = b2Body_GetWorldCenter( bodyId );
 		b2Vec2 rB = point - centerB;

@@ -101,6 +101,14 @@ b2WeldJointDef b2DefaultWeldJointDef( void )
 	return def;
 }
 
+b2MotionLockJointDef b2DefaultMotionLockJointDef( void )
+{
+	b2MotionLockJointDef def = { 0 };
+	def.base = b2DefaultJointDef();
+	def.internalValue = B2_SECRET_COOKIE;
+	return def;
+}
+
 b2WheelJointDef b2DefaultWheelJointDef( void )
 {
 	b2WheelJointDef def = { 0 };
@@ -787,6 +795,35 @@ b2JointId b2CreateWheelJoint( b2WorldId worldId, const b2WheelJointDef* def )
 	return jointId;
 }
 
+b2JointId b2CreateMotionLockJoint( b2WorldId worldId, const b2MotionLockJointDef* def )
+{
+	B2_CHECK_DEF( def );
+	B2_CHECK_INPUT_RETURN( b2IsValidJointDef( &def->base ), (b2JointId){ 0 } );
+
+	b2World* world = b2GetWorldFromId( worldId );
+
+	B2_ASSERT( world->locked == false );
+
+	if ( world->locked )
+	{
+		return (b2JointId){ 0 };
+	}
+
+	b2JointPair pair = b2CreateJoint( world, &def->base, b2_motionLockJoint );
+
+	b2JointSim* joint = pair.jointSim;
+
+	joint->motionLockJoint = (b2MotionLockJoint){ 0 };
+	joint->motionLockJoint.lockLinear[0] = def->lockLinearX;
+	joint->motionLockJoint.lockLinear[1] = def->lockLinearY;
+
+	b2JointId jointId = { joint->jointId + 1, world->worldId, pair.joint->generation };
+
+	B2_REC_CREATE( world, CreateMotionLockJoint, jointId, worldId, *def );
+
+	return jointId;
+}
+
 void b2DestroyJointInternal( b2World* world, b2Joint* joint )
 {
 	int jointId = joint->jointId;
@@ -1099,6 +1136,10 @@ void b2GetJointReaction( b2JointSim* sim, float invTimeStep, float* force, float
 		}
 		break;
 
+		case b2_motionLockJoint:
+			linearImpulse = b2Length( sim->motionLockJoint.linearImpulse );
+			break;
+
 		case b2_pogoJoint:
 		{
 			b2PogoJoint* joint = &sim->pogoJoint;
@@ -1166,6 +1207,9 @@ static b2Vec2 b2GetJointConstraintForce( b2World* world, b2Joint* joint )
 		case b2_moverJoint:
 			return b2GetMoverJointForce( world, base );
 
+		case b2_motionLockJoint:
+			return b2GetMotionLockJointForce( world, base );
+
 		case b2_filterJoint:
 			return b2Vec2_zero;
 
@@ -1203,6 +1247,9 @@ static float b2GetJointConstraintTorque( b2World* world, b2Joint* joint )
 			return b2GetMotorJointTorque( world, base );
 
 		case b2_filterJoint:
+			return 0.0f;
+
+		case b2_motionLockJoint:
 			return 0.0f;
 
 		case b2_prismaticJoint:
@@ -1243,10 +1290,11 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 	b2Joint* joint = b2GetJointFullId( world, jointId );
 	b2JointSim* base = b2GetJointSim( world, joint );
 
-	// Relative to body A so the difference stays in float precision far from the origin
+	// Relative to anchor A so the difference stays in float precision far from the origin
 	b2WorldTransform wxfA = b2GetBodyTransform( world, joint->edges[0].bodyId );
-	b2Transform xfA = b2ToRelativeTransform( wxfA, wxfA.p );
-	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), wxfA.p );
+	b2Pos origin = b2MulWorldTransforms( wxfA, base->localFrameA ).p;
+	b2Transform xfA = b2ToRelativeTransform( wxfA, origin );
+	b2Transform xfB = b2ToRelativeTransform( b2GetBodyTransform( world, joint->edges[1].bodyId ), origin );
 
 	b2Vec2 pA = b2TransformPoint( xfA, base->localFrameA.p );
 	b2Vec2 pB = b2TransformPoint( xfB, base->localFrameB.p );
@@ -1286,6 +1334,15 @@ float b2Joint_GetLinearSeparation( b2JointId jointId )
 
 		case b2_filterJoint:
 			return 0.0f;
+
+		case b2_motionLockJoint:
+		{
+			b2MotionLockJoint* motionLockJoint = &base->motionLockJoint;
+			b2Vec2 localDelta = b2InvRotateVector( b2MulRot( xfA.q, base->localFrameA.q ), dp );
+			localDelta.x = motionLockJoint->lockLinear[0] ? localDelta.x : 0.0f;
+			localDelta.y = motionLockJoint->lockLinear[1] ? localDelta.y : 0.0f;
+			return b2Length( localDelta );
+		}
 
 		case b2_prismaticJoint:
 		{
@@ -1376,6 +1433,9 @@ float b2Joint_GetAngularSeparation( b2JointId jointId )
 			return 0.0f;
 
 		case b2_filterJoint:
+			return 0.0f;
+
+		case b2_motionLockJoint:
 			return 0.0f;
 
 		case b2_prismaticJoint:
@@ -1526,6 +1586,10 @@ void b2PrepareJoint( b2JointSim* joint, b2StepContext* context )
 			b2PrepareWheelJoint( joint, context );
 			break;
 
+		case b2_motionLockJoint:
+			b2PrepareMotionLockJoint( joint, context );
+			break;
+
 		default:
 			B2_ASSERT( false );
 	}
@@ -1570,6 +1634,10 @@ void b2WarmStartJoint( b2JointSim* joint, b2StepContext* context )
 			b2WarmStartWheelJoint( joint, context );
 			break;
 
+		case b2_motionLockJoint:
+			b2WarmStartMotionLockJoint( joint, context );
+			break;
+
 		default:
 			B2_ASSERT( false );
 	}
@@ -1612,6 +1680,10 @@ void b2SolveJoint( b2JointSim* joint, b2StepContext* context, bool useBias )
 
 		case b2_wheelJoint:
 			b2SolveWheelJoint( joint, context, useBias );
+			break;
+
+		case b2_motionLockJoint:
+			b2SolveMotionLockJoint( joint, context, useBias );
 			break;
 
 		default:
@@ -1823,6 +1895,10 @@ void b2DrawJoint( b2DebugDraw* draw, b2World* world, b2Joint* joint )
 
 		case b2_wheelJoint:
 			b2DrawWheelJoint( draw, jointSim, xfA, xfB, scale );
+			break;
+
+		case b2_motionLockJoint:
+			b2DrawMotionLockJoint( draw, jointSim, xfA, xfB, scale );
 			break;
 
 		default:

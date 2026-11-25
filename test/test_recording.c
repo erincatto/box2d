@@ -300,7 +300,7 @@ int RecordingTest( void )
 	b2Body_EnableContactRecycling( bodyId, false );
 	b2Body_EnableContactEvents( bodyId, true );
 	b2Body_EnableHitEvents( bodyId, true );
-	b2Body_SetMotionLocks( bodyId, (b2MotionLocks){ false, false, true } );
+	b2Body_SetFixedRotation( bodyId, true );
 	b2MassData md = { 2.0f, { 0.0f, 0.0f }, 0.5f };
 	b2Body_SetMassData( bodyId, md );
 	b2Body_UpdateMassFromShapes( bodyId );
@@ -440,6 +440,14 @@ int RecordingTest( void )
 	b2WeldJoint_SetLinearDampingRatio( weldId, 0.6f );
 	b2WeldJoint_SetAngularHertz( weldId, 5.0f );
 	b2WeldJoint_SetAngularDampingRatio( weldId, 0.6f );
+
+	b2MotionLockJointDef motionLockDef = b2DefaultMotionLockJointDef();
+	motionLockDef.base.bodyIdA = groundId;
+	motionLockDef.base.bodyIdB = jb[0];
+	motionLockDef.lockLinearY = true;
+	b2JointId motionLockId = b2CreateMotionLockJoint( worldId, &motionLockDef );
+	b2MotionLockJoint_EnableLinearLock( motionLockId, 0, true );
+	b2MotionLockJoint_EnableLinearLock( motionLockId, 0, false );
 
 	// Motor joint
 	b2MotorJointDef motorDef = b2DefaultMotorJointDef();

@@ -5,6 +5,7 @@
 #include "human.h"
 #include "sample.h"
 #include "utils.h"
+#include "wave_drop.h"
 
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
@@ -12,6 +13,7 @@
 #include <GLFW/glfw3.h>
 #include <float.h>
 #include <imgui.h>
+#include <stdio.h>
 #include <vector>
 
 // extern "C" int b2_toiHitCount;
@@ -320,7 +322,7 @@ public:
 		bodyDef.linearVelocity = { 0.0f, m_speed };
 		bodyDef.position = { 0.0f, 10.0f + m_yOffset };
 		bodyDef.rotation = b2MakeRot( 0.5f * B2_PI );
-		bodyDef.motionLocks.angularZ = true;
+		bodyDef.fixedRotation = true;
 		m_bodyId = b2CreateBody( m_worldId, &bodyDef );
 
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -1102,7 +1104,7 @@ public:
 			// ballShapeDef.restitution = 1.f;
 			b2CreatePolygonShape( m_ballId, &ballShapeDef, &ballShape );
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -5.0f } );
-			b2Body_SetMotionLocks( m_ballId, { false, false, true } );
+			b2Body_SetFixedRotation( m_ballId, true );
 		}
 	}
 
@@ -1172,7 +1174,7 @@ public:
 			b2CreateCircleShape( m_ballId, &ballShapeDef, &ballShape );
 
 			b2Body_SetLinearVelocity( m_ballId, { 0.f, -2.9f } );	   // Initial velocity
-			b2Body_SetMotionLocks( m_ballId, { false, false, true } ); // Do not rotate a ball
+			b2Body_SetFixedRotation( m_ballId, true ); // Do not rotate a ball
 		}
 	}
 
@@ -2020,7 +2022,7 @@ public:
 		bodyDef.linearVelocity = def.velocity;
 		bodyDef.angularVelocity = def.angularVelocity;
 		bodyDef.gravityScale = m_gravityScale;
-		bodyDef.motionLocks.angularZ = def.lockRotation;
+		bodyDef.fixedRotation = def.lockRotation;
 		bodyDef.isBullet = def.isBullet;
 		bodyDef.enableSleep = false;
 		m_playerId = b2CreateBody( m_worldId, &bodyDef );
@@ -2588,3 +2590,269 @@ public:
 };
 
 static int samplePolygonChains = RegisterSample( "Continuous", "Polygon Chains", PolygonChains::Create );
+
+// A 2D port of Box3D's Mesh Drop. Drops a grid of small bodies on a wave shaped chain until they sleep. Auto
+// Generate repeats with new seeds and stops on a tunnel or a pile that stays awake. The wave_soak tool
+// runs the same scene headless. The rough wave has bumps smaller than the bodies. Registered a second
+// time as Rough Wave Drop with that wave on.
+class WaveDrop : public Sample
+{
+public:
+	WaveDrop( SampleContext* context, bool rough )
+		: Sample( context )
+	{
+		if ( m_context->restart == false )
+		{
+			m_context->camera.center = { 0.0f, 5.0f };
+			m_context->camera.zoom = rough ? 12.0f : 22.0f;
+		}
+
+		m_settings = GetDefaultWaveDropSettings();
+		m_settings.rough = rough;
+		m_settings.amplitude = GetWaveDropDefaultAmplitude( rough );
+		m_groundId = b2_nullBodyId;
+		CreateGround();
+
+		for ( int i = 0; i < WAVE_DROP_BODY_COUNT; ++i )
+		{
+			m_bodies[i] = b2_nullBodyId;
+		}
+
+		m_seed = 0;
+		m_runCount = 0;
+		m_failure = false;
+		m_autoGenerate = false;
+		m_stepWhilePaused = true;
+
+		Generate();
+	}
+
+	void CreateGround()
+	{
+		if ( B2_IS_NON_NULL( m_groundId ) )
+		{
+			b2DestroyBody( m_groundId );
+			m_groundId = b2_nullBodyId;
+		}
+
+		m_groundId = CreateWaveDropGround( m_worldId, m_settings );
+	}
+
+	void Generate()
+	{
+		for ( int i = 0; i < WAVE_DROP_BODY_COUNT; ++i )
+		{
+			if ( B2_IS_NULL( m_bodies[i] ) )
+			{
+				continue;
+			}
+
+			b2DestroyBody( m_bodies[i] );
+			m_bodies[i] = b2_nullBodyId;
+		}
+
+		// A non-zero seed replays a generation reported by the wave_soak tool
+		m_seed = m_replaySeed != 0 ? m_replaySeed : (uint32_t)b2GetTicks();
+
+		m_runCount += 1;
+		m_stepCount = 0;
+		m_failure = false;
+		printf( "run %d seed %u\n", m_runCount, m_seed );
+
+		WaveDropSettings settings = m_settings;
+		if ( m_solo[0] >= 0 && m_solo[1] >= 0 )
+		{
+			settings.soloIndex = WAVE_DROP_GRID_COUNT * m_solo[0] + m_solo[1];
+		}
+
+		CreateWaveDropBodies( m_worldId, settings, m_seed, m_bodies );
+		ResetWaveDropDepth( &m_depth, settings );
+	}
+
+	bool DrawControls() override
+	{
+		ImGui::PushItemWidth( 8.0f * ImGui::GetFontSize() );
+
+		int shapeType = (int)m_settings.shape;
+		if ( ImGui::Combo( "Type", &shapeType, g_waveDropShapeNames, e_waveDropShapeCount ) )
+		{
+			m_settings.shape = WaveDropShape( shapeType );
+			Generate();
+		}
+
+		if ( ImGui::Checkbox( "Rough", &m_settings.rough ) )
+		{
+			m_settings.amplitude = GetWaveDropDefaultAmplitude( m_settings.rough );
+			CreateGround();
+			Generate();
+		}
+
+		float maxAmplitude = m_settings.rough ? 0.05f : 1.0f;
+		if ( ImGui::SliderFloat( "Amplitude", &m_settings.amplitude, 0.0f, maxAmplitude, "%.3f" ) )
+		{
+			CreateGround();
+			Generate();
+		}
+
+		if ( ImGui::Checkbox( "Collide", &m_settings.collide ) )
+		{
+			Generate();
+		}
+
+		ImGui::InputScalar( "Seed", ImGuiDataType_U32, &m_replaySeed );
+
+		// Drop only the body at these indices, -1 for all
+		if ( ImGui::InputInt2( "Solo", m_solo ) )
+		{
+			m_solo[0] = b2ClampInt( m_solo[0], -1, WAVE_DROP_GRID_COUNT - 1 );
+			m_solo[1] = b2ClampInt( m_solo[1], -1, WAVE_DROP_GRID_COUNT - 1 );
+		}
+
+		ImGui::PopItemWidth();
+
+		if ( ImGui::Button( "Generate" ) )
+		{
+			Generate();
+		}
+
+		if ( ImGui::Button( m_autoGenerate ? "Stop Auto Generate" : "Auto Generate" ) )
+		{
+			m_autoGenerate = !m_autoGenerate;
+			m_stepCount = 0;
+		}
+
+		return true;
+	}
+
+	void Step() override
+	{
+		int stepCount = m_stepCount;
+		Sample::Step();
+
+		if ( m_stepCount != stepCount )
+		{
+			UpdateWaveDropDepth( m_worldId, &m_depth );
+		}
+
+		// Grid indices of the body under the mouse, for the Solo field
+		{
+			float bestDistance = 0.25f;
+			int bestIndex = -1;
+			for ( int i = 0; i < WAVE_DROP_BODY_COUNT; ++i )
+			{
+				if ( B2_IS_NULL( m_bodies[i] ) )
+				{
+					continue;
+				}
+
+				b2Pos p = b2Body_GetPosition( m_bodies[i] );
+				float distance = b2Length( { float( p.x - m_mousePoint.x ), float( p.y - m_mousePoint.y ) } );
+				if ( distance < bestDistance )
+				{
+					bestDistance = distance;
+					bestIndex = i;
+				}
+			}
+
+			if ( bestIndex >= 0 )
+			{
+				DrawScreenTextLine( "indices: (%d, %d)", bestIndex / WAVE_DROP_GRID_COUNT, bestIndex % WAVE_DROP_GRID_COUNT );
+			}
+		}
+
+		DrawScreenTextLine( "run %d seed %u", m_runCount, m_seed );
+
+		if ( m_depth.maxIndex >= 0 )
+		{
+			int index = m_depth.maxIndex;
+			DrawScreenTextLine( "deepest: (%d, %d) %.1f slop at step %d", index / WAVE_DROP_GRID_COUNT,
+								index % WAVE_DROP_GRID_COUNT, m_depth.maxDepth / B2_LINEAR_SLOP, m_depth.maxStep );
+		}
+
+		if ( m_failure )
+		{
+			DrawScreenTextLine( "FAILED, see the console" );
+		}
+
+		float tunnelHeight = GetWaveDropTunnelHeight();
+		for ( int i = 0; i < WAVE_DROP_BODY_COUNT && m_failure == false; ++i )
+		{
+			b2BodyId bodyId = m_bodies[i];
+			if ( B2_IS_NULL( bodyId ) )
+			{
+				continue;
+			}
+
+			b2Pos center = b2Body_GetWorldCenter( bodyId );
+			if ( center.y < tunnelHeight )
+			{
+				printf( "tunnel: seed %u body (%d, %d) at (%.2f, %.2f)\n", m_seed, i / WAVE_DROP_GRID_COUNT,
+						i % WAVE_DROP_GRID_COUNT, (float)center.x, (float)center.y );
+				m_context->pause = true;
+				m_failure = true;
+				m_autoGenerate = false;
+			}
+		}
+
+		if ( m_autoGenerate )
+		{
+			b2BodyEvents bodyEvents = b2World_GetBodyEvents( m_worldId );
+			if ( bodyEvents.moveCount == 0 )
+			{
+				Generate();
+			}
+
+			float timeStep = 0.0f;
+			if ( m_context->pause == false || m_context->singleStep > 0 )
+			{
+				timeStep = m_context->hertz > 0.0f ? 1.0f / m_context->hertz : 0.0f;
+				m_context->singleStep = b2MaxInt( 0, m_context->singleStep - 1 );
+			}
+
+			// Many steps
+			if ( timeStep > 0.0f )
+			{
+				int n = 20;
+				for ( int i = 0; i < n; ++i )
+				{
+					b2World_Step( m_worldId, timeStep, m_context->subStepCount );
+					UpdateWaveDropDepth( m_worldId, &m_depth );
+				}
+
+				m_stepCount += n;
+			}
+
+			if ( m_stepCount > GetWaveDropStepLimit( m_settings.shape ) )
+			{
+				printf( "awake: seed %u\n", m_seed );
+				m_context->pause = true;
+				m_failure = true;
+				m_autoGenerate = false;
+			}
+		}
+	}
+
+	static Sample* Create( SampleContext* context )
+	{
+		return new WaveDrop( context, false );
+	}
+
+	static Sample* CreateRough( SampleContext* context )
+	{
+		return new WaveDrop( context, true );
+	}
+
+	WaveDropSettings m_settings;
+	WaveDropDepth m_depth;
+	b2BodyId m_groundId;
+	b2BodyId m_bodies[WAVE_DROP_BODY_COUNT];
+	uint32_t m_seed;
+	int m_runCount;
+	bool m_failure;
+	bool m_autoGenerate;
+	uint32_t m_replaySeed = 0;
+	int m_solo[2] = { -1, -1 };
+};
+
+static int sampleWaveDrop = RegisterSample( "Continuous", "Wave Drop", WaveDrop::Create );
+static int sampleRoughWaveDrop = RegisterSample( "Continuous", "Rough Wave Drop", WaveDrop::CreateRough );

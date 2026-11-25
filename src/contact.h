@@ -46,6 +46,9 @@ enum b2ContactFlags
 
 	// This contact has a cached relative transform
 	b2_simRelativeTransformValid = 0x00400000,
+
+	// Did a body on this contact have a time of impact event?
+	b2_simHadTimeOfImpact = 0x00800000,
 };
 
 // A contact edge is used to connect bodies and contacts together

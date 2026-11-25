@@ -47,8 +47,8 @@ typedef struct b2World b2World;
 
 // Recording format version. Any mismatch refuses to load. The minor tracks op stream layout
 // changes that keep the 32 byte header shape.
-#define B2_REC_VERSION_MAJOR 3
-#define B2_REC_VERSION_MINOR 13 // shape queries not recorded
+#define B2_REC_VERSION_MAJOR 4
+#define B2_REC_VERSION_MINOR 0
 
 // File header, fixed 32 bytes, little-endian
 typedef struct b2RecHeader
@@ -117,7 +117,6 @@ typedef b2ChainSegment b2RecCType_CHAINSEG;
 typedef b2Filter b2RecCType_FILTER;
 typedef b2SurfaceMaterial b2RecCType_MATERIAL;
 typedef b2MassData b2RecCType_MASSDATA;
-typedef b2MotionLocks b2RecCType_LOCKS;
 typedef b2ExplosionDef b2RecCType_EXPLOSIONDEF;
 typedef b2BodyDef b2RecCType_BODYDEF;
 typedef b2ShapeDef b2RecCType_SHAPEDEF;
@@ -126,6 +125,7 @@ typedef b2DistanceJointDef b2RecCType_DISTANCEJOINTDEF;
 typedef b2FilterJointDef b2RecCType_FILTERJOINTDEF;
 typedef b2MotorJointDef b2RecCType_MOTORJOINTDEF;
 typedef b2MoverJointDef b2RecCType_MOVERJOINTDEF;
+typedef b2MotionLockJointDef b2RecCType_MOTIONLOCKJOINTDEF;
 typedef b2PogoJointDef b2RecCType_POGOJOINTDEF;
 typedef b2PrismaticJointDef b2RecCType_PRISMATICJOINTDEF;
 typedef b2RevoluteJointDef b2RecCType_REVOLUTEJOINTDEF;
@@ -193,7 +193,6 @@ void b2RecW_CHAINSEG( b2RecBuffer* buf, b2ChainSegment v );
 void b2RecW_FILTER( b2RecBuffer* buf, b2Filter v );
 void b2RecW_MATERIAL( b2RecBuffer* buf, b2SurfaceMaterial v );
 void b2RecW_MASSDATA( b2RecBuffer* buf, b2MassData v );
-void b2RecW_LOCKS( b2RecBuffer* buf, b2MotionLocks v );
 void b2RecW_STR( b2RecBuffer* buf, const char* s );
 void b2RecW_EXPLOSIONDEF( b2RecBuffer* buf, b2ExplosionDef v );
 void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v );
@@ -207,6 +206,7 @@ void b2RecW_POGOJOINTDEF( b2RecBuffer* buf, b2PogoJointDef v );
 void b2RecW_PRISMATICJOINTDEF( b2RecBuffer* buf, b2PrismaticJointDef v );
 void b2RecW_REVOLUTEJOINTDEF( b2RecBuffer* buf, b2RevoluteJointDef v );
 void b2RecW_WELDJOINTDEF( b2RecBuffer* buf, b2WeldJointDef v );
+void b2RecW_MOTIONLOCKJOINTDEF( b2RecBuffer* buf, b2MotionLockJointDef v );
 void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v );
 void b2RecW_AABB( b2RecBuffer* buf, b2AABB v );
 void b2RecW_QUERYFILTER( b2RecBuffer* buf, b2QueryFilter v );

@@ -63,6 +63,7 @@ doxygen_add_docs(doc
                 "collision.md"
                 "simulation.md"
                 "loose_ends.md"
+                "known_limitations.md"
                 "recording.md"
                 "large_worlds.md"
                 "character.md"

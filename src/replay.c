@@ -278,15 +278,6 @@ b2MassData b2RecR_MASSDATA( b2RecReader* rdr )
 	return md;
 }
 
-b2MotionLocks b2RecR_LOCKS( b2RecReader* rdr )
-{
-	b2MotionLocks locks;
-	locks.linearX = b2RecR_BOOL( rdr );
-	locks.linearY = b2RecR_BOOL( rdr );
-	locks.angularZ = b2RecR_BOOL( rdr );
-	return locks;
-}
-
 // Returns a pointer into a rotating set of static buffers, valid until the next several
 // STR reads. Only used to pass a name straight into a create/setter call during dispatch.
 const char* b2RecR_STR( b2RecReader* rdr )
@@ -339,7 +330,7 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 	def.name = b2RecR_STR( rdr );
 
 	(void)b2RecR_U64( rdr ); // userData (not preserved)
-	def.motionLocks = b2RecR_LOCKS( rdr );
+	def.fixedRotation = b2RecR_BOOL( rdr );
 	def.enableSleep = b2RecR_BOOL( rdr );
 	def.isAwake = b2RecR_BOOL( rdr );
 	def.isBullet = b2RecR_BOOL( rdr );
@@ -553,6 +544,15 @@ b2WeldJointDef b2RecR_WELDJOINTDEF( b2RecReader* rdr )
 	def.angularHertz = b2RecR_F32( rdr );
 	def.linearDampingRatio = b2RecR_F32( rdr );
 	def.angularDampingRatio = b2RecR_F32( rdr );
+	return def;
+}
+
+b2MotionLockJointDef b2RecR_MOTIONLOCKJOINTDEF( b2RecReader* rdr )
+{
+	b2MotionLockJointDef def = b2DefaultMotionLockJointDef();
+	b2RecR_JointBase( rdr, &def.base );
+	def.lockLinearX = b2RecR_BOOL( rdr );
+	def.lockLinearY = b2RecR_BOOL( rdr );
 	return def;
 }
 
@@ -1037,9 +1037,9 @@ static void b2RecDispatch_BodyEnable( const b2RecArgs_BodyEnable* a, b2RecReader
 	b2Body_Enable( b2RecMakeBodyId( rdr, a->body ) );
 }
 
-static void b2RecDispatch_BodySetMotionLocks( const b2RecArgs_BodySetMotionLocks* a, b2RecReader* rdr )
+static void b2RecDispatch_BodySetFixedRotation( const b2RecArgs_BodySetFixedRotation* a, b2RecReader* rdr )
 {
-	b2Body_SetMotionLocks( b2RecMakeBodyId( rdr, a->body ), a->locks );
+	b2Body_SetFixedRotation( b2RecMakeBodyId( rdr, a->body ), a->flag );
 }
 
 static void b2RecDispatch_BodySetBullet( const b2RecArgs_BodySetBullet* a, b2RecReader* rdr )
@@ -1634,6 +1634,21 @@ static void b2RecDispatch_WheelJointSetTargetMotorSpeed( const b2RecArgs_WheelJo
 static void b2RecDispatch_WheelJointSetMaxMotorTorque( const b2RecArgs_WheelJointSetMaxMotorTorque* a, b2RecReader* rdr )
 {
 	b2WheelJoint_SetMaxMotorTorque( b2RecMakeJointId( rdr, a->joint ), a->torque );
+}
+
+static void b2RecDispatch_CreateMotionLockJoint( const b2RecArgs_CreateMotionLockJoint* a, b2RecReader* rdr )
+{
+	b2JointId recId = b2RecR_JOINTID( rdr );
+	b2MotionLockJointDef def = a->def;
+	def.base.bodyIdA = b2RecMakeBodyId( rdr, def.base.bodyIdA );
+	def.base.bodyIdB = b2RecMakeBodyId( rdr, def.base.bodyIdB );
+	b2RecCheckJointId( rdr, b2CreateMotionLockJoint( rdr->replayWorldId, &def ), recId );
+}
+
+static void b2RecDispatch_MotionLockJointEnableLinearLock( const b2RecArgs_MotionLockJointEnableLinearLock* a,
+														   b2RecReader* rdr )
+{
+	b2MotionLockJoint_EnableLinearLock( b2RecMakeJointId( rdr, a->joint ), a->axis, a->flag );
 }
 
 // Float bit comparators: compare raw bits so NaN != NaN is handled consistently

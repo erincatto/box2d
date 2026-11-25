@@ -7,6 +7,13 @@
 
 typedef struct b2ContactSim b2ContactSim;
 
+// Contact points get this separation the step after a TOI capture. This puts the contact in the speculative zone
+// which is more rigid.
+#define B2_TOI_RIGID_SEPARATION ( 0.01f * B2_LINEAR_SLOP )
+
+// This prevents deep contacts from getting tweaked into the speculative zone.
+#define B2_TOI_RIGID_SEPARATION_LIMIT ( -B2_LINEAR_SLOP )
+
 typedef struct b2ContactConstraintPoint
 {
 	b2Vec2 anchorA, anchorB;

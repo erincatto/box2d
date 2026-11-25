@@ -1172,7 +1172,9 @@ b2TOIOutput b2ComputeTimeOfImpact( const b2TOIInput* input )
 
 	// Setup target distance and tolerance
 	float totalRadius = proxyA->radius + proxyB->radius;
-	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius - B2_LINEAR_SLOP );
+
+	// The target is just touching so the solver can make the contact rigid.
+	float target = b2MaxFloat( B2_LINEAR_SLOP, totalRadius );
 	float tolerance = 0.25f * B2_LINEAR_SLOP;
 	B2_ASSERT( target > tolerance );
 

@@ -232,13 +232,6 @@ void b2RecW_MASSDATA( b2RecBuffer* buf, b2MassData v )
 	b2RecW_F32( buf, v.rotationalInertia );
 }
 
-void b2RecW_LOCKS( b2RecBuffer* buf, b2MotionLocks v )
-{
-	b2RecW_BOOL( buf, v.linearX );
-	b2RecW_BOOL( buf, v.linearY );
-	b2RecW_BOOL( buf, v.angularZ );
-}
-
 void b2RecW_STR( b2RecBuffer* buf, const char* s )
 {
 	if ( s == NULL )
@@ -276,7 +269,7 @@ void b2RecW_BODYDEF( b2RecBuffer* buf, b2BodyDef v )
 	b2RecW_STR( buf, v.name );
 	// userData: not preserved
 	b2RecW_U64( buf, 0u );
-	b2RecW_LOCKS( buf, v.motionLocks );
+	b2RecW_BOOL( buf, v.fixedRotation );
 	b2RecW_BOOL( buf, v.enableSleep );
 	b2RecW_BOOL( buf, v.isAwake );
 	b2RecW_BOOL( buf, v.isBullet );
@@ -448,6 +441,13 @@ void b2RecW_WELDJOINTDEF( b2RecBuffer* buf, b2WeldJointDef v )
 	b2RecW_F32( buf, v.angularHertz );
 	b2RecW_F32( buf, v.linearDampingRatio );
 	b2RecW_F32( buf, v.angularDampingRatio );
+}
+
+void b2RecW_MOTIONLOCKJOINTDEF( b2RecBuffer* buf, b2MotionLockJointDef v )
+{
+	b2RecW_JointBase( buf, &v.base );
+	b2RecW_BOOL( buf, v.lockLinearX );
+	b2RecW_BOOL( buf, v.lockLinearY );
 }
 
 void b2RecW_WHEELJOINTDEF( b2RecBuffer* buf, b2WheelJointDef v )

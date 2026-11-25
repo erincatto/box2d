@@ -1265,6 +1265,7 @@ void B2_WIDE( b2PrepareContacts_Wide )( b2SolverBlock block, b2StepContext* cont
 
 			b2ContactSim* contactLanes[B2_SIMD_WIDTH];
 			uint32_t hitEvents = 0;
+			uint32_t toiFlags = 0;
 
 			for ( int laneIndex = 0; laneIndex < B2_SIMD_WIDTH; ++laneIndex )
 			{
@@ -1278,6 +1279,7 @@ void B2_WIDE( b2PrepareContacts_Wide )( b2SolverBlock block, b2StepContext* cont
 					cw->indexA[laneIndex] = b2DecodeAwakeIndex( c->encodedBodySimA ) + 1;
 					cw->indexB[laneIndex] = b2DecodeAwakeIndex( c->encodedBodySimB ) + 1;
 					hitEvents |= ( c->simFlags & b2_simEnableHitEvent );
+					toiFlags |= ( c->simFlags & b2_simHadTimeOfImpact );
 
 #if B2_ENABLE_VALIDATION
 					b2Body* bodyA = bodies + c->bodyIdA;
@@ -1319,6 +1321,24 @@ void B2_WIDE( b2PrepareContacts_Wide )( b2SolverBlock block, b2StepContext* cont
 								  (float)contactLanes[6]->manifold.pointCount, (float)contactLanes[7]->manifold.pointCount );
 #endif
 			b2FloatW twoPointMask = b2GreaterThanW( pointCounts, oneW );
+
+			// Separation tweak to make contacts more rigid after a TOI event.
+			b2FloatW separationFloor = b2SplatW( -FLT_MAX );
+			if ( toiFlags != 0 )
+			{
+				float floors[B2_SIMD_WIDTH];
+				for ( int laneIndex = 0; laneIndex < B2_SIMD_WIDTH; ++laneIndex )
+				{
+					bool hadToi = ( contactLanes[laneIndex]->simFlags & b2_simHadTimeOfImpact ) != 0;
+					floors[laneIndex] = hadToi ? B2_TOI_RIGID_SEPARATION : -FLT_MAX;
+				}
+
+#if B2_SIMD_WIDTH == 4
+				separationFloor = b2SetW( floors[0], floors[1], floors[2], floors[3] );
+#elif B2_SIMD_WIDTH == 8
+				separationFloor = b2SetW( floors[0], floors[1], floors[2], floors[3], floors[4], floors[5], floors[6], floors[7] );
+#endif
+			}
 
 			{
 				// Optimized transpose gather. Similar to b2GatherBodies.
@@ -1384,7 +1404,12 @@ void B2_WIDE( b2PrepareContacts_Wide )( b2SolverBlock block, b2StepContext* cont
 				cw->tangentImpulse1 = _mm256_permute2f128_ps( tt3, tt7, 0x31 );
 #endif
 
-				// separation1 = cw->baseSeparation1;
+				if ( toiFlags != 0 )
+				{
+					b2FloatW separation = cw->baseSeparation1;
+					b2FloatW liftMask = b2GreaterThanW( separation, b2SplatW( B2_TOI_RIGID_SEPARATION_LIMIT ) );
+					cw->baseSeparation1 = b2BlendW( separation, b2MaxW( separation, separationFloor ), liftMask );
+				}
 
 				b2FloatW offset = b2DotW( b2SubVW( cw->anchorB1, cw->anchorA1 ), cw->normal );
 				cw->baseSeparation1 = b2SubW( cw->baseSeparation1, offset );
@@ -1480,7 +1505,12 @@ void B2_WIDE( b2PrepareContacts_Wide )( b2SolverBlock block, b2StepContext* cont
 				cw->tangentImpulse2 = _mm256_permute2f128_ps( tt3, tt7, 0x31 );
 #endif
 
-				// separation2 = cw->baseSeparation2;
+				if ( toiFlags != 0 )
+				{
+					b2FloatW separation = cw->baseSeparation2;
+					b2FloatW liftMask = b2GreaterThanW( separation, b2SplatW( B2_TOI_RIGID_SEPARATION_LIMIT ) );
+					cw->baseSeparation2 = b2BlendW( separation, b2MaxW( separation, separationFloor ), liftMask );
+				}
 
 				b2FloatW offset = b2DotW( b2SubVW( cw->anchorB2, cw->anchorA2 ), cw->normal );
 				cw->baseSeparation2 = b2SubW( cw->baseSeparation2, offset );

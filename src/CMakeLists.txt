@@ -39,6 +39,7 @@ set(BOX2D_SOURCE_FILES
 	joint.h
 	manifold.c
 	math_functions.c
+	motion_lock_joint.c
 	motor_joint.c
 	mover_joint.c
 	mover.c

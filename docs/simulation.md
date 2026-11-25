@@ -322,25 +322,20 @@ bodyDef.isAwake = true;
 
 The `isAwake` flag is ignored if `enableSleep` is false.
 
-### Motion locks
+### Fixed rotation {#fixed-rotation}
 
-You may want a rigid body, such as a character, to have a fixed rotation. Such a body does not
-rotate, even under load. You can make the body have fixed rotation by locking z-axis rotation:
+You may want a body that translates but never rotates, such as a character. Set `fixedRotation` on
+the body definition:
 
 ```c
-bodyDef.motionLocks.angularZ = true;
+bodyDef.fixedRotation = true;
 ```
 
-The `angularZ` flag causes the rotational inertia and its inverse to be set to zero.
+Fixed rotation gives the body zero inverse rotational inertia, so contacts and joints cannot spin
+it. The body still has its full mass and rotational inertia, so turning fixed rotation off later
+restores the original behavior.
 
-You can also restrict translation using `b2MotionLocks::linearX` and `linearY`. For technical
-reasons these only restrict translation but the linear velocity may momentarily violate the
-restriction. I'm not a fan of restricting translation this way. I tried using an inverse mass of
-zero along an axis and that causes the solver to blow up because it ends up dividing by very small
-numbers.
-
-It is best to think of the motion locks as constraints that are not fully satisfied, like all other
-constraints in Box2D.
+To restrict a body to a point or a line, use a [motion lock joint](@ref motion-lock-joint).
 
 ### Bullets {#bullets}
 
@@ -455,8 +450,7 @@ vectors.
 ### Mass data
 
 A body has mass (scalar), center of mass (2-vector), and rotational inertia (scalar). For static
-bodies, the mass and rotational inertia are set to zero. When a body has fixed rotation, its
-rotational inertia is zero.
+bodies, the mass and rotational inertia are set to zero.
 
 Normally the mass properties of a body are established automatically when shapes are added to the
 body. You can also adjust the mass of a body at run-time. This is usually done when you have special
@@ -519,9 +513,8 @@ bool isAwake = b2Body_IsAwake(myBodyId);
 b2Body_Disable(myBodyId);
 b2Body_Enable(myBodyId);
 bool isEnabled = b2Body_IsEnabled(myBodyId);
-b2MotionLocks locks = {.linearX = false, .linearY = false, .angularZ = true};
-b2Body_SetMotionLocks(myBodyId, locks);
-locks = b2Body_GetMotionLocks(myBodyId);
+b2Body_SetFixedRotation(myBodyId, true);
+bool isFixedRotation = b2Body_IsFixedRotation(myBodyId);
 ```
 
 Please see the comments on these functions for more details.
@@ -1246,7 +1239,8 @@ recycling_. It has a large impact on performance and also improves stacking stab
 
 Contact recycling considers the relative movement between shapes and adjusts the contact point
 separation to account for the movement. If the relative movement is larger than the _contact
-recycling distance_ then contact points are computed from scratch.
+recycling distance_, or either body has rotated more than about 11 degrees since the contact points
+were computed, then the contact points are computed from scratch.
 
 Sometimes stacks of objects can become too stable. You can adjust the recycling distance to tune
 stability:
@@ -1268,9 +1262,15 @@ specific bodies as needed.
 bodyDef.enableContactRecycling = false;
 ```
 
+A contact is only recycled when both bodies have recycling enabled, so disabling it on either body
+is enough.
+
 > [!note]
 > Recycled contacts skip friction and restitution updates. They also skip pre-solve
 > callbacks.
+
+Cargo resting on a rotating body can drift when its contact is recycled. See
+[Known Limitations](known_limitations.md).
 
 ### Contact data
 
@@ -1915,6 +1915,81 @@ wheel to rotate. You can specify a rotational motor to drive the wheel and to ap
 
 You may also use the wheel joint where you want free rotation and translation along an axis. See the
 `ScissorLift` sample for details.
+
+### Motion lock joint {#motion-lock-joint}
+
+The motion lock joint restricts the motion of body B relative to frame A. Each linear lock keeps
+the origin of frame B from moving along that axis of frame A, so locking one axis gives a point on
+a line and locking both axes gives a point to point lock. Rotation is left free. Use
+[fixed rotation](@ref fixed-rotation) on the body to stop it from rotating.
+
+```c
+b2MotionLockJointDef jointDef = b2DefaultMotionLockJointDef();
+jointDef.base.bodyIdA = myGroundId;
+jointDef.base.bodyIdB = myBodyId;
+jointDef.base.localFrameA.p = b2Body_GetLocalPoint(myGroundId, b2Body_GetWorldCenter(myBodyId));
+jointDef.base.localFrameB.p = b2Body_GetLocalCenter(myBodyId);
+jointDef.lockLinearY = true;
+
+b2JointId myJointId = b2CreateMotionLockJoint(myWorldId, &jointDef);
+```
+
+Locks can be toggled at runtime. Toggling a lock clears its accumulated impulse.
+
+```c
+b2MotionLockJoint_EnableLinearLock(myJointId, 0, true);
+bool isLocked = b2MotionLockJoint_IsLinearLockEnabled(myJointId, 1);
+```
+
+Anchor frame B at the center of mass when you can. Against a static body this lets the solver
+handle each locked axis independently with no rotational coupling.
+
+#### Zero inverse mass instability
+
+Fixed rotation is implemented by giving a body zero inverse rotational inertia. This works well and
+has no drawbacks. It is tempting to lock translation the same way, by giving the body zero inverse
+mass. Unfortunately, this can destabilize joints attached to the body.
+
+![Zero Inverse Mass](images/zero_inverse_mass.svg)
+
+Consider a body with zero inverse mass. Setting the inverse mass to zero pins the center of mass
+while letting the body rotate freely. Attaching a revolute joint to the body adds a second pin.
+These two pins can fight each other with infinite force. Understanding this requires diving into the
+constraint math.
+
+The joint pivot \f$\mathbf{p}_B\f$ sits on the body at an offset \f$\mathbf{r}\f$ from the center of
+mass and the target pivot \f$\mathbf{p}_A\f$ sits on the ground at a distance \f$w\f$ from the
+center of mass. Rotation moves \f$\mathbf{p}_B\f$ along a circle of radius
+\f$r = \|\mathbf{r}\|\f$, so if \f$w \neq r\f$ no rotation can bring the pivots together. This is a
+door slightly too narrow for its frame.
+
+The joint solver builds an effective mass matrix \f$K\f$ for the pivot. With zero inverse mass
+only the angular part remains. The separation \f$\mathbf{d}\f$ points from \f$\mathbf{p}_B\f$ to
+\f$\mathbf{p}_A\f$. Its length is the position error \f$C\f$ and its direction is \f$\mathbf{n}\f$.
+
+\f[
+\mathbf{d} = \mathbf{p}_A - \mathbf{p}_B, \qquad C = \|\mathbf{d}\|, \qquad \mathbf{n} = \frac{\mathbf{d}}{\|\mathbf{d}\|}
+\f]
+
+The stiffness along \f$\mathbf{n}\f$ is
+
+\f[
+k = \mathbf{n}^T K \mathbf{n} = \frac{(\mathbf{r} \times \mathbf{n})^2}{I}
+\f]
+
+![Stiffness and Impulse](images/zero_inverse_stiffness.svg)
+
+The impulse that removes the position error is \f$|\lambda| = C / k\f$. As the body swings,
+\f$\mathbf{p}_B\f$ and \f$\mathbf{p}_A\f$ come into radial alignment with the center of mass and
+\f$\mathbf{n}\f$ turns parallel to \f$\mathbf{r}\f$. Rotation loses influence on the error,
+\f$k \to 0\f$, and \f$|\lambda| \to \infty\f$ while \f$C\f$ stays finite. The solver applies
+enormous impulses and the body jitters or explodes. Any joint that reaches the body through an
+offset suffers the same failure, including the prismatic and distance joints.
+
+The motion lock joint avoids this problem by not setting the inverse mass to zero. The lock is a
+separate constraint, so the center of mass can translate slightly as the solver seeks to balance all
+the constraints. The pivot can then move along \f$\mathbf{r}\f$, \f$k \geq m^{-1}\f$, and the
+conflict settles as a small error instead of exploding.
 
 ## Spatial queries {#spatial}
 

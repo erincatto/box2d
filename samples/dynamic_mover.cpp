@@ -109,7 +109,7 @@ void DynamicMover::Create( b2WorldId worldId, const DynamicMoverDef* def )
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.position = def->position;
 	bodyDef.gravityScale = m_gravityScale;
-	bodyDef.motionLocks.angularZ = true;
+	bodyDef.fixedRotation = true;
 	bodyDef.enableSleep = false;
 	bodyDef.name = "mover";
 
