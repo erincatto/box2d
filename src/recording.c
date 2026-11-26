@@ -834,8 +834,8 @@ bool b2Recording_SaveToFile( const b2Recording* recording, const char* path )
 	}
 
 	size_t written = fwrite( recording->buffer.data, 1, (size_t)recording->buffer.size, f );
-	fclose( f );
-	return (int)written == recording->buffer.size;
+	int closed = fclose( f );
+	return closed == 0 && (int)written == recording->buffer.size;
 }
 
 b2Recording* b2CreateRecordingFromFile( const char* path )
