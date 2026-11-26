@@ -72,7 +72,7 @@ static bool b2SensorQueryCallback( int proxyId, uint64_t userData, void* context
 	}
 
 	// Check filter
-	if ( b2ShouldShapesCollide( sensorShape->filter, otherShape->filter ) == false )
+	if ( b2ShouldFiltersCollide( sensorShape->filter, otherShape->filter ) == false )
 	{
 		return true;
 	}

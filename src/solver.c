@@ -177,7 +177,7 @@ static bool b2ContinuousQueryCallback( int proxyId, uint64_t userData, void* con
 	}
 
 	// Skip filtered shapes
-	bool canCollide = b2ShouldShapesCollide( fastShape->filter, shape->filter );
+	bool canCollide = b2ShouldFiltersCollide( fastShape->filter, shape->filter );
 	if ( canCollide == false )
 	{
 		return true;

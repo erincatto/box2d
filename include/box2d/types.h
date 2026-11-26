@@ -390,6 +390,18 @@ typedef struct b2Filter
 /// @ingroup shape
 B2_API b2Filter b2DefaultFilter( void );
 
+/// Should two shapes collide base in their filters?
+/// @ingroup shape
+B2_INLINE bool b2ShouldFiltersCollide( b2Filter filterA, b2Filter filterB )
+{
+	if ( filterA.groupIndex == filterB.groupIndex && filterA.groupIndex != 0 )
+	{
+		return filterA.groupIndex > 0;
+	}
+
+	return ( filterA.maskBits & filterB.categoryBits ) != 0 && ( filterA.categoryBits & filterB.maskBits ) != 0;
+}
+
 /// The query filter is used to filter collisions between queries and shapes. For example, you may
 /// want a ray-cast representing a projectile to hit players and the static environment but not
 /// debris.
