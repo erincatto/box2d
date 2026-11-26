@@ -82,15 +82,13 @@ B2_API b2JointEvents b2World_GetJointEvents( b2WorldId worldId );
 /// Overlap test for all shapes that *potentially* overlap the provided AABB. The AABB is relative
 /// to the origin, which keeps the test precise far from the world origin in large world mode. Near
 /// the origin pass b2Pos_zero and a world AABB.
-B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb,
-										b2QueryFilter filter, b2OverlapResultCallbackFcn* fcn,
-										void* context );
+B2_API b2TreeStats b2World_OverlapAABB( b2WorldId worldId, b2Pos origin, b2AABB aabb, b2QueryFilter filter,
+										b2OverlapResultCallbackFcn* fcn, void* context );
 
 /// Overlap test for all shapes that overlap the provided shape proxy. The proxy points are relative
 /// to the origin. Near the origin pass b2Pos_zero and world points.
 B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy,
-										 b2QueryFilter filter, b2OverlapResultCallbackFcn* fcn,
-										 void* context );
+										 b2QueryFilter filter, b2OverlapResultCallbackFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect shapes in the path of the ray. Your callback function
 /// controls whether you get the closest point, any point, or n-points.
@@ -102,35 +100,31 @@ B2_API b2TreeStats b2World_OverlapShape( b2WorldId worldId, b2Pos origin, const 
 /// @param fcn A user implemented callback function
 /// @param context A user context that is passed along to the callback function
 /// @return traversal performance counters
-B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation,
-									b2QueryFilter filter, b2CastResultCallbackFcn* fcn,
-									void* context );
+B2_API b2TreeStats b2World_CastRay( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter,
+									b2CastResultCallbackFcn* fcn, void* context );
 
 /// Cast a ray into the world to collect the closest hit. This is a convenience function. Ignores
 /// initial overlap. This is less general than b2World_CastRay() and does not allow for custom
 /// filtering.
-B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation,
-										   b2QueryFilter filter );
+B2_API b2RayResult b2World_CastRayClosest( b2WorldId worldId, b2Pos origin, b2Vec2 translation, b2QueryFilter filter );
 
 /// Cast a shape through the world. Similar to a ray cast except that a shape is cast instead of a
 /// point. The proxy points are relative to the origin. Callback points are world positions.
 /// @see b2World_CastRay
-B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy,
-									  b2Vec2 translation, b2QueryFilter filter,
-									  b2CastResultCallbackFcn* fcn, void* context );
+B2_API b2TreeStats b2World_CastShape( b2WorldId worldId, b2Pos origin, const b2ShapeProxy* proxy, b2Vec2 translation,
+									  b2QueryFilter filter, b2CastResultCallbackFcn* fcn, void* context );
 
 /// Cast a capsule mover through the world. This is a special shape cast that handles sliding along
 /// other shapes while reducing clipping. The mover capsule is relative to the origin. Near the
 /// origin pass b2Pos_zero and a world capsule. Returns the translation fraction at the first hit.
-B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover,
-								b2Vec2 translation, b2QueryFilter filter );
+B2_API float b2World_CastMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2Vec2 translation,
+								b2QueryFilter filter );
 
 /// Collide a capsule mover with the world, gathering collision planes that can be fed to
 /// b2SolvePlanes. Useful for kinematic character movement. The mover capsule and the resulting
 /// planes are relative to the origin.
-B2_API void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover,
-								  b2QueryFilter filter, b2PlaneResultCallbackFcn* fcn,
-								  void* context );
+B2_API void b2World_CollideMover( b2WorldId worldId, b2Pos origin, const b2Capsule* mover, b2QueryFilter filter,
+								  b2PlaneResultCallbackFcn* fcn, void* context );
 
 /// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 /// by disabling sleep completely at the world level.
@@ -180,13 +174,11 @@ B2_API void b2World_SetHitEventThreshold( b2WorldId worldId, float value );
 B2_API float b2World_GetHitEventThreshold( b2WorldId worldId );
 
 /// Register the custom filter callback. This is optional.
-B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackFcn* fcn,
-											 void* context );
+B2_API void b2World_SetCustomFilterCallback( b2WorldId worldId, b2CustomFilterCallbackFcn* fcn, void* context );
 
 /// Register the pre-solve and pre-continuous callbacks. This is optional.
 B2_API void b2World_SetPreSolveCallback( b2WorldId worldId, b2PreSolveCallbackFcn* preSolveFcn,
-										 b2PreContinuousCallbackFcn* preContinuousFcn,
-										 void* context );
+										 b2PreContinuousCallbackFcn* preContinuousFcn, void* context );
 
 /// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this is
 /// left as a decision for the application. Usually in m/s^2.
@@ -207,12 +199,10 @@ B2_API void b2World_Explode( b2WorldId worldId, const b2ExplosionDef* explosionD
 /// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
 /// @param pushSpeed The maximum contact constraint push out speed (meters per second)
 /// @note Advanced feature
-B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio,
-									  float pushSpeed );
+B2_API void b2World_SetContactTuning( b2WorldId worldId, float hertz, float dampingRatio, float pushSpeed );
 
 /// Get the contact tuning.
-B2_API void b2World_GetContactTuning( b2WorldId worldId, float* hertz, float* dampingRatio,
-									  float* pushSpeed );
+B2_API void b2World_GetContactTuning( b2WorldId worldId, float* hertz, float* dampingRatio, float* pushSpeed );
 
 /// Set the contact point recycling distance. Setting this to zero disables contact point recycling.
 /// Usually in meters.
@@ -462,8 +452,7 @@ B2_API void b2Body_SetAngularVelocity( b2BodyId bodyId, float angularVelocity );
 /// @param target The target transform for the body
 /// @param timeStep The time step of the next call to b2World_Step
 /// @param wake Option to wake the body or not
-B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float timeStep,
-									   bool wake );
+B2_API void b2Body_SetTargetTransform( b2BodyId bodyId, b2WorldTransform target, float timeStep, bool wake );
 
 /// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 B2_API b2Vec2 b2Body_GetLocalPointVelocity( b2BodyId bodyId, b2Vec2 localPoint );
@@ -700,14 +689,12 @@ B2_API float b2Body_GetMaxExtentFromOrigin( b2BodyId bodyId );
 /// Create a circle shape and attach it to a body. The shape definition and geometry are fully
 /// cloned. Contacts are not created until the next time step.
 /// @return the shape id for accessing the shape
-B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def,
-									  const b2Circle* circle );
+B2_API b2ShapeId b2CreateCircleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Circle* circle );
 
 /// Create a line segment shape and attach it to a body. The shape definition and geometry are fully
 /// cloned. Contacts are not created until the next time step.
 /// @return the shape id or b2_nullShapeId if the segment is too short.
-B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def,
-									   const b2Segment* segment );
+B2_API b2ShapeId b2CreateSegmentShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Segment* segment );
 
 /// Create a chain segment shape and attach it to a body. The shape definition and geometry are
 /// fully cloned. The segment is not owned by any chain shape (b2Shape_GetParentChain returns
@@ -721,14 +708,12 @@ B2_API b2ShapeId b2CreateChainSegmentShape( b2BodyId bodyId, const b2ShapeDef* d
 /// cloned. Contacts are not created until the next time step.
 /// @return the shape id for accessing the shape, this will be b2_nullShapeId if the length is too
 /// small.
-B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def,
-									   const b2Capsule* capsule );
+B2_API b2ShapeId b2CreateCapsuleShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Capsule* capsule );
 
 /// Create a polygon shape and attach it to a body. The shape definition and geometry are fully
 /// cloned. Contacts are not created until the next time step.
 /// @return the shape id for accessing the shape
-B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def,
-									   const b2Polygon* polygon );
+B2_API b2ShapeId b2CreatePolygonShape( b2BodyId bodyId, const b2ShapeDef* def, const b2Polygon* polygon );
 
 /// Destroy a shape. You may defer the body mass update which can improve performance if several
 /// shapes on a body are destroyed at once.
@@ -784,8 +769,7 @@ B2_API void b2Shape_SetUserMaterial( b2ShapeId shapeId, uint64_t material );
 B2_API uint64_t b2Shape_GetUserMaterial( b2ShapeId shapeId );
 
 /// Set the shape surface material
-B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId,
-										const b2SurfaceMaterial* surfaceMaterial );
+B2_API void b2Shape_SetSurfaceMaterial( b2ShapeId shapeId, const b2SurfaceMaterial* surfaceMaterial );
 
 /// Get the shape surface material
 B2_API b2SurfaceMaterial b2Shape_GetSurfaceMaterial( b2ShapeId shapeId );
@@ -953,8 +937,7 @@ B2_API int b2Chain_GetSegments( b2ChainId chainId, b2ShapeId* segmentArray, int 
 B2_API void b2Chain_SetAllSurfaceMaterials( b2ChainId chainId, const b2SurfaceMaterial* material );
 
 /// Set a chain material by segment index.
-B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material,
-										int segmentIndex );
+B2_API void b2Chain_SetSurfaceMaterial( b2ChainId chainId, const b2SurfaceMaterial* material, int segmentIndex );
 
 /// Get a chain material by segment index.
 B2_API b2SurfaceMaterial b2Chain_GetSurfaceMaterial( b2ChainId chainId, int segmentIndex );
@@ -1076,12 +1059,10 @@ B2_API void b2DistanceJoint_EnableSpring( b2JointId jointId, bool enableSpring )
 B2_API bool b2DistanceJoint_IsSpringEnabled( b2JointId jointId );
 
 /// Set the force range for the spring.
-B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce,
-												 float upperForce );
+B2_API void b2DistanceJoint_SetSpringForceRange( b2JointId jointId, float lowerForce, float upperForce );
 
 /// Get the force range for the spring.
-B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce,
-												 float* upperForce );
+B2_API void b2DistanceJoint_GetSpringForceRange( b2JointId jointId, float* lowerForce, float* upperForce );
 
 /// Set the spring stiffness in Hertz
 B2_API void b2DistanceJoint_SetSpringHertz( b2JointId jointId, float hertz );
@@ -1683,8 +1664,7 @@ B2_API int b2Replay_GetDivergeFrame( const b2Replay* player );
 /// @param player the recording player
 /// @param budgetBytes Memory cap for the kept snapshots. The spacing widens to stay under it.
 /// @param minIntervalFrames Finest spacing between keyframes, in frames.
-B2_API void b2Replay_SetKeyframePolicy( b2Replay* player, size_t budgetBytes,
-										int minIntervalFrames );
+B2_API void b2Replay_SetKeyframePolicy( b2Replay* player, size_t budgetBytes, int minIntervalFrames );
 
 /// Get the keyframe memory budget in bytes.
 B2_API size_t b2Replay_GetKeyframeBudget( const b2Replay* player );
@@ -1713,8 +1693,7 @@ B2_API int b2Replay_GetFrameQueryCount( const b2Replay* player );
 B2_API b2ReplayQueryInfo b2Replay_GetFrameQuery( const b2Replay* player, int index );
 
 /// Get one result of a recorded query from the most recently replayed frame.
-B2_API b2ReplayQueryHit b2Replay_GetFrameQueryHit( const b2Replay* player, int queryIndex,
-												   int hitIndex );
+B2_API b2ReplayQueryHit b2Replay_GetFrameQueryHit( const b2Replay* player, int queryIndex, int hitIndex );
 
 /// Get the number of body slots tracked for the outliner. This is the creation-order span and
 /// includes holes for destroyed bodies, so it only grows as the replay advances.
