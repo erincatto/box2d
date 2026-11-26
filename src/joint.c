@@ -89,6 +89,7 @@ b2RevoluteJointDef b2DefaultRevoluteJointDef( void )
 {
 	b2RevoluteJointDef def = { 0 };
 	def.base = b2DefaultJointDef();
+	def.maxSpringTorque = FLT_MAX;
 	def.internalValue = B2_SECRET_COOKIE;
 	return def;
 }
@@ -665,6 +666,7 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->targetAngle ), (b2JointId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->hertz ), (b2JointId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->dampingRatio ), (b2JointId){ 0 } );
+	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxSpringTorque ), (b2JointId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->lowerAngle ), (b2JointId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->upperAngle ), (b2JointId){ 0 } );
 	B2_CHECK_INPUT_RETURN( b2IsValidFloat( def->maxMotorTorque ), (b2JointId){ 0 } );
@@ -690,6 +692,7 @@ b2JointId b2CreateRevoluteJoint( b2WorldId worldId, const b2RevoluteJointDef* de
 	joint->revoluteJoint.targetAngle = b2ClampFloat( def->targetAngle, -B2_PI, B2_PI );
 	joint->revoluteJoint.hertz = def->hertz;
 	joint->revoluteJoint.dampingRatio = def->dampingRatio;
+	joint->revoluteJoint.maxSpringTorque = b2MaxFloat( 0.0f, def->maxSpringTorque );
 
 	float lowerAngle = b2MinFloat( def->lowerAngle, def->upperAngle );
 	float upperAngle = b2MaxFloat( def->lowerAngle, def->upperAngle );

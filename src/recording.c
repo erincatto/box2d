@@ -426,6 +426,7 @@ void b2RecW_REVOLUTEJOINTDEF( b2RecBuffer* buf, b2RevoluteJointDef v )
 	b2RecW_BOOL( buf, v.enableSpring );
 	b2RecW_F32( buf, v.hertz );
 	b2RecW_F32( buf, v.dampingRatio );
+	b2RecW_F32( buf, v.maxSpringTorque );
 	b2RecW_BOOL( buf, v.enableLimit );
 	b2RecW_F32( buf, v.lowerAngle );
 	b2RecW_F32( buf, v.upperAngle );

@@ -308,6 +308,7 @@ static int JointInputTest( void )
 		REJECTS( b2RevoluteJoint_SetLimits( jointId, -1.0f, bad ) );
 		REJECTS( b2RevoluteJoint_SetTargetMotorSpeed( jointId, bad ) );
 		REJECTS( b2RevoluteJoint_SetMaxMotorTorque( jointId, bad ) );
+		REJECTS( b2RevoluteJoint_SetMaxSpringTorque( jointId, bad ) );
 	}
 
 	ACCEPTS( b2RevoluteJoint_SetTargetMotorSpeed( jointId, 2.0f ) );
@@ -388,6 +389,9 @@ static int CreateInputTest( void )
 		badJointDef.base.bodyIdA = bodyId;
 		badJointDef.base.bodyIdB = b2CreateBody( worldId, &bodyDef );
 		badJointDef.hertz = bad;
+		ENSURE( b2Joint_IsValid( b2CreateRevoluteJoint( worldId, &badJointDef ) ) == false );
+		badJointDef.hertz = 0.0f;
+		badJointDef.maxSpringTorque = bad;
 		ENSURE( b2Joint_IsValid( b2CreateRevoluteJoint( worldId, &badJointDef ) ) == false );
 
 		b2ExplosionDef badExplosionDef = b2DefaultExplosionDef();

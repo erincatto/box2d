@@ -196,6 +196,22 @@ float b2RevoluteJoint_GetMaxMotorTorque( b2JointId jointId )
 	return joint->revoluteJoint.maxMotorTorque;
 }
 
+void b2RevoluteJoint_SetMaxSpringTorque( b2JointId jointId, float torque )
+{
+	B2_CHECK_INPUT( b2IsValidFloat( torque ) );
+
+	b2World* world = b2GetWorld( jointId.world0 );
+	B2_REC( world, RevoluteJointSetMaxSpringTorque, jointId, torque );
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
+	joint->revoluteJoint.maxSpringTorque = b2MaxFloat( 0.0f, torque );
+}
+
+float b2RevoluteJoint_GetMaxSpringTorque( b2JointId jointId )
+{
+	b2JointSim* joint = b2GetJointSimCheckType( jointId, b2_revoluteJoint );
+	return joint->revoluteJoint.maxSpringTorque;
+}
+
 float b2RevoluteJoint_GetCurrentAngle( b2JointId jointId )
 {
 	b2World* world = b2GetWorld( jointId.world0 );
@@ -392,8 +408,16 @@ void b2SolveRevoluteJoint( b2JointSim* base, b2StepContext* context, bool useBia
 		float impulseScale = joint->springSoftness.impulseScale;
 
 		float Cdot = angularCdot;
-		float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * joint->springImpulse;
-		joint->springImpulse += impulse;
+		float maxImpulse = context->h * joint->maxSpringTorque;
+		float oldImpulse = joint->springImpulse;
+		float impulse = -massScale * joint->axialMass * ( Cdot + bias ) - impulseScale * oldImpulse;
+		float newImpulse = oldImpulse + impulse;
+		if ( newImpulse < -maxImpulse || maxImpulse < newImpulse )
+		{
+			newImpulse = b2ClampFloat( newImpulse, -maxImpulse, maxImpulse );
+			impulse = newImpulse - oldImpulse;
+		}
+		joint->springImpulse = newImpulse;
 
 		angularCdot += k * impulse;
 		axialImpulse += impulse;

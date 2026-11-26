@@ -1418,6 +1418,12 @@ B2_API void b2RevoluteJoint_SetSpringDampingRatio( b2JointId jointId, float damp
 /// Get the revolute joint spring damping ratio, non-dimensional
 B2_API float b2RevoluteJoint_GetSpringDampingRatio( b2JointId jointId );
 
+// Set the revolute joint maximum spring torque, usually in newton-meters
+B2_API void b2RevoluteJoint_SetMaxSpringTorque( b2JointId jointId, float torque );
+
+// Get the revolute joint maximum spring torque, usually in newton-meters
+B2_API float b2RevoluteJoint_GetMaxSpringTorque( b2JointId jointId );
+
 /// Set the revolute joint spring target angle, radians
 B2_API void b2RevoluteJoint_SetTargetAngle( b2JointId jointId, float angle );
 
