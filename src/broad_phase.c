@@ -205,7 +205,7 @@ static void b2FlushCandidatePairs( b2PairContext* context )
 			continue;
 		}
 
-		if ( b2ShouldShapesCollide( shapeA->filter, shapeB->filter ) == false )
+		if ( b2ShouldFiltersCollide( shapeA->filter, shapeB->filter ) == false )
 		{
 			continue;
 		}

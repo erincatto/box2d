@@ -115,16 +115,6 @@ static inline float b2GetShapeRadius( const b2Shape* shape )
 	}
 }
 
-static inline bool b2ShouldShapesCollide( b2Filter filterA, b2Filter filterB )
-{
-	if ( filterA.groupIndex == filterB.groupIndex && filterA.groupIndex != 0 )
-	{
-		return filterA.groupIndex > 0;
-	}
-
-	return ( filterA.maskBits & filterB.categoryBits ) != 0 && ( filterA.categoryBits & filterB.maskBits ) != 0;
-}
-
 static inline bool b2ShouldQueryCollide( b2Filter shapeFilter, b2QueryFilter queryFilter )
 {
 	return ( shapeFilter.categoryBits & queryFilter.maskBits ) != 0 && ( shapeFilter.maskBits & queryFilter.categoryBits ) != 0;

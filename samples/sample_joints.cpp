@@ -605,6 +605,7 @@ public:
 		m_enableMotor = false;
 		m_hertz = 2.0f;
 		m_dampingRatio = 0.5f;
+		m_maxSpringTorque = 5000.0f;
 		m_targetDegrees = 45.0f;
 		m_motorSpeed = 1.0f;
 		m_motorTorque = 1000.0f;
@@ -632,6 +633,7 @@ public:
 			jointDef.enableSpring = m_enableSpring;
 			jointDef.hertz = m_hertz;
 			jointDef.dampingRatio = m_dampingRatio;
+			jointDef.maxSpringTorque = m_maxSpringTorque;
 			jointDef.motorSpeed = m_motorSpeed;
 			jointDef.maxMotorTorque = m_motorTorque;
 			jointDef.enableMotor = m_enableMotor;
@@ -739,6 +741,12 @@ public:
 				b2Joint_WakeBodies( m_jointId1 );
 			}
 
+			if ( ImGui::SliderFloat( "Spring Torque", &m_maxSpringTorque, 0.0f, 5000.0f, "%.0f" ) )
+			{
+				b2RevoluteJoint_SetMaxSpringTorque( m_jointId1, m_maxSpringTorque );
+				b2Joint_WakeBodies( m_jointId1 );
+			}
+
 			if ( ImGui::SliderFloat( "Degrees", &m_targetDegrees, -180.0f, 180.0f, "%.0f" ) )
 			{
 				b2RevoluteJoint_SetTargetAngle( m_jointId1, B2_PI * m_targetDegrees / 180.0f );
@@ -776,6 +784,7 @@ public:
 	float m_motorTorque;
 	float m_hertz;
 	float m_dampingRatio;
+	float m_maxSpringTorque;
 	float m_targetDegrees;
 	bool m_enableSpring;
 	bool m_enableMotor;

@@ -366,6 +366,7 @@ int RecordingTest( void )
 	revDef.base.bodyIdB = jb[1];
 	revDef.base.localFrameA.p = (b2Vec2){ 0.5f, 0.0f };
 	revDef.base.localFrameB.p = (b2Vec2){ -0.5f, 0.0f };
+	revDef.maxSpringTorque = 20.0f;
 	b2JointId revId = b2CreateRevoluteJoint( worldId, &revDef );
 	ENSURE( b2Joint_IsValid( revId ) );
 	b2RevoluteJoint_EnableLimit( revId, true );
@@ -377,6 +378,7 @@ int RecordingTest( void )
 	b2RevoluteJoint_SetSpringHertz( revId, 2.0f );
 	b2RevoluteJoint_SetSpringDampingRatio( revId, 0.5f );
 	b2RevoluteJoint_SetTargetAngle( revId, 0.25f );
+	b2RevoluteJoint_SetMaxSpringTorque( revId, 5.0f );
 	b2Joint_SetLocalFrameA( revId, (b2Transform){ { 0.5f, 0.0f }, b2Rot_identity } );
 	b2Joint_SetLocalFrameB( revId, (b2Transform){ { -0.5f, 0.0f }, b2Rot_identity } );
 	b2Joint_SetConstraintTuning( revId, 60.0f, 2.0f );

@@ -206,6 +206,9 @@ B2_REC_OP( 0xD7, WheelJointSetMaxMotorTorque, RET_NONE, ARG( JOINTID, joint ) AR
 B2_REC_OP( 0xD8, CreateMotionLockJoint, RET_JOINTID, ARG( WORLDID, world ) ARG( MOTIONLOCKJOINTDEF, def ) )
 B2_REC_OP( 0xD9, MotionLockJointEnableLinearLock, RET_NONE, ARG( JOINTID, joint ) ARG( I32, axis ) ARG( BOOL, flag ) )
 
+// Revolute joint, continued
+B2_REC_OP( 0xDA, RevoluteJointSetMaxSpringTorque, RET_NONE, ARG( JOINTID, joint ) ARG( F32, torque ) )
+
 // Spatial queries. Inputs through the manifest (reader side). Hit tail / results hand-written.
 // Query geometry is relative to the origin so recordings reproduce queries far from the world origin.
 B2_REC_OP( 0xE0, QueryOverlapAABB, RET_NONE,

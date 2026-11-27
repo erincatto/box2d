@@ -18,14 +18,16 @@
 
 // Contacts and determinism
 // A deterministic simulation requires contacts to exist in the same order in b2Island no matter the thread count.
-// The order must reproduce from run to run. This is necessary because the Gauss-Seidel constraint solver is order dependent.
+// The order must reproduce from run to run. This is necessary because the Gauss-Seidel constraint solver is order
+// dependent.
 //
 // Creation:
 // - Contacts are created using results from the broad-phase pair update
 // - These results are ordered according to the order of the broad-phase move array
 // - The move array is ordered according to the shape creation order using a bitset.
 // - The island/shape/body order is determined by creation order
-// - Logically contacts are only created for awake bodies, so they are immediately added to the awake contact array (serially)
+// - Logically contacts are only created for awake bodies, so they are immediately added to the awake contact array
+// (serially)
 //
 // Island linking:
 // - The awake contact array is built from the body-contact graph for all awake bodies in awake islands.
@@ -86,7 +88,8 @@ b2ContactData b2Contact_GetData( b2ContactId contactId )
 	return data;
 }
 
-typedef b2LocalManifold b2ManifoldFcn( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf, b2SimplexCache* cache );
+typedef b2LocalManifold b2ManifoldFcn( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf,
+									   b2SimplexCache* cache );
 
 struct b2ContactRegister
 {
@@ -94,7 +97,8 @@ struct b2ContactRegister
 	bool primary;
 };
 
-static b2LocalManifold b2CircleManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf, b2SimplexCache* cache )
+static b2LocalManifold b2CircleManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf,
+										 b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideCircles( &shapeA->circle, &shapeB->circle, xf );
@@ -107,7 +111,8 @@ static b2LocalManifold b2CapsuleAndCircleManifold( const b2Shape* shapeA, const 
 	return b2CollideCapsuleAndCircle( &shapeA->capsule, &shapeB->circle, xf );
 }
 
-static b2LocalManifold b2CapsuleManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf, b2SimplexCache* cache )
+static b2LocalManifold b2CapsuleManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf,
+										  b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollideCapsules( &shapeA->capsule, &shapeB->capsule, xf );
@@ -127,7 +132,8 @@ static b2LocalManifold b2PolygonAndCapsuleManifold( const b2Shape* shapeA, const
 	return b2CollidePolygonAndCapsule( &shapeA->polygon, &shapeB->capsule, xf );
 }
 
-static b2LocalManifold b2PolygonManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf, b2SimplexCache* cache )
+static b2LocalManifold b2PolygonManifold( const b2Shape* shapeA, const b2Shape* shapeB, b2Transform xf,
+										  b2SimplexCache* cache )
 {
 	B2_UNUSED( cache );
 	return b2CollidePolygons( &shapeA->polygon, &shapeB->polygon, xf );
@@ -284,8 +290,9 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	contact->flags = 0;
 
 	// Both bodies must enable recycling. Disable for pre-solve.
-	if ( ( bodyA->flags & b2_bodyEnableContactRecycling ) != 0 && ( bodyB->flags & b2_bodyEnableContactRecycling ) != 0 &&
-		 shapeA->enablePreSolveEvents == false && shapeB->enablePreSolveEvents == false )
+	if ( ( bodyA->flags & b2_bodyEnableContactRecycling ) != 0 &&
+		 ( bodyB->flags & b2_bodyEnableContactRecycling ) != 0 && shapeA->enablePreSolveEvents == false &&
+		 shapeB->enablePreSolveEvents == false )
 	{
 		contact->flags |= b2_contactRecycleFlag;
 	}
@@ -373,8 +380,9 @@ void b2CreateContact( b2World* world, b2Shape* shapeA, b2Shape* shapeB )
 	}
 	else
 	{
-		contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
-															  shapeB->material.restitution, shapeB->material.userMaterialId );
+		contactSim->restitution =
+			world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
+										shapeB->material.restitution, shapeB->material.userMaterialId );
 	}
 
 	contactSim->tangentSpeed = 0.0f;
@@ -581,8 +589,12 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	for ( int i = 0; i < local.pointCount; ++i )
 	{
 		b2ManifoldPoint* mp = contactSim->manifold.points + i;
-		mp->anchorA = b2RotateVector( transformA.q, local.points[i].point );
-		mp->anchorB = b2Add( mp->anchorA, originDelta );
+		b2Vec2 anchorA = b2RotateVector( transformA.q, local.points[i].point );
+
+		// Convert anchors to be relative to the center of mass. Pre-solve sees these anchors.
+		mp->anchorA = b2Sub( anchorA, centerOffsetA );
+		mp->anchorB = b2Sub( b2Add( anchorA, originDelta ), centerOffsetB );
+
 		mp->separation = local.points[i].separation;
 		mp->id = local.points[i].id;
 	}
@@ -604,8 +616,9 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 	}
 	else
 	{
-		contactSim->restitution = world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
-															  shapeB->material.restitution, shapeB->material.userMaterialId );
+		contactSim->restitution =
+			world->restitutionCallback( shapeA->material.restitution, shapeA->material.userMaterialId,
+										shapeB->material.restitution, shapeB->material.userMaterialId );
 	}
 
 	if ( shapeA->material.rollingResistance > 0.0f || shapeB->material.rollingResistance > 0.0f )
@@ -664,10 +677,6 @@ bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA,
 		for ( int i = 0; i < pointCount; ++i )
 		{
 			b2ManifoldPoint* mp2 = contactSim->manifold.points + i;
-
-			// shift anchors to be center of mass relative
-			mp2->anchorA = b2Sub( mp2->anchorA, centerOffsetA );
-			mp2->anchorB = b2Sub( mp2->anchorB, centerOffsetB );
 
 			mp2->normalImpulse = 0.0f;
 			mp2->tangentImpulse = 0.0f;

@@ -390,6 +390,18 @@ typedef struct b2Filter
 /// @ingroup shape
 B2_API b2Filter b2DefaultFilter( void );
 
+/// Should two shapes collide base in their filters?
+/// @ingroup shape
+B2_INLINE bool b2ShouldFiltersCollide( b2Filter filterA, b2Filter filterB )
+{
+	if ( filterA.groupIndex == filterB.groupIndex && filterA.groupIndex != 0 )
+	{
+		return filterA.groupIndex > 0;
+	}
+
+	return ( filterA.maskBits & filterB.categoryBits ) != 0 && ( filterA.categoryBits & filterB.maskBits ) != 0;
+}
+
 /// The query filter is used to filter collisions between queries and shapes. For example, you may
 /// want a ray-cast representing a projectile to hit players and the static environment but not
 /// debris.
@@ -647,15 +659,15 @@ typedef struct b2Counters
 /// @ingroup joint
 typedef enum b2JointType
 {
-	b2_distanceJoint,  ///< constrain the distance between two points
-	b2_filterJoint,	   ///< filter collision between two bodies
-	b2_motorJoint,	   ///< fully control the movement of a body
-	b2_moverJoint,	   ///< control the movement of the dynamic character mover
-	b2_pogoJoint,	   ///< ground interaction for the dynamic character mover
-	b2_prismaticJoint, ///< slide along an axis
-	b2_revoluteJoint,  ///< rotate around a pivot
-	b2_weldJoint,	   ///< bring two bodies together with some flex
-	b2_wheelJoint,	   ///< wheel spins with shock absorber
+	b2_distanceJoint,	///< constrain the distance between two points
+	b2_filterJoint,		///< filter collision between two bodies
+	b2_motorJoint,		///< fully control the movement of a body
+	b2_moverJoint,		///< control the movement of the dynamic character mover
+	b2_pogoJoint,		///< ground interaction for the dynamic character mover
+	b2_prismaticJoint,	///< slide along an axis
+	b2_revoluteJoint,	///< rotate around a pivot
+	b2_weldJoint,		///< bring two bodies together with some flex
+	b2_wheelJoint,		///< wheel spins with shock absorber
 	b2_motionLockJoint, ///< restrict translation to a line or a point
 } b2JointType;
 
@@ -947,6 +959,9 @@ typedef struct b2RevoluteJointDef
 
 	/// The spring damping ratio, non-dimensional
 	float dampingRatio;
+
+	// The maximum spring torque, typically in newton-meters.
+	float maxSpringTorque;
 
 	/// A flag to enable joint limits
 	bool enableLimit;
@@ -1330,8 +1345,8 @@ typedef struct b2ContactData
 /// only called if one of the two shapes has custom filtering enabled. Notes:
 /// - this function must be thread-safe
 /// - this is only called if one of the two shapes has enabled custom filtering
-/// - this may be called for awake dynamic bodies and sensors Return false if you want to disable
-///   the collision
+/// - this may be called for awake dynamic bodies and sensors
+/// @return false if you want to disable the collision
 /// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
@@ -1357,7 +1372,8 @@ typedef void b2PreSolveCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Ma
 /// - this function must be thread-safe
 /// - this is only called if the shape has enabled pre-solve events
 /// - this is called only for awake dynamic bodies
-/// - this is not called for sensors Return false if you want to disable the time of impact event.
+/// - this is not called for sensors
+/// @return false if you want to disable the time of impact event.
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
 typedef bool b2PreContinuousCallbackFcn( b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Pos point, b2Vec2 normal,

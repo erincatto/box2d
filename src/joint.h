@@ -194,6 +194,7 @@ typedef struct b2RevoluteJoint
 	float upperImpulse;
 	float hertz;
 	float dampingRatio;
+	float maxSpringTorque;
 	float targetAngle;
 	float maxMotorTorque;
 	float motorSpeed;

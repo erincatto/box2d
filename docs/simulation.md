@@ -130,7 +130,7 @@ You can create up to 128 worlds. These worlds do not interact and may be simulat
 When you destroy a world, every body, shape, and joint is also destroyed. This is much faster than
 destroying individual objects.
 
-### Simulation
+### Simulation {#world-step}
 
 The world is used to drive the simulation. You specify a time step and a sub-step count. For
 example:
@@ -168,7 +168,7 @@ sub-steps at 480Hz!
 Rigid bodies, or just *bodies*, have position and velocity. You can apply forces, torques, and
 impulses to bodies. Bodies can be static, kinematic, or dynamic. Here are the body type definitions:
 
-### Body types
+### Body types {#body-types}
 
 `b2_staticBody`: A static body does not move under simulation and behaves as if it has infinite
 mass. Internally, Box2D stores zero for the mass and the inverse mass. A static body has zero
@@ -228,7 +228,7 @@ b2BodyDef bodyDef = b2DefaultBodyDef();
 bodyDef.type = b2_dynamicBody;
 ```
 
-### Position and angle
+### Position and angle {#body-position}
 
 You can initialize the body position and angle in the body definition. This has far better
 performance than creating the body at the world origin and then moving the body.
@@ -302,7 +302,7 @@ gravity magnitude can decrease stability.
 bodyDef.gravityScale = 0.0f;
 ```
 
-### Sleep parameters
+### Sleep parameters {#sleep}
 
 What does sleep mean? Well it is expensive to simulate bodies, so the less we have to simulate the
 better. When a body comes to rest we would like to stop simulating it.
@@ -447,7 +447,7 @@ After creating a body, there are many operations you can perform on the body. Th
 mass properties, accessing position and velocity, applying forces, and transforming points and
 vectors.
 
-### Mass data
+### Mass data {#mass-data}
 
 A body has mass (scalar), center of mass (2-vector), and rotational inertia (scalar). For static
 bodies, the mass and rotational inertia are set to zero.
@@ -669,8 +669,7 @@ optimize your application.
 
 ## Shapes
 
-A body may have zero or more shapes. A body with multiple shapes is sometimes called a *compound
-shape* or *aggregate*.
+A body may have zero or more shapes. A body with multiple shapes is called a *compound body*.
 
 Shapes hold the following:
 
@@ -766,7 +765,7 @@ float mixedFriction = sqrtf(b2Shape_GetFriction(shapeIdA) * b2Shape_GetFriction(
 
 If one shape has zero friction then the mixed friction will be zero.
 
-### Restitution
+### Restitution {#restitution}
 
 [Restitution](https://en.wikipedia.org/wiki/Coefficient_of_restitution) is used to make objects
 bounce. The restitution value is usually set to be between 0 and 1. Consider dropping a ball on a
@@ -840,7 +839,7 @@ if (result.hit == true)
 }
 ```
 
-### Friction and restitution callbacks
+### Friction and restitution callbacks {#material-callbacks}
 
 Advanced users can override friction and restitution mixing using b2FrictionCallbackFcn and
 b2RestitutionCallbackFcn. These should be very lightweight functions because they are called
@@ -949,7 +948,7 @@ Sometimes you might need to change collision filtering after a shape has already
 can get and set the `b2Filter` structure on an existing shape using `b2Shape_GetFilter()` and
 `b2Shape_SetFilter()`. Changing the filter is expensive because it causes contacts to be destroyed.
 
-### Chain shapes
+### Chain shapes {#chain-shapes}
 
 The chain shape provides an efficient way to connect many line segments together to construct your
 static game worlds. Chain shapes automatically eliminate ghost collisions and provide one-sided
@@ -1055,7 +1054,7 @@ chainSegment.ghost1 = (b2Vec2){ 3.0f, 0.5f };
 b2Shape_SetChainSegment( shapeId, &chainSegment );
 ```
 
-### Sensors
+### Sensors {#sensors}
 
 Sometimes game logic needs to know when two shapes overlap yet there should be no collision
 response. This is done by using sensors. A sensor is a shape that detects overlap but does not
@@ -1232,7 +1231,7 @@ object until one is created to analyze the collision. We could delete the contac
 shapes are not touching, or we can just wait until the AABBs stop overlapping. Box2D takes the
 latter approach because it lets the system cache information to improve performance.
 
-### Contact recycling
+### Contact recycling {#contact-recycling}
 
 Performance is improved by recycling contact data across time steps. This is called _contact
 recycling_. It has a large impact on performance and also improves stacking stability.
@@ -1270,7 +1269,7 @@ is enough.
 > callbacks.
 
 Cargo resting on a rotating body can drift when its contact is recycled. See
-[Known Limitations](known_limitations.md).
+[Known Limitations](@ref recycling-drift).
 
 ### Contact data
 
@@ -1326,7 +1325,7 @@ if (b2Contact_IsValid( myContactId ))
 }
 ```
 
-### Contact events
+### Contact events {#contact-events}
 
 Contact events are available after each world step. Like sensor events these should be retrieved and
 processed before performing other game logic. Otherwise you may be accessing orphaned/invalid data.
@@ -1455,7 +1454,7 @@ This function must be [thread-safe](https://en.wikipedia.org/wiki/Thread_safety)
 from or write to the Box2D world. Otherwise you will get a [race
 condition](https://en.wikipedia.org/wiki/Race_condition). See the `CustomFilter` sample for details.
 
-#### Pre-solve callback
+#### Pre-solve callback {#pre-solve}
 
 This is called after collision detection, but before collision resolution. This gives you a chance
 to disable or modify the contact manifold. For example, you can implement a one-sided platform using
@@ -1861,7 +1860,7 @@ void b2PrismaticJoint_SetTargetMotorSpeed(b2JointId jointId, float motorSpeed);
 void b2PrismaticJoint_SetMaxMotorForce(b2JointId jointId, float force);
 ```
 
-### Weld joint
+### Weld joint {#weld-joint}
 
 The weld joint attempts to constrain all relative motion between two bodies. See the `Cantilever`
 sample to see how the weld joint behaves.
@@ -2094,7 +2093,7 @@ b2ShapeProxy proxy = b2MakeProxy(&circle.center, 1, circle.radius);
 b2World_OverlapShape(myWorldId, b2Pos_zero, &proxy, grenadeFilter, MyOverlapCallback, &myGame);
 ```
 
-### Ray-casts
+### Ray-casts {#ray-casts}
 
 You can use ray-casts to do line-of-sight checks, fire guns, etc. You perform a ray-cast by
 implementing the `b2CastResultCallbackFcn()` callback function and providing the origin point and

@@ -527,6 +527,7 @@ b2RevoluteJointDef b2RecR_REVOLUTEJOINTDEF( b2RecReader* rdr )
 	def.enableSpring = b2RecR_BOOL( rdr );
 	def.hertz = b2RecR_F32( rdr );
 	def.dampingRatio = b2RecR_F32( rdr );
+	def.maxSpringTorque = b2RecR_F32( rdr );
 	def.enableLimit = b2RecR_BOOL( rdr );
 	def.lowerAngle = b2RecR_F32( rdr );
 	def.upperAngle = b2RecR_F32( rdr );
@@ -1649,6 +1650,12 @@ static void b2RecDispatch_MotionLockJointEnableLinearLock( const b2RecArgs_Motio
 														   b2RecReader* rdr )
 {
 	b2MotionLockJoint_EnableLinearLock( b2RecMakeJointId( rdr, a->joint ), a->axis, a->flag );
+}
+
+static void b2RecDispatch_RevoluteJointSetMaxSpringTorque( const b2RecArgs_RevoluteJointSetMaxSpringTorque* a,
+														   b2RecReader* rdr )
+{
+	b2RevoluteJoint_SetMaxSpringTorque( b2RecMakeJointId( rdr, a->joint ), a->torque );
 }
 
 // Float bit comparators: compare raw bits so NaN != NaN is handled consistently
