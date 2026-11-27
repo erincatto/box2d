@@ -170,7 +170,7 @@ Public features are supported and you can get help with these on the Discord ser
 code directly is not supported. However, feel free to study the code and ask questions. I'm happy to
 share all the details of how Box2D works internally.
 
-## Units
+## Units {#units}
 
 Box2D works with floating point numbers and tolerances have to be used to make Box2D perform well.
 These tolerances have been tuned to work well with meters-kilogram-second (MKS) units. In

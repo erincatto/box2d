@@ -63,7 +63,7 @@ capsule.center2 = (b2Vec2){2.0f, 3.0f};
 capsule.radius = 0.25f;
 ```
 
-### Polygons
+### Polygons {#polygons}
 
 Box2D polygons are solid convex polygons. A polygon is convex when all line segments connecting two
 points in the interior do not cross any edge of the polygon. Polygons are solid and never hollow. A
@@ -154,7 +154,7 @@ segment1.point2 = (b2Vec2){1.0f, 0.0f};
 b2Segment segment2 = {{0.0f, 0.0f}, {1.0f, 0.0f}};
 ```
 
-### Ghost collisions
+### Ghost collisions {#ghost-collisions}
 
 In many cases a game environment is constructed by connecting several segment shapes end-to-end.
 This can give rise to an unexpected artifact when a polygon slides along the chain of segments. In

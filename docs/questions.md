@@ -148,7 +148,8 @@ Using many boxes for your terrain may not work well because box-like characters 
 internal corners. Box2D provides chain shapes for smooth collision, see `b2ChainDef`. In general you
 should avoid using a rectangular character because collision tolerances will still lead to
 undesirable snagging. Box2D provides capsules and rounded polygons that may work better for
-characters.
+characters. See the character mover samples for guidance. Also consider using `b2ComputeChains()` to
+convert tiles to optimized chain shapes automatically.
 
 ### Asteroid type coordinate systems
 
@@ -171,9 +172,3 @@ feature of Box2D. This assumes precision is not mixed (single versus double prec
 Some developers want rollback determinism. You can achieve this using the [snapshot](@ref snapshot)
 system.
 
-## Common mistakes
-
-* Using pixels units without calling `b2SetLengthUnitsPerMeter()`
-* Expecting Box2D to give pixel perfect results
-* Testing their code in release mode
-* Not learning C before using Box2D

@@ -94,7 +94,7 @@ Box2D does not keep a reference to the shape data. It copies the data into the i
 structures.
 
 Note that every shape must have a parent body, even shapes that are static. You may attach multiple
-shapes to a single parent body. This is often called a _compound shape_.
+shapes to a single parent body. This is often called a _compound body_.
 
 When you attach a shape, the shape's coordinates become local to the body. So when the body moves,
 so does the shape. A shape's world transform is inherited from the parent body. A shape does not
