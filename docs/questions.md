@@ -170,5 +170,18 @@ Box2D has cross-platform determinism as of version 3.1. This is heavily tested a
 feature of Box2D. This assumes precision is not mixed (single versus double precision).
 
 Some developers want rollback determinism. You can achieve this using the [snapshot](@ref snapshot)
-system.
+system. Your game code must be deterministic too. See [Known Limitations](@ref snapshot-limits).
+
+### What breaks determinism?
+
+Cross-platform determinism holds when:
+* every platform runs the same Box2D version and game code, and makes the same calls in the same order
+* Box2D is built without fast-math and without fused multiply-add. The Box2D CMake build sets
+  `-ffp-contract=off` for GCC and Clang. If you compile Box2D in your own build system, set it
+  yourself.
+* simulation inputs are computed with Box2D's math functions, such as `b2MakeRot()` and `b2Atan2()`.
+  The standard `sinf`, `cosf` and `atan2f` give different results on different platforms.
+
+Determinism is brittle. A compiler upgrade or a small code change can break it. Test it regularly by
+comparing `b2World_GetStateHash()` across your platforms.
 

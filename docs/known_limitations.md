@@ -22,6 +22,10 @@ Many problems come from setup rather than from the engine. Those are covered in
 | Shapes pass through a chain from one side | [Chains are one-sided](@ref one-sided-chains) |
 | A thin polygon or short capsule is not created | [Minimum shape size](@ref minimum-shape-size) |
 | A kinematic body passes through static bodies | [Kinematic bodies don't collide with static bodies](@ref kinematic-static) |
+| A thin, fast spinning shape passes through a chain | [Tunneling between dynamic bodies](@ref tunneling) |
+| A pile of bodies never falls asleep | [Sleep and waking](@ref sleep-and-waking) |
+| A ragdoll jitters or crawls on the ground | [Ragdolls](@ref ragdolls) |
+| A snapshot is too large to send over the network | [Snapshots cover the whole world](@ref snapshot-limits) |
 | Character movers pass through each other | [Geometric movers don't collide with each other](@ref mover-collision) |
 | Cargo drifts on a rotating platform | [Contact recycling drifts on slowly rotating platforms](@ref recycling-drift) |
 | Shapes snag on seams in flat ground | [Terrain and level geometry](@ref terrain) |
@@ -46,6 +50,9 @@ the joint for a few steps before it recovers. This is commonly seen in fast vehi
 bodies for wheels. For fast vehicles it is better to use a ray cast and suspension to simulate
 wheels.
 
+Continuous collision is not exact. In rare cases a thin shape spinning fast passes through a chain
+or segment. Thicker shapes avoid this.
+
 See also: [Bullets](@ref bullets).
 
 ## Resting overlap {#resting-overlap}
@@ -56,7 +63,8 @@ try that then you can increase `b2WorldDef::contactHertz` to reduce the softness
 
 Deeper overlap is pushed apart at a limited speed, set by `b2WorldDef::contactSpeed`, so bodies
 that start out overlapping separate over several steps instead of exploding. In large stacks some
-overlap can persist. You should normally not need to tune the contact softness settings in
+overlap can persist, because the weight has to pass down through every contact and the solver
+converges slowly. More sub-steps help. You should normally not need to tune the contact softness settings in
 `b2WorldDef`. If overlap recovers too slowly, a lower `contactDampingRatio` resolves it faster at
 the cost of a more energetic push.
 
@@ -68,7 +76,9 @@ contacts can compress under heavy loads.
 
 Extreme mass ratios make this worse. A heavy body hanging from light bodies stretches the joints
 between them, and several joints holding a heavy body can fight each other until the rig becomes
-unstable. Keep the mass ratio between connected bodies below about 10 to 1.
+unstable. The bad case is a heavy body supported by light bodies, and the reverse is fine. Contacts
+have the same problem, so a heavy box on a light box compresses it. Keep the mass ratio between
+connected bodies below about 10 to 1.
 
 What helps:
 
@@ -130,7 +140,9 @@ See also: [Sensors](@ref sensors).
 
 ## Chains are one-sided {#one-sided-chains}
 
-Chain shapes collide on one side only. This is what lets them remove ghost collisions. Shapes coming
+Chain shapes collide on one side only. This is what lets them remove ghost collisions. Smooth
+collision needs to know which side to push a shape toward, and with two sides there is no robust way
+to decide this where segments meet. Shapes coming
 from the back side pass through, and ray casts and shape casts from the back side miss. Placing two
 chains back to back does not make a reliable two-sided wall.
 
@@ -170,6 +182,18 @@ example by keeping the movers in your own dynamic tree and querying it. If you n
 interaction, use the dynamic mover, which is a rigid body.
 
 See also: [Character Mover](character.md).
+
+## Snapshots cover the whole world {#snapshot-limits}
+
+A snapshot always captures the whole world. You can't snapshot part of it. A snapshot of a large
+world is large and takes time to make, so sending one over the network is only practical for small
+worlds.
+
+Rollback with snapshots is deterministic only if your game code is deterministic too. Restoring a
+snapshot can remove bodies your game still refers to and bring back bodies it no longer tracks. Check
+ids with `b2Body_IsValid()` after a restore and rebuild your own mappings.
+
+See also: [Recording and Replay](@ref recording).
 
 ## Contact recycling drifts on slowly rotating platforms {#recycling-drift}
 

@@ -86,11 +86,34 @@ compound body. Shapes on the same body are perfectly rigid. Weld joints between 
 will flex, especially in long chains. For breakable objects, build a compound body and split it when
 it breaks. The `ContactEvent` sample shows how. See [Weld joint](@ref weld-joint).
 
+A concave dynamic object must be a compound body made of convex shapes. Each pair of shapes collides
+independently, so another body can get wedged in a narrow gap between two shapes, even shapes on the
+same body. Overlap or extend the shapes so no thin gap is left. For example, extend the legs of a
+table up into the table top. Approximate collision is usually good enough and cheaper than an exact
+decomposition.
+
+Prefer fat shapes to long skinny ones. Rotational inertia grows faster with size than with mass, so
+a thin body spins easily and is harder for collision. If a part spins too much or won't sleep, make
+it larger rather than lighter.
+
 ## Joints {#joint-practice}
 
 Keep the mass ratio between connected bodies below about 10 to 1. A heavy body hanging from a light
 chain stretches the chain, and a light body squeezed between heavy bodies jitters. More sub-steps
 help. Reducing the ratio helps more.
+
+The bad case is a heavy body supported by a light one. A light body resting on a heavy one is fine.
+Contacts work the same way, so put the heavy boxes at the bottom of a stack. Avoid joining two large
+bodies through a small one.
+
+Tune joint springs with a frequency in Hertz and a damping ratio instead of a stiffness. These don't
+depend on the masses, so you can tune them without knowing the masses, and the spring stays stable at
+any setting. A damping ratio of 1 removes oscillation. Don't build a stiff spring by applying forces
+yourself. A spring made from forces needs at least 4 time steps per oscillation or it blows up.
+
+A kinematic body that drags jointed dynamic bodies, such as a ragdoll attached to an animated
+character, tears the joints if it moves too fast. Limit its speed. For a large jump, teleport the
+kinematic body and the attached dynamic bodies together.
 
 Rigs where several joints pull against a heavy body can become unstable. Lowering
 `b2JointDef::constraintHertz` from the default 60 to around 30 softens the joints and usually
@@ -103,6 +126,20 @@ To stop a body from rotating, use [fixed rotation](@ref fixed-rotation). To pin 
 or a line, use a [motion lock joint](@ref motion-lock-joint). Don't give a body zero mass to stop it
 from translating.
 
+## Ragdolls {#ragdolls}
+
+Overlap the shapes at each joint, such as the upper and lower arm at the elbow. A gap lets other
+objects get stuck in it and puts large joint forces on small bodies.
+
+Jointed bodies don't collide with each other by default, but parts that aren't directly connected
+still do. Overlapping parts, such as the two thighs, then fight the joints and the ragdoll jitters.
+Give every shape in a ragdoll the same negative group index to turn off self collision, or filter the
+pairs that overlap. The `Ragdoll` sample does this.
+
+Small parts such as hands and feet add little and tend to get stuck in the ground. Leave them out
+unless you need them. When you switch a character from animation to ragdoll, set the body velocities
+from the animation or the transition will pop.
+
 ## Terrain and level geometry {#terrain}
 
 Build ground from chain shapes. A row of boxes or separate segments makes sliding shapes snag on the
@@ -113,8 +150,8 @@ Chains are one-sided. A counter-clockwise loop collides on the outside. Shapes a
 back side pass through. If you need two-sided collision, use segment shapes. See [Chain
 shapes](@ref chain-shapes).
 
-Keep chain points more than about a centimeter apart. For a loop, don't repeat the first point at
-the end because the closing segment is added for you.
+Keep chain points more than about a centimeter apart, and don't let a chain cross itself. For a
+loop, don't repeat the first point at the end because the closing segment is added for you.
 
 The chain copies its points during `b2CreateChain()`, so you may free your point array afterwards.
 To change chain geometry, destroy and recreate the chain. For streaming or destructible terrain, use
@@ -132,6 +169,10 @@ Continuous collision keeps dynamic bodies from tunneling through static bodies b
 bodies can still tunnel through other dynamic bodies. Mark the few bodies that need it as bullets
 with `b2BodyDef::isBullet`. See [Bullets](@ref bullets).
 
+A speed limit is a cheap alternative to bullets. A body that moves much less than the thickness of
+the shapes it hits in one step can't pass through them. `b2WorldDef::maximumLinearSpeed` caps the
+speed of every body and defaults to 400 meters per second.
+
 For projectiles that only need to report a hit, such as gunfire, use a ray cast or shape cast each
 step instead of a body. Don't use a sensor because sensors are not swept and fast objects skip
 past them. See [Ray-casts](@ref ray-casts).
@@ -147,6 +188,12 @@ Sleeping bodies cost almost nothing. Several functions do not wake bodies:
 A sleeping body ignores forces and impulses. After changing a joint, call `b2Joint_WakeBodies()`.
 After a teleport, call `b2Body_SetAwake()` if the body should start moving. If a body must never
 sleep, set `b2BodyDef::enableSleep` to false. See [Sleep parameters](@ref sleep).
+
+Bodies sleep in islands. An island is a group of bodies connected by touching contacts and joints,
+and it sleeps only when every body in it is at rest. One body that keeps moving, such as a ball
+rolling on top of a pile, keeps the whole pile awake. Static bodies don't join islands, so the ground
+doesn't link everything together. Rolling resistance in `b2SurfaceMaterial` helps circles and
+capsules come to rest.
 
 ## Events {#events-practice}
 
@@ -173,6 +220,8 @@ callback returns.
 
 Disabling a contact in pre-solve lasts for one step. Keep the state of a one-way platform in your
 game and decide again each step. See [Pre-solve callback](@ref pre-solve).
+
+Treat ids as opaque handles. Don't read or construct their fields.
 
 Store an entity id or a pointer to a long-lived game object in user data. Then there is nothing for
 Box2D to free and no lifetime to manage.
@@ -205,4 +254,5 @@ a single worker. See [Multithreading](@ref multi).
 Draw the world with `b2World_Draw()` and compare it with your sprites. Most scale and offset
 mistakes show up right away.
 
-To report a bug, a [recording](@ref recording) is the best way to reproduce it.
+To report a bug, a [recording](@ref recording) is the best way to reproduce it. Zip the file and
+attach it to the GitHub issue. Recording doesn't support the pre-solve and custom filter callbacks.
